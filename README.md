@@ -1,7 +1,6 @@
 # WooSync, synchronize Woocommerce and Dolibarr
 
-# IMPORTANT
-You have to rename the folder to ecommerceng when you download the zip file or make a gti clone. In other case the module will not work
+## You have to rename the folder to ecommerceng when you download the zip file or make a gti clone. In other case the module will ## not work
 
 Use it at you onwn risk Open-DSI does not provide support for the use, installation or bug fixing for this software. For this you have to acquire a time credit on our online shop. https://www.open-dsi.fr/boutique/ You can also consult our company for any installation, configuration or development services. Forker Repository of Teclib modules for Dolibarr ERP CRM
 Only use to maintain ecommerceng module for Woocommerce
