@@ -15,8 +15,8 @@ NothingToSetup=Activez le module pour accéder à sa configuration
 ##SETUP##
 magento=Magento
 woocommerce=WooCommerce
-ECommercetoDolibarr=De E-Commerce vers Dolibarr
-DolibarrToeCommerce=De Dolibarr vers E-Commerce
+ECommerceToDolibarr=De E-Commerce vers Dolibarr
+DolibarrToECommerce=De Dolibarr vers E-Commerce
 ECommercePriceType=Type de prix importés
 ECommercePriceTypeHT=Hors Taxes
 ECommercePriceTypeTTC=Toutes Taxes Comprises
@@ -169,6 +169,11 @@ ECommerceSiteOAuthIdDescription=Id de connexion au service OAuth
 ECommerceSiteOAuthSecret=OAuth secret
 ECommerceSiteOAuthSecretDescription=Secret de connexion au service OAuth
 ECommerceOAuthCheckToken=Allez sur <a class="notasortlink" href="%s" target="_blank">cette page</a> pour vérifier/effacer les autorisations sauvées par le fournisseur OAuth2.
+
+ECommerceOrderStatusSetup=Synchronisation des statuts des commandes
+ECommerceOrderStatusSetupDescription=Choississez le statut correspondant lors de la synchronisation.
+ECommerceOrderStatusDtoECheckLvlStatus=Ne change le statut que si le niveau est plus élevé que le statut précédant
+ECommerceOrderStatusDtoECheckLvlStatusDescription=Le niveau du statut se renseigne dans les valeurs de l'attribut complémentaire du statut de la commande (Index sous la forme: niveau_statut,libellé). ex: 0_on-hold,En attente
 
 ECommerceSynchronizeProductImages=Synchroniser les images
 ECommerceProductImagesSynchronized=Les images ont été synchronisées.

@@ -347,17 +347,16 @@ if (is_object($site))
 	}
 
 
-	print '<br>';
-	$soapwsdlcacheon = ini_get('soap.wsdl_cache_enabled');
-	$soapwsdlcachedir = ini_get('soap.wsdl_cache_dir');
-	if ($soapwsdlcacheon)
-	{
-	    print '<div class="opacitymedium">'.$langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir).'</div><br>';
-	}
-	else
-	{
-	    print '<div class="opacitymedium">'.$langs->trans("SoapCacheIsOff", $soapwsdlcachedir).'</div><br>';
-	}
+  if ($site->type == 1) {
+      print '<br>';
+      $soapwsdlcacheon = ini_get('soap.wsdl_cache_enabled');
+      $soapwsdlcachedir = ini_get('soap.wsdl_cache_dir');
+      if ($soapwsdlcacheon) {
+          print '<div class="opacitymedium">' . $langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir) . '</div><br>';
+      } else {
+          print '<div class="opacitymedium">' . $langs->trans("SoapCacheIsOff", $soapwsdlcachedir) . '</div><br>';
+      }
+  }
 	print '<br>';
 
 }

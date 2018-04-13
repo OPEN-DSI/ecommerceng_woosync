@@ -47,10 +47,12 @@ class eCommerceSite // extends CommonObject
 	var $last_update;
 	var $timeout;
 	var $magento_use_special_price;
-	var $ecommerce_price_type;
+    var $ecommerce_price_type;
 
 	var $oauth_id;
 	var $oauth_secret;
+
+    var $parameters;
 
 	//The site type name is used to define class name in eCommerceRemoteAccess class
     private $siteTypes = array(2=>'woocommerce');
@@ -146,7 +148,8 @@ class eCommerceSite // extends CommonObject
 		$sql.= "magento_use_special_price,";
 		$sql.= "ecommerce_price_type,";
 		$sql.= "oauth_id,";
-		$sql.= "oauth_secret";
+		$sql.= "oauth_secret,";
+        $sql.= "parameters";
         $sql.= ") VALUES (";
 		$sql.= " ".(! isset($this->name)?'NULL':"'".$this->db->escape($this->name)."'").",";
 		$sql.= " ".(! isset($this->type)?'NULL':"'".$this->type."'").",";
@@ -166,7 +169,8 @@ class eCommerceSite // extends CommonObject
 		$sql.= " ".(! isset($this->magento_use_special_price)?'0':"'".intval($this->magento_use_special_price)."'").",";
 		$sql.= " ".(! isset($this->ecommerce_price_type)?'HT':"'".$this->ecommerce_price_type."'").",";
 		$sql.= " ".(! isset($this->oauth_id)?"NULL":"'".$this->db->escape($this->oauth_id)."'").",";
-		$sql.= " ".(! isset($this->oauth_secret)?"NULL":"'".$this->db->escape($this->oauth_secret)."'")."";
+		$sql.= " ".(! isset($this->oauth_secret)?"NULL":"'".$this->db->escape($this->oauth_secret)."'").",";
+        $sql.= " ".(! isset($this->parameters)?"NULL":"'".$this->db->escape(json_encode($this->parameters))."'")."";
 		$sql.= ")";
 
 		$this->db->begin();
@@ -239,7 +243,8 @@ class eCommerceSite // extends CommonObject
 		$sql.= " t.magento_use_special_price,";
 		$sql.= " t.ecommerce_price_type,";
 		$sql.= " t.oauth_id,";
-		$sql.= " t.oauth_secret";
+		$sql.= " t.oauth_secret,";
+        $sql.= " t.parameters";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_site as t";
         $sql.= " WHERE t.rowid = ".$id;
 
@@ -274,6 +279,7 @@ class eCommerceSite // extends CommonObject
 				$this->oauth_id = $obj->oauth_id;
 				$this->oauth_secret = $obj->oauth_secret;
 
+                $this->parameters = json_decode($obj->parameters, true);
             }
             $this->db->free($resql);
 
@@ -341,8 +347,9 @@ class eCommerceSite // extends CommonObject
 		$sql.= " timeout=".(isset($this->timeout)? "'".intval($this->timeout)."'" : '300').",";
 		$sql.= " magento_use_special_price=".(isset($this->magento_use_special_price)? "'".intval($this->magento_use_special_price)."'" : '0').",";
 		$sql.= " ecommerce_price_type=".(isset($this->ecommerce_price_type)? "'".$this->ecommerce_price_type."'" : 'HT').",";
-		$sql.= " oauth_id=".(isset($this->oauth_id)?"'".$this->oauth_id."'":"NULL").",";
-		$sql.= " oauth_secret=".(isset($this->oauth_secret)?"'".$this->oauth_secret."'":"NULL")."";
+		$sql.= " oauth_id=".(isset($this->oauth_id)?"'".$this->db->escape($this->oauth_id)."'":"NULL").",";
+		$sql.= " oauth_secret=".(isset($this->oauth_secret)?"'".$this->db->escape($this->oauth_secret)."'":"NULL").",";
+        $sql.= " parameters=".(isset($this->parameters)?"'".$this->db->escape(json_encode($this->parameters))."'":"NULL")."";
         $sql.= " WHERE rowid=".$this->id;
 
 		$this->db->begin();
@@ -556,6 +563,7 @@ class eCommerceSite // extends CommonObject
 		$this->ecommerce_price_type='';
 		$this->oauth_id='';
 		$this->oauth_secret='';
+        $this->parameters='';
 	}
 
 	/**

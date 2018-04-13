@@ -37,7 +37,9 @@ if (! $res) die("Include of main fails");
 
 require_once(DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php');
-require_once DOL_DOCUMENT_ROOT.'/includes/OAuth/bootstrap.php';
+require_once DOL_DOCUMENT_ROOT . '/includes/OAuth/bootstrap.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
+require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
 dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
 dol_include_once('/ecommerceng/admin/class/gui/eCommerceMenu.class.php');
 dol_include_once('/ecommerceng/lib/eCommerce.lib.php');
@@ -135,8 +137,62 @@ if ($_POST['site_form_detail_action'] == 'save')
         $siteDb->magento_use_special_price = ($_POST['ecommerce_magento_use_special_price'] ? 1 : 0);
         $siteDb->ecommerce_price_type = $_POST['ecommerce_price_type'];
 
-        $siteDb->oauth_id = $_POST['ecommerce_oauth_id'];
-        $siteDb->oauth_secret = $_POST['ecommerce_oauth_secret'];
+        if ($siteDb->type == 2) {
+            $siteDb->oauth_id = $_POST['ecommerce_oauth_id'];
+            $siteDb->oauth_secret = $_POST['ecommerce_oauth_secret'];
+
+            dolibarr_set_const($db, 'ECOMMERCENG_WOOCOMMERCE_ORDER_STATUS_LVL_CHECK', GETPOST('order_status_dtoe_check_lvl_status', 'alpha') == 'yes' ? 1 : 0, 'chaine', 0, '', $conf->entity);
+
+            $efields = new ExtraFields($db);
+            $efields->fetch_name_optionals_label('commande', true);
+            $ecommerceOrderStatusForECommerceToDolibarr = array();
+            if (isset($efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options']) &&
+                is_array($efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options'])
+            ) {
+                foreach ($efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options'] as $key => $value) {
+                    if (($pos = strpos($key, '_')) > 0) $key = substr($key, $pos + 1);
+                    $billed = GETPOST('order_status_etod_billed_' . $key, 'alpha');
+                    $ecommerceOrderStatusForECommerceToDolibarr[$key] = array(
+                        'selected' => GETPOST('order_status_etod_' . $key, 'alpha'),
+                        'billed' => empty($billed) ? 0 : 1,
+                    );
+                }
+            }
+
+            $ecommerceOrderStatusForDolibarrToECommerce = array(
+                Commande::STATUS_CANCELED => GETPOST('order_status_dtoe_' . Commande::STATUS_CANCELED, 'alpha'),
+                Commande::STATUS_DRAFT => GETPOST('order_status_dtoe_' . Commande::STATUS_DRAFT, 'alpha'),
+                Commande::STATUS_VALIDATED => GETPOST('order_status_dtoe_' . Commande::STATUS_VALIDATED, 'alpha'),
+                Commande::STATUS_ACCEPTED => GETPOST('order_status_dtoe_' . Commande::STATUS_ACCEPTED, 'alpha'),
+                Commande::STATUS_CLOSED => GETPOST('order_status_dtoe_' . Commande::STATUS_CLOSED, 'alpha'),
+            );
+
+            if (isset($siteDb->parameters)) {
+                $siteDb->parameters = array(
+                    'order_status_etod' => $ecommerceOrderStatusForECommerceToDolibarr,
+                    'order_status_dtoe' => $ecommerceOrderStatusForDolibarrToECommerce,
+                );
+            } else {
+                $siteDb->parameters = array(
+                    'order_status_etod' => array(
+                        "pending" => array('selected' => 's' . Commande::STATUS_DRAFT, 'billed' => 0),
+                        "processing" => array('selected' => 's' . Commande::STATUS_VALIDATED, 'billed' => 0),
+                        "on-hold" => array('selected' => 's' . Commande::STATUS_DRAFT, 'billed' => 0),
+                        "completed" => array('selected' => 's' . Commande::STATUS_CLOSED, 'billed' => 1),
+                        "cancelled" => array('selected' => 's' . Commande::STATUS_CANCELED, 'billed' => 0),
+                        "refunded" => array('selected' => 's' . Commande::STATUS_CANCELED, 'billed' => 1),
+                        "failed" => array('selected' => 's' . Commande::STATUS_CANCELED, 'billed' => 0),
+                    ),
+                    'order_status_dtoe' => array(
+                        Commande::STATUS_CANCELED => 'cancelled',
+                        Commande::STATUS_DRAFT => 'on-hold',
+                        Commande::STATUS_VALIDATED => 'processing',
+                        Commande::STATUS_ACCEPTED => 'processing',
+                        Commande::STATUS_CLOSED => 'completed',
+                    ),
+                );
+            }
+        }
 
         $result = 0;
         if (intval($_POST['ecommerce_id']))
@@ -170,7 +226,7 @@ if ($_POST['site_form_detail_action'] == 'save')
                         )),
                         'alwayseditable' => 1,
                         'perms' => '',
-                        'list' => 0,
+                        'list' => 1,
                     ],[
                         'attrname' => "ecommerceng_description_{$conf->entity}",
                         'label' => 'ECommercengWoocommerceDescription',
@@ -184,7 +240,7 @@ if ($_POST['site_form_detail_action'] == 'save')
                         'param' => '',
                         'alwayseditable' => 1,
                         'perms' => '',
-                        'list' => 0,
+                        'list' => 1,
                     ],
                     [
                         'attrname' => "ecommerceng_short_description_{$conf->entity}",
@@ -199,7 +255,7 @@ if ($_POST['site_form_detail_action'] == 'save')
                         'param' => '',
                         'alwayseditable' => 1,
                         'perms' => '',
-                        'list' => 0,
+                        'list' => 1,
                     ],
                     [
                         'attrname' => "ecommerceng_tax_class_{$siteDb->id}_{$conf->entity}",
@@ -214,7 +270,7 @@ if ($_POST['site_form_detail_action'] == 'save')
                         'param' => array('options' => array("c_ecommerceng_tax_class:label:code::active=1 AND site_id={$siteDb->id} AND entity={$conf->entity}" => null)),
                         'alwayseditable' => 1,
                         'perms' => '',
-                        'list' => 0,
+                        'list' => 1,
                     ],
                     [
                         'attrname' => "ecommerceng_online_payment_{$conf->entity}",
@@ -227,12 +283,12 @@ if ($_POST['site_form_detail_action'] == 'save')
                         'required' => 0,
                         'default_value' => '',
                         'param' => '',
-                        'alwayseditable' => 1,
+                        'alwayseditable' => 0,
                         'perms' => '',
-                        'list' => 0,
+                        'list' => 1,
                     ],[
-                        'attrname' => "ecommerceng_wc_status_{$conf->entity}",
-                        'label' => 'ECommercengWoocommerceOrderStatus',
+                        'attrname' => "ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}",
+                        'label' => $langs->trans('ECommercengWoocommerceOrderStatus', $siteDb->name),
                         'type' => 'select',
                         'pos' => 2,
                         'size' => '',
@@ -241,17 +297,17 @@ if ($_POST['site_form_detail_action'] == 'save')
                         'required' => 0,
                         'default_value' => '',
                         'param' => array('options' => array(
-                            "pending" => $langs->trans('ECommercengWoocommerceOrderStatusPending'),
-                            "processing" => $langs->trans('ECommercengWoocommerceOrderStatusProcessing'),
-                            "on-hold" => $langs->trans('ECommercengWoocommerceOrderStatusOnHold'),
-                            "completed" => $langs->trans('ECommercengWoocommerceOrderStatusCompleted'),
-                            "cancelled" => $langs->trans('ECommercengWoocommerceOrderStatusCancelled'),
-                            "refunded" => $langs->trans('ECommercengWoocommerceOrderStatusRefunded'),
-                            "failed" => $langs->trans('ECommercengWoocommerceOrderStatusFailed'),
+                            "0_pending" => $langs->trans('ECommercengWoocommerceOrderStatusPending'),
+                            "1_on-hold" => $langs->trans('ECommercengWoocommerceOrderStatusOnHold'),
+                            "2_processing" => $langs->trans('ECommercengWoocommerceOrderStatusProcessing'),
+                            "3_completed" => $langs->trans('ECommercengWoocommerceOrderStatusCompleted'),
+                            "3_cancelled" => $langs->trans('ECommercengWoocommerceOrderStatusCancelled'),
+                            "3_refunded" => $langs->trans('ECommercengWoocommerceOrderStatusRefunded'),
+                            "3_failed" => $langs->trans('ECommercengWoocommerceOrderStatusFailed'),
                         )),
-                        'alwayseditable' => 1,
+                        'alwayseditable' => 0,
                         'perms' => '',
-                        'list' => 0,
+                        'list' => 1,
                     ],
                 ], $error);
             }
@@ -374,10 +430,12 @@ elseif (isset($siteDb->timeout))
     $ecommerceTimeout = $siteDb->timeout;*/
 $ecommerceOAuth = false;
 $ecommerceOAuthGenerateToken = false;
+$ecommerceOrderStatus = false;
 if (!empty($ecommerceId)) {
     if ($ecommerceType == 2) {
         $ecommerceOAuth = true;
         $ecommerceOAuthWordpressOAuthSetupUri = $ecommerceWebserviceAddress . (substr($ecommerceWebserviceAddress, -1, 1) != '/' ? '/' : '') . 'wp-admin/admin.php?page=wo_settings#clients';
+        $ecommerceOrderStatus = $conf->commande->enabled;
     }
 
     if ($ecommerceOAuth) {
@@ -417,6 +475,58 @@ if (!empty($ecommerceId)) {
             }
         }
     }
+
+    if ($ecommerceOrderStatus) {
+        $efields = new ExtraFields($db);
+        $efields->fetch_name_optionals_label('commande', true);
+        $ecommerceOrderStatusForECommerceToDolibarr = array();
+        if (isset($efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options']) &&
+            is_array($efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options'])) {
+            foreach ($efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options'] as $key => $value) {
+                if (($pos = strpos($key , '_')) > 0) $key = substr($key, $pos + 1);
+                $selected = GETPOST('order_status_etod_' . $key, 'alpha');
+                $selected = $selected ? $selected : (isset($siteDb->parameters['order_status_etod'][$key]['selected']) ? $siteDb->parameters['order_status_etod'][$key]['selected'] : '');
+                $billed = isset($_POST['order_status_etod_billed_' . $key]) ? GETPOST('order_status_etod_billed_' . $key, 'alpha') :
+                    (isset($siteDb->parameters['order_status_etod'][$key]['billed']) ? $siteDb->parameters['order_status_etod'][$key]['billed'] : '');
+                $ecommerceOrderStatusForECommerceToDolibarr[$key] = array('label' => $value, 'selected' => $selected, 'billed' => $billed);
+            }
+        }
+
+        $commande = new Commande($db);
+        $langs->load('orders');
+        $langs->load('bills');
+        $ecommerceOrderStatusForDolibarrToECommerce = array();
+        $selected = GETPOST('order_status_dtoe_' . Commande::STATUS_CANCELED, 'alpha');
+        $selected = $selected ? $selected : (isset($siteDb->parameters['order_status_dtoe'][Commande::STATUS_CANCELED]) ? $siteDb->parameters['order_status_dtoe'][Commande::STATUS_CANCELED] : '');
+        $ecommerceOrderStatusForDolibarrToECommerce['s'.Commande::STATUS_CANCELED] = array(
+            'label' => $commande->LibStatut(Commande::STATUS_CANCELED, 0, 0, 1),
+            'selected' => $selected
+        );
+        $selected = GETPOST('order_status_dtoe_' . Commande::STATUS_DRAFT, 'alpha');
+        $selected = $selected ? $selected : (isset($siteDb->parameters['order_status_dtoe'][Commande::STATUS_DRAFT]) ? $siteDb->parameters['order_status_dtoe'][Commande::STATUS_DRAFT] : '');
+        $ecommerceOrderStatusForDolibarrToECommerce['s'.Commande::STATUS_DRAFT] = array(
+            'label' => $commande->LibStatut(Commande::STATUS_DRAFT, 0, 0, 1),
+            'selected' => $selected
+        );
+        $selected = GETPOST('order_status_dtoe_' . Commande::STATUS_VALIDATED, 'alpha');
+        $selected = $selected ? $selected : (isset($siteDb->parameters['order_status_dtoe'][Commande::STATUS_VALIDATED]) ? $siteDb->parameters['order_status_dtoe'][Commande::STATUS_VALIDATED] : '');
+        $ecommerceOrderStatusForDolibarrToECommerce['s'.Commande::STATUS_VALIDATED] = array(
+            'label' => $commande->LibStatut(Commande::STATUS_VALIDATED, 0, 0, 1),
+            'selected' => $selected
+        );
+        $selected = GETPOST('order_status_dtoe_' . Commande::STATUS_ACCEPTED, 'alpha');
+        $selected = $selected ? $selected : (isset($siteDb->parameters['order_status_dtoe'][Commande::STATUS_ACCEPTED]) ? $siteDb->parameters['order_status_dtoe'][Commande::STATUS_ACCEPTED] : '');
+        $ecommerceOrderStatusForDolibarrToECommerce['s'.Commande::STATUS_ACCEPTED] = array(
+            'label' => $commande->LibStatut(Commande::STATUS_ACCEPTED, 0, 0, 1),
+            'selected' => $selected
+        );
+        $selected = GETPOST('order_status_dtoe_' . Commande::STATUS_CLOSED, 'alpha');
+        $selected = $selected ? $selected : (isset($siteDb->parameters['order_status_dtoe'][Commande::STATUS_CLOSED]) ? $siteDb->parameters['order_status_dtoe'][Commande::STATUS_CLOSED] : '');
+        $ecommerceOrderStatusForDolibarrToECommerce['s'.Commande::STATUS_CLOSED] = array(
+            'label' => $commande->LibStatut(Commande::STATUS_CLOSED, 0, 0, 1),
+            'selected' => $selected
+        );
+    }
 }
 
 $ecommerceLastUpdate = $siteDb->last_update;
@@ -432,18 +542,17 @@ else
 $urltpl=dol_buildpath('/ecommerceng/admin/tpl/eCommerceSetup.tpl.php',0);
 include($urltpl);
 
-$soapwsdlcacheon = ini_get('soap.wsdl_cache_enabled');
-$soapwsdlcachedir = ini_get('soap.wsdl_cache_dir');
-if ($soapwsdlcacheon)
-{
-    print img_warning('').' '.$langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir).' ';
-    print $langs->trans("WarningSoapCacheIsOn2", $langs->transnoentitiesnoconv("ECommerceSiteAddress")).'<br>';
-}
-else
-{
-    print $langs->trans("SoapCacheIsOff", $soapwsdlcachedir).'<br>';
-}
+if ($siteDb->type == 1) {
+    $soapwsdlcacheon = ini_get('soap.wsdl_cache_enabled');
+    $soapwsdlcachedir = ini_get('soap.wsdl_cache_dir');
+    if ($soapwsdlcacheon) {
+        print img_warning('') . ' ' . $langs->trans("WarningSoapCacheIsOn", $soapwsdlcachedir) . ' ';
+        print $langs->trans("WarningSoapCacheIsOn2", $langs->transnoentitiesnoconv("ECommerceSiteAddress")) . '<br>';
+    } else {
+        print $langs->trans("SoapCacheIsOff", $soapwsdlcachedir) . '<br>';
+    }
 
+}
 llxFooter();
 
 

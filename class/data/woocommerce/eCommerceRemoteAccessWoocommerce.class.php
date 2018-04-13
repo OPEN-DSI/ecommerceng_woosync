@@ -933,34 +933,34 @@ class eCommerceRemoteAccessWoocommerce
 
                     // Set status of order
                     // $order->status is: 'pending', 'processing', 'on-hold', 'completed', 'cancelled', 'refunded', 'failed'
-                    $orderStatus = $order->status;
-
                     $status = '';
-                    switch ($orderStatus) {
-                        case 'on-hold': $status = Commande::STATUS_DRAFT; break;
-                        case 'pending': $status = Commande::STATUS_DRAFT; break;
-                        case 'processing': $status = !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_ORDER_PROCESSING_STATUS_TO_DRAFT)?Commande::STATUS_DRAFT:Commande::STATUS_VALIDATED; break;
-                        case 'completed': $status = Commande::STATUS_CLOSED; break;
-                        case 'refunded': $status = Commande::STATUS_CANCELED; break;
-                        case 'cancelled': $status = Commande::STATUS_CANCELED; break;
-                        case 'failed': $status = Commande::STATUS_CANCELED; break;
-                    }
-                    if (!empty($conf->global->ECOMMERCENG_WOOCOMMERCE_FORCE_ORDER_STATUS_TO_DRAFT)) $status = Commande::STATUS_DRAFT;
+                    if (isset($this->site->parameters['order_status_etod'][$order->status]))
+                        $status = substr($this->site->parameters['order_status_etod'][$order->status]['selected'], 1);
                     if ($status == '') {
-                        dol_syslog(__METHOD__ . ": Status \"$orderStatus\" was not found for remote order ID {$order->id} and set in draft", LOG_WARNING);
+                        dol_syslog(__METHOD__ . ": Status \"{$order->status}\" was not found for remote order ID {$order->id} and set in draft", LOG_WARNING);
                         $status = Commande::STATUS_DRAFT;   // draft by default
                     }
 
                     // Set dolibarr billed status (payed or not)
                     $billed = -1;   // unknown
-                    if ($order->status == 'pending') $billed = 0;
-                    if ($order->status == 'processing') $billed = 0;   //
-                    if ($order->status == 'on-hold') $billed = 0;      //
-                    if ($order->status == 'completed') $billed = 1;    // We are sure for complete that order is payed
-                    if ($order->status == 'cancelled') $billed = 0;    // We are sure for canceled that order was not payed
-                    if ($order->status == 'refunded') $billed = 1;     //
-                    if ($order->status == 'failed') $billed = 0;       //
+                    if (isset($this->site->parameters['order_status_etod'][$order->status]))
+                        $billed = $this->site->parameters['order_status_etod'][$order->status]['billed'];
                     // Note: with processing, billed can be 0 or 1, so we keep -1
+
+                    $orderStatus = '';
+                    require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
+                    $efields = new ExtraFields($this->db);
+                    $efields->fetch_name_optionals_label('commande', true);
+                    if (isset($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options']) &&
+                       is_array($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options'])) {
+                        foreach ($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options'] as $key => $value) {
+                            $key_test = ($pos = strpos($key , '_')) > 0 ? substr($key, $pos + 1) : $key;
+                            if ($key_test == $order->status) {
+                                $orderStatus = $key;
+                                break;
+                            }
+                        }
+                    }
 
                     // Add order content to array or orders
                     $orders[] = [
@@ -985,7 +985,7 @@ class eCommerceRemoteAccessWoocommerce
                         'payment_method' => $order->payment_method_title,
                         'extrafields' => [
                             "ecommerceng_online_payment_{$conf->entity}" => empty($order->date_paid) ? 0 : 1,
-                            "ecommerceng_wc_status_{$conf->entity}" => $order->status,
+                            "ecommerceng_wc_status_{$this->site->id}_{$conf->entity}" => $orderStatus,
                         ],
                     ];
                 }
@@ -1710,31 +1710,31 @@ class eCommerceRemoteAccessWoocommerce
         global $conf, $langs, $user;
 
         $status = '';
-        switch ($object->statut) {
-            //case Commande::STOCK_NOT_ENOUGH_FOR_ORDER:  $status = ''; break;
-            case Commande::STATUS_CANCELED:             $status = 'cancelled'; break;
-            case Commande::STATUS_DRAFT:                $status = 'on-hold'; break;
-            case Commande::STATUS_VALIDATED:            $status = 'processing'; break;
-            //case Commande::STATUS_ACCEPTED:             $status = 'processing'; break;
-            case Commande::STATUS_SHIPMENTONPROCESS:    $status = 'processing'; break;
-            case Commande::STATUS_CLOSED:               $status = 'completed'; break;
-        }
+        if (isset($this->site->parameters['order_status_dtoe'][$object->statut]))
+            $status = $this->site->parameters['order_status_dtoe'][$object->statut];
 
         if (!empty($status)) {
             $object->fetch_optionals();
 
-            $order_status = [
-                'pending' => 0,
-                'on-hold' => 1,
-                'processing' => 2,
-                'completed' => 3,
-                'cancelled' => 3,
-                'refunded' => 3,
-                'failed' => 3,
-            ];
+            require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
+            $efields = new ExtraFields($this->db);
+            $efields->fetch_name_optionals_label('commande', true);
+            $order_status = array();
+            if (isset($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options']) &&
+               is_array($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options'])) {
+                foreach ($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options'] as $key => $value) {
+                    $lvl = 0;
+                    if (($pos = strpos($key , '_')) > 0) {
+                        $key = substr($key, $pos + 1);
+                        $lvl = substr($key, 0, $pos);
+                    }
+                    $order_status[$key] = $lvl;
+                }
+            }
 
-            $wc_status = $object->array_options["options_ecommerceng_wc_status_{$conf->entity}"];
-            if ($order_status[$status] < $order_status[$wc_status]) $status = $wc_status;
+            $wc_status = $object->array_options["options_ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"];
+            if ($order_status[$status] < $order_status[$wc_status] &&
+                !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_ORDER_STATUS_LVL_CHECK)) $status = $wc_status;
 
             $orderData = [
                 'status' => $status,  // string  Order status. Options: pending, processing, on-hold, completed, cancelled, refunded and failed.

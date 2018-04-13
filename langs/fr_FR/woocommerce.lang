@@ -28,14 +28,14 @@ ECommerceWoocommerceUpdateRemoteStockProductVariation=Erreur de mise à jour des
 ECommerceWoocommerceGetAllWoocommerceTaxClass=Erreur de récupération des données des classes de taxes sur le site '%s': %s
 ECommerceWoocommerceGetWoocommerceTaxes=Erreur de récupération des données des taxes sur le site '%s': %s
 
-ECommercengWoocommerceStatus=Statut pour le site "%s"
+ECommercengWoocommerceStatus=Statut pour le site [%s]
 ECommercengWoocommerceDescription=Description boutique
 ECommercengWoocommerceShortDescription=Description courte boutique
 ECommercengWoocommerceOnlinePayment=Paiement en ligne
-ECommercengWoocommerceTaxClass=Classe de TVA pour le site "%s"
+ECommercengWoocommerceTaxClass=Classe de TVA pour le site [%s]
 
 ECommercengWoocommerceDictTaxClass=Liste des classes de TVA sur Woocommerce
-ECommercengWoocommerceDictTaxClassUpdated=Dictionnaire des classes de TVA sur Woocommerce mise à jour.
+ECommercengWoocommerceDictTaxClassUpdated=Dictionnaire des classes de TVA depuis Woocommerce mise à jour.
 ECommerceWoocommerceConfirmUpdateDictTaxClasses=Confirmer la mise à jour du dictionnaire des classes de TVA pour ce site ?
 ECommerceWoocommerceUpdateDictTaxClasses=Mise à jour du dictionnaire des classes de TVA
 ECommerceWoocommerceErrorDisableDictTaxClass=Erreur de déactivation d'une classe de TVA, code:"%s", erreur:"%s"
@@ -49,7 +49,7 @@ ECommercengWoocommerceStatusPublish=Publié
 ECommercengWoocommerceWithoutFirstnameLastname=Pas de nom/prénom renseigné
 ECommercengWoocommerceLastnameNotInformed=[Nom non renseigné]
 
-ECommercengWoocommerceOrderStatus=Statut sur le site ECommerce
+ECommercengWoocommerceOrderStatus=Statut sur le site [%s]
 ECommercengWoocommerceOrderStatusPending=Attente paiement
 ECommercengWoocommerceOrderStatusProcessing=En cours
 ECommercengWoocommerceOrderStatusOnHold=En attente

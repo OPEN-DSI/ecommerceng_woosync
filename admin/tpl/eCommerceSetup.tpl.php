@@ -364,14 +364,15 @@ if ($ecommerceOAuth) {
 ?>
 			</table>
 
-			<br>
 
 <?php
 if ($conf->stock->enabled)
 {
-    print_titre($langs->trans("StockSyncSetup"));
-
     $var=!$var;
+?>
+      <br>
+<?php
+    print_titre($langs->trans("StockSyncSetup"));
 ?>
 			<table class="noborder" width="100%">
 
@@ -385,7 +386,7 @@ if ($conf->stock->enabled)
 					<td><span><?php print $langs->trans('ECommerceStockSyncDirection') ?></span></td>
 					<td>
 						<?php
-                            $array=array('none'=>$langs->trans('None'), 'ecommerce2dolibarr'=>$langs->trans('ECommerceToDolibarr'), 'dolibarr2ecommerce'=>$langs->trans('DolibarrToeCommerce'));
+                            $array=array('none'=>$langs->trans('None'), 'ecommerce2dolibarr'=>$langs->trans('ECommerceToDolibarr'), 'dolibarr2ecommerce'=>$langs->trans('DolibarrToECommerce'));
 							print $form->selectarray('ecommerce_stock_sync_direction', $array, $ecommerceStockSyncDirection);
 						?>
 					</td>
@@ -404,11 +405,100 @@ if ($conf->stock->enabled)
 					</td>
 					<td><?php print $langs->trans('ECommerceStockProductDescription', $langs->transnoentitiesnoconv('ECommerceStockSyncDirection')) ?></td>
 				</tr>
+      </table>
 <?php
 }
 ?>
-			</table>
 
+
+<?php
+if ($ecommerceOrderStatus)
+{
+   $var = true;
+?>
+          <br>
+<?php
+    print_titre($langs->trans("ECommerceOrderStatusSetup"));
+?>
+     			<table class="noborder" width="100%">
+
+            <tr class="liste_titre">
+              <td colspan="3"><?php print $langs->trans('ECommerceToDolibarr') ?></td>
+            </tr>
+
+            <tr class="liste_titre">
+              <td width="20%"><?php print $langs->trans('Parameter') ?></td>
+              <td><?php print $langs->trans('Value') ?></td>
+              <td><?php print $langs->trans('Description') ?></td>
+            </tr>
+<?php
+  foreach ($ecommerceOrderStatusForECommerceToDolibarr as $key => $value) {
+    $var = !$var;
+?>
+            <tr <?php print $bc[$var] ?>>
+              <td><span><?php print $value['label'] ?></span></td>
+              <td>
+                <?php
+                  $array_list = array();
+                  foreach ($ecommerceOrderStatusForDolibarrToECommerce as $key2 => $value2) {
+                    $array_list[$key2] = $value2['label'];
+                  }
+                  print $form->selectarray('order_status_etod_'.$key, $array_list, $value['selected']);
+                  print '&nbsp;'.$langs->trans('Billed').'&nbsp;?&nbsp;:&nbsp;';
+                ?>
+                <input type="checkbox" name="order_status_etod_billed_<?php print $key ?>" value="1" <?php print $value['billed'] ? ' checked' : '' ?>>
+              </td>
+              <td><?php print $langs->trans('ECommerceOrderStatusSetupDescription') ?></td>
+            </tr>
+<?php
+  }
+?>
+
+<?php
+  $var = true;
+?>
+            <tr class="liste_titre">
+              <td colspan="3"><?php print $langs->trans('DolibarrToECommerce') ?></td>
+            </tr>
+
+            <tr class="liste_titre">
+              <td width="20%"><?php print $langs->trans('Parameter') ?></td>
+              <td><?php print $langs->trans('Value') ?></td>
+              <td><?php print $langs->trans('Description') ?></td>
+            </tr>
+
+<?php
+  $var = !$var;
+?>
+            <tr <?php print $bc[$var] ?>>
+              <td><?php print $langs->trans('ECommerceOrderStatusDtoECheckLvlStatus') ?></td>
+              <td><?php print $form->selectyesno('order_status_dtoe_check_lvl_status', $conf->global->ECOMMERCENG_WOOCOMMERCE_ORDER_STATUS_LVL_CHECK) ?></td>
+              <td><?php print $langs->trans('ECommerceOrderStatusDtoECheckLvlStatusDescription') ?></td>
+            </tr>
+<?php
+  foreach ($ecommerceOrderStatusForDolibarrToECommerce as $key => $value) {
+    $var = !$var;
+?>
+            <tr <?php print $bc[$var] ?>>
+              <td><span><?php print $value['label'] ?></span></td>
+              <td>
+                <?php
+                  $array_list = array();
+                  foreach ($ecommerceOrderStatusForECommerceToDolibarr as $key2 => $value2) {
+                    $array_list[$key2] = $value2['label'];
+                  }
+                  print $form->selectarray('order_status_dtoe_'.substr($key, 1), $array_list, $value['selected'])
+                ?>
+              </td>
+              <td><?php print $langs->trans('ECommerceOrderStatusSetupDescription') ?></td>
+            </tr>
+<?php
+  }
+?>
+          </table>
+<?php
+}
+?>
 
 
 

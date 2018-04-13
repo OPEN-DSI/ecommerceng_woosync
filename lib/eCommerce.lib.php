@@ -409,13 +409,13 @@ function ecommerceng_update_woocommerce_dict_tax_class($db, $site)
     $eCommerceRemoteAccessWoocommerce = new eCommerceRemoteAccessWoocommerce($db, $site);
 
     if (!$eCommerceRemoteAccessWoocommerce->connect()) {
-        setEventMessages('', $this->errors, 'errors');
+        setEventMessages('', $eCommerceRemoteAccessWoocommerce->errors, 'errors');
         return false;
     }
 
     $taxClasses = $eCommerceRemoteAccessWoocommerce->getAllWoocommerceTaxClass();
     if ($taxClasses === false) {
-        setEventMessages('', $this->errors, 'errors');
+        setEventMessages('', $eCommerceRemoteAccessWoocommerce->errors, 'errors');
         return false;
     }
 

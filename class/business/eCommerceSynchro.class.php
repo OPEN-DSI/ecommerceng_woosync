@@ -1955,7 +1955,7 @@ class eCommerceSynchro
                             //update commande
                             $result = 1;
 
-                            $tmpdateorder1=dol_print_date($dBCommande->date_commande, 'dayrfc');
+                            $tmpdateorder1=dol_print_date($dBCommande->date_commande? $dBCommande->date_commande : $dBCommande->date, 'dayrfc');
                             $tmpdateorder2=dol_print_date(strtotime($commandeArray['date_commande']), 'dayrfc');
                             $tmpdatedeliv1=dol_print_date($dBCommande->date_livraison, 'dayrfc');
                             $tmpdatedeliv2=dol_print_date(strtotime($commandeArray['date_livraison']), 'dayrfc');
@@ -1986,6 +1986,7 @@ class eCommerceSynchro
                                 dol_syslog("Some info has changed on order, we update order");
 
                                 $dBCommande->ref_client = $commandeArray['ref_client'];
+                                $dBCommande->date = strtotime($commandeArray['date_commande']);
                                 $dBCommande->date_commande = strtotime($commandeArray['date_commande']);
                                 $dBCommande->date_livraison = strtotime($commandeArray['date_livraison']);
 
@@ -2083,6 +2084,7 @@ class eCommerceSynchro
                                 $dBCommande->statut=Commande::STATUS_DRAFT;             // STATUS_DRAFT by default at creation
                                 $dBCommande->ref_client = $commandeArray['ref_client'];
                                 $dBCommande->ref_ext = $this->eCommerceSite->name.'-'.$commandeArray['ref_client'];
+                                $dBCommande->date = strtotime($commandeArray['date_commande']);
                                 $dBCommande->date_commande = strtotime($commandeArray['date_commande']);
                                 $dBCommande->date_livraison = strtotime($commandeArray['date_livraison']);
                                 $dBCommande->socid = $this->eCommerceSociete->fk_societe;
