@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 4.0.21.0
+
+- Mise à jour de l'attribut complémentaire "statut de la commande sur ECommerce" sur la fiche de la commande lors de la mise à jour de la commande de Dolibarr vers ECommerce.
+- Correction bug du test pour ne changer le statut que si le niveau est plus élevé que le statut précédant lors de la synchro Dolibarr vers ECommerce.
+
 ## 4.0.20.0
 
 - Correction erreur lors de la synchronisation des classes de TVA. (Correction du fichier de langue)

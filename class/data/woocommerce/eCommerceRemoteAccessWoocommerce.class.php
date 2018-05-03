@@ -1723,12 +1723,12 @@ class eCommerceRemoteAccessWoocommerce
             if (isset($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options']) &&
                is_array($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options'])) {
                 foreach ($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options'] as $key => $value) {
-                    $lvl = 0;
+                    $status_lvl = 0;
                     if (($pos = strpos($key , '_')) > 0) {
-                        $key = substr($key, $pos + 1);
-                        $lvl = substr($key, 0, $pos);
+                        $status_key = substr($key, $pos + 1);
+                        $status_lvl = substr($key, 0, $pos);
                     }
-                    $order_status[$key] = $lvl;
+                    $order_status[$status_key] = $status_lvl;
                 }
             }
 
@@ -1749,6 +1749,9 @@ class eCommerceRemoteAccessWoocommerce
                     ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
                 return false;
             }
+
+            $object->array_options["options_ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"] = $order_status[$status] . '_' . $status;
+            $object->insertExtraFields();
         }
 
         dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
