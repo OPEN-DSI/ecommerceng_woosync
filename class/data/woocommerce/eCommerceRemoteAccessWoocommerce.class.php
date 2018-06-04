@@ -467,7 +467,7 @@ class eCommerceRemoteAccessWoocommerce
                             'type' => 'company',
                             'name' => $company->billing->company,
                             'name_alias' => null,
-                            'email' => null,
+                            'email' => !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_GET_EMAIL_ON_COMPANY) ? $company->email : null,
                             'email_key' => $company->email,
                             'client' => 1,
                             'vatnumber' => null,
@@ -702,6 +702,21 @@ class eCommerceRemoteAccessWoocommerce
                             ],
                             'images' => $images,
                         ];
+
+                        // Synch extrafields <=> metadatas
+                        if (!empty($product->meta_data) && !empty($this->site->parameters['ef_crp']['product'])) {
+                           $correspondences = array();
+                           foreach ($this->site->parameters['ef_crp']['product'] as $key => $options_saved) {
+                               if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
+                                   $correspondences[$options_saved['correspondences']] = $key;
+                               }
+                           }
+                           foreach ($product->meta_data as $meta) {
+                               if (isset($correspondences[$meta->key])) {
+                                   $products[$remote_id]['extrafields'][$correspondences[$meta->key]] = $meta->value;
+                               }
+                           }
+                        }
                     }
 
                     // Variations
@@ -776,6 +791,21 @@ class eCommerceRemoteAccessWoocommerce
                                     ],
                                     'images' => $images,
                                 ];
+
+                                // Synch extrafields <=> metadatas
+                                if (!empty($variation->meta_data) && !empty($this->site->parameters['ef_crp']['product'])) {
+                                   $correspondences = array();
+                                   foreach ($this->site->parameters['ef_crp']['product'] as $key => $options_saved) {
+                                       if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
+                                           $correspondences[$options_saved['correspondences']] = $key;
+                                       }
+                                   }
+                                   foreach ($variation->meta_data as $meta) {
+                                       if (isset($correspondences[$meta->key])) {
+                                           $products[$remote_id]['extrafields'][$correspondences[$meta->key]] = $meta->value;
+                                       }
+                                   }
+                                }
                             }
                         }
                     }
@@ -830,7 +860,7 @@ class eCommerceRemoteAccessWoocommerce
                     // Set items
                     $items = [];
                     foreach ($order->line_items as $item) {
-                        $items[] = [
+                        $items[$item->id] = [
                             'item_id' => $item->id,
                             'id_remote_product' => !empty($item->variation_id) ? $item->product_id . '|' . $item->variation_id : $item->product_id,
                             'description' => $item->name,
@@ -839,6 +869,21 @@ class eCommerceRemoteAccessWoocommerce
                             'qty' => $item->quantity,
                             'tva_tx' => $this->getClosestDolibarrTaxRate($item->total, $item->total_tax),
                         ];
+
+                        // Synch extrafields <=> metadatas
+                        if (!empty($item->meta_data) && !empty($this->site->parameters['ef_crp']['commandedet'])) {
+                            $correspondences = array();
+                            foreach ($this->site->parameters['ef_crp']['commandedet'] as $key => $options_saved) {
+                                if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
+                                    $correspondences[$options_saved['correspondences']] = $key;
+                                }
+                            }
+                            foreach ($item->meta_data as $meta) {
+                                if (isset($correspondences[$meta->key])) {
+                                    $items[$item->id]['extrafields'][$correspondences[$meta->key]] = $meta->value;
+                                }
+                            }
+                        }
                     }
 
                     // Set remote id company : 0 for anonymous
@@ -963,7 +1008,7 @@ class eCommerceRemoteAccessWoocommerce
                     }
 
                     // Add order content to array or orders
-                    $orders[] = [
+                    $orders[$order->id] = [
                         'last_update' => $last_update->format('Y-m-d H:i:s'),
                         'remote_id' => $order->id,
                         'remote_increment_id' => $order->id,
@@ -988,6 +1033,21 @@ class eCommerceRemoteAccessWoocommerce
                             "ecommerceng_wc_status_{$this->site->id}_{$conf->entity}" => $orderStatus,
                         ],
                     ];
+
+                    // Synch extrafields <=> metadatas
+                    if (!empty($order->meta_data) && !empty($this->site->parameters['ef_crp']['commande'])) {
+                        $correspondences = array();
+                        foreach ($this->site->parameters['ef_crp']['commande'] as $key => $options_saved) {
+                            if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
+                                $correspondences[$options_saved['correspondences']] = $key;
+                            }
+                        }
+                        foreach ($order->meta_data as $meta) {
+                            if (isset($correspondences[$meta->key])) {
+                                $orders[$order->id]['extrafields'][$correspondences[$meta->key]] = $meta->value;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1359,6 +1419,20 @@ class eCommerceRemoteAccessWoocommerce
                 $variationData['tax_class'] = $object->array_options["options_ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"];
             }
 
+            // Synch extrafields <=> metadatas
+            if (!empty($object->array_options)) {
+                foreach ($object->array_options as $key => $value) {
+                    $cr_key = substr($key, 8);
+                    if (preg_match('/^ecommerceng_/', $cr_key)) continue;
+                    $options_saved = $this->site->parameters['ef_crp']['product'][$cr_key];
+                    if ($options_saved['activated']) {
+                        $rm_key = $cr_key;
+                        if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
+                        $variationData['meta_data'][] = array('key' => $rm_key, 'value' => $value);
+                    }
+                }
+            }
+
             // Product
             // 'name'    => $object->label,			                    // string		Product name.
             // 'status'  => $object->status ? 'publish' : 'pending',	// string		Product status (post status). Options: draft, pending, private and publish. Default is publish.
@@ -1507,6 +1581,20 @@ class eCommerceRemoteAccessWoocommerce
             if (!empty($object->array_options["options_ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"])) {
                 $productData['tax_status'] = 'taxable';
                 $productData['tax_class'] = $object->array_options["options_ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"];
+            }
+
+            // Synch extrafields <=> metadatas
+            if (!empty($object->array_options)) {
+                foreach ($object->array_options as $key => $value) {
+                    $cr_key = substr($key, 8);
+                    if (preg_match('/^ecommerceng_/', $cr_key)) continue;
+                    $options_saved = $this->site->parameters['ef_crp']['product'][$cr_key];
+                    if ($options_saved['activated']) {
+                        $rm_key = $cr_key;
+                        if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
+                        $productData['meta_data'][] = array('key' => $rm_key, 'value' => $value);
+                    }
+                }
             }
 
             try {
@@ -1740,6 +1828,20 @@ class eCommerceRemoteAccessWoocommerce
                 'status' => $status,  // string  Order status. Options: pending, processing, on-hold, completed, cancelled, refunded and failed.
             ];
 
+            // Synch extrafields <=> metadatas
+            if (!empty($object->array_options)) {
+                foreach ($object->array_options as $key => $value) {
+                    $cr_key = substr($key, 8);
+                    if (preg_match('/^ecommerceng_/', $cr_key)) continue;
+                    $options_saved = $this->site->parameters['ef_crp']['commande'][$cr_key];
+                    if ($options_saved['activated']) {
+                        $rm_key = $cr_key;
+                        if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
+                        $orderData['meta_data'][] = array('key' => $rm_key, 'value' => $value);
+                    }
+                }
+            }
+
             try {
                 $result = $this->client->put("orders/$remote_id", $orderData);
             } catch (HttpClientException $fault) {
@@ -1970,6 +2072,20 @@ class eCommerceRemoteAccessWoocommerce
                 $productData['tax_class'] = $object->array_options["options_ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"];
             }
 
+            // Synch extrafields <=> metadatas
+            if (!empty($object->array_options)) {
+                foreach ($object->array_options as $key => $value) {
+                    $cr_key = substr($key, 8);
+                    if (preg_match('/^ecommerceng_/', $cr_key)) continue;
+                    $options_saved = $this->site->parameters['ef_crp']['product'][$cr_key];
+                    if ($options_saved['activated']) {
+                        $rm_key = $cr_key;
+                        if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
+                        $productData['meta_data'][] = array('key' => $rm_key, 'value' => $value);
+                    }
+                }
+            }
+
             try {
                 $res = $this->client->post("products", $productData);
                 $remoteId = $res->id;
@@ -1984,6 +2100,390 @@ class eCommerceRemoteAccessWoocommerce
 
         dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
         return $remoteId;
+    }
+
+    /**
+     * Create batch categories
+     *
+     * @param   array     $batch     Array of object category
+     *
+     * @return  bool|array           Array of association id <=> remote id
+     */
+    public function createRemoteCategories($batch)
+    {
+        $ids = implode(', ', array_keys($batch));
+        dol_syslog(__METHOD__ . ": Create batch categories from Dolibarr categories IDs: '{$ids}' for site ID {$this->site->id}", LOG_DEBUG);
+        global $conf, $langs;
+
+        $this->errors = array();
+
+        // Set datas to create
+        $cats_by_level = array();
+        $cats_slug_id = array();
+        foreach ($batch as $cat_id => $category) {
+            if ($category['level'] == 1) continue;
+
+            $slug = 'cat_'.$cat_id;
+
+            $categoryData = [
+                'name'          => $category['label'],                  // string		Category name.
+                'slug'          => $slug,			                    // string		An alphanumeric identifier for the resource unique to its type.
+                'parent'        => $category['level'] > 2 ? $category['fk_parent'] : null,			    // integer		The ID for the parent of the resource.
+                'description'   => $category['description'],            // string		HTML description of the resource.
+                //'display'       => '',		                          // string		Category archive display type. Options: default, products, subcategories and both. Default is default.
+                //'images'        => $images,                             // object		Image data. See Product category - Image properties
+                //'menu_order'    => 0,                                   // integer	Menu order, used to custom sort the resource.
+            ];
+
+            $cats_slug_id[$slug]                 = $cat_id;
+            $cats_by_level[$category['level']][] = $categoryData;
+        }
+        ksort($cats_by_level);
+
+        // Create categories on Woocommerce
+        $countCreated = 0;
+        $cats_id_remote_id = array();
+        $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_BATCH) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_BATCH, 100);
+        foreach ($cats_by_level as $lvl => $group) {
+            foreach ($group as $key => $categoryData) {
+                if (isset($cats_id_remote_id[$categoryData['parent']])) {
+                    $group[$key]['parent'] = $cats_id_remote_id[$categoryData['parent']]['remote_id'];
+                } elseif ($categoryData['parent'] > 0) {
+                    $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteCategoryParentNotCreated', $this->site->name, $categoryData['name'], $categoryData['slug']);
+                    dol_syslog(__METHOD__ .
+                        ': Error:' . $langs->trans('ECommerceWoocommerceCreateRemoteCategoryParentNotCreated', $this->site->name, $categoryData['name'], $categoryData['slug']), LOG_ERR);
+                    return false;
+                }
+            }
+
+            $requestGroups = $this->getRequestGroups($group, $nb_max_by_request);
+            foreach ($requestGroups as $request) {
+                $error = 0;
+
+                try {
+                    $results = $this->client->post("products/categories/batch", ['create' => $request]);
+                } catch (HttpClientException $fault) {
+                    $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteBatchCategories', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                    dol_syslog(__METHOD__ .
+                        ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceCreateRemoteBatchCategories', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                        ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                    return false;
+                }
+
+                $results = isset($results->create) ? $results->create : array();
+                foreach ($results as $key => $item) {
+                    if ($item->id > 0) {
+                        $cats_id_remote_id[$cats_slug_id[$item->slug]] = array('remote_id' => $item->id, 'remote_parent_id' => $item->parent);
+                    } else {
+                        $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteBatchCategory', $request[$key]['slug'], $this->site->name,$item->error->code . ': ' . $item->error->message . ' (data : ' . json_encode($item->error->data) . ' )');
+                        dol_syslog(__METHOD__ . ': Error:' .
+                            $langs->trans('ECommerceWoocommerceCreateRemoteBatchCategory', $request[$key]['slug'], $this->site->name, $item->error->code . ': ' . $item->error->message . ' (data : ' . json_encode($item->error->data) . ' )'), LOG_ERR);
+                    }
+                }
+                $countCreated += count($results);
+                if ($error) {
+                    return $cats_id_remote_id;
+                }
+            }
+        }
+
+/*        if ($countCreated < count($batch)) {
+            foreach ($batch as $cat_id => $category) {
+                if (!isset($cats_id_remote_id[$cat_id])) {
+                    $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteCategory', $this->site->name, $cat_id, $category['label']);
+                    dol_syslog(__METHOD__ .
+                        ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceCreateRemoteCategory', $this->site->name, $cat_id, $category['label']), LOG_ERR);
+                }
+            }
+
+            return false;
+        }*/
+
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+        return $cats_id_remote_id;
+    }
+
+    /**
+     * Create batch products
+     *
+     * @param   array     $batch     Array of id of product
+     *
+     * @return  bool|array           Array of association id <=> remote id
+     */
+    public function createRemoteProducts($batch)
+    {
+        $ids = implode(', ', $batch);
+        dol_syslog(__METHOD__ . ": Create batch products from Dolibarr products IDs: '{$ids}' for site ID {$this->site->id}", LOG_DEBUG);
+        global $conf, $langs;
+
+        require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
+        $product_static = new Product($this->db);
+
+        $this->errors = array();
+
+        // Set datas to create
+        $prod_sku_id = array();
+        $products = array();
+        foreach ($batch as $product_id) {
+            if ($product_static->fetch($product_id) > 0) {
+                $sku = $product_static->ref;
+
+                // Set weight
+                $totalWeight = $product_static->weight;
+                if ($product_static->weight_units < 50)   // >50 means a standard unit (power of 10 of official unit), > 50 means an exotic unit (like inch)
+                {
+                    $trueWeightUnit = pow(10, $product_static->weight_units);
+                    $totalWeight = sprintf("%f", $product_static->weight * $trueWeightUnit);
+                }
+
+                // images
+                $images = [];
+                if (!empty($conf->global->ECOMMERCENG_ENABLE_SYNCHRO_IMAGES)) {
+                    // Product - Images properties
+                    $entity = isset($product_static->entity) ? $product_static->entity : $conf->entity;
+                    if (!empty($conf->global->PRODUCT_USE_OLD_PATH_FOR_PHOTO)) {    // For backward compatiblity, we scan also old dirs
+                        if ($product_static->type == Product::TYPE_PRODUCT) {
+                            $dir = $conf->product->multidir_output[$entity] . '/' . substr(substr("000" . $product_static->id, -2), 1, 1) . '/' . substr(substr("000" . $product_static->id, -2), 0, 1) . '/' . $product_static->id . "/photos/";
+                        } else {
+                            $dir = $conf->service->multidir_output[$entity] . '/' . substr(substr("000" . $product_static->id, -2), 1, 1) . '/' . substr(substr("000" . $product_static->id, -2), 0, 1) . '/' . $product_static->id . "/photos/";
+                        }
+                    } else {
+                        if ($product_static->type == Product::TYPE_PRODUCT) {
+                            $dir = $conf->product->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $product_static, 'product') . dol_sanitizeFileName($product_static->ref) . '/';
+                        } else {
+                            $dir = $conf->service->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $product_static, 'product') . dol_sanitizeFileName($product_static->ref) . '/';
+                        }
+                    }
+                    $photos = $product_static->liste_photos($dir);
+
+                    $pdir = '/' . get_exdir(0,0,0,0,$product_static,'product').$product_static->ref.'/';
+                    foreach ($photos as $index => $photo) {
+                        $filename = ecommerceng_wordpress_sanitize_file_name($photo['photo']);
+                        $images[] = array(
+                            'src' => DOL_URL_ROOT.'/viewimage.php?modulepart=product&entity='.$conf->entity.'&file='.urlencode($pdir.$photo),
+                            'name' => $filename,
+                            'position' => $index,
+                        );
+                    }
+                }
+
+                // Product - Meta data properties
+                $product_static->fetch_optionals();
+
+                // Price
+                if (!empty($conf->global->PRODUIT_MULTIPRICES)) {
+                    $price_level = !empty($this->site->price_level) ? $this->site->price_level : 1;
+                    $price = $product_static->multiprices[$price_level];
+                } else {
+                    $price = $product_static->price;
+                }
+
+                /*
+                // Product - Downloads properties
+                $downloads = [
+                    [
+                        'name' => '',       // string     File name.
+                        'file' => '',       // string     File URL.
+                    ],
+                ];
+
+                // Product - Dimensions properties
+                $dimensions = [
+                    'length' => '',     // string   Product length (cm).
+                    'width' => '',      // string   Product width (cm).
+                    'height' => '',     // string   Product height (cm).
+                ];
+
+                // Product - Categories properties
+                $categories = [
+                    [
+                        'id' => 0,      // integer  Category ID.
+                    ],
+                ];
+
+                // Product - Tags properties
+                $tags = [
+                    [
+                        'id' => 0,      // integer  Tag ID.
+                    ],
+                ];
+
+                // Product - Images properties
+                $images = [
+                    [
+                        'id' => 0,              // integer	Image ID. Not required
+                        'src' => '',            // string	Image URL.
+                        'name' => '',           // string	Image name.
+                        'alt' => '',            // string	Image alternative text.
+                        'position' => 0,        // integer	Image position. 0 means that the image is featured.
+                    ],
+                ];
+
+                // Product - Attributes properties
+                $attributes = [
+                    [
+                        'id' => 0,              // integer	Attribute ID. Not required
+                        'name' => '',           // string	Attribute name.
+                        'position' => 0,        // integer	Attribute position.
+                        'visible' => false,     // boolean	Define if the attribute is visible on the “Additional information” tab in the product’s page. Default is false.
+                        'variation' => false,   // boolean	Define if the attribute can be used as variation. Default is false.
+                        'options' => [],        // array	List of available term names of the attribute.
+                    ],
+                ];
+
+                // Product - Default attributes properties
+                $default_attributes = [
+                    'id' => 0,              // integer	Attribute ID. Not required
+                    'name' => '',           // string	Attribute name.
+                    'option' => '',         // string	Selected attribute term name.
+                ];
+
+                // Product - Meta data properties
+                $meta_data = [
+                    'key' => '', // string	Meta key.
+                    'value' => '', // string	Meta value.
+                ];
+                */
+
+                // Get categories
+                $eCommerceCategory = new eCommerceCategory($this->db);
+                $cat = new Categorie($this->db);
+                $categories_list = $cat->containing($product_static->id, 'product');
+                $categories = [];
+                foreach ($categories_list as $category) {
+                    if ($this->site->fk_cat_product != $category->id) {
+                        $ret = $eCommerceCategory->fetchByFKCategory($category->id, $this->site->id);
+                        if ($ret > 0) {
+                            $categories[] = ['id' => $eCommerceCategory->remote_id];
+                        }
+                    }
+                }
+
+                $status = $product_static->array_options["options_ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"];
+                $description = $product_static->array_options["options_ecommerceng_description_{$conf->entity}"];
+
+                // Product
+                $productData = [
+                    'name' => $product_static->label,                            // string		Product name.
+                    //'slug'                  => '',			                            // string		Product slug.
+                    //'type'                  => '',			                            // string		Product type. Options: simple, grouped, external and variable. Default is simple.
+                    'status' => (!empty($status) ? $status : 'publish'), //$product_static->status ? 'publish' : 'pending',	// string		Product status (post status). Options: draft, pending, private and publish. Default is publish.
+                    //'featured'              => false,		                            // boolean		Featured product. Default is false.
+                    //'catalog_visibility'    => '',                                      // string		Catalog visibility. Options: visible, catalog, search and hidden. Default is visible.
+                    'description' => (!empty($description) ? $description : $product_static->description),                    // string		Product description.
+                    'short_description' => $product_static->array_options["options_ecommerceng_short_description_{$conf->entity}"],                                      // string		Product short description.
+                    'sku' => $sku,                            // string		Unique identifier.
+                    'regular_price' => $price,                          // string		Product regular price.
+                    //'sale_price'            => '',                                      // string		Product sale price.
+                    //'date_on_sale_from'     => '',                                      // date-time	Start date of sale price, in the site’s timezone.
+                    //'date_on_sale_from_gmt' => '',                                      // date-time	Start date of sale price, as GMT.
+                    //'date_on_sale_to'       => '',                                      // date-time	End date of sale price, in the site’s timezone.
+                    //'date_on_sale_to_gmt'   => '',                                      // date-time	End date of sale price, in the site’s timezone.
+                    //'virtual'               => $product_static->type == Product::TYPE_SERVICE,  // boolean		If the product is virtual. Default is false.
+                    //'downloadable'          => false,                                   // boolean		If the product is downloadable. Default is false.
+                    //'downloads'             => $downloads,                              // array		List of downloadable files. See Product - Downloads properties
+                    //'download_limit'        => -1,                                      // integer		Number of times downloadable files can be downloaded after purchase. Default is -1.
+                    //'download_expiry'       => -1,                                      // integer		Number of days until access to downloadable files expires. Default is -1.
+                    //'external_url'          => '',                                      // string		Product external URL. Only for external products.
+                    //'button_text'           => '',                                      // string		Product external button text. Only for external products.
+                    'tax_status' => 'none',                                  // string		Tax status. Options: taxable, shipping and none. Default is taxable.
+                    //'tax_class'             => '',                                      // string		Tax class.
+                    //'manage_stock'          => false,                                   // boolean		Stock management at product level. Default is false.
+                    //'stock_quantity'        => $product_static->stock_reel,                     // integer		Stock quantity.
+                    //'in_stock'              => $product_static->stock_reel > 0,                 // boolean		Controls whether or not the product is listed as “in stock” or “out of stock” on the frontend. Default is true.
+                    //'backorders'            => '',                                      // string		If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
+                    //'sold_individually'     => false,                                   // boolean		Allow one item to be bought in a single order. Default is false.
+                    'weight' => (!empty($totalWeight) ? $totalWeight : ''),                            // string		Product weight (kg).
+                    //'dimensions'            => $dimensions,                             // object		Product dimensions. See Product - Dimensions properties
+                    //'shipping_class'        => '',                                      // string		Shipping class slug.
+                    //'reviews_allowed'       => true,                                    // boolean		Allow reviews. Default is true.
+                    //'upsell_ids'            => [],                                      // array		List of up-sell products IDs.
+                    //'cross_sell_ids'        => [],                                      // array		List of cross-sell products IDs.
+                    //'parent_id'             => 0,                                       // integer		Product parent ID.
+                    //'purchase_note'         => '',                                      // string		Optional note to send the customer after purchase.
+                    'categories' => $categories,                             // array		List of categories. See Product - Categories properties
+                    //'tags'                  => $tags,                                   // array		List of tags. See Product - Tags properties
+                    'images'                => $images,                                 // object		List of images. See Product - Images properties
+                    //'attributes'            => $attributes,			                    // array		List of attributes. See Product - Attributes properties
+                    //'default_attributes'    => $default_attributes,			            // array		Defaults variation attributes. See Product - Default attributes properties
+                    //'menu_order'            => 0,			                            // integer		Menu order, used to custom sort products.
+                    //'meta_data'             => $meta_data,                              // array		Meta data. See Product - Meta data properties
+                ];
+
+                // Set tax
+                if (!empty($product_static->array_options["options_ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"])) {
+                    $productData['tax_status'] = 'taxable';
+                    $productData['tax_class'] = $product_static->array_options["options_ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"];
+                }
+
+                // Synch extrafields <=> metadatas
+                if (!empty($product_static->array_options)) {
+                    foreach ($product_static->array_options as $key => $value) {
+                        $cr_key = substr($key, 8);
+                        if (preg_match('/^ecommerceng_/', $cr_key)) continue;
+                        $options_saved = $this->site->parameters['ef_crp']['product'][$cr_key];
+                        if ($options_saved['activated']) {
+                            $rm_key = $cr_key;
+                            if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
+                            $productData['meta_data'][] = array('key' => $rm_key, 'value' => $value);
+                        }
+                    }
+                }
+
+                $prod_sku_id[$sku] = $product_id;
+                $products[$product_id] = $productData;
+            }
+        }
+
+        // Create products on Woocommerce
+        $countCreated = 0;
+        $prods_id_remote_id = array();
+        $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_BATCH) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_BATCH, 100);
+
+        $requestGroups = $this->getRequestGroups($products, $nb_max_by_request);
+        foreach ($requestGroups as $request) {
+            $error = 0;
+
+            try {
+                $results = $this->client->post("products/batch", [ 'create' => $request ] );
+            } catch (HttpClientException $fault) {
+                $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteBatchProducts', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                dol_syslog(__METHOD__ .
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceCreateRemoteBatchProducts', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                $error++;
+            }
+
+            $results = isset($results->create) ? $results->create : array();
+            foreach ($results as $key => $item) {
+                if ($item->id > 0) {
+                    $prods_id_remote_id[$prod_sku_id[$item->sku]] = $item->id;
+                } else {
+                    $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteBatchProduct', $request[$key]['sku'], $this->site->name,$item->error->code . ': ' . $item->error->message . ' (data : ' . json_encode($item->error->data) . ' )');
+                    dol_syslog(__METHOD__ . ': Error:' .
+                        $langs->trans('ECommerceWoocommerceCreateRemoteBatchProduct', $request[$key]['sku'], $this->site->name, $item->error->code . ': ' . $item->error->message . ' (data : ' . json_encode($item->error->data) . ' )'), LOG_ERR);
+                }
+            }
+            $countCreated += count($results);
+            if ($error) {
+                return $prods_id_remote_id;
+            }
+        }
+
+/*        if ($countCreated < count($products)) {
+            foreach ($products as $product_id => $productData) {
+                if (!isset($prods_id_remote_id[$product_id])) {
+                    $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteProduct', $this->site->name, $product_id, $productData['slug']);
+                    dol_syslog(__METHOD__ .
+                        ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceCreateRemoteProduct', $this->site->name, $product_id, $productData['slug']), LOG_ERR);
+                }
+            }
+
+            return false;
+        }*/
+
+        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+        return $prods_id_remote_id;
     }
 
     /**

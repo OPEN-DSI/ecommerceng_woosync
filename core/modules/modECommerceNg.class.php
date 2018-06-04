@@ -61,7 +61,7 @@ class modECommerceNg extends DolibarrModules
 		$this->editor_url = 'http://www.open-dsi.fr';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '4.0.21';
+		$this->version = '4.0.22';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
@@ -117,7 +117,7 @@ class modECommerceNg extends DolibarrModules
 		    2=>array('ECOMMERCENG_MAXSIZE_MULTICALL', 'chaine', '400', 'Max size for multicall', 1, 'allentities', 0),
 			3=>array('ECOMMERCENG_MAXRECORD_PERSYNC', 'chaine', '2000', 'Max nb of record per synch', 1, 'allentities', 0),
 			4=>array('ECOMMERCENG_ENABLE_LOG_IN_NOTE', 'chaine', '0', 'Store into private note the last full response returned by web service', 1, 'allentities', 0),
-            5=>array('ECOMMERCENG_WOOCOMMERCE_ORDER_STATUS_LVL_CHECK', 'chaine', '1', '', 0, 'allentities', 0),
+            5=>array('ECOMMERCENG_WOOCOMMERCE_ORDER_STATUS_LVL_CHECK', 'chaine', '1', '', 0, 'current', 0),
 		);
 
 		// Array to add new pages in new tabs

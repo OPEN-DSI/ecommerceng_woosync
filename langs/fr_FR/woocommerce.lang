@@ -57,3 +57,13 @@ ECommercengWoocommerceOrderStatusCompleted=Terminée
 ECommercengWoocommerceOrderStatusCancelled=Annulée
 ECommercengWoocommerceOrderStatusRefunded=Remboursée
 ECommercengWoocommerceOrderStatusFailed=Échouée
+
+ECommercengWoocommerceExtrafieldsCorrespondence                 = Correspondance des attributs supplémentaires avec les méta-données de Woocommerce
+ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription = Renseigner le nom de la méta-donnée correspondant à cet attribut supplémentaire : %s
+
+ECommerceWoocommerceCreateRemoteCategoryParentNotCreated    = Erreur pour le site '%s' lors de la recherche de l'ID parent da la catégorie '%s' (slug: '%s')
+ECommerceWoocommerceCreateRemoteBatchCategories             = Erreur lors de creation des catégories par lot sur le site '%s': %s
+ECommerceWoocommerceCreateRemoteBatchProducts               = Erreur lors de creation des produits par lot sur le site '%s': %s
+
+ECommerceWoocommerceCreateRemoteBatchCategory               = Erreur lors de creation de la catégorie (slug : %s) sur le site '%s': %s
+ECommerceWoocommerceCreateRemoteBatchProduct                = Erreur lors de creation du produit (sku : %s) sur le site '%s': %s

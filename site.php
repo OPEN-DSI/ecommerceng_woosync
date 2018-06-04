@@ -59,6 +59,8 @@ $id = GETPOST('id','int');
 $to_date = GETPOST('to_date','aZ09');
 $to_nb = GETPOST('to_nb','int');
 $from_date = GETPOST('from_date','aZ09');
+$dtoe_to_date = GETPOST('dtoe_to_date','aZ09');
+$dtoe_to_nb = GETPOST('dtoe_to_nb','int');
 
 $error=0;
 
@@ -105,6 +107,10 @@ if ($id)
 		$toNb=0;
 		if ($to_nb == '') $to_nb=(empty($conf->global->ECOMMERCENG_MAXRECORD_PERSYNC)?'':$conf->global->ECOMMERCENG_MAXRECORD_PERSYNC);     // If '0', we keep 0
 		if (! empty($to_nb)) $toNb=$to_nb;
+
+        $toNbDToE=0;
+        if ($dtoe_to_nb == '') $dtoe_to_nb=(empty($conf->global->ECOMMERCENG_MAXRECORD_PERSYNC)?'':$conf->global->ECOMMERCENG_MAXRECORD_PERSYNC);     // If '0', we keep 0
+        if (! empty($dtoe_to_nb)) $toNbDToE=$dtoe_to_nb;
 
 		$synchro = new eCommerceSynchro($db, $site, $toDate, $toNb);          // $synchro->toDate will be set to dol_now if toDate no defined.
 
@@ -175,6 +181,17 @@ if ($id)
 				$result=$synchro->synchFacture($toNb);
 				if ($result < 0) $error++;
 			}
+
+            if (GETPOST('submit_dtoe_synchro_category') || GETPOST('submit_dtoe_synchro_category_ajax') || GETPOST('submit_dtoe_synchro_all'))
+            {
+                $result=$synchro->synchDtoECategory($toNbDToE);
+                if ($result < 0) $error++;
+            }
+            if (GETPOST('submit_dtoe_synchro_product') || GETPOST('submit_dtoe_synchro_product_ajax') || GETPOST('submit_dtoe_synchro_all'))
+            {
+                $result=$synchro->synchDtoEProduct($toNbDToE);
+                if ($result < 0) $error++;
+            }
 		}
 
 
@@ -262,6 +279,14 @@ if ($id)
 		    $site->last_update = $synchro->toDate;
 		    $site->update($user);
 		}
+
+        // Count into Dolibarr not linked to ecommerce
+        if (! $error) $nbCategoriesToUpdateDToE = $synchro->getNbCategoriesInDolibarrNotLinkedToE($site->fk_cat_product);
+        else $nbCategoriesToUpdateDToE='?';
+        if ($nbCategoriesToUpdateDToE < 0) $error++;
+        if (! $error) $nbProductToUpdateDToE = $synchro->getNbProductInDolibarrNotLinkedToE();
+        else $nbProductToUpdateDToE='?';
+        if ($nbProductToUpdateDToE < 0) $error++;
 
 		if ($user->rights->ecommerceng->write)
 			$synchRights = true;                // Set permission ok for .tpl

@@ -138,6 +138,11 @@ class InterfaceECommerceng
 
 			    if (! $error)
 			    {
+			        if (empty($site->parameters['realtime_dtoe']['thridparty'])) {
+                        dol_syslog("Triggers disabled from the config of the module");
+                        continue;
+                    }
+
     				$eCommerceSociete = new eCommerceSociete($this->db);
     				$eCommerceSociete->fetchByFkSociete($object->id, $site->id);
 
@@ -238,6 +243,11 @@ class InterfaceECommerceng
 
                 if (! $error)
                 {
+                    if (empty($site->parameters['realtime_dtoe']['contact'])) {
+                        dol_syslog("Triggers disabled from the config of the module");
+                        continue;
+                    }
+
                     $eCommerceSocpeople = new eCommerceSocpeople($this->db);
                     $eCommerceSocpeople->fetchByFkSocpeople($object->id, $site->id);
 
@@ -349,6 +359,11 @@ class InterfaceECommerceng
                 }
 
 				if (! $error) {
+                    if (empty($site->parameters['realtime_dtoe']['product'])) {
+                        dol_syslog("Triggers disabled from the config of the module");
+                        continue;
+                    }
+
                     $eCommerceProduct = new eCommerceProduct($this->db);
                     $eCommerceProduct->fetchByProductId($object->id, $site->id);
 
@@ -544,6 +559,11 @@ class InterfaceECommerceng
 
     	        if (! $error)
     	        {
+                    if (empty($site->parameters['realtime_dtoe']['order'])) {
+                        dol_syslog("Triggers disabled from the config of the module");
+                        continue;
+                    }
+
     	            $eCommerceFacture = new eCommerceFacture($this->db);
     	            $eCommerceFacture->fetchByFactureId($object->id, $site->id);
 

@@ -81,8 +81,15 @@ class OAuth
      * @param array  $parameters     Request parameters.
      * @param string $timestamp      Timestamp.
      */
-    public function __construct($url, $consumerKey, $consumerSecret, $apiVersion, $method, $parameters = [], $timestamp = '')
-    {
+    public function __construct(
+        $url,
+        $consumerKey,
+        $consumerSecret,
+        $apiVersion,
+        $method,
+        $parameters = [],
+        $timestamp = ''
+    ) {
         $this->url            = $url;
         $this->consumerKey    = $consumerKey;
         $this->consumerSecret = $consumerSecret;

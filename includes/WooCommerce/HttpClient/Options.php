@@ -128,7 +128,7 @@ class Options
 
     /**
      * Custom user agent.
-     * 
+     *
      * @return string
      */
     public function userAgent()

@@ -35,6 +35,7 @@ if (! $res && file_exists("../../main.inc.php")) $res=@include("../../main.inc.p
 if (! $res && file_exists("../../../main.inc.php")) $res=@include("../../../main.inc.php");
 if (! $res) die("Include of main fails");
 
+require_once(DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php');
 require_once DOL_DOCUMENT_ROOT . '/includes/OAuth/bootstrap.php';
@@ -66,6 +67,7 @@ if (!empty($error)) {
 
 //DATABASE ACCESS
 $siteDb = new eCommerceSite($db);
+$form = new Form($db);
 
 $sites = $siteDb->listSites();
 $siteTypes = $siteDb->getSiteTypes();
@@ -167,10 +169,69 @@ if ($_POST['site_form_detail_action'] == 'save')
                 Commande::STATUS_CLOSED => GETPOST('order_status_dtoe_' . Commande::STATUS_CLOSED, 'alpha'),
             );
 
+            $ecommerceExtrafieldsCorrespondence = array();
+            // fetch optionals attributes and labels
+            if ($conf->product->enabled) {
+                $product_table_element = 'product';
+                $ecommerceExtrafieldsCorrespondence[$product_table_element] = array();
+
+                $productExtrafields = $efields->fetch_name_optionals_label($product_table_element);
+                foreach ($productExtrafields as $key => $label) {
+                    if (preg_match('/^ecommerceng_/', $key)) continue;
+                    $options_saved = $siteDb->parameters['ef_crp'][$product_table_element][$key];
+                    $activated = GETPOST('act_ef_crp_' . $product_table_element . '_' . $key, 'alpha');
+                    $correspondence = GETPOST('ef_crp_' . $product_table_element . '_' . $key, 'alpha');
+                    $ecommerceExtrafieldsCorrespondence[$product_table_element][$key] = array(
+                        'correspondences' => !empty($activated) ? $correspondence : (isset($options_saved['correspondences']) ? $options_saved['correspondences'] : $key),
+                        'activated' => !empty($activated) ? 1 : 0,
+                    );
+                }
+            }
+            if ($conf->commande->enabled) {
+                $order_table_element = 'commande';
+                $ecommerceExtrafieldsCorrespondence[$order_table_element] = array();
+
+                $orderExtrafields = $efields->fetch_name_optionals_label($order_table_element);
+                foreach ($orderExtrafields as $key => $label) {
+                    if (preg_match('/^ecommerceng_/', $key)) continue;
+                    $options_saved = $siteDb->parameters['ef_crp'][$order_table_element][$key];
+                    $activated = GETPOST('act_ef_crp_' . $order_table_element . '_' . $key, 'alpha');
+                    $correspondence = GETPOST('ef_crp_' . $order_table_element . '_' . $key, 'alpha');
+                    $ecommerceExtrafieldsCorrespondence[$order_table_element][$key] = array(
+                        'correspondences' => !empty($activated) ? $correspondence : (isset($options_saved['correspondences']) ? $options_saved['correspondences'] : $key),
+                        'activated' => !empty($activated) ? 1 : 0,
+                    );
+                }
+
+                $order_line_table_element = 'commandedet';
+                $ecommerceExtrafieldsCorrespondence[$order_line_table_element] = array();
+
+                $orderLinesExtrafields = $efields->fetch_name_optionals_label($order_line_table_element);
+                foreach ($orderLinesExtrafields as $key => $label) {
+                    if (preg_match('/^ecommerceng_/', $key)) continue;
+                    $options_saved = $siteDb->parameters['ef_crp'][$order_line_table_element][$key];
+                    $activated = GETPOST('act_ef_crp_' . $order_line_table_element . '_' . $key, 'alpha');
+                    $correspondence = GETPOST('ef_crp_' . $order_line_table_element . '_' . $key, 'alpha');
+                    $ecommerceExtrafieldsCorrespondence[$order_line_table_element][$key] = array(
+                        'correspondences' => !empty($activated) ? $correspondence : (isset($options_saved['correspondences']) ? $options_saved['correspondences'] : $key),
+                        'activated' => !empty($activated) ? 1 : 0,
+                    );
+                }
+            }
+
+            // Todo separer la premiere initialisation
             if (isset($siteDb->parameters)) {
                 $siteDb->parameters = array(
                     'order_status_etod' => $ecommerceOrderStatusForECommerceToDolibarr,
                     'order_status_dtoe' => $ecommerceOrderStatusForDolibarrToECommerce,
+                    'ef_crp' => $ecommerceExtrafieldsCorrespondence,
+                    'payment_cond' => $_POST['ecommerce_payment_cond'],
+                    'realtime_dtoe' => array(
+                        'thridparty' => !empty($_POST['ecommerce_realtime_dtoe_thridparty']) ? 1 : 0,
+                        'contact' => !empty($_POST['ecommerce_realtime_dtoe_contact']) ? 1 : 0,
+                        'product' => !empty($_POST['ecommerce_realtime_dtoe_product']) ? 1 : 0,
+                        'order' => !empty($_POST['ecommerce_realtime_dtoe_order']) ? 1 : 0,
+                    ),
                 );
             } else {
                 $siteDb->parameters = array(
@@ -189,6 +250,12 @@ if ($_POST['site_form_detail_action'] == 'save')
                         Commande::STATUS_VALIDATED => 'processing',
                         Commande::STATUS_ACCEPTED => 'processing',
                         Commande::STATUS_CLOSED => 'completed',
+                    ),
+                    'realtime_dtoe' => array(
+                        'thridparty' => 1,
+                        'contact' => 1,
+                        'product' => 1,
+                        'order' => 1,
                     ),
                 );
             }
@@ -423,6 +490,8 @@ $ecommerceFkWarehouse = ($_POST['ecommerce_fk_warehouse'] ? $_POST['ecommerce_fk
 $ecommerceStockSyncDirection = ($_POST['ecommerce_stock_sync_direction'] ? $_POST['ecommerce_stock_sync_direction'] : $siteDb->stock_sync_direction);
 $ecommerceMagentoUseSpecialPrice = ($_POST['ecommerce_magento_use_special_price'] ? $_POST['ecommerce_magento_use_special_price'] : intval($siteDb->magento_use_special_price));
 $ecommercePriceType = ($_POST['ecommerce_price_type'] ? $_POST['ecommerce_price_type'] : $siteDb->ecommerce_price_type);
+$ecommercePaymentCondition = ($_POST['ecommerce_payment_cond'] ? $_POST['ecommerce_payment_cond'] : (isset($siteDb->parameters['payment_cond']) ? $siteDb->parameters['payment_cond'] : ''));
+$ecommerceRealtimeDtoe = (isset($siteDb->parameters['realtime_dtoe']) ? $siteDb->parameters['realtime_dtoe'] : array());
 /*$ecommerceTimeout = 300;
 if (isset($_POST['ecommerce_timeout']))
     $ecommerceTimeout = $_POST['ecommerce_timeout'];
@@ -526,6 +595,61 @@ if (!empty($ecommerceId)) {
             'label' => $commande->LibStatut(Commande::STATUS_CLOSED, 0, 0, 1),
             'selected' => $selected
         );
+    }
+
+    // Extrafields correspondence
+    if ($ecommerceType == 2) {
+        require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
+        $extrafields = new ExtraFields($db);
+
+        // fetch optionals attributes and labels
+        if ($conf->product->enabled) {
+            $product_table_element = 'product';
+            $productExtrafields = array();
+            $ecommerceExtrafieldsCorrespondence[$product_table_element] = array();
+
+            $tempExtrafields = $extrafields->fetch_name_optionals_label($product_table_element);
+            foreach ($tempExtrafields as $key => $label) {
+                if (preg_match('/^ecommerceng_/', $key)) continue;
+                $productExtrafields[$key] = $label;
+                $options_saved = $siteDb->parameters['ef_crp'][$product_table_element][$key];
+                $ecommerceExtrafieldsCorrespondence[$product_table_element][$key] = array(
+                    'correspondences' => (isset($options_saved['correspondences']) ? $options_saved['correspondences'] : $key),
+                    'activated' => (isset($options_saved['activated']) ? $options_saved['activated'] : $key),
+                );
+            }
+        }
+        if ($conf->commande->enabled) {
+            $order_table_element = 'commande';
+            $orderExtrafields = array();
+            $ecommerceExtrafieldsCorrespondence[$order_table_element] = array();
+
+            $tempExtrafields = $extrafields->fetch_name_optionals_label($order_table_element);
+            foreach ($tempExtrafields as $key => $label) {
+                if (preg_match('/^ecommerceng_/', $key)) continue;
+                $orderExtrafields[$key] = $label;
+                $options_saved = $siteDb->parameters['ef_crp'][$order_table_element][$key];
+                $ecommerceExtrafieldsCorrespondence[$order_table_element][$key] = array(
+                    'correspondences' => (isset($options_saved['correspondences']) ? $options_saved['correspondences'] : $key),
+                    'activated' => (isset($options_saved['activated']) ? $options_saved['activated'] : $key),
+                );
+            }
+
+            $order_line_table_element = 'commandedet';
+            $orderLinesExtrafields = array();
+            $ecommerceExtrafieldsCorrespondence[$order_line_table_element] = array();
+
+            $tempExtrafields = $extrafields->fetch_name_optionals_label($order_line_table_element);
+            foreach ($tempExtrafields as $key => $label) {
+                if (preg_match('/^ecommerceng_/', $key)) continue;
+                $orderLinesExtrafields[$key] = $label;
+                $options_saved = $siteDb->parameters['ef_crp'][$order_line_table_element][$key];
+                $ecommerceExtrafieldsCorrespondence[$order_line_table_element][$key] = array(
+                    'correspondences' => (isset($options_saved['correspondences']) ? $options_saved['correspondences'] : $key),
+                    'activated' => (isset($options_saved['activated']) ? $options_saved['activated'] : $key),
+                );
+            }
+        }
     }
 }
 

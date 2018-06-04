@@ -1,5 +1,14 @@
 # ChangeLog
 
+## 4.0.22.0
+
+- Ajout de la synchronisation des attibuts supplémentaires avec les méta-données pour les produits et commandes (ainsi que les lignes).
+- Ajout d'une globale ECOMMERCENG_WOOCOMMERCE_GET_EMAIL_ON_COMPANY pour récuperer l'email dans le tier lors de la synchro d'un client de type 'companie'
+- Ajout de l'option de désactiver la synchro en temps reel de Dolibarr vers ECommerce
+- Ajout du choix de la condition de paiement par défaut lors de la synchro des commandes de ECommerce vers Dolibarr
+- Ajout de la synchro manuelle des catégories et produits de Dolibarr vers Ecommerce
+- Mise à jour de l'API client Woocommerce 2.0.0 en 2.0.1
+
 ## 4.0.21.0
 
 - Mise à jour de l'attribut complémentaire "statut de la commande sur ECommerce" sur la fiche de la commande lors de la mise à jour de la commande de Dolibarr vers ECommerce.

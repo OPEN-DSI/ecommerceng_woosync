@@ -417,6 +417,34 @@ class eCommerceRemoteAccess
     }
 
     /**
+     * Create batch remote categories
+     *
+     * @param  array    $batch              Array of object category
+     * @return bool
+     */
+    public function createRemoteCategories($batch)
+    {
+        $result=$this->class->createRemoteCategories($batch);
+        $this->error=$this->class->error;
+        $this->errors=$this->class->errors;
+        return $result;
+    }
+
+    /**
+     * Create batch remote products
+     *
+     * @param  array    $batch              Array of id product
+     * @return bool
+     */
+    public function createRemoteProducts($batch)
+    {
+        $result=$this->class->createRemoteProducts($batch);
+        $this->error=$this->class->error;
+        $this->errors=$this->class->errors;
+        return $result;
+    }
+
+    /**
      * Send a file for remote commande
      *
      * @param   int         $order_remote_id    Id of order on remote ecommerce

@@ -55,13 +55,37 @@ class eCommerceSynchro
     private $db;
     public $eCommerceRemoteAccess;
 
+    /**
+     * @var eCommerceSite
+     */
     private $eCommerceSite;
+    /**
+     * @var eCommerceSociete
+     */
     private $eCommerceSociete;
+    /**
+     * @var eCommerceSocpeople
+     */
     private $eCommerceSocpeople;
+    /**
+     * @var eCommerceProduct
+     */
     private $eCommerceProduct;
+    /**
+     * @var eCommerceCategory
+     */
     private $eCommerceCategory;
+    /**
+     * @var eCommerceCategory
+     */
     private $eCommerceMotherCategory;
+    /**
+     * @var eCommerceCommande
+     */
     private $eCommerceCommande;
+    /**
+     * @var eCommerceFacture
+     */
     private $eCommerceFacture;
     //class members
     public $toDate;
@@ -80,6 +104,7 @@ class eCommerceSynchro
     private $commandeToUpdate;
     private $factureToUpdate;
 
+    private $cache_categories;
 
 
     /**
@@ -319,6 +344,60 @@ class eCommerceSynchro
         }
     }
 
+    /**
+     * Rebuilding the category tree as an array
+   	 * Return an array of table('id','id_mere',...) trie selon arbre et avec:
+   	 *                id = id de la categorie
+   	 *                id_mere = id de la categorie mere
+   	 *                id_children = tableau des id enfant
+   	 *                label = nom de la categorie
+   	 *                fulllabel = nom avec chemin complet de la categorie
+   	 *                fullpath = chemin complet compose des id
+   	 *
+   	 * @param   string $type        Type of categories ('customer', 'supplier', 'contact', 'product', 'member').
+   	 *                              Old mode (0, 1, 2, ...) is deprecated.
+   	 * @param   int    $parent_id   Id of parent category (0 for root).
+   	 *
+     * @return  array               Array of categories. this->cats and this->motherof are set.
+   	 */
+    public function fetch_categories($type, $parent_id=0) {
+        if (!isset($this->cache_categories[$type])) {
+            require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+            $cat = new Categorie($this->db);
+            $all_cat = $cat->get_full_arbo($type);
+
+            $parent_id = $parent_id > 0 ? $parent_id : '';
+            $cat_arbo = array();
+            foreach ($all_cat as $category) {
+                if (preg_match('/_'.$parent_id.'(_|$)/', $category['fullpath'])) {
+                    $cat_arbo[$category['id']] = $category;
+                }
+            }
+
+            $this->cache_categories[$type] = $cat_arbo;
+        }
+    }
+
+    public function getNbCategoriesInDolibarrNotLinkedToE($excludeid = 0)
+    {
+        $this->fetch_categories('product', $this->eCommerceSite->fk_cat_product);
+        $cats_id = array_keys($this->cache_categories['product']);
+        $nb_cat = count($this->cache_categories['product']) - 1;
+        $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."ecommerce_category" .
+             " WHERE type = 0 AND fk_site=".$this->eCommerceSite->id." AND fk_category IN (".implode(',', $cats_id).")".
+             " AND fk_category <> ".$excludeid;
+        $resql=$this->db->query($sql);
+        if ($resql)
+        {
+            $obj=$this->db->fetch_object($resql);
+            return $nb_cat - $obj->nb;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+
     public function getNbProductInDolibarr()
     {
         $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."product";
@@ -337,6 +416,26 @@ class eCommerceSynchro
     public function getNbProductInDolibarrLinkedToE()
     {
         $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."ecommerce_product WHERE fk_site=".$this->eCommerceSite->id;
+        $resql=$this->db->query($sql);
+        if ($resql)
+        {
+            $obj=$this->db->fetch_object($resql);
+            return $obj->nb;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+
+    public function getNbProductInDolibarrNotLinkedToE()
+    {
+        $this->fetch_categories('product', $this->eCommerceSite->fk_cat_product);
+        $cats_id = array_keys($this->cache_categories['product']);
+        $sql="SELECT COUNT(p.rowid) as nb FROM ".MAIN_DB_PREFIX."product as p" .
+            " INNER JOIN ".MAIN_DB_PREFIX."categorie_product as cp ON p.rowid = cp.fk_product AND cp.fk_categorie IN (".implode(',', $cats_id).")" .
+            " LEFT JOIN ".MAIN_DB_PREFIX."ecommerce_product as ep ON p.rowid = ep.fk_product AND ep.fk_site=".$this->eCommerceSite->id .
+            " WHERE ep.rowid IS NULL";
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -838,7 +937,21 @@ class eCommerceSynchro
                         else
                         {
 			                if ($dBCategorie->already_exists()) {
-                                $cats = $dBCategorie->rechercher('', $dBCategorie->label, $dBCategorie->type, true, true);
+                                // Generation requete recherche
+                                $cats = array();
+                                $sql = "SELECT rowid FROM " . MAIN_DB_PREFIX . "categorie";
+                                $sql .= " WHERE type = " . $dBCategorie->type;
+                                $sql .= " AND entity IN (" . getEntity('category', 1) . ")";
+                                $sql .= " AND label = '" . $this->db->escape($dBCategorie->label) . "'";
+                                $res = $this->db->query($sql);
+                                if ($res) {
+                                    while ($rec = $this->db->fetch_array($res)) {
+                                        $cat = new Categorie($this->db);
+                                        $cat->fetch($rec['rowid']);
+                                        $cats[] = $cat;
+                                    }
+                                }
+                                //$cats = $dBCategorie->rechercher('', $dBCategorie->label, $dBCategorie->type, true, true);
                                 foreach ($cats as $cat) {
                                     if ($cat->fk_parent == $dBCategorie->fk_parent) {
                                         $dBCategorie->id = $cat->id;
@@ -1541,9 +1654,14 @@ class eCommerceSynchro
                         }
                     } else {
                         // First, we check object does not alreay exists. If not, we create it, if it exists, update it.
-                        $refExists = $dBProduct->fetch('', dol_string_nospecial(trim($productArray['ref'])));
-                        if ($refExists > 0) {
-                            $synchExists = $this->eCommerceProduct->fetchByProductId($dBProduct->id, $this->eCommerceSite->id);
+                        $ref = dol_string_nospecial(trim($productArray['ref']));
+                        if (!empty($ref)) {
+                            $refExists = $dBProduct->fetch('', $ref);
+                            if ($refExists > 0) {
+                                $synchExists = $this->eCommerceProduct->fetchByProductId($dBProduct->id, $this->eCommerceSite->id);
+                            }
+                        } else {
+                            $refExists = 0;
                         }
                     }
 
@@ -2088,6 +2206,7 @@ class eCommerceSynchro
                                 $dBCommande->date_commande = strtotime($commandeArray['date_commande']);
                                 $dBCommande->date_livraison = strtotime($commandeArray['date_livraison']);
                                 $dBCommande->socid = $this->eCommerceSociete->fk_societe;
+                                $dBCommande->cond_reglement_id = isset($this->eCommerceSite->parameters['payment_cond']) ? $this->eCommerceSite->parameters['payment_cond'] : '';
                                 $input_method_id = dol_getIdFromCode($this->db, 'OrderByWWW', 'c_input_method', 'code', 'rowid');  // Order mode. Not visible with some Dolibarr versions
                                 $dBCommande->source=$input_method_id;
                                 $dBCommande->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
@@ -2160,6 +2279,13 @@ class eCommerceSynchro
                                                 $description = $this->langs->trans('ECommerceNoDescForProductLine');
                                             }
 
+                                            $array_options = array();
+                                            if (is_array($item['extrafields'])) {
+                                                foreach ($item['extrafields'] as $extrafield => $extrafield_value) {
+                                                    $array_options['options_'.$extrafield] = $extrafield_value;
+                                                }
+                                            }
+
                                             $result = $dBCommande->addline($description, $item['price'], $item['qty'], $item['tva_tx'], 0, 0,
                                                 $fk_product, //fk_product
                                                 0, //remise_percent
@@ -2174,7 +2300,9 @@ class eCommerceSynchro
                                                 0, //special_code
                                                 0, // fk_parent_line
                                                 0, // fk_prod four_price
-                                                $buyprice
+                                                $buyprice,
+                                                '',
+                                                $array_options
                                                 );
                                             dol_syslog("result=".$result);
                                             if ($result <= 0)
@@ -2950,6 +3078,171 @@ class eCommerceSynchro
         return false;
     }
 
+
+    /**
+     * 	Sync categories from Dolibarr to ECommerce
+     *
+     * @param  int     $toNb       Max nb to synch
+     * @return int                 <0 if KO, >= 0 if ok
+     */
+    public function synchDtoECategory($toNb=0)
+    {
+        global $langs, $user;
+
+        $error = 0;
+        $nbgoodsunchronize = 0;
+
+        dol_syslog("***** eCommerceSynchro synchDtoECategory");
+
+        $this->initECommerceCategory(); // Initialise 2 properties eCommerceCategory and eCommerceMotherCategory
+
+        $this->fetch_categories('product', $this->eCommerceSite->fk_cat_product);
+        $categories = $this->cache_categories['product'];
+
+        $already_synch = array();
+        $sql="SELECT fk_category FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE type = 0 AND fk_site=".$this->eCommerceSite->id;
+        $resql=$this->db->query($sql);
+        if ($resql) {
+            while ($obj = $this->db->fetch_object($resql)) {
+                $already_synch[] = $obj->fk_category;
+            }
+        } else {
+            $error_msg = $langs->trans('ECommerceErrorGetCategoryIdsAlreadyLinked', $this->eCommerceSite->name, $this->db->lasterror());
+            $this->errors[] = $error_msg;
+            dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
+            return -1;
+        }
+
+        $index = 0;
+        $group = array();
+        foreach ($categories as $cat_id => $category) {
+            if (in_array($cat_id, $already_synch)) continue;
+
+            $index++;
+            $group[$cat_id] = $category;
+            if ($index == $toNb) {
+                break;
+            }
+        }
+
+        $cats_id_remote_id = $this->eCommerceRemoteAccess->createRemoteCategories($group);
+        if ($cats_id_remote_id === false) {
+            $error++;
+        } elseif (count($cats_id_remote_id)) {
+            foreach ($cats_id_remote_id as $cat_id => $remote_ids) {
+                if ($this->eCommerceCategory->fetchByFKCategory($cat_id, $this->eCommerceSite->id) > 0) {
+                    $this->eCommerceCategory->delete($user);
+                }
+
+                // Create remote link
+                $category = $categories[$cat_id];
+                $this->eCommerceCategory->label = $category['label'];
+                $this->eCommerceCategory->type = 0; // product
+                $this->eCommerceCategory->description = $category['description'];
+                $this->eCommerceCategory->fk_category = $cat_id;
+                $this->eCommerceCategory->fk_site = $this->eCommerceSite->id;
+                $this->eCommerceCategory->remote_id = $remote_ids['remote_id'];
+                $this->eCommerceCategory->remote_parent_id = $remote_ids['remote_parent_id'];
+                $this->eCommerceCategory->last_update = '';
+                $res = $this->eCommerceCategory->create($user);
+                if ($res < 0) {
+                    $error++;
+                    $error_msg = $langs->trans('ECommerceCreateRemoteCategoryLink', $cat_id, $this->eCommerceSite->name, $this->eCommerceCategory->error);
+                    $this->errors[] = $error_msg;
+                    dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
+                } else {
+                    $nbgoodsunchronize++;
+                }
+            }
+        }
+
+        if ($nbgoodsunchronize > 0) {
+            $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchCategorySuccess');
+        }
+
+        if (!$error) {
+            return $nbgoodsunchronize;
+        } else {
+            return -1;
+        }
+    }
+
+    /**
+     *  Synchronize product from Dolibarr to ECommerce
+     *
+     * @param   int     $toNb       Max nb to synch
+     * @return int                  <0 if KO, >= 0 if ok
+     */
+    public function synchDtoEProduct($toNb=0)
+    {
+        global $langs, $user;
+
+        $error = 0;
+        $nbgoodsunchronize = 0;
+
+        dol_syslog("***** eCommerceSynchro synchDtoEProduct");
+
+        $this->fetch_categories('product', $this->eCommerceSite->fk_cat_product);
+        $cats_id = array_keys($this->cache_categories['product']);
+
+        $sql = "SELECT p.rowid FROM " . MAIN_DB_PREFIX . "product as p" .
+            " INNER JOIN " . MAIN_DB_PREFIX . "categorie_product as cp ON p.rowid = cp.fk_product AND cp.fk_categorie IN (" . implode(',', $cats_id) . ")" .
+            " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_product as ep ON p.rowid = ep.fk_product AND ep.fk_site=" . $this->eCommerceSite->id .
+            " WHERE ep.rowid IS NULL";
+        $resql = $this->db->query($sql);
+        if ($resql) {
+            $prods_id_remote_id = array();
+            $index = 0;
+            $group = array();
+            while ($obj = $this->db->fetch_object($resql)) {
+                $index++;
+                $group[] = $obj->rowid;
+                if ($index == $toNb) {
+                    break;
+                }
+            }
+
+            $prods_id_remote_id = $this->eCommerceRemoteAccess->createRemoteProducts($group);
+            if ($prods_id_remote_id === false || !empty($this->errors)) {
+                $error++;
+            } elseif (count($prods_id_remote_id)) {
+                $this->initECommerceProduct();
+                foreach ($prods_id_remote_id as $product_id => $remote_id) {
+                    if ($this->eCommerceProduct->fetchByProductId($product_id, $this->eCommerceSite->id) > 0) {
+                        $this->eCommerceProduct->delete($user);
+                    }
+
+                    // Create remote link
+                    $this->eCommerceProduct->fk_product = $product_id;
+                    $this->eCommerceProduct->fk_site = $this->eCommerceSite->id;
+                    $this->eCommerceProduct->remote_id = $remote_id;
+                    $this->eCommerceProduct->last_update = '';
+                    $res = $this->eCommerceProduct->create($user);
+                    if ($res < 0) {
+                        $error++;
+                        $error_msg = $langs->trans('ECommerceCreateRemoteProductLink', $product_id, $this->eCommerceSite->name, $this->eCommerceProduct->error);
+                        $this->errors[] = $error_msg;
+                        dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
+                    } else {
+                        $nbgoodsunchronize++;
+                    }
+                }
+            }
+
+            if ($nbgoodsunchronize > 0) {
+                $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchProductSuccess');
+            }
+
+            if (!$error) {
+                return $nbgoodsunchronize;
+            } else {
+                return -1;
+            }
+        } else {
+            $this->error = $this->db->lasterror();
+            return -1;
+        }
+    }
 
 
     /**

@@ -291,6 +291,79 @@ if (is_object($site))
 
 	print $langs->trans("SyncIsAutomaticInRealTime", $site->name)."\n";
 
+    print '<form name="form_count" id="form_count" action="'.$_SERVER['PHP_SELF'].'" method="post">';
+    print '<input type="hidden" name="id" value="'.$site->id.'">';
+
+    print '<table class="centpercent nobordernopadding">';
+
+    print '<tr><td>';
+    print $langs->trans("RestrictNbInSync").' ';
+    print '<input type="text" name="dtoe_to_nb" placeholder="0" value="'.dol_escape_htmltag($dtoe_to_nb).'">';
+    print '</td><td>';
+    print '<input type="submit" class="button" name="refresh" style="margin-right: 15px" href="'.$_SERVER["PHP_SELF"].'?id='.$site->id.'&action=refresh" value="'.$langs->trans('RefreshCount').'">';
+    $disabled=true;
+    if ($synchRights != true || (($nbCategoriesToUpdateDToE>0 || $nbProductToUpdateDToE>0) && !($nbCategoriesToUpdate>0 || $nbProductToUpdate>0))) $disabled=false;
+    print '<input type="submit" class="button'.($disabled?' buttonRefused':'').'" name="submit_dtoe_synchro_all" href="'.($disabled?'#':$_SERVER["PHP_SELF"].'?id='.$site->id.'&action=submit_dtoe_synchro_all').'" value="'.$langs->trans('SyncAll').'">';
+    print '</td></tr>';
+
+    print '</table>';
+
+
+    print '<br>'."\n";
+    ?>
+	<div class="div-table-responsive">
+	<table class="noborder" width="100%">
+		<tr class="liste_titre">
+			<td><?php print $langs->trans('ECommerceObjectToUpdate') ?></td>
+			<td><?php print $langs->trans('NbInDolibarr') ?></td>
+			<td><?php print $langs->trans('NbInDolibarrLinkedToE') ?></td>
+			<td><?php print $langs->trans('ECommerceCountToUpdateDtoE'); ?></td>
+			<?php if ($synchRights==true) { ?>
+			<td>&nbsp;</td>
+			<?php } ?>
+		</tr>
+
+    <?php
+    $var=!$var;
+    ?>
+		<tr <?php print $bc[$var] ?>>
+			<td><?php print $langs->trans('ECommerceCategoriesProducts') ?></td>
+			<td><?php print $nbCategoriesInDolibarr ?> *</td>
+			<td><?php print $nbCategoriesInDolibarrLinkedToE ?> *</td>
+			<td><?php print $nbCategoriesToUpdateDToE ?></td>
+			<?php if ($synchRights==true) { ?>
+			<td>
+				<?php if ($nbCategoriesToUpdateDToE>0) { ?>
+					<input type="submit" name="submit_dtoe_synchro_category" id="submit_dtoe_synchro_category" class="button"<?php print ($nbCategoriesToUpdate>0 ? ' disabled="disabled"' : '') ?> value="<?php print ($nbCategoriesToUpdate>0 ? $langs->trans('ECommerceSynchronizeCategoryProduct').' ('.$langs->trans("SyncCategFirst").")" : $langs->trans('ECommerceSynchronizeCategoryProduct')) ?>">
+				<?php } ?>
+			</td>
+			<?php } ?>
+		</tr>
+
+    <?php
+    $var=!$var;
+    ?>
+		<tr <?php print $bc[$var] ?>>
+			<td><?php print $langs->trans('ProductsOrServices') ?></td>
+			<td><?php print $nbProductInDolibarr ?> **</td>
+			<td><?php print $nbProductInDolibarrLinkedToE ?> **</td>
+			<td><?php print $nbProductToUpdateDToE ?></td>
+			<?php if ($synchRights==true) { ?>
+			<td>
+				<?php if ($nbProductToUpdateDToE>0) { ?>
+					<input type="submit" name="submit_dtoe_synchro_product" id="submit_dtoe_synchro_product" class="button"<?php print ($nbCategoriesToUpdateDToE>0 || $nbCategoriesToUpdate>0 || $nbProductToUpdate>0 ? ' disabled="disabled"' : '') ?> value="<?php print ($nbCategoriesToUpdate>0 || $nbProductToUpdate>0 || $nbCategoriesToUpdateDToE>0? $langs->trans('ECommerceSynchronizeProduct').' ('.($nbProductToUpdate>0?$langs->trans("SyncProductFirst"):$langs->trans("SyncCategFirst")).")" : $langs->trans('ECommerceSynchronizeProduct')) ?>">
+				<?php } ?>
+			</td>
+			<?php } ?>
+		</tr>
+	</table>
+	</div>
+	<?php
+	print '<span class="opacitymedium">';
+	print '* '.$langs->trans("OnlyProductCategIn", $tagnameprod).'<br>';
+	print '** '.$langs->trans("OnlyProductsIn", $tagnameprod, $tagnameprod).'<br>';
+	print '</span>';
+
 	dol_fiche_end();
 
 	print '</form>';

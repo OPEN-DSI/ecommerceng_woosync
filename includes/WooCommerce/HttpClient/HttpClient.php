@@ -154,10 +154,24 @@ class HttpClient
     {
         // Setup authentication.
         if ($this->isSsl()) {
-            $basicAuth  = new BasicAuth($this->ch, $this->consumerKey, $this->consumerSecret, $this->options->isQueryStringAuth(), $parameters);
+            $basicAuth  = new BasicAuth(
+                $this->ch,
+                $this->consumerKey,
+                $this->consumerSecret,
+                $this->options->isQueryStringAuth(),
+                $parameters
+            );
             $parameters = $basicAuth->getParameters();
         } else {
-            $oAuth      = new OAuth($url, $this->consumerKey, $this->consumerSecret, $this->options->getVersion(), $method, $parameters, $this->options->oauthTimestamp());
+            $oAuth      = new OAuth(
+                $url,
+                $this->consumerKey,
+                $this->consumerSecret,
+                $this->options->getVersion(),
+                $method,
+                $parameters,
+                $this->options->oauthTimestamp()
+            );
             $parameters = $oAuth->getParameters();
         }
 
@@ -173,7 +187,7 @@ class HttpClient
     {
         if ('POST' == $method) {
             \curl_setopt($this->ch, CURLOPT_POST, true);
-        } else if (\in_array($method, ['PUT', 'DELETE', 'OPTIONS'])) {
+        } elseif (\in_array($method, ['PUT', 'DELETE', 'OPTIONS'])) {
             \curl_setopt($this->ch, CURLOPT_CUSTOMREQUEST, $method);
         }
     }
@@ -227,7 +241,13 @@ class HttpClient
             \curl_setopt($this->ch, CURLOPT_POSTFIELDS, $body);
         }
 
-        $this->request = new Request($this->buildUrlQuery($url, $parameters), $method, $parameters, $this->getRequestHeaders($hasData), $body);
+        $this->request = new Request(
+            $this->buildUrlQuery($url, $parameters),
+            $method,
+            $parameters,
+            $this->getRequestHeaders($hasData),
+            $body
+        );
 
         return $this->getRequest();
     }
@@ -288,8 +308,8 @@ class HttpClient
      */
     protected function setDefaultCurlSettings()
     {
-        $verifySsl = $this->options->verifySsl();
-        $timeout   = $this->options->getTimeout();
+        $verifySsl       = $this->options->verifySsl();
+        $timeout         = $this->options->getTimeout();
         $followRedirects = $this->options->getFollowRedirects();
 
         \curl_setopt($this->ch, CURLOPT_SSL_VERIFYPEER, $verifySsl);
@@ -318,8 +338,8 @@ class HttpClient
             $errors = isset($parsedResponse->errors) ? $parsedResponse->errors : $parsedResponse;
 
             if (is_array($errors)) {
-                $errorMessage = $errors[0]['message'];
-                $errorCode    = $errors[0]['code'];
+                $errorMessage = $errors[0]->message;
+                $errorCode    = $errors[0]->code;
             } else {
                 $errorMessage = $errors->message;
                 $errorCode    = $errors->code;
@@ -343,7 +363,7 @@ class HttpClient
     {
         $body = $this->response->getBody();
 
-        if (0 === strpos(bin2hex($body), 'efbbbf')) {
+        if (0 === strpos(bin2hex(substr($body, 0, 4)), 'efbbbf')) {
             $body = substr($body, 3);
         }
 
