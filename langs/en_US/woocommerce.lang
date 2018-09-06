@@ -48,3 +48,4 @@ ECommercengWoocommerceStatusPublish=Publish
 
 ECommercengWoocommerceWithoutFirstnameLastname=No firstname/lastname informed
 ECommercengWoocommerceLastnameNotInformed=[Lastname not informed]
+ECommerceWoocommerceUpdateRemoteBatchProduct                = Erreur lors de la mise à jour du produit (sku : %s) sur le site '%s': %s

@@ -219,3 +219,21 @@ ECommerceUpdateRemoteProductLink=Erreur de mise à jour du lien du produit 'id:%
 ECommerceCreateRemoteProductLink=Erreur de la création du lien du produit 'id:%s' sur le site '%s': %s
 ECommerceUpdateRemoteOrderLink=Erreur de mise à jour du lien de la commande 'id:%s' sur le site '%s': %s
 ECommerceUpdateRemoteInvoiceLink=Erreur de mise à jour du lien de la facture 'id:%s' sur le site '%s': %s
+
+ECommerceRealTimeSynchroDolibarrToECommerceSetup            = Synchronisation en temps reel de Dolibarr vers Ecommerce
+ECommerceThirdParty                                         = Tiers
+ECommerceContact                                            = Contacts
+ECommerceProduct                                            = Produits
+ECommerceOrder                                              = Commandes
+ECommerceRealTimeSynchroDolibarrToECommerceSetupDescription = Synchronisation de l'élément dans le site ECommerce à la modification de celui lié dans Dolibarr
+
+ECommercePaymentCondition            = Conditions de règlement
+ECommercePaymentConditionDescription = Conditions de règlement par défault lors de la récupération de la commande depuis le site ECommerce
+
+ECommerceCountToUpdateDtoE  = Nombre d'éléments à synchroniser (crée côté Dolibarr et non lié à ECommerce)
+SyncProductFirst            = Synchroniser d'abord les produits
+
+ECommerceCreateRemoteCategoryLink   = Erreur de la création du lien de la catégorie 'id:%s' sur le site '%s': %s
+
+ECommerceSyncheCommerceMotherCategoryCreateError=Erreur de création du lien de la catégorie racine pour la catégorie distante '%s' 'id:%s' sur le site '%s'.
+ECommerceNGUpdateElementDateMoreRecent=Inclus aussi les éléments dont la date de mise à jour est plus récente que celle de synchronisation

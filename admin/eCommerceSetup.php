@@ -148,26 +148,48 @@ if ($_POST['site_form_detail_action'] == 'save')
             $efields = new ExtraFields($db);
             $efields->fetch_name_optionals_label('commande', true);
             $ecommerceOrderStatusForECommerceToDolibarr = array();
-            if (isset($efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options']) &&
-                is_array($efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options'])
-            ) {
-                foreach ($efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options'] as $key => $value) {
-                    if (($pos = strpos($key, '_')) > 0) $key = substr($key, $pos + 1);
-                    $billed = GETPOST('order_status_etod_billed_' . $key, 'alpha');
-                    $ecommerceOrderStatusForECommerceToDolibarr[$key] = array(
-                        'selected' => GETPOST('order_status_etod_' . $key, 'alpha'),
-                        'billed' => empty($billed) ? 0 : 1,
-                    );
+            if (!isset($_POST['ecommerce_realtime_dtoe_thridparty']) && !isset($siteDb->parameters)) {
+                $ecommerceOrderStatusForECommerceToDolibarr = array(
+                    "pending" => array('selected' => 's' . Commande::STATUS_DRAFT, 'billed' => 0),
+                    "processing" => array('selected' => 's' . Commande::STATUS_VALIDATED, 'billed' => 0),
+                    "on-hold" => array('selected' => 's' . Commande::STATUS_DRAFT, 'billed' => 0),
+                    "completed" => array('selected' => 's' . Commande::STATUS_CLOSED, 'billed' => 1),
+                    "cancelled" => array('selected' => 's' . Commande::STATUS_CANCELED, 'billed' => 0),
+                    "refunded" => array('selected' => 's' . Commande::STATUS_CANCELED, 'billed' => 1),
+                    "failed" => array('selected' => 's' . Commande::STATUS_CANCELED, 'billed' => 0),
+                );
+            } else {
+                if (isset($efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options']) &&
+                    is_array($efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options'])
+                ) {
+                    foreach ($efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options'] as $key => $value) {
+                        if (($pos = strpos($key, '_')) > 0) $key = substr($key, $pos + 1);
+                        $billed = GETPOST('order_status_etod_billed_' . $key, 'alpha');
+                        $ecommerceOrderStatusForECommerceToDolibarr[$key] = array(
+                            'selected' => GETPOST('order_status_etod_' . $key, 'alpha'),
+                            'billed' => empty($billed) ? 0 : 1,
+                        );
+                    }
                 }
             }
 
-            $ecommerceOrderStatusForDolibarrToECommerce = array(
-                Commande::STATUS_CANCELED => GETPOST('order_status_dtoe_' . Commande::STATUS_CANCELED, 'alpha'),
-                Commande::STATUS_DRAFT => GETPOST('order_status_dtoe_' . Commande::STATUS_DRAFT, 'alpha'),
-                Commande::STATUS_VALIDATED => GETPOST('order_status_dtoe_' . Commande::STATUS_VALIDATED, 'alpha'),
-                Commande::STATUS_ACCEPTED => GETPOST('order_status_dtoe_' . Commande::STATUS_ACCEPTED, 'alpha'),
-                Commande::STATUS_CLOSED => GETPOST('order_status_dtoe_' . Commande::STATUS_CLOSED, 'alpha'),
-            );
+            if (!isset($_POST['ecommerce_realtime_dtoe_thridparty']) && !isset($siteDb->parameters)) {
+                $ecommerceOrderStatusForDolibarrToECommerce = array(
+                    Commande::STATUS_CANCELED => 'cancelled',
+                    Commande::STATUS_DRAFT => 'on-hold',
+                    Commande::STATUS_VALIDATED => 'processing',
+                    Commande::STATUS_ACCEPTED => 'processing',
+                    Commande::STATUS_CLOSED => 'completed',
+                );
+            } else {
+                $ecommerceOrderStatusForDolibarrToECommerce = array(
+                    Commande::STATUS_CANCELED => GETPOST('order_status_dtoe_' . Commande::STATUS_CANCELED, 'alpha'),
+                    Commande::STATUS_DRAFT => GETPOST('order_status_dtoe_' . Commande::STATUS_DRAFT, 'alpha'),
+                    Commande::STATUS_VALIDATED => GETPOST('order_status_dtoe_' . Commande::STATUS_VALIDATED, 'alpha'),
+                    Commande::STATUS_ACCEPTED => GETPOST('order_status_dtoe_' . Commande::STATUS_ACCEPTED, 'alpha'),
+                    Commande::STATUS_CLOSED => GETPOST('order_status_dtoe_' . Commande::STATUS_CLOSED, 'alpha'),
+                );
+            }
 
             $ecommerceExtrafieldsCorrespondence = array();
             // fetch optionals attributes and labels
@@ -219,46 +241,40 @@ if ($_POST['site_form_detail_action'] == 'save')
                 }
             }
 
-            // Todo separer la premiere initialisation
-            if (isset($siteDb->parameters)) {
-                $siteDb->parameters = array(
-                    'order_status_etod' => $ecommerceOrderStatusForECommerceToDolibarr,
-                    'order_status_dtoe' => $ecommerceOrderStatusForDolibarrToECommerce,
-                    'ef_crp' => $ecommerceExtrafieldsCorrespondence,
-                    'payment_cond' => $_POST['ecommerce_payment_cond'],
-                    'realtime_dtoe' => array(
-                        'thridparty' => !empty($_POST['ecommerce_realtime_dtoe_thridparty']) ? 1 : 0,
-                        'contact' => !empty($_POST['ecommerce_realtime_dtoe_contact']) ? 1 : 0,
-                        'product' => !empty($_POST['ecommerce_realtime_dtoe_product']) ? 1 : 0,
-                        'order' => !empty($_POST['ecommerce_realtime_dtoe_order']) ? 1 : 0,
-                    ),
+            if (!isset($_POST['ecommerce_realtime_dtoe_thridparty']) && !isset($siteDb->parameters)) {
+                $ecommerceRealtimeDolibarrToECommerce = array(
+                    'thridparty' => 1,
+                    'contact' => 1,
+                    'product' => 1,
+                    'order' => 1,
                 );
             } else {
-                $siteDb->parameters = array(
-                    'order_status_etod' => array(
-                        "pending" => array('selected' => 's' . Commande::STATUS_DRAFT, 'billed' => 0),
-                        "processing" => array('selected' => 's' . Commande::STATUS_VALIDATED, 'billed' => 0),
-                        "on-hold" => array('selected' => 's' . Commande::STATUS_DRAFT, 'billed' => 0),
-                        "completed" => array('selected' => 's' . Commande::STATUS_CLOSED, 'billed' => 1),
-                        "cancelled" => array('selected' => 's' . Commande::STATUS_CANCELED, 'billed' => 0),
-                        "refunded" => array('selected' => 's' . Commande::STATUS_CANCELED, 'billed' => 1),
-                        "failed" => array('selected' => 's' . Commande::STATUS_CANCELED, 'billed' => 0),
-                    ),
-                    'order_status_dtoe' => array(
-                        Commande::STATUS_CANCELED => 'cancelled',
-                        Commande::STATUS_DRAFT => 'on-hold',
-                        Commande::STATUS_VALIDATED => 'processing',
-                        Commande::STATUS_ACCEPTED => 'processing',
-                        Commande::STATUS_CLOSED => 'completed',
-                    ),
-                    'realtime_dtoe' => array(
-                        'thridparty' => 1,
-                        'contact' => 1,
-                        'product' => 1,
-                        'order' => 1,
-                    ),
+                $ecommerceRealtimeDolibarrToECommerce = array(
+                    'thridparty' => !empty($_POST['ecommerce_realtime_dtoe_thridparty']) ? 1 : 0,
+                    'contact' => !empty($_POST['ecommerce_realtime_dtoe_contact']) ? 1 : 0,
+                    'product' => !empty($_POST['ecommerce_realtime_dtoe_product']) ? 1 : 0,
+                    'order' => !empty($_POST['ecommerce_realtime_dtoe_order']) ? 1 : 0,
                 );
             }
+
+            $ecommerceProductSynchDirection = array(
+                'image' => GETPOST('ecommerce_product_image_synch_direction', 'alpha'),
+                'ref' => GETPOST('ecommerce_product_ref_synch_direction', 'alpha'),
+                'description' => GETPOST('ecommerce_product_description_synch_direction', 'alpha'),
+                'short_description' => GETPOST('ecommerce_product_short_description_synch_direction', 'alpha'),
+                'weight' => GETPOST('ecommerce_product_weight_synch_direction', 'alpha'),
+                'tax' => GETPOST('ecommerce_product_tax_synch_direction', 'alpha'),
+                'status' => GETPOST('ecommerce_product_status_synch_direction', 'alpha'),
+            );
+
+            $siteDb->parameters = array(
+                'order_status_etod' => $ecommerceOrderStatusForECommerceToDolibarr,
+                'order_status_dtoe' => $ecommerceOrderStatusForDolibarrToECommerce,
+                'ef_crp' => $ecommerceExtrafieldsCorrespondence,
+                'payment_cond' => $_POST['ecommerce_payment_cond'],
+                'realtime_dtoe' => $ecommerceRealtimeDolibarrToECommerce,
+                'product_synch_direction' => $ecommerceProductSynchDirection,
+            );
         }
 
         $result = 0;
@@ -650,6 +666,14 @@ if (!empty($ecommerceId)) {
                 );
             }
         }
+
+        $ecommerceProductImageSynchDirection = isset($siteDb->parameters['product_synch_direction']['image']) ? $siteDb->parameters['product_synch_direction']['image'] : '';
+        $ecommerceProductRefSynchDirection = isset($siteDb->parameters['product_synch_direction']['ref']) ? $siteDb->parameters['product_synch_direction']['ref'] : '';
+        $ecommerceProductDescriptionSynchDirection = isset($siteDb->parameters['product_synch_direction']['description']) ? $siteDb->parameters['product_synch_direction']['description'] : '';
+        $ecommerceProductShortDescriptionSynchDirection = isset($siteDb->parameters['product_synch_direction']['short_description']) ? $siteDb->parameters['product_synch_direction']['short_description'] : '';
+        $ecommerceProductWeightSynchDirection = isset($siteDb->parameters['product_synch_direction']['weight']) ? $siteDb->parameters['product_synch_direction']['weight'] : '';
+        $ecommerceProductTaxSynchDirection = isset($siteDb->parameters['product_synch_direction']['tax']) ? $siteDb->parameters['product_synch_direction']['tax'] : '';
+        $ecommerceProductStatusSynchDirection = isset($siteDb->parameters['product_synch_direction']['status']) ? $siteDb->parameters['product_synch_direction']['status'] : '';
     }
 }
 

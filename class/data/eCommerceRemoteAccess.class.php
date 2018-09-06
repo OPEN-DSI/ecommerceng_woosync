@@ -420,7 +420,7 @@ class eCommerceRemoteAccess
      * Create batch remote categories
      *
      * @param  array    $batch              Array of object category
-     * @return bool
+     * @return bool|array
      */
     public function createRemoteCategories($batch)
     {
@@ -434,11 +434,11 @@ class eCommerceRemoteAccess
      * Create batch remote products
      *
      * @param  array    $batch              Array of id product
-     * @return bool
+     * @return array
      */
-    public function createRemoteProducts($batch)
+    public function batchUpdateRemoteProducts($batch)
     {
-        $result=$this->class->createRemoteProducts($batch);
+        $result=$this->class->batchUpdateRemoteProducts($batch);
         $this->error=$this->class->error;
         $this->errors=$this->class->errors;
         return $result;

@@ -17,8 +17,8 @@ if (is_object($site))
 
     dol_fiche_head($head, 'ecommerce2dolibarr', '');
 
-    print '<form name="form_count" id="form_count" action="'.$_SERVER['PHP_SELF'].'" method="post">';
-    print '<input type="hidden" name="id" value="'.$site->id.'">';
+    print '<form name="form_count" id="form_count" action="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'" method="post">';
+    //print '<input type="hidden" name="id" value="'.$site->id.'">';
     if (GETPOST('test_with_no_categ_count','alpha')) print '<input type="hidden" name="test_with_no_categ_count" value="'.GETPOST('test_with_no_categ_count','alpha').'">';
     if (GETPOST('test_with_no_product_count','alpha')) print '<input type="hidden" name="test_with_no_product_count" value="'.GETPOST('test_with_no_product_count','alpha').'">';
     if (GETPOST('test_with_no_thirdparty_count','alpha')) print '<input type="hidden" name="test_with_no_thirdparty_count" value="'.GETPOST('test_with_no_thirdparty_count','alpha').'">';
@@ -291,8 +291,8 @@ if (is_object($site))
 
 	print $langs->trans("SyncIsAutomaticInRealTime", $site->name)."\n";
 
-    print '<form name="form_count" id="form_count" action="'.$_SERVER['PHP_SELF'].'" method="post">';
-    print '<input type="hidden" name="id" value="'.$site->id.'">';
+    print '<form name="form_count" id="form_count" action="'.$_SERVER['PHP_SELF'].'?id='.$site->id.'" method="post">';
+    //print '<input type="hidden" name="id" value="'.$site->id.'">';
 
     print '<table class="centpercent nobordernopadding">';
 
@@ -347,7 +347,7 @@ if (is_object($site))
 			<td><?php print $langs->trans('ProductsOrServices') ?></td>
 			<td><?php print $nbProductInDolibarr ?> **</td>
 			<td><?php print $nbProductInDolibarrLinkedToE ?> **</td>
-			<td><?php print $nbProductToUpdateDToE ?></td>
+			<td><?php print $nbProductToUpdateDToE ?> ***</td>
 			<?php if ($synchRights==true) { ?>
 			<td>
 				<?php if ($nbProductToUpdateDToE>0) { ?>
@@ -362,6 +362,7 @@ if (is_object($site))
 	print '<span class="opacitymedium">';
 	print '* '.$langs->trans("OnlyProductCategIn", $tagnameprod).'<br>';
 	print '** '.$langs->trans("OnlyProductsIn", $tagnameprod, $tagnameprod).'<br>';
+  print '*** '.$langs->trans("ECommerceNGUpdateElementDateMoreRecent").'<br>';
 	print '</span>';
 
 	dol_fiche_end();

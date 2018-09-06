@@ -280,10 +280,118 @@ if (!empty($conf->commande->enabled)) {
 ?>
 			</table>
 
-			<br>
+<?php
+if ($ecommerceType == 2)
+{
+    $var=!$var;
+    $sync_direction_array=array(''=>$langs->trans('None'), 'etod'=>$langs->trans('ECommerceToDolibarr'), 'dtoe'=>$langs->trans('DolibarrToECommerce'), 'all'=>$langs->trans('AllDirection'));
+?>
+      <br>
+<?php
+    print_titre($langs->trans("ProductsSyncSetup"));
+?>
+      <table class="noborder" width="100%">
+
+        <tr class="liste_titre">
+          <td width="20%"><?php print $langs->trans('Parameter') ?></td>
+          <td><?php print $langs->trans('Value') ?></td>
+          <td><?php print $langs->trans('Description') ?></td>
+        </tr>
+
+        <tr <?php print $bc[$var] ?>>
+          <td><span><?php print $langs->trans('ECommerceProductImageSyncDirection') ?></span></td>
+          <td>
+            <?php
+              print $form->selectarray('ecommerce_product_image_synch_direction', $sync_direction_array, $ecommerceProductImageSynchDirection);
+            ?>
+          </td>
+          <td><?php print $langs->trans('ECommerceProductImageSyncDirectionDescription') ?></td>
+        </tr>
+        <tr <?php print $bc[$var] ?>>
+          <td><span><?php print $langs->trans('ECommerceProductRefSyncDirection') ?></span></td>
+          <td>
+            <?php
+              print $form->selectarray('ecommerce_product_ref_synch_direction', $sync_direction_array, $ecommerceProductRefSynchDirection);
+            ?>
+          </td>
+          <td><?php print $langs->trans('ECommerceProductRefSyncDirectionDescription') ?></td>
+        </tr>
+        <tr <?php print $bc[$var] ?>>
+          <td><span><?php print $langs->trans('ECommerceProductDescriptionSyncDirection') ?></span></td>
+          <td>
+            <?php
+              print $form->selectarray('ecommerce_product_description_synch_direction', $sync_direction_array, $ecommerceProductDescriptionSynchDirection);
+            ?>
+          </td>
+          <td><?php print $langs->trans('ECommerceProductDescriptionSyncDirectionDescription') ?></td>
+        </tr>
+        <tr <?php print $bc[$var] ?>>
+          <td><span><?php print $langs->trans('ECommerceProductShortDescriptionSyncDirection') ?></span></td>
+          <td>
+            <?php
+              print $form->selectarray('ecommerce_product_short_description_synch_direction', $sync_direction_array, $ecommerceProductShortDescriptionSynchDirection);
+            ?>
+          </td>
+          <td><?php print $langs->trans('ECommerceProductShortDescriptionSyncDirectionDescription') ?></td>
+        </tr>
+        <tr <?php print $bc[$var] ?>>
+          <td><span><?php print $langs->trans('ECommerceProductWeightSyncDirection') ?></span></td>
+          <td>
+            <?php
+              print $form->selectarray('ecommerce_product_weight_synch_direction', $sync_direction_array, $ecommerceProductWeightSynchDirection);
+            ?>
+          </td>
+          <td><?php print $langs->trans('ECommerceProductWeightSyncDirectionDescription') ?></td>
+        </tr>
+        <tr <?php print $bc[$var] ?>>
+          <td><span><?php print $langs->trans('ECommerceProductTaxSyncDirection') ?></span></td>
+          <td>
+            <?php
+              print $form->selectarray('ecommerce_product_tax_synch_direction', $sync_direction_array, $ecommerceProductTaxSynchDirection);
+            ?>
+          </td>
+          <td><?php print $langs->trans('ECommerceProductTaxSyncDirectionDescription') ?></td>
+        </tr>
+        <tr <?php print $bc[$var] ?>>
+          <td><span><?php print $langs->trans('ECommerceProductStatusSyncDirection') ?></span></td>
+          <td>
+            <?php
+              print $form->selectarray('ecommerce_product_status_synch_direction', $sync_direction_array, $ecommerceProductStatusSynchDirection);
+            ?>
+          </td>
+          <td><?php print $langs->trans('ECommerceProductStatusSyncDirectionDescription') ?></td>
+        </tr>
+      </table>
+
+    <!--
+      <script type="text/javascript" language="javascript">
+          jQuery(document).ready(function () {
+            updateECommerceOAuthWordpress();
+            $('#ecommerce_product_image_synch_direction').on("change", function () {
+              updateECommerceOAuthWordpress();
+            });
+
+            function updateECommerceOAuthWordpress() {
+              var image_sync = $('#ecommerce_product_image_synch_direction').val();
+              if (image_sync == 'all' || image_sync == 'dtoe') {
+                $('#ecommerce_oauth_wordpress').show();
+              } else {
+                $('#ecommerce_oauth_wordpress').hide();
+              }
+            }
+          });
+      </script>
+    -->
+<?php
+}
+?>
 
 <?php
 if ($ecommerceOAuth) {
+?>
+  <br>
+  <div id="ecommerce_oauth_wordpress">
+<?php
     print_titre($langs->trans("ECommerceOAuthWordpressSetup", $ecommerceOAuthWordpressOAuthSetupUri));
 ?>
 		<table class="noborder" width="100%">
@@ -374,9 +482,12 @@ if ($ecommerceOAuth) {
 <?php
 		}
 	}
+?>
+    </table>
+  </div>
+<?php
 }
 ?>
-			</table>
 
 
 <?php

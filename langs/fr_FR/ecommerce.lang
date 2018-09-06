@@ -229,3 +229,31 @@ SyncProductFirst            = Synchroniser d'abord les produits
 
 ECommerceCreateRemoteCategoryLink   = Erreur de la création du lien de la catégorie 'id:%s' sur le site '%s': %s
 
+ECommerceSyncheCommerceMotherCategoryCreateError=Erreur de création du lien de la catégorie racine pour la catégorie distante '%s' 'id:%s' sur le site '%s'.
+ECommerceNGUpdateElementDateMoreRecent=Inclus aussi les éléments dont la date de mise à jour est plus récente que celle de synchronisation
+ProductsSyncSetup=Synchronisation des produits
+AllDirection=Dans les deux sens
+ECommerceProductImageSyncDirection=Synchronisation des images
+ECommerceProductImageSyncDirectionDescription=Ce paramètre détermine le sens de mise à jour des images
+ECommerceProductRefSyncDirection=Synchronisation de la référence
+ECommerceProductRefSyncDirectionDescription=Ce paramètre détermine le sens de mise à jour de la référence
+ECommerceProductDescriptionSyncDirection=Synchronisation de la description
+ECommerceProductDescriptionSyncDirectionDescription=Ce paramètre détermine le sens de mise à jour de la description
+ECommerceProductShortDescriptionSyncDirection=Synchronisation de la description courte
+ECommerceProductShortDescriptionSyncDirectionDescription=Ce paramètre détermine le sens de mise à jour de la description courte
+ECommerceProductWeightSyncDirection=Synchronisation du poids du produit
+ECommerceProductWeightSyncDirectionDescription=Ce paramètre détermine le sens de mise à jour du poids du produit
+ECommerceProductTaxSyncDirection=Synchronisation de la classes de TVA sur la boutique
+ECommerceProductTaxSyncDirectionDescription=Ce paramètre détermine le sens de mise à jour de la classes de TVA sur la boutique
+ECommerceProductStatusSyncDirection=Synchronisation du status sur la boutique
+ECommerceProductStatusSyncDirectionDescription=Ce paramètre détermine le sens de mise à jour du status sur la boutique
+
+ECommerceExportProductsPrices=Export des prix des produits (WooSync)
+ECommerceImportProductsPrices=Import des prix des produits (WooSync) (Ne support pas l'ajout de nouveaux produits, la mis à jour n'est supporté que par le CSV)
+
+EcommerceNGUnlinkToECommerce=Enlever le produit du site ECommerce
+EcommerceNGConfirmUnlinkToECommerce=Êtes-vous sûr de vouloir enlever ce produit du site ECommerce ?
+ECommerceResetCategoriesProductSuccess=catégories du site sur les produits ont bien été retirées.
+
+ECommerceSynchProductError=Erreur lors de la synchronisation du produit distant:
+ECommerceErrorProductAlreadyLinkedWithRemoteProduct=Le produit avec cette réf. est déjà lié au produit distant ID: %s.

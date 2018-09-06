@@ -1,5 +1,28 @@
 # ChangeLog
 
+## 4.0.25.0
+
+- La suppression des liens des produits supprime aussi les catégories de la boutique sur les produits.
+- Amélioration de la synchronisation WooCommerce vers Dolibarr des sociétés, produits et commandes.
+- Ajout d'un bouton pour retirer le lien d'un produit avec un site ECommerce dans Dolibarr sur la fiche d'un produit.
+- Modification de l'export et import des prix des produits (enlevement de la date de modification, elle sera mise à jour automatiquement)
+- Ajout d'un test si la ref du produit dans Dolibarr est deja lié à un autre produit distant dans la boutique
+- Ajout d'une option de sens de synchronisation de la Réf. 
+
+## 4.0.24.0
+
+- Correction synchro des categories de ECommerce vers Dolibarr.
+- Ajout de la direction des synchronisation des images dans les options du site. La variable global ECOMMERCENG_ENABLE_SYNCHRO_IMAGES a été enlevé.
+- Ajout de la synchro manuelle des produits modifié de Dolibarr vers ECommerce.
+- Ajout d'une erreur si la base du prix d'un produit est different d'es paramétrage du site.
+- Amélioration lors de la synchro Ecommerce/Dolibarr (retrouve le produit dont la ref existe deja meme si le lien est different)
+- Ajout export/import des prix des produit dans l'export/import standard Dolibarr
+
+## 4.0.23.0
+
+- N'affiche pas le bouton "synchronisation des images" sur la pages des fichiers joints de la fiche produit si il n'est pas lié à un site ECommerce.
+- Ajout de la synchronisation des images à la création du produit sur le site ECommerce.
+
 ## 4.0.22.0
 
 - Ajout de la synchronisation des attibuts supplémentaires avec les méta-données pour les produits et commandes (ainsi que les lignes).
@@ -7,7 +30,6 @@
 - Ajout de l'option de désactiver la synchro en temps reel de Dolibarr vers ECommerce
 - Ajout du choix de la condition de paiement par défaut lors de la synchro des commandes de ECommerce vers Dolibarr
 - Ajout de la synchro manuelle des catégories et produits de Dolibarr vers Ecommerce
-- Mise à jour de l'API client Woocommerce 2.0.0 en 2.0.1
 
 ## 4.0.21.0
 

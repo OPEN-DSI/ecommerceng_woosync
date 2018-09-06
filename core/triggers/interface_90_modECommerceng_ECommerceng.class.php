@@ -160,6 +160,7 @@ class InterfaceECommerceng
         			    if (! $error)
         			    {
         				    $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteSociete($eCommerceSociete->remote_id, $object);
+                            $now = dol_now();
         				    if (! $result)
         				    {
         				        $error++;
@@ -170,8 +171,7 @@ class InterfaceECommerceng
 
                         if (! $error) {
                             //eCommerce update link
-                            $now = dol_now();
-//                            $eCommerceSociete->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
+                            $eCommerceSociete->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
                             if ($eCommerceSociete->update($user) < 0) {
                                 $error++;
                                 $error_msg = $langs->trans('ECommerceUpdateRemoteCompanyLink', $object->id, $site->name, $eCommerceSociete->error);
@@ -265,6 +265,7 @@ class InterfaceECommerceng
                         if (! $error)
                         {
                             $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteSocpeople($eCommerceSocpeople->remote_id, $object);
+                            $now = dol_now();
                             if (! $result)
         				    {
         				        $error++;
@@ -275,8 +276,7 @@ class InterfaceECommerceng
 
                         if (! $error) {
                             //eCommerce update link
-                            $now = dol_now();
-//                            $eCommerceSocpeople->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
+                            $eCommerceSocpeople->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
                             if ($eCommerceSocpeople->update($user) < 0) {
                                 $error++;
                                 $error_msg = $langs->trans('ECommerceUpdateRemoteSocpeopleLink', $object->id, $site->name, $eCommerceSocpeople->error);
@@ -381,6 +381,7 @@ class InterfaceECommerceng
                                 $object->price = $object->multiprices[$site->price_level];
                             }
                             $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id, $object);
+                            $now = dol_now();
                             if (!$result) {
                                 $error++;
                                 $this->error = $eCommerceSynchro->eCommerceRemoteAccess->error;
@@ -390,8 +391,7 @@ class InterfaceECommerceng
 
                         if (!$error) {
                             //eCommerce update link
-                            $now = dol_now();
-//                            $eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
+                            $eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
                             if ($eCommerceProduct->update($user) < 0) {
                                 $error++;
                                 $error_msg = $langs->trans('ECommerceUpdateRemoteProductLink', $object->id, $site->name, $eCommerceProduct->error);
@@ -416,6 +416,7 @@ class InterfaceECommerceng
                         }
 
                         $result = $eCommerceSynchro->eCommerceRemoteAccess->createRemoteProduct($object);
+                        $now = dol_now();
                         if (!$result) {
                             $error++;
                             $this->error = $eCommerceSynchro->eCommerceRemoteAccess->error;
@@ -424,8 +425,7 @@ class InterfaceECommerceng
 
                         if (!$error) {
                             // Create remote link
-                            $now = dol_now();
-//                            $eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
+                            $eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
                             $eCommerceProduct->fk_product = $object->id;
                             $eCommerceProduct->fk_site = $site->id;
                             $eCommerceProduct->remote_id = $result;
@@ -437,6 +437,18 @@ class InterfaceECommerceng
                                 $this->errors = array_merge($this->errors, $eCommerceProduct->errors);
                                 dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
                             }
+                        }
+                    }
+
+                    // Maj date product avec date de modif sur ecommerce
+                    if (! $error) {
+                        $sql = "UPDATE " . MAIN_DB_PREFIX . "product SET tms = '" . $eCommerceProduct->last_update . "' WHERE rowid = " . $object->id;
+                        $resql = $this->db->query($sql);
+                        if (!$resql) {
+                            $error++;
+                            // Todo traduction du texte de l'erreur
+                            $this->error = 'Error update modification date of product "'.$object->ref.'" : ' . $this->db->lasterror();
+                            $this->errors[] = $this->error;
                         }
                     }
                 }
@@ -500,6 +512,7 @@ class InterfaceECommerceng
                         if (! $error)
                         {
         				    $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteCommande($eCommerceCommande->remote_id, $object);
+                            $now = dol_now();
         				    if (! $result)
         				    {
         				        $error++;
@@ -512,8 +525,7 @@ class InterfaceECommerceng
 
                         if (! $error) {
                             //eCommerce update link
-                            $now = dol_now();
-//                            $eCommerceCommande->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
+                            $eCommerceCommande->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
                             if ($eCommerceCommande->update($user) < 0) {
                                 $error++;
                                 $error_msg = $langs->trans('ECommerceUpdateRemoteOrderLink', $object->id, $site->name, $eCommerceCommande->error);
@@ -581,6 +593,7 @@ class InterfaceECommerceng
     	                if (! $error)
     	                {
         	                $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteFacture($eCommerceFacture->remote_id, $object);
+                            $now = dol_now();
         	                if (! $result)
         	                {
         	                    $error++;
@@ -591,8 +604,7 @@ class InterfaceECommerceng
 
                         if (! $error) {
                             //eCommerce update link
-                            $now = dol_now();
-//                            $eCommerceFacture->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
+                            $eCommerceFacture->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
                             if ($eCommerceFacture->update($user) < 0) {
                                 $error++;
                                 $error_msg = $langs->trans('ECommerceUpdateRemoteInvoiceLink', $object->id, $site->name, $eCommerceFacture->error);
@@ -826,6 +838,7 @@ class InterfaceECommerceng
     		            {
     		                dol_syslog("Trigger ".$action." call synchLivraison for object shipment id = ".$object->id." and order id = ".$origin_id.", order remote id = ".$eCommerceCommande->remote_id);
                             $result = $eCommerceSynchro->synchLivraison($object, $eCommerceCommande->remote_id);
+                            $now = dol_now();
                             if (! $result)
                             {
                                 $error++;
@@ -848,8 +861,7 @@ class InterfaceECommerceng
 
                             if (! $error && $result !== true) {
                                 //eCommerce update link
-                                $now = dol_now();
-//                                $eCommerceCommande->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
+                                $eCommerceCommande->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
                                 if ($eCommerceCommande->update($user) < 0) {
                                     $error++;
                                     $error_msg = $langs->trans('ECommerceUpdateRemoteOrderLink', $object->id, $site->name, $eCommerceCommande->error);
@@ -934,6 +946,7 @@ class InterfaceECommerceng
                             if (! $error)
                             {
                                 $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteStockProduct($eCommerceProduct->remote_id, $object);
+                                $now = dol_now();
                                 if (! $result)
                                 {
                                     $error++;
@@ -944,8 +957,7 @@ class InterfaceECommerceng
 
                             if (! $error) {
                                 //eCommerce update link
-                                $now = dol_now();
-//                                $eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
+                                $eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
                                 if ($eCommerceProduct->update($user) < 0) {
                                     $error++;
                                     $error_msg = $langs->trans('ECommerceUpdateRemoteProductLink', $object->id, $site->name, $eCommerceProduct->error);

@@ -470,7 +470,7 @@ class eCommerceCategory // extends CommonObject
                 return 1;
             }
             $this->db->free($resql);
-            return -1;
+            return 0;
         } else
         {
             $this->error = "Error " . $this->db->lasterror();
