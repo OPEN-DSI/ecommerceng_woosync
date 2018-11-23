@@ -1,0 +1,1 @@
+ALTER TABLE llx_ecommerce_societe DROP INDEX uk_ecommerce_societe_fk_site_fk_societe;

@@ -257,3 +257,7 @@ ECommerceResetCategoriesProductSuccess=catégories du site sur les produits ont 
 
 ECommerceSynchProductError=Erreur lors de la synchronisation du produit distant:
 ECommerceErrorProductAlreadyLinkedWithRemoteProduct=Le produit avec cette réf. est déjà lié au produit distant ID: %s.
+
+ECommerceOnlyNew = Seulement les nouveaux
+
+ECommerceUpdateRemoteCompanyLinkWhenMergeCompany    = Erreur de mise à jour des lien de la société 'id:%s' lors de la fusion avec la société 'id:%s': %s

@@ -23,8 +23,8 @@ ECommerceWoocommerceUpdateRemoteProductSendImage=Erreur de l'envoi d'une image p
 ECommerceWoocommerceUpdateRemoteProductVariation=Erreur de mise à jour de la variation 'id:%s' du produit distant 'id:%s' sur le site '%s': %s
 ECommerceWoocommerceUpdateRemoteSociete=Erreur de mise à jour de la société distante 'id:%s' sur le site '%s': %s
 ECommerceWoocommerceUpdateRemoteSocpeople=Erreur de mise à jour des contacts/adresses de la société distante 'id:%s' sur le site '%s': %s
-ECommerceWoocommerceUpdateRemoteStockProduct=Erreur de mise à jour des stocks de la variation 'id:%s' du produit distant 'id:%s' sur le site '%s': %s
-ECommerceWoocommerceUpdateRemoteStockProductVariation=Erreur de mise à jour des stocks du produit distant 'id:%s' sur le site '%s': %s
+ECommerceWoocommerceUpdateRemoteStockProduct=Erreur de mise à jour des stocks (%s) du produit distant 'id:%s' sur le site '%s':
+ECommerceWoocommerceUpdateRemoteStockProductVariation=Erreur de mise à jour des stocks (%s) de la variation 'id:%s' du produit distant 'id:%s' sur le site '%s':
 ECommerceWoocommerceGetAllWoocommerceTaxClass=Erreur de récupération des données des classes de taxes sur le site '%s': %s
 ECommerceWoocommerceGetWoocommerceTaxes=Erreur de récupération des données des taxes sur le site '%s': %s
 
@@ -49,3 +49,13 @@ ECommercengWoocommerceStatusPublish=Publish
 ECommercengWoocommerceWithoutFirstnameLastname=No firstname/lastname informed
 ECommercengWoocommerceLastnameNotInformed=[Lastname not informed]
 ECommerceWoocommerceUpdateRemoteBatchProduct                = Erreur lors de la mise à jour du produit (sku : %s) sur le site '%s': %s
+
+ECommercengWoocommerceCompanyRole               = Role for the site "%s"
+ECommercengWoocommerceCompanyRole_administrator = Administrator
+ECommercengWoocommerceCompanyRole_author        = Author
+ECommercengWoocommerceCompanyRole_contributor   = Contributor
+ECommercengWoocommerceCompanyRole_customer      = Customer
+ECommercengWoocommerceCompanyRole_editor        = Editor
+ECommercengWoocommerceCompanyRole_subscriber    = Subscriber
+ECommercengWoocommerceCompanyRole_shop_manager  = Shop manager
+ECommercengWoocommerceCompanyRole_              = No role for this site

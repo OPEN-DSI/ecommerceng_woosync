@@ -257,6 +257,8 @@ if ($_POST['site_form_detail_action'] == 'save')
                 );
             }
 
+            $ecommerceProductSynchPrice = GETPOST('ecommerce_product_synch_price', 'alpha');
+
             $ecommerceProductSynchDirection = array(
                 'image' => GETPOST('ecommerce_product_image_synch_direction', 'alpha'),
                 'ref' => GETPOST('ecommerce_product_ref_synch_direction', 'alpha'),
@@ -274,6 +276,7 @@ if ($_POST['site_form_detail_action'] == 'save')
                 'payment_cond' => $_POST['ecommerce_payment_cond'],
                 'realtime_dtoe' => $ecommerceRealtimeDolibarrToECommerce,
                 'product_synch_direction' => $ecommerceProductSynchDirection,
+                'product_synch_price' => $ecommerceProductSynchPrice,
             );
         }
 
@@ -292,10 +295,38 @@ if ($_POST['site_form_detail_action'] == 'save')
             if ($siteDb->type == 2) { // Woocommerce
                 $result = ecommerceng_add_extrafields($db, $langs, [
                     [
+                        'attrname' => "ecommerceng_description_{$conf->entity}",
+                        'label' => 'ECommercengWoocommerceDescription',
+                        'type' => 'text',
+                        'pos' => 1,
+                        'size' => '',
+                        'elementtype' => 'product',
+                        'unique' => 0,
+                        'required' => 0,
+                        'default_value' => '',
+                        'param' => '',
+                        'alwayseditable' => 1,
+                        'perms' => '',
+                        'list' => 1,
+                    ],[
+                        'attrname' => "ecommerceng_short_description_{$conf->entity}",
+                        'label' => 'ECommercengWoocommerceShortDescription',
+                        'type' => 'text',
+                        'pos' => 2,
+                        'size' => '',
+                        'elementtype' => 'product',
+                        'unique' => 0,
+                        'required' => 0,
+                        'default_value' => '',
+                        'param' => '',
+                        'alwayseditable' => 1,
+                        'perms' => '',
+                        'list' => 1,
+                    ],[
                         'attrname' => "ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}",
                         'label' => $langs->trans('ECommercengWoocommerceStatus', $siteDb->name),
                         'type' => 'select',
-                        'pos' => 1,
+                        'pos' => 3,
                         'size' => '',
                         'elementtype' => 'product',
                         'unique' => 0,
@@ -311,36 +342,6 @@ if ($_POST['site_form_detail_action'] == 'save')
                         'perms' => '',
                         'list' => 1,
                     ],[
-                        'attrname' => "ecommerceng_description_{$conf->entity}",
-                        'label' => 'ECommercengWoocommerceDescription',
-                        'type' => 'text',
-                        'pos' => 2,
-                        'size' => '',
-                        'elementtype' => 'product',
-                        'unique' => 0,
-                        'required' => 0,
-                        'default_value' => '',
-                        'param' => '',
-                        'alwayseditable' => 1,
-                        'perms' => '',
-                        'list' => 1,
-                    ],
-                    [
-                        'attrname' => "ecommerceng_short_description_{$conf->entity}",
-                        'label' => 'ECommercengWoocommerceShortDescription',
-                        'type' => 'text',
-                        'pos' => 3,
-                        'size' => '',
-                        'elementtype' => 'product',
-                        'unique' => 0,
-                        'required' => 0,
-                        'default_value' => '',
-                        'param' => '',
-                        'alwayseditable' => 1,
-                        'perms' => '',
-                        'list' => 1,
-                    ],
-                    [
                         'attrname' => "ecommerceng_tax_class_{$siteDb->id}_{$conf->entity}",
                         'label' => $langs->trans('ECommercengWoocommerceTaxClass', $siteDb->name),
                         'type' => 'sellist',
@@ -354,8 +355,63 @@ if ($_POST['site_form_detail_action'] == 'save')
                         'alwayseditable' => 1,
                         'perms' => '',
                         'list' => 1,
-                    ],
-                    [
+                    /*],[
+                        'attrname' => "ecommerceng_wc_regular_price_{$siteDb->id}_{$conf->entity}",
+                        'label' => $langs->trans('ECommercengWoocommerceRegularPrice', $siteDb->name),
+                        'type' => 'price',
+                        'pos' => 5,
+                        'size' => '',
+                        'elementtype' => 'product',
+                        'unique' => 0,
+                        'required' => 0,
+                        'default_value' => '',
+                        'param' => '',
+                        'alwayseditable' => 1,
+                        'perms' => '',
+                        'list' => 1,*/
+                    ],[
+                        'attrname' => "ecommerceng_wc_sale_price_{$siteDb->id}_{$conf->entity}",
+                        'label' => $langs->trans('ECommercengWoocommerceSalePrice', $siteDb->name),
+                        'type' => 'price',
+                        'pos' => 6,
+                        'size' => '',
+                        'elementtype' => 'product',
+                        'unique' => 0,
+                        'required' => 0,
+                        'default_value' => '',
+                        'param' => '',
+                        'alwayseditable' => 1,
+                        'perms' => '',
+                        'list' => 1,
+                    ],[
+                        'attrname' => "ecommerceng_wc_date_on_sale_from_{$siteDb->id}_{$conf->entity}",
+                        'label' => $langs->trans('ECommercengWoocommerceDateOnSaleFrom', $siteDb->name),
+                        'type' => 'date',
+                        'pos' => 7,
+                        'size' => '',
+                        'elementtype' => 'product',
+                        'unique' => 0,
+                        'required' => 0,
+                        'default_value' => '',
+                        'param' => '',
+                        'alwayseditable' => 1,
+                        'perms' => '',
+                        'list' => 1,
+                    ],[
+                        'attrname' => "ecommerceng_wc_date_on_sale_to_{$siteDb->id}_{$conf->entity}",
+                        'label' => $langs->trans('ECommercengWoocommerceDateOnSaleTo', $siteDb->name),
+                        'type' => 'date',
+                        'pos' => 8,
+                        'size' => '',
+                        'elementtype' => 'product',
+                        'unique' => 0,
+                        'required' => 0,
+                        'default_value' => '',
+                        'param' => '',
+                        'alwayseditable' => 1,
+                        'perms' => '',
+                        'list' => 1,
+                    ],[
                         'attrname' => "ecommerceng_online_payment_{$conf->entity}",
                         'label' => 'ECommercengWoocommerceOnlinePayment',
                         'type' => 'boolean',
@@ -388,6 +444,20 @@ if ($_POST['site_form_detail_action'] == 'save')
                             "3_refunded" => $langs->trans('ECommercengWoocommerceOrderStatusRefunded'),
                             "3_failed" => $langs->trans('ECommercengWoocommerceOrderStatusFailed'),
                         )),
+                        'alwayseditable' => 0,
+                        'perms' => '',
+                        'list' => 1,
+                    ],[
+                        'attrname' => "ecommerceng_wc_role_{$siteDb->id}_{$conf->entity}",
+                        'label' => $langs->trans('ECommercengWoocommerceCompanyRole', $siteDb->name),
+                        'type' => 'varchar',
+                        'pos' => 0,
+                        'size' => '255',
+                        'elementtype' => 'societe',
+                        'unique' => 0,
+                        'required' => 0,
+                        'default_value' => '',
+                        'param' => '',
                         'alwayseditable' => 0,
                         'perms' => '',
                         'list' => 1,
@@ -667,6 +737,7 @@ if (!empty($ecommerceId)) {
             }
         }
 
+        $ecommerceProductSynchPrice = isset($siteDb->parameters['product_synch_price']) ? $siteDb->parameters['product_synch_price'] : 'regular';
         $ecommerceProductImageSynchDirection = isset($siteDb->parameters['product_synch_direction']['image']) ? $siteDb->parameters['product_synch_direction']['image'] : '';
         $ecommerceProductRefSynchDirection = isset($siteDb->parameters['product_synch_direction']['ref']) ? $siteDb->parameters['product_synch_direction']['ref'] : '';
         $ecommerceProductDescriptionSynchDirection = isset($siteDb->parameters['product_synch_direction']['description']) ? $siteDb->parameters['product_synch_direction']['description'] : '';

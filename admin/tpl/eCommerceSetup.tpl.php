@@ -299,6 +299,15 @@ if ($ecommerceType == 2)
         </tr>
 
         <tr <?php print $bc[$var] ?>>
+          <td><span><?php print $langs->trans('ECommerceWoocommerceProductSyncPrice') ?></span></td>
+          <td>
+            <?php
+              print $form->selectarray('ecommerce_product_synch_price', array(/*'selling'=>$langs->trans('ECommerceWoocommerceSellingPrice'),*/ 'regular'=>$langs->trans('ECommerceWoocommerceRegularPrice')), $ecommerceProductSyncPrice);
+            ?>
+          </td>
+          <td><?php print $langs->trans('ECommerceWoocommerceProductSyncPriceDescription') ?></td>
+        </tr>
+        <tr <?php print $bc[$var] ?>>
           <td><span><?php print $langs->trans('ECommerceProductImageSyncDirection') ?></span></td>
           <td>
             <?php

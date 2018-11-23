@@ -52,6 +52,9 @@ class eCommerceSynchro
     public $user;
 
     //Data access
+    /**
+     * @var DoliDB
+     */
     private $db;
     public $eCommerceRemoteAccess;
 
@@ -1102,11 +1105,17 @@ class eCommerceSynchro
                             $dBSociete->client = $societeArray['client'];
                             if (isset($societeArray['name_alias'])) $dBSociete->name_alias = $societeArray['name_alias'];
                             if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
-                            if (isset($societeArray['vatnumber'])) {
-                                $dBSociete->tva_intra = $societeArray['vatnumber'];
-                            }
+                            if (isset($societeArray['vatnumber'])) $dBSociete->tva_intra = $societeArray['vatnumber']; //dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
+                            if (isset($societeArray['country_id'])) $dBSociete->country_id = $societeArray['country_id'];
+                            if (isset($societeArray['default_lang'])) $dBSociete->default_lang = $societeArray['default_lang'];
                             $dBSociete->tva_assuj = 1;      // tva_intra is not saved if this field is not set
                             $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+
+                            if (is_array($societeArray['extrafields'])) {
+                                foreach ($societeArray['extrafields'] as $extrafield => $extrafield_value) {
+                                    $dBSociete->array_options['options_'.$extrafield] = $extrafield_value;
+                                }
+                            }
 
                             $result = $dBSociete->update($dBSociete->id, $this->user);
                             if ($result < 0)
@@ -1144,26 +1153,26 @@ class eCommerceSynchro
 
                         if ($result == -2) {
                             $error++;
-                            $this->error='Several thirdparties with name '.$societeArray['name'].' were found in Dolibarr. Sync is not possible. Please rename one of it to avoid duplicate.';
+                            $this->error='Several thirdparties with name "'.$societeArray['name'].'" were found in Dolibarr. Sync is not possible. Please rename one of it to avoid duplicate.';
                             $this->errors[]=$this->error;
                         }
 
-                        if (! $error && $result > 0)    // We did not found with remote id but we found one with the fetch on name.
-                        {
-                            $eCommerceSocieteBis=new eCommerceSociete($this->db);
-                            $synchExistsBis = $eCommerceSocieteBis->fetchByFkSociete($dBSociete->id, $this->eCommerceSite->id);
-                            dol_syslog("Warning: we did not found the remote id into dolibarr eCommerceSociete table but we found a record with the name.");
-                            if ($synchExistsBis > 0 && $eCommerceSocieteBis->id != $this->eCommerceSociete->id)
-                            {
-                                // We found a dolibarr record with name, but this one is alreayd linked and we know it is linked with another remote id because
-                                // the current remote_id was not found  when we previously did the fetchByRemoteId
-                                // So we make as if we didn't found the thirdparty. It may be a duplicate name created in same transaction from Magento
-                                dol_syslog("Warning: the record found with the name already has a remote_id in the eCommerceSite. So what we found is not what we want. We forget the find.");
-                                unset($dBSociete);  // Clear object, fetch was not what we wanted
-                                $dBSociete = new Societe($this->db);
-                                $result = 0;
-                            }
-                        }
+//                        if (! $error && $result > 0)    // We did not found with remote id but we found one with the fetch on name.
+//                        {
+//                            $eCommerceSocieteBis=new eCommerceSociete($this->db);
+//                            $synchExistsBis = $eCommerceSocieteBis->fetchByFkSociete($dBSociete->id, $this->eCommerceSite->id);
+//                            dol_syslog("Warning: we did not found the remote id into dolibarr eCommerceSociete table but we found a record with the name.");
+//                            if ($synchExistsBis > 0 && $eCommerceSocieteBis->id != $this->eCommerceSociete->id)
+//                            {
+//                                // We found a dolibarr record with name, but this one is alreayd linked and we know it is linked with another remote id because
+//                                // the current remote_id was not found  when we previously did the fetchByRemoteId
+//                                // So we make as if we didn't found the thirdparty. It may be a duplicate name created in same transaction from Magento
+//                                dol_syslog("Warning: the record found with the name already has a remote_id in the eCommerceSite. So what we found is not what we want. We forget the find.");
+//                                unset($dBSociete);  // Clear object, fetch was not what we wanted
+//                                $dBSociete = new Societe($this->db);
+//                                $result = 0;
+//                            }
+//                        }
 
                         if ($result == 0)
                         {
@@ -1172,13 +1181,19 @@ class eCommerceSynchro
                             $dBSociete->client = $societeArray['client'];
                             if (isset($societeArray['name_alias'])) $dBSociete->name_alias = $societeArray['name_alias'];
                             if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
-                            if (isset($societeArray['vatnumber'])) {
-                                $dBSociete->tva_intra = dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
-                            }
+                            if (isset($societeArray['vatnumber'])) $dBSociete->tva_intra = $societeArray['vatnumber']; //dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
+                            if (isset($societeArray['country_id'])) $dBSociete->country_id = $societeArray['country_id'];
+                            if (isset($societeArray['default_lang'])) $dBSociete->default_lang = $societeArray['default_lang'];
                             $dBSociete->tva_assuj = 1;                              // tva_intra is not saved if this field is not set
                             $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
                             $dBSociete->code_client = -1;           // Automatic code
                             $dBSociete->code_fournisseur = -1;      // Automatic code
+
+                            if (is_array($societeArray['extrafields'])) {
+                                foreach ($societeArray['extrafields'] as $extrafield => $extrafield_value) {
+                                    $dBSociete->array_options['options_'.$extrafield] = $extrafield_value;
+                                }
+                            }
 
                             $result = $dBSociete->create($this->user);
                             if ($result < 0)
@@ -1197,11 +1212,17 @@ class eCommerceSynchro
                             $dBSociete->client = $societeArray['client'];
                             if (isset($societeArray['name_alias'])) $dBSociete->name_alias = $societeArray['name_alias'];
                             if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
-                            if (isset($societeArray['vatnumber'])) {
-                                $dBSociete->tva_intra = $societeArray['vatnumber'];
-                            }
+                            if (isset($societeArray['vatnumber'])) $dBSociete->tva_intra = $societeArray['vatnumber']; //dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
+                            if (isset($societeArray['country_id'])) $dBSociete->country_id = $societeArray['country_id'];
+                            if (isset($societeArray['default_lang'])) $dBSociete->default_lang = $societeArray['default_lang'];
                             $dBSociete->tva_assuj = 1;      // tva_intra is not saved if this field is not set
                             $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+
+                            if (is_array($societeArray['extrafields'])) {
+                                foreach ($societeArray['extrafields'] as $extrafield => $extrafield_value) {
+                                    $dBSociete->array_options['options_'.$extrafield] = $extrafield_value;
+                                }
+                            }
 
                             $result = $dBSociete->update($dBSociete->id, $this->user);
                             if ($result < 0)
@@ -1229,6 +1250,10 @@ class eCommerceSynchro
                         //if a previous synchro exists
                         if ($synchExists > 0 && !isset($this->error))
                         {
+//                            $old_remote_ids = explode(',', $this->eCommerceSociete->remote_id);
+//                            if (!in_array($societeArray['remote_id'], $old_remote_ids)) {
+//                                $this->eCommerceSociete->remote_id = $this->eCommerceSociete->remote_id.','.$societeArray['remote_id'];
+//                            }
                             //eCommerce update
                             if ($this->eCommerceSociete->update($this->user) < 0)
                             {
@@ -1257,11 +1282,12 @@ class eCommerceSynchro
                         {
                             dol_syslog("Make a remote call to get contacts");   // Slow because done on each thirdparty to sync.
                             $listofaddressids=$this->eCommerceRemoteAccess->getRemoteAddressIdForSociete($societeArray['remote_id']);   // Ask contacts to magento
+                            if (is_array($listofaddressids) || $this->eCommerceSite->type == 2)
+                            {
                             if ($this->eCommerceSite->type == 2) { // Woocommerce
                                 $listofaddressids = $societeArray['remote_datas'];
                             }
-                            if (is_array($listofaddressids))
-                            {
+
                                 $socpeoples = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSocpeople($listofaddressids);
                                 foreach($socpeoples as $tmpsocpeople)
                                 {
@@ -1275,7 +1301,7 @@ class eCommerceSynchro
                     else
                     {
                         $error++;
-                        $this->errors[] = $this->langs->trans('ECommerceSynchSocieteErrorCreateUpdateSociete') . ' ' . $societeArray['name'] . ' ' . $societeArray['email'] . ' ' . $societeArray['client'];
+                        $this->errors[] = $this->langs->trans('ECommerceSynchSocieteErrorCreateUpdateSociete') . ' "' . $societeArray['name'] . '" "' . $societeArray['email'] . '" "' . $societeArray['client'].'"';
                     }
 
                     unset($dBSociete);
@@ -1699,6 +1725,9 @@ class eCommerceSynchro
                                 (isset($productArray['price_min']) && $price_min_org != $productArray['price_min']) ||
                                 price2num((float) $productArray['tax_rate']) != price2num((float) $tax_rate_org)
                             ) {
+                                if ($productArray['price_min'] === '') {
+                                    $productArray['price_min'] = $price_min_org <= $productArray['price'] ? $price_min_org : $productArray['price'];
+                                }
                                 // The price type from eCommerce is defined for the site: TI/TE (Tax Include / Tax Excluded)
                                 if (empty($conf->global->PRODUIT_MULTIPRICES)) {
                                     $dBProduct->updatePrice($productArray['price'], $price_base_type, $this->user, $productArray['tax_rate'], $productArray['price_min']);
@@ -1986,7 +2015,7 @@ class eCommerceSynchro
      */
     public function synchCommande($toNb=0)
     {
-        global $conf, $user;
+        global $conf, $user, $mysoc;
 
         $error = 0;
 
@@ -2429,6 +2458,65 @@ class eCommerceSynchro
                             $commandeArray['socpeopleCommande']['fk_soc'] = $fk_soc_socpeopleCommande;
                             $commandeArray['socpeopleFacture']['fk_soc'] = $fk_soc_socpeopleFacture;
                             $commandeArray['socpeopleLivraison']['fk_soc'] = $fk_soc_socpeopleLivraison;
+
+                            if ($commandeArray['socpeopleCommande']['company'] != $commandeArray['socpeopleLivraison']['company']) {
+                                $sCompany = $commandeArray['socpeopleLivraison'];
+                                $fk_soc_socpeopleLivraison = 0;
+
+                                // First, we check company does not already exists with email
+                                if (!empty($sCompany['email'])) {
+                                    $fk_soc_socpeopleLivraison = get_company_by_email($this->db, $sCompany['email'], $this->eCommerceSite->id);
+                                }
+
+                                // If not, search for the company name
+                                if ($fk_soc_socpeopleLivraison <= 0 && !empty($sCompany['company_name'])) {
+                                    $dBSociete = new Societe($this->db);
+                                    $result = $dBSociete->fetch(0, $sCompany['company_name']);
+                                    if ($result > 0) {
+                                        $fk_soc_socpeopleLivraison = $dBSociete->id;
+                                    } elseif ($result == -2) {
+                                        $error++;
+                                        $this->error='Several thirdparties with name "'.$sCompany['company_name'].'" were found in Dolibarr. Sync is not possible. Please rename one of it to avoid duplicate.';
+                                        $this->errors[]=$this->error;
+                                    }
+                                }
+
+                                // If not, create company
+                                if ($fk_soc_socpeopleLivraison <= 0 && !$error) {
+                                    // Create company
+                                    $dBSociete = new Societe($this->db);
+                                    $dBSociete->name = $sCompany['company_name'];
+                                    $dBSociete->client = 1;
+                                    $dBSociete->email = $sCompany['email'];
+//                                    $dBSociete->phone = $sCompany['phone'];
+//                                    $dBSociete->fax = $sCompany['fax'];
+//                                    $dBSociete->address = $sCompany['address'];
+//                                    $dBSociete->zip = $sCompany['zip'];
+//                                    $dBSociete->town = $sCompany['town'];
+                                    if (isset($sCompany['country_id'])) {
+                                        $dBSociete->country_id = $sCompany['country_id'];
+                                        $dBSociete->default_lang = $dBSociete->country_id != $mysoc->country_id && !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_DEFAULT_LANG_OTHER_COUNTRY) ? $conf->global->ECOMMERCENG_WOOCOMMERCE_DEFAULT_LANG_OTHER_COUNTRY : null;
+                                    }
+                                    $dBSociete->code_client = -1;           // Automatic code
+                                    $dBSociete->code_fournisseur = -1;      // Automatic code
+
+                                    $result = $dBSociete->create($this->user);
+                                    if ($result < 0) {
+                                        $error++;
+                                        $this->errors[] = $this->langs->trans('ECommerceSynchSocieteCreatedInOrderError', $this->eCommerceSite->name, $commandeArray['ref_client']) . ' ' . $dBSociete->error;
+                                        $this->errors = array_merge($this->errors, $dBSociete->errors);
+                                    } else {
+                                        $fk_soc_socpeopleLivraison = $dBSociete->id;
+
+                                        $dBSociete->update_note("Site: '{$this->eCommerceSite->name}' - Order: {$commandeArray['ref_client']}", '_private');
+                                    }
+                                }
+
+                                // Set new company to the shipping contact
+                                if ($fk_soc_socpeopleLivraison > 0) {
+                                    $commandeArray['socpeopleLivraison']['fk_soc'] = $fk_soc_socpeopleLivraison;
+                                }
+                            }
 
                             if (! $error)
                             {
@@ -3630,20 +3718,18 @@ class eCommerceSynchro
 	 */
 	function getContactIdFromInfos($contact)
 	{
-	    global $db;
-
 		$contactId = -1;
 
 		$sql  = 'SELECT rowid FROM '.MAIN_DB_PREFIX.'socpeople';
-		$sql .= ' WHERE lastname LIKE "'.$db->escape(trim($contact->lastname)).'"';
-		$sql .= ' AND firstname LIKE "'.$db->escape(trim($contact->firstname)).'"';
-		$sql .= ' AND address LIKE "'.$db->escape(trim($contact->address)).'"';
-		$sql .= ' AND town LIKE "'.$db->escape(trim($contact->town)).'"';
-        $sql .= ' AND zip LIKE "'.$db->escape(trim($contact->zip)).'"';
+		$sql .= ' WHERE lastname LIKE "'.$this->db->escape(trim($contact->lastname)).'"';
+		$sql .= ' AND firstname LIKE "'.$this->db->escape(trim($contact->firstname)).'"';
+		$sql .= ' AND address LIKE "'.$this->db->escape(trim($contact->address)).'"';
+		$sql .= ' AND town LIKE "'.$this->db->escape(trim($contact->town)).'"';
+        $sql .= ' AND zip LIKE "'.$this->db->escape(trim($contact->zip)).'"';
         if (isset($contact->country_id)) $sql .= ' AND fk_pays='.($contact->country_id>0?$contact->country_id:'NULL');
-        if (isset($contact->email)) $sql .= ' AND email LIKE "'.$db->escape(trim($contact->email)).'"';
-        if (isset($contact->phone_pro)) $sql .= ' AND phone LIKE "'.$db->escape(trim($contact->phone_pro)).'"';
-        if (isset($contact->fax)) $sql .= ' AND fax LIKE "'.$db->escape(trim($contact->fax)).'"';
+        if (isset($contact->email)) $sql .= ' AND email LIKE "'.$this->db->escape(trim($contact->email)).'"';
+        if (isset($contact->phone_pro)) $sql .= ' AND phone LIKE "'.$this->db->escape(trim($contact->phone_pro)).'"';
+        if (isset($contact->fax)) $sql .= ' AND fax LIKE "'.$this->db->escape(trim($contact->fax)).'"';
 		$sql .= ' AND fk_soc='.$contact->fk_soc;
 
 		$resql = $this->db->query($sql);
@@ -3669,7 +3755,5 @@ class eCommerceSynchro
 			return $contactId;
 		}
 	}
-
-
 }
 

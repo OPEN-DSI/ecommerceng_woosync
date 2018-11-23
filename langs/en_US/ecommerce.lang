@@ -237,3 +237,6 @@ ECommerceCreateRemoteCategoryLink   = Erreur de la création du lien de la caté
 
 ECommerceSyncheCommerceMotherCategoryCreateError=Erreur de création du lien de la catégorie racine pour la catégorie distante '%s' 'id:%s' sur le site '%s'.
 ECommerceNGUpdateElementDateMoreRecent=Inclus aussi les éléments dont la date de mise à jour est plus récente que celle de synchronisation
+ECommerceOnlyNew     = Only new
+
+ECommerceUpdateRemoteCompanyLinkWhenMergeCompany    = Erreur de mise à jour des lien de la société 'id:%s' lors de la fusion avec la société 'id:%s': %s

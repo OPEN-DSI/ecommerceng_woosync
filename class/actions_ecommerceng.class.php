@@ -220,10 +220,10 @@ class ActionsECommerceNg
                     foreach ($sites as $site) {
                         if (!$error) {
                             $eCommerceCommande = new eCommerceCommande($db);
-                            $eCommerceCommande->fetchByCommandeId($commande_id, $site->id);
+                            $eCommerceCommande->fetchByCommandeId($commande_id, $site->id); // TODO $eCommerceCommande->remote_societe_id a rajouter a la table
 
                             $eCommerceSociete = new eCommerceSociete($db);
-                            $eCommerceSociete->fetchByFkSociete($societe_id, $site->id);
+                            $eCommerceSociete->fetchByFkSociete($societe_id, $site->id); // TODO a qui donnée l'auteur du media si plusieur utilisateur lié a la societe
 
                             if ($eCommerceCommande->remote_id > 0 && $eCommerceSociete->remote_id > 0) {
                                 $eCommerceSynchro = new eCommerceSynchro($db, $site);
@@ -299,10 +299,10 @@ class ActionsECommerceNg
                     foreach ($sites as $site) {
                         if (!$error) {
                             $eCommerceCommande = new eCommerceCommande($db);
-                            $eCommerceCommande->fetchByCommandeId($commande_id, $site->id);
+                            $eCommerceCommande->fetchByCommandeId($commande_id, $site->id); // TODO $eCommerceCommande->remote_societe_id a rajouter a la table
 
                             $eCommerceSociete = new eCommerceSociete($db);
-                            $eCommerceSociete->fetchByFkSociete($societe_id, $site->id);
+                            $eCommerceSociete->fetchByFkSociete($societe_id, $site->id); // TODO a qui donnée l'auteur du media si plusieur utilisateur lié a la societe
 
                             if ($eCommerceCommande->remote_id > 0 && $eCommerceSociete->remote_id > 0) {
                                 $eCommerceSynchro = new eCommerceSynchro($db, $site);

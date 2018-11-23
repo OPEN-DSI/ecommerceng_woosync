@@ -125,44 +125,50 @@ class InterfaceECommerceng
         {
             $this->db->begin();
 
+            if ($object->context['merge'] == 1) {
+                $merge_from_id = $object->context['mergefromid'];
+
+                // Update all company link
+                $sql = "UPDATE " . MAIN_DB_PREFIX . "ecommerce_societe SET fk_societe = " . $object->id . " WHERE fk_societe = " . $merge_from_id;
+
+                $resql = $this->db->query($sql);
+                if (!$resql) {
+                    $error++;
+                    $error_msg = $langs->trans('ECommerceUpdateRemoteCompanyLinkWhenMergeCompany', $merge_from_id, $object->id, $this->db->lasterror());
+                    $this->errors[] = "Error " . $this->db->lasterror();
+                    dol_syslog(__METHOD__ . ' SQL: ' . $sql . '; Error:' . $error_msg, LOG_ERR);
+                }
+            } else {
 			$eCommerceSite = new eCommerceSite($this->db);
 			$sites = $eCommerceSite->listSites('object');
 
-			foreach($sites as $site)
-			{
-		        if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id)
-                {
+                foreach ($sites as $site) {
+                    if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id) {
                     dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
                     continue;
                 }
 
-			    if (! $error)
-			    {
+                    if (!$error) {
 			        if (empty($site->parameters['realtime_dtoe']['thridparty'])) {
                         dol_syslog("Triggers disabled from the config of the module");
                         continue;
                     }
-
     				$eCommerceSociete = new eCommerceSociete($this->db);
-    				$eCommerceSociete->fetchByFkSociete($object->id, $site->id);
+                        $eCommerceSociete->fetchByFkSociete($object->id, $site->id); // TODO ne met a jour que le premier lié
 
-    				if ($eCommerceSociete->remote_id > 0)
-    				{
+                        if ($eCommerceSociete->remote_id > 0) {
 		                $eCommerceSynchro = new eCommerceSynchro($this->db, $site);
         			    dol_syslog("Trigger ".$action." try to connect to eCommerce site ".$site->name);
         			    $eCommerceSynchro->connect();
-        			    if (count($eCommerceSynchro->errors))
-        			    {
+                            if (count($eCommerceSynchro->errors)) {
         			        $error++;
         			        setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
         			    }
 
-        			    if (! $error)
-        			    {
+                            if (!$error) {
         				    $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteSociete($eCommerceSociete->remote_id, $object);
                             $now = dol_now();
-        				    if (! $result)
-        				    {
+                                if (!$result) {
         				        $error++;
         				        $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
         				        $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
@@ -180,16 +186,13 @@ class InterfaceECommerceng
                                 dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
                             }
                         }
-    				}
-    				else
-    				{
+                        } else {
     				    // Get current categories
     				    require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
     				    $c = new Categorie($this->db);
     				    $catids = $c->containing($object->id, Categorie::TYPE_CUSTOMER, 'id');
 
-    				    if (in_array($site->fk_cat_societe, $catids))
-    				    {
+                            if (in_array($site->fk_cat_societe, $catids)) {
     				        dol_syslog("Societe with id ".$object->id." is not linked to an ecommerce record but has category flag to push on eCommerce. So we push it");
     				        // TODO
     				        /*$eCommerceSynchro = new eCommerceSynchro($this->db, $site);
@@ -205,14 +208,13 @@ class InterfaceECommerceng
     				        {
     				            $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteProduct($eCommerceProduct->remote_id);
     				        }*/
-    				    }
-    				    else
-    				    {
+                            } else {
     				        dol_syslog("Societe with id ".$object->id." is not linked to an ecommerce record and does not has category flag to push on eCommerce.");
     				    }
     				}
 			    }
 			}
+            }
 
 			if ($error)
 			{

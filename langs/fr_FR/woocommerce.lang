@@ -23,8 +23,8 @@ ECommerceWoocommerceUpdateRemoteProductSendImage=Erreur de l'envoi d'une image p
 ECommerceWoocommerceUpdateRemoteProductVariation=Erreur de mise à jour de la variation 'id:%s' du produit distant 'id:%s' sur le site '%s': %s
 ECommerceWoocommerceUpdateRemoteSociete=Erreur de mise à jour de la société distante 'id:%s' sur le site '%s': %s
 ECommerceWoocommerceUpdateRemoteSocpeople=Erreur de mise à jour des contacts/adresses de la société distante 'id:%s' sur le site '%s': %s
-ECommerceWoocommerceUpdateRemoteStockProduct=Erreur de mise à jour des stocks de la variation 'id:%s' du produit distant 'id:%s' sur le site '%s': %s
-ECommerceWoocommerceUpdateRemoteStockProductVariation=Erreur de mise à jour des stocks du produit distant 'id:%s' sur le site '%s': %s
+ECommerceWoocommerceUpdateRemoteStockProduct=Erreur de mise à jour des stocks (%s) du produit distant 'id:%s' sur le site '%s':
+ECommerceWoocommerceUpdateRemoteStockProductVariation=Erreur de mise à jour des stocks (%s) de la variation 'id:%s' du produit distant 'id:%s' sur le site '%s':
 ECommerceWoocommerceGetAllWoocommerceTaxClass=Erreur de récupération des données des classes de taxes sur le site '%s': %s
 ECommerceWoocommerceGetWoocommerceTaxes=Erreur de récupération des données des taxes sur le site '%s': %s
 ECommerceWoocommerceCreateRemoteProductSendImage=Erreur de l'envoi d'une image pour le produit 'ref:%s' dans les média de Wordpress sur le site '%s': %s
@@ -71,3 +71,23 @@ ECommerceWoocommerceCreateRemoteBatchProduct                = Erreur lors de cre
 ECommerceWoocommerceUpdateRemoteBatchProduct                = Erreur lors de la mise à jour du produit (sku : %s) sur le site '%s': %s
 
 ECommerceWoocommerceErrorBaseTypeOfProductWithSiteParameter = Erreur de base de prix (HT/TTC) pour la saisie du prix du produit '%s', il doit être en '%s' pour le site '%s'.
+
+ECommerceWoocommerceProductSyncPrice               = Synchronisation des prix de vente
+ECommerceWoocommerceProductSyncPriceDescription    = Ce paramètre détermine quel type de prix dans WooCommerce doit être synchronisé avec le prix de vente dans Dolibarr
+ECommerceWoocommerceRegularPrice                   = Prix régulier
+ECommerceWoocommerceSellingPrice                   = Prix de vente
+
+ECommercengWoocommerceRegularPrice      = Prix régulier pour le site [%s]
+ECommercengWoocommerceSalePrice         = Prix promo pour le site [%s]
+ECommercengWoocommerceDateOnSaleFrom    = Date de début de la promo pour le site [%s]
+ECommercengWoocommerceDateOnSaleTo      = Date de fin de la promo pour le site [%s]
+
+ECommercengWoocommerceCompanyRole               = Role pour le site "%s"
+ECommercengWoocommerceCompanyRole_administrator = Administrateur
+ECommercengWoocommerceCompanyRole_author        = Auteur
+ECommercengWoocommerceCompanyRole_contributor   = Contributeur
+ECommercengWoocommerceCompanyRole_customer      = Client
+ECommercengWoocommerceCompanyRole_editor        = Éditeur
+ECommercengWoocommerceCompanyRole_subscriber    = Abonné
+ECommercengWoocommerceCompanyRole_shop_manager  = Gestionnaire boutique
+ECommercengWoocommerceCompanyRole_              = Pas de rôle sur ce site

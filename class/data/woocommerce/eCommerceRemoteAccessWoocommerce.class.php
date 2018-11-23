@@ -259,18 +259,16 @@ class eCommerceRemoteAccessWoocommerce
         $from_date = isset($fromDate) && !empty($fromDate) ? new DateTime(dol_print_date($fromDate, 'standard')) : null;
         $to_date = isset($toDate) && !empty($toDate) ? new DateTime(dol_print_date($toDate, 'standard')) : null;
 
-        $filter = ['limit' => $per_page];
-        // Not work with customers
-        //if (isset($fromDate) && !empty($fromDate)) $filter['updated_at_min'] = dol_print_date($fromDate - (24 * 60 * 60), 'dayrfc');
-        //if (isset($toDate) && !empty($toDate)) $filter['updated_at_max'] = dol_print_date($toDate + (24 * 60 * 60), 'dayrfc');
-
+        $no_more = false;
         while (true) {
             try {
-                $page = $this->clientOld->get('customers',
+                $page = $this->client->get('customers',
                     [
                         'page' => $idxPage++,
-                        'filter' => $filter,
-                        'fields' => 'id,created_at,last_update'
+                        'per_page' => $per_page,
+                        'orderby' => 'registered_date',
+                        'order' => 'desc',
+                        'role' => 'all',
                     ]
                 );
             } catch (HttpClientException $fault) {
@@ -281,12 +279,11 @@ class eCommerceRemoteAccessWoocommerce
                 return false;
             }
 
-            if (!isset($page->customers) || ($nbCustomers = count($page->customers)) == 0) break;
-            $page = $page->customers;
+            if (!is_array($page) || ($nbCustomers = count($page)) == 0) break;
 
             foreach ($page as $customer) {
                 $id = $customer->id;
-                $date_customer = $this->getDateTimeFromGMTDateTime(!empty($customer->updated_at) ? $customer->updated_at : $customer->created_at);
+                $date_customer = $this->getDateTimeFromGMTDateTime(/*!empty($customer->date_modified_gmt) ? $customer->date_modified_gmt : */$customer->date_created_gmt);
                 $update_customer = false;
                 if ($from_date == $date_customer) {
                     if ($this->eCommerceSociete->fetchByRemoteId($id, $this->site->id) > 0) {
@@ -304,8 +301,14 @@ class eCommerceRemoteAccessWoocommerce
                 if ($update_customer || (!isset($from_date) || $from_date < $date_customer) && (!isset($to_date) || $date_customer <= $to_date)) {
                     $result[$id] = $id;
                     $last_update[$id] = $date_customer->format('Y-m-d H:i:s');
+                } else {
+                    $no_more = true;
                 }
+
+                if ($no_more) break;
             }
+
+            if ($no_more) break;
         }
 
         //important - order by last update
@@ -350,7 +353,7 @@ class eCommerceRemoteAccessWoocommerce
                     [
                         'page' => $idxPage++,
                         'filter' => $filter,
-                        'fields' => 'id,created_at,updated_at,variations'
+                        'fields' => 'id,created_at,updated_at,variations',
                     ]
                 );
             } catch (HttpClientException $fault) {
@@ -541,7 +544,7 @@ class eCommerceRemoteAccessWoocommerce
     public function convertRemoteObjectIntoDolibarrSociete($remoteObject, $toNb=0)
     {
         dol_syslog(__METHOD__ . ": Get " . count($remoteObject) . " remote companies ID: " . implode(', ', $remoteObject) . " for site ID {$this->site->id}", LOG_DEBUG);
-        global $conf, $langs;
+        global $conf, $langs, $mysoc;
 
         $companies = [];
         $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
@@ -554,6 +557,9 @@ class eCommerceRemoteAccessWoocommerce
                     [
                         'per_page' => $nb_max_by_request,
                         'include' => implode(',', $request),
+                        'orderby' => 'registered_date',
+                        'order' => 'desc',
+                        'role' => 'all',
                     ]
                 );
             } catch (HttpClientException $fault) {
@@ -568,22 +574,43 @@ class eCommerceRemoteAccessWoocommerce
                 foreach ($results as $company) {
                     $last_update = $this->getDateTimeFromGMTDateTime(!empty($company->date_modified_gmt) ? $company->date_modified_gmt : $company->date_created_gmt);
 
-                    // Company
-                    if (!empty($company->billing->company)) {
-                        $companies[] = [
+                    // Global infos
+                    $item = [
                             'remote_id' => $company->id,
                             'last_update' => $last_update->format('Y-m-d H:i:s'),
-                            'type' => 'company',
-                            'name' => $company->billing->company,
                             'name_alias' => null,
-                            'email' => !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_GET_EMAIL_ON_COMPANY) ? $company->email : null,
                             'email_key' => $company->email,
                             'client' => 1,
                             'vatnumber' => null,
                             'note_private' => "Site: '{$this->site->name}' - ID: {$company->id}",
                             'country_id' => getCountry($company->billing->country, 3),
+                        'default_lang' => $mysoc->default_lang,
                             'remote_datas' => $company,
+                        'extrafields' => [
+                            "ecommerceng_wc_role_{$this->site->id}_{$conf->entity}" => $langs->trans('ECommercengWoocommerceCompanyRole_' . $company->role),
+                        ],
                         ];
+
+                    // Default language
+                    if ($item['country_id'] != $mysoc->country_id && !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_DEFAULT_LANG_OTHER_COUNTRY)) {
+                        $item['default_lang'] = $conf->global->ECOMMERCENG_WOOCOMMERCE_DEFAULT_LANG_OTHER_COUNTRY;
+                    }
+
+                    // Meta datas
+                    if (!empty($conf->global->ECOMMERCENG_WOOCOMMERCE_VAT_NUMBER_META_NAME)) {
+                        foreach ($company->meta_data as $data) {
+                            if ($data->key == $conf->global->ECOMMERCENG_WOOCOMMERCE_VAT_NUMBER_META_NAME) {
+                                $item['vatnumber'] = $data->value;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Company
+                    if (!empty($company->billing->company)) {
+                        $item['type'] = 'company';
+                        $item['name'] = $company->billing->company;
+                        $item['email'] = !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_GET_EMAIL_ON_COMPANY) ? $company->email : null;
                     }
                     // User
                     else {
@@ -592,25 +619,16 @@ class eCommerceRemoteAccessWoocommerce
                         if (!empty($firstname) && !empty($lastname)) {
                             $name = dolGetFirstLastname($firstname, $lastname);
                         } elseif (!empty($firstname)) {
-                            $name = dolGetFirstLastname($firstname, $langs->trans("ECommercengWoocommerceLastnameNotInformed"));
+                            $name = dolGetFirstLastname($firstname, $langs->transnoentitiesnoconv("ECommercengWoocommerceLastnameNotInformed"));
                         } else {
-                            $name = $langs->trans('ECommercengWoocommerceWithoutFirstnameLastname');
+                            $name = $langs->transnoentitiesnoconv('ECommercengWoocommerceWithoutFirstnameLastname');
                         }
-                        $companies[] = [
-                            'remote_id' => $company->id,
-                            'last_update' => $last_update->format('Y-m-d H:i:s'),
-                            'type' => 'user',
-                            'name' => $name,
-                            'name_alias' => null,
-                            'email' => $company->email,
-                            'email_key' => $company->email,
-                            'client' => 1,
-                            'vatnumber' => null,
-                            'note_private' => "Site: '{$this->site->name}' - ID: {$company->id}",
-                            'country_id' => getCountry($company->billing->country, 3),
-                            'remote_datas' => $company,
-                        ];
+                        $item['type'] = 'user';
+                        $item['name'] = $name;
+                        $item['email'] = $company->email;
                     }
+
+                    $companies[] = $item;
                 }
             }
         }
@@ -645,14 +663,14 @@ class eCommerceRemoteAccessWoocommerce
         $bContact = $remoteCompany->billing;
         if (!empty($bContact->address_1) || !empty($bContact->address_2) || !empty($bContact->postcode) ||
             !empty($bContact->city) || !empty($bContact->country) ||
-            !empty($bContact->email) || !empty($bContact->phone)
+            !empty($bContact->email) || !empty($bContact->company) || !empty($bContact->phone)
         ) {
             $firstname = !empty($bContact->first_name) ? $bContact->first_name : $remoteCompany->first_name;
             $lastname = !empty($bContact->last_name) ? $bContact->last_name : $remoteCompany->last_name;
             if (!empty($firstname) && empty($lastname)) {
-                $lastname = $langs->trans("ECommercengWoocommerceLastnameNotInformed");
+                $lastname = $langs->transnoentitiesnoconv("ECommercengWoocommerceLastnameNotInformed");
             } elseif (empty($firstname) && empty($lastname)) {
-                $lastname = $langs->trans('ECommercengWoocommerceWithoutFirstnameLastname');
+                $lastname = $langs->transnoentitiesnoconv('ECommercengWoocommerceWithoutFirstnameLastname');
             }
             $contacts[] = [
                 'remote_id' => null,
@@ -682,9 +700,9 @@ class eCommerceRemoteAccessWoocommerce
                 $firstname = !empty($sContact->first_name) ? $sContact->first_name : $remoteCompany->first_name;
                 $lastname = !empty($sContact->last_name) ? $sContact->last_name : $remoteCompany->last_name;
                 if (!empty($firstname) && empty($lastname)) {
-                    $lastname = $langs->trans("ECommercengWoocommerceLastnameNotInformed");
+                    $lastname = $langs->transnoentitiesnoconv("ECommercengWoocommerceLastnameNotInformed");
                 } elseif (empty($firstname) && empty($lastname)) {
-                    $lastname = $langs->trans('ECommercengWoocommerceWithoutFirstnameLastname');
+                    $lastname = $langs->transnoentitiesnoconv('ECommercengWoocommerceWithoutFirstnameLastname');
                 }
                 $contacts[] = [
                     'remote_id' => null,
@@ -725,6 +743,7 @@ class eCommerceRemoteAccessWoocommerce
         $products_variation = [];
         $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
 
+        $productSynchPrice = isset($this->site->parameters['product_synch_price']) ? $this->site->parameters['product_synch_price'] : 'regular';
         $productImageSynchDirection = isset($this->site->parameters['product_synch_direction']['image']) ? $this->site->parameters['product_synch_direction']['image'] : '';
         $productRefSynchDirection = isset($this->site->parameters['product_synch_direction']['ref']) ? $this->site->parameters['product_synch_direction']['ref'] : '';
         $productDescriptionSynchDirection = isset($this->site->parameters['product_synch_direction']['description']) ? $this->site->parameters['product_synch_direction']['description'] : '';
@@ -789,6 +808,12 @@ class eCommerceRemoteAccessWoocommerce
                     $remote_id = $product->id;  // id product
                     $last_update = $last_update_product->format('Y-m-d H:i:s');
 
+                    $price = $productSynchPrice == 'selling' ? $product->price : $product->regular_price;
+                    $date_on_sale_from = $this->getDateTimeFromGMTDateTime($product->date_on_sale_from_gmt);
+                    $date_on_sale_from = isset($date_on_sale_from) ? $date_on_sale_from->getTimestamp() : '';
+                    $date_on_sale_to = $this->getDateTimeFromGMTDateTime($product->date_on_sale_to_gmt);
+                    $date_on_sale_to = isset($date_on_sale_to) ? $date_on_sale_to->getTimestamp() : '';
+
                     // Produit de base
                     if (in_array($remote_id, $remoteObject, true)) {
                         $products_last_update[$remote_id] = $last_update;
@@ -797,29 +822,26 @@ class eCommerceRemoteAccessWoocommerce
                             'remote_id' => $remote_id,
                             'last_update' => $last_update,
                             'fk_product_type' => ($product->virtual ? 1 : 0), // 0 (product) or 1 (service)
-                            //'ref' => $product->sku,
                             'label' => $product->name,
-                            //'weight' => $product->weight,
-                            'price' => $product->price,
+                            'price' => $price,
                             'envente' => empty($product->variations) ? 1 : 0,
                             'enachat' => empty($product->variations) ? 1 : 0,
                             'finished' => 1,    // 1 = manufactured, 0 = raw material
                             'canvas' => $canvas,
                             'categories' => $categories,
                             'tax_rate' => $this->getTaxRate($product->tax_class, $product->tax_status),
-                            'price_min' => $product->price,
+                            'price_min' => '',
                             'fk_country' => '',
                             'url' => $product->permalink,
                             // Stock
                             'stock_qty' => $product->stock_quantity,
                             'is_in_stock' => $product->in_stock,   // not used
                             'extrafields' => [
-                                //"ecommerceng_wc_status_{$this->site->id}_{$conf->entity}" => $product->status,
-                                //"ecommerceng_description_{$conf->entity}" => $product->description,
-                                //"ecommerceng_short_description_{$conf->entity}" => $product->short_description,
-                                //"ecommerceng_tax_class_{$this->site->id}_{$conf->entity}" => $this->getTaxClass($product->tax_class, $product->tax_status),
+                                "ecommerceng_wc_regular_price_{$this->site->id}_{$conf->entity}" => $product->regular_price,
+                                "ecommerceng_wc_sale_price_{$this->site->id}_{$conf->entity}" => $product->sale_price,
+                                "ecommerceng_wc_date_on_sale_from_{$this->site->id}_{$conf->entity}" => $date_on_sale_from,
+                                "ecommerceng_wc_date_on_sale_to_{$this->site->id}_{$conf->entity}" => $date_on_sale_to,
                             ],
-                            //'images' => $images,
                         ];
 
                         if ($productImageSynchDirection == 'etod' || $productImageSynchDirection == 'all') {
@@ -905,6 +927,12 @@ class eCommerceRemoteAccessWoocommerce
                                 $remote_id = $product->id . '|' . $variation->id;  // id product | id variation
                                 $last_update = $last_update_product->format('Y-m-d H:i:s'); //$last_update_product_variation->format('Y-m-d H:i:s');
 
+                                $price = $productSynchPrice == 'selling' ? $variation->price : $variation->regular_price;
+                                $date_on_sale_from = $this->getDateTimeFromGMTDateTime($variation->date_on_sale_from_gmt);
+                                $date_on_sale_from = isset($date_on_sale_from) ? $date_on_sale_from->getTimestamp() : '';
+                                $date_on_sale_to = $this->getDateTimeFromGMTDateTime($variation->date_on_sale_to_gmt);
+                                $date_on_sale_to = isset($date_on_sale_to) ? $date_on_sale_to->getTimestamp() : '';
+
                                 // Variation
                                 $products_last_update[$remote_id] = $last_update;
                                 $products_variation[$remote_id] = 1;
@@ -912,27 +940,25 @@ class eCommerceRemoteAccessWoocommerce
                                     'remote_id' => $remote_id,
                                     'last_update' => $last_update,
                                     'fk_product_type' => ($variation->virtual ? 1 : 0), // 0 (product) or 1 (service)
-                                    //'ref' => $variation->sku,
                                     'label' => $product->name . $attributesLabel,
-                                    //'weight' => $variation->weight,
-                                    'price' => $variation->price,
+                                    'price' => $price,
                                     'envente' => 1,
                                     'enachat' => 1,
                                     'finished' => 1,    // 1 = manufactured, 0 = raw material
                                     'canvas' => $canvas,
                                     'categories' => $categories,
-                                    //'tax_rate' => $this->getTaxRate($variation->tax_class, $variation->tax_status),
-                                    'price_min' => $variation->price,
+                                    'price_min' => '',
                                     'fk_country' => '',
                                     'url' => $variation->permalink,
                                     // Stock
                                     'stock_qty' => $variation->stock_quantity,
                                     'is_in_stock' => $variation->in_stock,   // not used
                                     'extrafields' => [
-                                        //"ecommerceng_description_{$conf->entity}" => $variation->description,
-                                        //"ecommerceng_tax_class_{$this->site->id}_{$conf->entity}" => $this->getTaxClass($variation->tax_class, $variation->tax_status),
+                                        "ecommerceng_wc_regular_price_{$this->site->id}_{$conf->entity}" => $variation->regular_price,
+                                        "ecommerceng_wc_sale_price_{$this->site->id}_{$conf->entity}" => $variation->sale_price,
+                                        "ecommerceng_wc_date_on_sale_from_{$this->site->id}_{$conf->entity}" => $date_on_sale_from,
+                                        "ecommerceng_wc_date_on_sale_to_{$this->site->id}_{$conf->entity}" => $date_on_sale_to,
                                     ],
-                                    //'images' => $images,
                                 ];
 
                                 if ($productImageSynchDirection == 'etod' || $productImageSynchDirection == 'all') {
@@ -1074,14 +1100,15 @@ class eCommerceRemoteAccessWoocommerce
                     $firstname = $bContact->first_name;
                     $lastname = $bContact->last_name;
                     if (!empty($firstname) && empty($lastname)) {
-                        $lastname = $langs->trans("ECommercengWoocommerceLastnameNotInformed");
+                        $lastname = $langs->transnoentitiesnoconv("ECommercengWoocommerceLastnameNotInformed");
                     } elseif (empty($firstname) && empty($lastname)) {
-                        $lastname = $langs->trans('ECommercengWoocommerceWithoutFirstnameLastname');
+                        $lastname = $langs->transnoentitiesnoconv('ECommercengWoocommerceWithoutFirstnameLastname');
                     }
                     $contactBilling = [
                         'remote_id' => "",
                         'type' => 1, //eCommerceSocpeople::CONTACT_TYPE_ORDER,
                         'last_update' => $last_update->format('Y-m-d H:i:s'),
+                        'company' => $bContact->company,
                         'firstname' => $firstname,
                         'lastname' => $lastname,
                         'address' => $bContact->address_1 . (!empty($bContact->address_1) && !empty($bContact->address_2) ? "\n" : "") . $bContact->address_2,
@@ -1111,14 +1138,15 @@ class eCommerceRemoteAccessWoocommerce
                             $firstname = $sContact->first_name;
                             $lastname = $sContact->last_name;
                             if (!empty($firstname) && empty($lastname)) {
-                                $lastname = $langs->trans("ECommercengWoocommerceLastnameNotInformed");
+                                $lastname = $langs->transnoentitiesnoconv("ECommercengWoocommerceLastnameNotInformed");
                             } elseif (empty($firstname) && empty($lastname)) {
-                                $lastname = $langs->trans('ECommercengWoocommerceWithoutFirstnameLastname');
+                                $lastname = $langs->transnoentitiesnoconv('ECommercengWoocommerceWithoutFirstnameLastname');
                             }
                             $contactShipping = [
                                 'remote_id' => "",
                                 'type' => 1, //eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
                                 'last_update' => $last_update->format('Y-m-d H:i:s'),
+                                'company' => $sContact->company,
                                 'firstname' => $firstname,
                                 'lastname' => $lastname,
                                 'address' => $sContact->address_1 . (!empty($sContact->address_1) && !empty($sContact->address_2) ? "\n" : "") . $sContact->address_2,
@@ -1129,6 +1157,19 @@ class eCommerceRemoteAccessWoocommerce
                                 'phone' => null,
                                 'fax' => null,
                             ];
+
+                            if (empty($sContact->company)) {
+                                if (!empty($firstname) && !empty($lastname)) {
+                                    $name = dolGetFirstLastname($firstname, $lastname);
+                                } elseif (!empty($firstname)) {
+                                    $name = dolGetFirstLastname($firstname, $langs->transnoentitiesnoconv("ECommercengWoocommerceLastnameNotInformed"));
+                                } else {
+                                    $name = $langs->transnoentitiesnoconv('ECommercengWoocommerceWithoutFirstnameLastname');
+                                }
+                                $contactShipping['company_name'] = $name;
+                            } else {
+                                $contactShipping['company_name'] = $sContact->company;
+                            }
                         } else {
                             $contactShipping = $contactBilling;
                             $contactShipping['type'] = 1; //eCommerceSocpeople::CONTACT_TYPE_DELIVERY;
@@ -1416,6 +1457,7 @@ class eCommerceRemoteAccessWoocommerce
             $remote_product_variation_id = $idsProduct[2];
         }
 
+        $productSynchPrice = isset($this->site->parameters['product_synch_price']) ? $this->site->parameters['product_synch_price'] : 'regular';
         $productImageSynchDirection = isset($this->site->parameters['product_synch_direction']['image']) ? $this->site->parameters['product_synch_direction']['image'] : '';
         $productRefSynchDirection = isset($this->site->parameters['product_synch_direction']['ref']) ? $this->site->parameters['product_synch_direction']['ref'] : '';
         $productDescriptionSynchDirection = isset($this->site->parameters['product_synch_direction']['description']) ? $this->site->parameters['product_synch_direction']['description'] : '';
@@ -1470,6 +1512,7 @@ class eCommerceRemoteAccessWoocommerce
             dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_ERR);
             return false;
         }
+        $regular_price = $object->array_options["options_ecommerceng_wc_regular_price_{$this->site->id}_{$conf->entity}"];
 
         // images
         $images = [];
@@ -1608,7 +1651,7 @@ class eCommerceRemoteAccessWoocommerce
             $variationData = [
                 //'description' => nl2br($object->array_options["options_ecommerceng_description_{$conf->entity}"]),                    // string       Variation description.
                 //'sku' => $object->ref,                                  // string       Unique identifier.
-                'regular_price' => $price,                              // string       Variation regular price.
+                'regular_price' => $productSynchPrice == 'regular' ? $price : $regular_price,                              // string       Variation regular price.
                 //'sale_price' => '',                                     // string       Variation sale price.
                 //'date_on_sale_from' => '',                              // date-time    Start date of sale price, in the site’s timezone.
                 //'date_on_sale_from_gmt' => '',                          // date-time    Start date of sale price, as GMT.
@@ -1780,7 +1823,7 @@ class eCommerceRemoteAccessWoocommerce
                 //'description' => nl2br($object->array_options["options_ecommerceng_description_{$conf->entity}"]),                    // string		Product description.
                 //'short_description' => nl2br($object->array_options["options_ecommerceng_short_description_{$conf->entity}"]),                                      // string		Product short description.
                 //'sku' => $object->ref,                            // string		Unique identifier.
-                'regular_price' => $price,                          // string		Product regular price.
+                'regular_price' => $productSynchPrice == 'regular' ? $price : $regular_price,                          // string		Product regular price.
                 //'sale_price'            => '',                                      // string		Product sale price.
                 //'date_on_sale_from'     => '',                                      // date-time	Start date of sale price, in the site’s timezone.
                 //'date_on_sale_from_gmt' => '',                                      // date-time	Start date of sale price, as GMT.
@@ -1870,6 +1913,10 @@ class eCommerceRemoteAccessWoocommerce
             }
         }
 
+        // Update extrafields infos
+        $object->array_options["options_ecommerceng_wc_regular_price_{$this->site->id}_{$conf->entity}"] = $productSynchPrice == 'regular' ? $price : $regular_price;
+        if (empty($conf->global->MAIN_EXTRAFIELDS_DISABLED)) $object->insertExtraFields();
+
         dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
         return true;
     }
@@ -1887,11 +1934,14 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Update stock of the remote product ID $remote_id for MouvementStock ID {$object->id}, new qty: {$object->qty_after} for site ID {$this->site->id}", LOG_DEBUG);
         global $langs, $user;
 
+        $new_stocks = ceil($object->qty_after);
+        $stocks_label = $object->qty_after . ' -> ' . $new_stocks;
+
         if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsProduct) == 1) {
             // Variations
             $variationData = [
                 //'manage_stock'      => '',                      // boolean      Stock management at variation level. Default is false.
-                'stock_quantity' => $object->qty_after,         // integer      Stock quantity.
+                'stock_quantity' => $new_stocks,         // integer      Stock quantity.
                 'in_stock' => $object->qty_after > 0,           // boolean      Controls whether or not the variation is listed as “in stock” or “out of stock” on the frontend. Default is true.
                 //'backorders'        => '',                      // string       If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
             ];
@@ -1899,16 +1949,16 @@ class eCommerceRemoteAccessWoocommerce
             try {
                 $result = $this->client->put("products/$idsProduct[1]/variations/$idsProduct[2]", $variationData);
             } catch (HttpClientException $fault) {
-                $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProductVariation', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProductVariation', $stocks_label, $idsProduct[2], $idsProduct[1], $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage();
                 dol_syslog(__METHOD__ .
-                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteStockProductVariation', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
-                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteStockProductVariation', $stocks_label, $idsProduct[2], $idsProduct[1], $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage()) .
+                                        ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse(), LOG_ERR);
                 return false;
             }
         } else {
             $productData = [
                 //'manage_stock'      => false,                   // boolean      Stock management at product level. Default is false.
-                'stock_quantity' => $object->qty_after,         // integer      Stock quantity.
+                'stock_quantity' => $new_stocks,         // integer      Stock quantity.
                 'in_stock' => $object->qty_after > 0,           // boolean      Controls whether or not the product is listed as “in stock” or “out of stock” on the frontend. Default is true.
                 //'backorders'        => '',                      // string       If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
             ];
@@ -1916,10 +1966,10 @@ class eCommerceRemoteAccessWoocommerce
             try {
                 $result = $this->client->put("products/$remote_id", $productData);
             } catch (HttpClientException $fault) {
-                $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+                $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProduct', $stocks_label, $idsProduct[1], $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage();
                 dol_syslog(__METHOD__ .
-                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteStockProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
-                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteStockProduct', $stocks_label, $idsProduct[1], $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage()) .
+                                                            ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse(), LOG_ERR);
                 return false;
             }
         }
@@ -2366,6 +2416,8 @@ class eCommerceRemoteAccessWoocommerce
                 }
             }
 
+            $productSynchPrice = isset($this->site->parameters['product_synch_price']) ? $this->site->parameters['product_synch_price'] : 'regular';
+            $regular_price = $object->array_options["options_ecommerceng_wc_regular_price_{$this->site->id}_{$conf->entity}"];
             $status = $object->array_options["options_ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"];
 
             // Product
@@ -2379,7 +2431,7 @@ class eCommerceRemoteAccessWoocommerce
                 //'description' => $object->array_options["options_ecommerceng_description_{$conf->entity}"],                    // string		Product description.
                 //'short_description' => $object->array_options["options_ecommerceng_short_description_{$conf->entity}"],                                      // string		Product short description.
                 //'sku' => $object->ref,                            // string		Unique identifier.
-                'regular_price' => $price,                          // string		Product regular price.
+                'regular_price' => $productSynchPrice == 'regular' ? $price : $regular_price,                          // string		Product regular price.
                 //'sale_price'            => '',                                      // string		Product sale price.
                 //'date_on_sale_from'     => '',                                      // date-time	Start date of sale price, in the site’s timezone.
                 //'date_on_sale_from_gmt' => '',                                      // date-time	Start date of sale price, as GMT.
@@ -2578,6 +2630,7 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Create batch products from Dolibarr products IDs: '{$ids}' for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
+        $productSynchPrice = isset($this->site->parameters['product_synch_price']) ? $this->site->parameters['product_synch_price'] : 'regular';
         $productImageSynchDirection = isset($this->site->parameters['product_synch_direction']['image']) ? $this->site->parameters['product_synch_direction']['image'] : '';
         $productRefSynchDirection = isset($this->site->parameters['product_synch_direction']['ref']) ? $this->site->parameters['product_synch_direction']['ref'] : '';
         $productDescriptionSynchDirection = isset($this->site->parameters['product_synch_direction']['description']) ? $this->site->parameters['product_synch_direction']['description'] : '';
@@ -2830,6 +2883,10 @@ class eCommerceRemoteAccessWoocommerce
 
                 $status = $product_static->array_options["options_ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"];
                 $description = $product_static->array_options["options_ecommerceng_description_{$conf->entity}"];
+                $regular_price = $product_static->array_options["options_ecommerceng_wc_regular_price_{$this->site->id}_{$conf->entity}"];
+                $sale_price = $product_static->array_options["options_ecommerceng_wc_sale_price_{$this->site->id}_{$conf->entity}"];
+                $date_on_sale_from = $product_static->array_options["options_ecommerceng_wc_date_on_sale_from_{$this->site->id}_{$conf->entity}"];
+                $date_on_sale_to = $product_static->array_options["options_ecommerceng_wc_date_on_sale_to_{$this->site->id}_{$conf->entity}"];
 
                 // Product
                 $productData = [
@@ -2842,8 +2899,8 @@ class eCommerceRemoteAccessWoocommerce
                     //'description' => (!empty($description) ? $description : $product_static->description),                    // string		Product description.
                     //'short_description' => $product_static->array_options["options_ecommerceng_short_description_{$conf->entity}"],                                      // string		Product short description.
                     //'sku' => $sku,                            // string		Unique identifier.
-                    'regular_price' => $price,                          // string		Product regular price.
-                    //'sale_price'            => '',                                      // string		Product sale price.
+                    'regular_price' => $productSynchPrice == 'regular' ? $price : $regular_price,                          // string		Product regular price.
+                    //'sale_price' => $productSynchPrice == 'selling' ? $price : $sale_price,                                      // string		Product sale price.
                     //'date_on_sale_from'     => '',                                      // date-time	Start date of sale price, in the site’s timezone.
                     //'date_on_sale_from_gmt' => '',                                      // date-time	Start date of sale price, as GMT.
                     //'date_on_sale_to'       => '',                                      // date-time	End date of sale price, in the site’s timezone.

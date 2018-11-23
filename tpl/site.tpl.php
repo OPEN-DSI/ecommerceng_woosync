@@ -159,7 +159,7 @@ if (is_object($site))
     $var=!$var;
     ?>
 		<tr <?php print $bc[$var] ?>>
-			<td><?php print $langs->trans('ECommerceSociete') ?></td>
+			<td><?php print $langs->trans('ECommerceSociete') ?> (<?php print $langs->trans('ECommerceOnlyNew') ?>)</td>
 			<td><?php print $nbSocieteInDolibarr; ?> ***</td>
 			<td><?php print $nbSocieteInDolibarrLinkedToE; ?> ***
 			<?php
