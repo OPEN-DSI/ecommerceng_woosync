@@ -1885,7 +1885,7 @@ class eCommerceRemoteAccessWoocommerce
                 }
             }
             if ($productStatusSynchDirection == 'dtoe' || $productStatusSynchDirection == 'all') {
-                $productData['status'] = (!empty($status) ? $status : '');
+                $productData['status'] = (!empty($status) ? $status : 'publish');
             }
 
             // Synch extrafields <=> metadatas
@@ -2499,7 +2499,7 @@ class eCommerceRemoteAccessWoocommerce
                 }
             }
             if ($productStatusSynchDirection == 'dtoe' || $productStatusSynchDirection == 'all') {
-                $productData['status'] = (!empty($status) ? $status : '');
+                $productData['status'] = (!empty($status) ? $status : 'publish');
             }
 
             // Synch extrafields <=> metadatas
