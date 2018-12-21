@@ -917,7 +917,7 @@ class eCommerceSynchro
                         // Search if category link already exist
                         $synchExists = $this->eCommerceCategory->fetchByRemoteId($categoryArray['category_id'], $this->eCommerceSite->id);
                         if ($synchExists > 0) {
-                            $eCommerceCatExists = $dBCategorie->fetch($this->eCommerceCategory->fk_category);
+                            $eCommerceCatExists = $dBCategorie->fetch($this->eCommerceCategory->rowid);
                         } else {
                             $eCommerceCatExists = -1;
                             // Search if already exist

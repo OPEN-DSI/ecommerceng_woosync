@@ -1885,7 +1885,7 @@ class eCommerceRemoteAccessWoocommerce
                 }
             }
             if ($productStatusSynchDirection == 'dtoe' || $productStatusSynchDirection == 'all') {
-                $productData['status'] = (!empty($status) ? $status : '');
+                $productData['status'] = (!empty($status) ? $status : 'publish');
             }
 
             // Synch extrafields <=> metadatas
@@ -2499,7 +2499,7 @@ class eCommerceRemoteAccessWoocommerce
                 }
             }
             if ($productStatusSynchDirection == 'dtoe' || $productStatusSynchDirection == 'all') {
-                $productData['status'] = (!empty($status) ? $status : '');
+                $productData['status'] = (!empty($status) ? $status : 'publish');
             }
 
             // Synch extrafields <=> metadatas
@@ -2579,10 +2579,26 @@ class eCommerceRemoteAccessWoocommerce
                 if (isset($cats_id_remote_id[$categoryData['parent']])) {
                     $group[$key]['parent'] = $cats_id_remote_id[$categoryData['parent']]['remote_id'];
                 } elseif ($categoryData['parent'] > 0) {
-                    $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteCategoryParentNotCreated', $this->site->name, $categoryData['name'], $categoryData['slug']);
-                    dol_syslog(__METHOD__ .
-                        ': Error:' . $langs->trans('ECommerceWoocommerceCreateRemoteCategoryParentNotCreated', $this->site->name, $categoryData['name'], $categoryData['slug']), LOG_ERR);
-                    return false;
+                    $sql="SELECT remote_id FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE fk_category =".$categoryData['parent'];
+        			$resql=$this->db->query($sql);
+        			if ($resql) {
+        				if ($this->db->num_rows($resql)==1) {
+                			$obj = $this->db->fetch_object($resql);
+                			$group[$key]['parent'] = $obj->remote_id;
+        				} else {
+        					
+        					$this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteCategoryParentNotFound', $this->site->name, $categoryData['name'], $categoryData['slug']);
+	                    	dol_syslog(__METHOD__ .
+	                        ': Error:' . $langs->trans('ECommerceWoocommerceCreateRemoteCategoryParentNotFound', $this->site->name, $categoryData['name'], $categoryData['slug']), LOG_ERR);
+	                    	return false;
+        				}
+            		} else {
+	                	
+	                    $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteCategoryParentNotCreated', $this->site->name, $categoryData['name'], $categoryData['slug']);
+	                    dol_syslog(__METHOD__ .
+	                        ': Error:' . $langs->trans('ECommerceWoocommerceCreateRemoteCategoryParentNotCreated', $this->site->name, $categoryData['name'], $categoryData['slug']), LOG_ERR);
+	                    return false;
+            		}
                 }
             }
 
