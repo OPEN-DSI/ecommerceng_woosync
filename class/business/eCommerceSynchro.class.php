@@ -3129,7 +3129,7 @@ class eCommerceSynchro
             }
             else
             {
-                $this->error=$this->langs->trans('ECommerceErrorsynchProduct').' (Code FailToGetDetailsOfRecord)';
+                $this->error=$this->langs->trans('ECommerceErrorsynchFacture').' (Code FailToGetDetailsOfRecord)';
                 $this->errors[] = $this->error;
             }
         } catch (Exception $e) {
