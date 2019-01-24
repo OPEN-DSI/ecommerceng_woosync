@@ -444,6 +444,10 @@ class InterfaceECommerceng
 
                     // Maj date product avec date de modif sur ecommerce
                     if (! $error) {
+                    	
+                    	// Force the ability to run synchDtoEProduct() in case the association with the categories has changed
+		                $eCommerceProduct->last_update = dol_print_date((dol_now() + 10), '%Y-%m-%d %H:%M:%S');
+                    	
                         $sql = "UPDATE " . MAIN_DB_PREFIX . "product SET tms = '" . $eCommerceProduct->last_update . "' WHERE rowid = " . $object->id;
                         $resql = $this->db->query($sql);
                         if (!$resql) {
