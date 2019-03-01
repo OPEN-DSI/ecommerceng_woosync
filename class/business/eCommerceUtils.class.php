@@ -101,6 +101,9 @@ class eCommerceUtils
 				if ($result >= 0) $result=$synchro->synchSociete($toNb);
 				if ($result >= 0) $result=$synchro->synchCommande($toNb);
 				if ($result >= 0) $result=$synchro->synchFacture($toNb);
+				
+				if ($result >= 0) $result=$synchro->synchDtoECategory($toNb);
+				if ($result >= 0) $result=$synchro->synchDtoEProduct($toNb);
 			}
 
 			if ($error || $result < 0)

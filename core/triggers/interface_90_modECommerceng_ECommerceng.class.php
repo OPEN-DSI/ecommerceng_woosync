@@ -94,7 +94,7 @@ class InterfaceECommerceng
      *      @param      Conf        $conf        Objet conf
      *      @return     int                      <0 if fatal error, 0 si nothing done, >0 if ok
      */
-	function run_trigger($action,$object,$user,$langs,$conf)
+	function runTrigger($action,$object,$user,$langs,$conf)
     {
     	$error=0;
 
