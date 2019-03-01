@@ -1,5 +1,11 @@
 # ChangeLog
 
+## 4.0.28.0
+
+- Ajout de la variable globale ECOMMERCENG_PRODUCT_IN_PURCHASE_WHEN_CREATED pour permettre de mettre les produit creer sur dolibarr lors de la synchronisation au statut 'En achat'.
+- Ne met plus à jour le statut 'En achat' lors de la synchronisation.
+- Ajout des corrections et améliorations de Ewake.
+
 ## 4.0.27.0
 
 - Ajout d'une variable global ECOMMERCENG_WOOCOMMERCE_VAT_NUMBER_META_NAME pour renseigner le nom de la meta donnée correspondant à la TVA client.

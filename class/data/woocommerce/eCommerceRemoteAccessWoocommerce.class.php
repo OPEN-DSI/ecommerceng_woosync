@@ -825,7 +825,7 @@ class eCommerceRemoteAccessWoocommerce
                             'label' => $product->name,
                             'price' => $price,
                             'envente' => empty($product->variations) ? 1 : 0,
-                            'enachat' => empty($product->variations) ? 1 : 0,
+                            'enachat' => null,
                             'finished' => 1,    // 1 = manufactured, 0 = raw material
                             'canvas' => $canvas,
                             'categories' => $categories,
@@ -943,7 +943,7 @@ class eCommerceRemoteAccessWoocommerce
                                     'label' => $product->name . $attributesLabel,
                                     'price' => $price,
                                     'envente' => 1,
-                                    'enachat' => 1,
+                                    'enachat' => null,
                                     'finished' => 1,    // 1 = manufactured, 0 = raw material
                                     'canvas' => $canvas,
                                     'categories' => $categories,

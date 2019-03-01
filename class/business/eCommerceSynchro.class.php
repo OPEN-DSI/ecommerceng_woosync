@@ -1678,7 +1678,7 @@ class eCommerceSynchro
                     $dBProduct->type = $productArray['fk_product_type'];
                     $dBProduct->finished = $productArray['finished'];
                     $dBProduct->status = $productArray['envente'];
-                    $dBProduct->status_buy = $productArray['enachat'];
+                    if (isset($productArray['enachat'])) $dBProduct->status_buy = $productArray['enachat'];
 
                     $dBProduct->country_id = $productArray['fk_country'];
                     $dBProduct->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
@@ -1775,6 +1775,8 @@ class eCommerceSynchro
                     }
                     else
                     {
+                        if (!isset($productArray['enachat']) && !empty($conf->global->ECOMMERCENG_PRODUCT_IN_PURCHASE_WHEN_CREATED)) $dBProduct->status_buy = 1;
+
                         //create
                         $dBProduct->canvas = $productArray['canvas'];
                         $dBProduct->note = 'Initialy created the ' . dol_print_date($now, 'dayhour') . ' from '.$this->eCommerceSite->name . ', remote ID: ' . $productArray['remote_id'];
