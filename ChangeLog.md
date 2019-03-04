@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.0.29.0
+
+- Correction sur la date de synchronisation des clients qui se basais sur la date de modification et non celle de création.
+
 ## 4.0.28.0
 
 - Ajout de la variable globale ECOMMERCENG_PRODUCT_IN_PURCHASE_WHEN_CREATED pour permettre de mettre les produit creer sur dolibarr lors de la synchronisation au statut 'En achat'.
