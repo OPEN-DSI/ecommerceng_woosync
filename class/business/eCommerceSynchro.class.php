@@ -1059,6 +1059,7 @@ class eCommerceSynchro
         $error=0;
 
         try {
+            $nbrecorderror = 0;
             $nbgoodsunchronize = 0;
             $societes=array();
 
@@ -1105,10 +1106,14 @@ class eCommerceSynchro
                             $dBSociete->client = $societeArray['client'];
                             if (isset($societeArray['name_alias'])) $dBSociete->name_alias = $societeArray['name_alias'];
                             if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
-                            if (isset($societeArray['vatnumber'])) $dBSociete->tva_intra = $societeArray['vatnumber']; //dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
+                            if (!empty($societeArray['vatnumber'])) {
+                                $dBSociete->tva_intra = $societeArray['vatnumber']; //dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
+                                $dBSociete->tva_assuj = 1;                          // tva_intra is not saved if this field is not set
+                            } else {
+                                $dBSociete->tva_assuj = 0;                          // tva_intra is not saved if this field is not set
+                            }
                             if (isset($societeArray['country_id'])) $dBSociete->country_id = $societeArray['country_id'];
                             if (isset($societeArray['default_lang'])) $dBSociete->default_lang = $societeArray['default_lang'];
-                            $dBSociete->tva_assuj = 1;      // tva_intra is not saved if this field is not set
                             $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
 
                             if (is_array($societeArray['extrafields'])) {
@@ -1181,10 +1186,14 @@ class eCommerceSynchro
                             $dBSociete->client = $societeArray['client'];
                             if (isset($societeArray['name_alias'])) $dBSociete->name_alias = $societeArray['name_alias'];
                             if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
-                            if (isset($societeArray['vatnumber'])) $dBSociete->tva_intra = $societeArray['vatnumber']; //dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
+                            if (!empty($societeArray['vatnumber'])) {
+                                $dBSociete->tva_intra = $societeArray['vatnumber']; //dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
+                                $dBSociete->tva_assuj = 1;                          // tva_intra is not saved if this field is not set
+                            } else {
+                                $dBSociete->tva_assuj = 0;                          // tva_intra is not saved if this field is not set
+                            }
                             if (isset($societeArray['country_id'])) $dBSociete->country_id = $societeArray['country_id'];
                             if (isset($societeArray['default_lang'])) $dBSociete->default_lang = $societeArray['default_lang'];
-                            $dBSociete->tva_assuj = 1;                              // tva_intra is not saved if this field is not set
                             $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
                             $dBSociete->code_client = -1;           // Automatic code
                             $dBSociete->code_fournisseur = -1;      // Automatic code
@@ -1212,10 +1221,14 @@ class eCommerceSynchro
                             $dBSociete->client = $societeArray['client'];
                             if (isset($societeArray['name_alias'])) $dBSociete->name_alias = $societeArray['name_alias'];
                             if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
-                            if (isset($societeArray['vatnumber'])) $dBSociete->tva_intra = $societeArray['vatnumber']; //dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
+                            if (!empty($societeArray['vatnumber'])) {
+                                $dBSociete->tva_intra = $societeArray['vatnumber']; //dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
+                                $dBSociete->tva_assuj = 1;                          // tva_intra is not saved if this field is not set
+                            } else {
+                                $dBSociete->tva_assuj = 0;                          // tva_intra is not saved if this field is not set
+                            }
                             if (isset($societeArray['country_id'])) $dBSociete->country_id = $societeArray['country_id'];
                             if (isset($societeArray['default_lang'])) $dBSociete->default_lang = $societeArray['default_lang'];
-                            $dBSociete->tva_assuj = 1;      // tva_intra is not saved if this field is not set
                             $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
 
                             if (is_array($societeArray['extrafields'])) {
@@ -1284,9 +1297,9 @@ class eCommerceSynchro
                             $listofaddressids=$this->eCommerceRemoteAccess->getRemoteAddressIdForSociete($societeArray['remote_id']);   // Ask contacts to magento
                             if (is_array($listofaddressids) || $this->eCommerceSite->type == 2)
                             {
-                            if ($this->eCommerceSite->type == 2) { // Woocommerce
-                                $listofaddressids = $societeArray['remote_datas'];
-                            }
+                                if ($this->eCommerceSite->type == 2) { // Woocommerce
+                                    $listofaddressids = $societeArray['remote_datas'];
+                                }
 
                                 $socpeoples = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSocpeople($listofaddressids);
                                 foreach($socpeoples as $tmpsocpeople)
@@ -1330,7 +1343,8 @@ class eCommerceSynchro
                 }
                 else
                 {
-                    $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchSocieteSuccess');
+                    if (!empty($nbgoodsunchronize)) $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchSocieteSuccess');
+                    if (!empty($nbrecorderror)) $this->errors[] = $this->langs->trans('ECommerceSynchSocieteFailed', $nbrecorderror);
                     return -1;
                 }
             }

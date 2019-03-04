@@ -572,7 +572,7 @@ class eCommerceRemoteAccessWoocommerce
 
             if (is_array($results)) {
                 foreach ($results as $company) {
-                    $last_update = $this->getDateTimeFromGMTDateTime(!empty($company->date_modified_gmt) ? $company->date_modified_gmt : $company->date_created_gmt);
+                    $last_update = $this->getDateTimeFromGMTDateTime(/*!empty($company->date_modified_gmt) ? $company->date_modified_gmt :*/ $company->date_created_gmt);
 
                     // Global infos
                     $item = [
@@ -658,7 +658,7 @@ class eCommerceRemoteAccessWoocommerce
         global $langs;
 
         $contacts = [];
-        $last_update = $this->getDateTimeFromGMTDateTime(!empty($remoteCompany->date_modified_gmt) ? $remoteCompany->date_modified_gmt : $remoteCompany->date_created_gmt);
+        $last_update = $this->getDateTimeFromGMTDateTime(/*!empty($remoteCompany->date_modified_gmt) ? $remoteCompany->date_modified_gmt :*/ $remoteCompany->date_created_gmt);
 
         $bContact = $remoteCompany->billing;
         if (!empty($bContact->address_1) || !empty($bContact->address_2) || !empty($bContact->postcode) ||

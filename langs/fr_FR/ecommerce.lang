@@ -114,6 +114,7 @@ ECommerceSynchSocieteSuccess=clients ont bien été synchronisées.
 ECommerceSynchProductSuccess=produits ont bien été synchronisés.
 ECommerceSynchCommandeSuccess=commandes ont bien été synchronisées.
 ECommerceSynchFactureSuccess=factures ont bien été synchronisées.
+ECommerceSynchSocieteFailed=%s erreurs se sont produites lors de la synchronisation.
 ECommerceSynchECommerceSocpeopleCreateError=Une erreur est survenue lors de l'enregistrement du contact (societe ID: %s; prénom: %s; nom: %s).
 ECommerceSetupSites=Configuration des sites
 ECommerceTimeout=Timeout des accès APIS

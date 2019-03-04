@@ -98,6 +98,7 @@ ECommerceSynchSocieteSuccess=companies have been synchronized.
 ECommerceSynchProductSuccess=products have been synchronized.
 ECommerceSynchCommandeSuccess=orders have been synchronized.
 ECommerceSynchFactureSuccess=bills have been synchronized.
+ECommerceSynchSocieteFailed=%s erreurs se sont produites lors de la synchronisation.
 ECommerceSynchCommandeError=Error during synchronization of orders
 ECommerceCheckIfCategoryDoesNotExistsTwice=Try to make name of your categories unique on your eCommerce platform
 ECommerceSynchSocieteErrorCreateUpdateSociete=Failed to synchronize thirdparty
