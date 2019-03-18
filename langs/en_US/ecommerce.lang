@@ -11,6 +11,11 @@ Module107100Name=Woosync
 Module107100Desc=Module de synchronisation entre Dolibarr et les plateformes e-commerce WooCommerce
 NothingToSetup=Activez le module pour accéder à sa configuration
 
+##MENU##
+ECommerceMenuMain=WooSync
+ECommerceMenuSites=ECommerce Sync
+ECommerceMenuSetup=Setup sites ECommerce
+
 ##SETUP##
 ECommercePriceType=Imported prices' types
 ECommercePriceTypeHT=Tax excluded
@@ -56,7 +61,6 @@ ECommerceUpdateSite=Detailed update of this site
 ECommerceUpdateAll=Update all for this site
 ECommerceReset=Delete all links and Dolibarr linked record
 ECommerceResetLink=Delete all link records between Dolibarr and Ecommerce
-ECommerceMenu=ECommerce Sync
 ECommerceSetupCatProductEmpty=Product category is required.
 ECommerceSetupCatSocieteEmpty=Customer category is required.
 ECommerceSetupTypeEmpty=Site type is required.
@@ -109,7 +113,6 @@ ECommerceSyncheCommerceCommandeCreateError=Error creating the link between Dolib
 ECommerceSyncheCommerceCategoryUpdateError=Error while updating a category.
 ECommerceSyncheCommerceCategoryCreateError=Error while creating a category.
 
-ECommerceSetupSites=Setup sites ECommerce
 ECommerceTimeout=Timeout of synchronize
 ECommerceSetupTimeoutEmpty=Timeout empty
 ECommerceSetupTimeoutMustBeInt=Timeout must be int

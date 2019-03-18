@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.0.30.0
+
+- Modification et deplacement des menus.
+
 ## 4.0.29.0
 
 - Correction sur la date de synchronisation des clients qui se basais sur la date de modification et non celle de création.
