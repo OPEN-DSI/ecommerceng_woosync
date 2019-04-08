@@ -12,6 +12,11 @@ Module107100Desc=Module de synchronisation entre Dolibarr et les plateformes e-c
 BackToListOfSites=Retour à la liste des sites
 NothingToSetup=Activez le module pour accéder à sa configuration
 
+##MENU##
+ECommerceMenuMain=WooSync
+ECommerceMenuSites=Synchro. E-Commerce
+ECommerceMenuSetup=Configuration des sites
+
 ##SETUP##
 magento=Magento
 woocommerce=WooCommerce
@@ -64,7 +69,6 @@ ECommerceStockProduct=Entrepôt
 ECommerceStockProductDescription=Si vous définissez l'option précédente de <b>%s</b> à <b>E-Commerce vers Dolibarr</b>, les produits créés ou modifiés depuis la plateforme e-commerce seront synchronisés dans Dolibarr dans cet entrepôt. <br/><b>Attention</b> : Les stocks de Dolibarr sont modifiés lors de la synchronisation des produits et non pas pendant la synchronisation de commandes ou des factures.
 ECommerceReset=Supprimer de Dolibarr toutes les données issues de synchronisation de la boutique Ecommerce
 ECommerceResetLink=Supprimer les enregistrements liens entre Dolibarr et la boutique Ecommerce
-ECommerceMenu=Synchro. E-Commerce
 ECommerceSetupCatProductEmpty=Une catégorie produit est obligatoire.
 ECommerceSetupCatSocieteEmpty=Une catégorie client est obligatoire.
 ECommerceSetupTypeEmpty=Le type de site est obligatoire.
@@ -114,8 +118,8 @@ ECommerceSynchSocieteSuccess=clients ont bien été synchronisées.
 ECommerceSynchProductSuccess=produits ont bien été synchronisés.
 ECommerceSynchCommandeSuccess=commandes ont bien été synchronisées.
 ECommerceSynchFactureSuccess=factures ont bien été synchronisées.
+ECommerceSynchSocieteFailed=%s erreurs se sont produites lors de la synchronisation.
 ECommerceSynchECommerceSocpeopleCreateError=Une erreur est survenue lors de l'enregistrement du contact (societe ID: %s; prénom: %s; nom: %s).
-ECommerceSetupSites=Configuration des sites
 ECommerceTimeout=Timeout des accès APIS
 ECommerceClickUrlToTestUrl=Cliquez ici pour tester l'URL (un fichier XML ou JSON doit s'afficher)
 ECommerceTimeoutDescription=Timeout pour les accès aux APIs, en secondes
