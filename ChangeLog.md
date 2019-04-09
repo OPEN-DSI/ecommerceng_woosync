@@ -3,6 +3,8 @@
 ## 4.0.30.0
 
 - Modification et deplacement des menus.
+- Mise à jour et corrections variées par Ewake.
+- Correction de la prise en compte de l'option de désactivation de la synchro en temps réel pour les commandes par mkdgs.
 
 ## 4.0.29.0
 
