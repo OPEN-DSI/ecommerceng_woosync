@@ -194,7 +194,7 @@ class eCommerceRemoteAccessWoocommerce
                 $this->site->user_password,
                 [
                     'wp_api' => true,
-                    'version' => 'wc/v2',
+                    'version' => 'wc/v3',
                     'timeout' => $response_timeout,
                     'query_string_auth' => $isHTTPS,
                 ]
@@ -206,7 +206,8 @@ class eCommerceRemoteAccessWoocommerce
                 $this->site->user_name,
                 $this->site->user_password,
                 [
-                    'version' => 'v3',
+                    'wp_api' => false,
+                	'version' => 'v3',
                     'timeout' => $response_timeout,
                     'query_string_auth' => $isHTTPS,
                 ]

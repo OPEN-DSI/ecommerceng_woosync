@@ -942,7 +942,7 @@ class eCommerceSynchro
                         $dBCategorie->type = 0; // for product category type
                         $dBCategorie->label = $categoryArray['name'];
                         $dBCategorie->description = $categoryArray['description'];
-                        $dBCategorie->fk_parent = $fk_parent;
+                        $dBCategorie->fk_parent = ($fk_parent != $dBCategorie->id) ? $fk_parent : 0;
                         $dBCategorie->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
 
                         if ($eCommerceCatExists > 0)
@@ -3145,7 +3145,7 @@ class eCommerceSynchro
             }
             else
             {
-                $this->error=$this->langs->trans('ECommerceErrorsynchProduct').' (Code FailToGetDetailsOfRecord)';
+                $this->error=$this->langs->trans('ECommerceErrorsynchFacture').' (Code FailToGetDetailsOfRecord)';
                 $this->errors[] = $this->error;
             }
         } catch (Exception $e) {
