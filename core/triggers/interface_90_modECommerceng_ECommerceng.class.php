@@ -499,6 +499,11 @@ class InterfaceECommerceng
                     continue;
                 }
 
+                if (empty($site->parameters['realtime_dtoe']['order'])) {
+                    dol_syslog("Triggers disabled from the config of the module");
+                    continue;
+                }    
+
                 if (! $error)
                 {
     				$eCommerceCommande = new eCommerceCommande($this->db);
