@@ -1685,7 +1685,7 @@ class eCommerceSynchro
                     }
 
                     //libelle of product object = label into database
-                    $dBProduct->ref = dol_string_nospecial(trim($productArray['ref']));
+                    $dBProduct->ref = isset($productArray['ref']) ? dol_string_nospecial(trim($productArray['ref'])) : $dBProduct->ref;
                     $dBProduct->label = $productArray['label'];
                     $dBProduct->description = isset($productArray['description']) ? $productArray['description'] : $dBProduct->description;
                     $dBProduct->weight = isset($productArray['weight']) ? $productArray['weight'] : $dBProduct->weight;

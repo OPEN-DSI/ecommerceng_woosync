@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 4.0.31.0
+
+- Ajout de la variable global pour envoyer l'authorisation de connection vers l'API de WordPress dans les paramètres de l'URL avec OAUTH_WORDPRESS_AUTHORIZATION_METHOD_QUERY_STRING.
+- Correction lors de la synchronisation des produits de WooCommerce vers Dolibarr lorsque le paramètrage du sens de synchronisation de la référence du produit à été mis sur 'De Dolibarr vers ECommerce'.
+
 ## 4.0.30.0
 
 - Modification et deplacement des menus.

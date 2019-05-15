@@ -61,7 +61,8 @@ class WordPress extends AbstractService
      */
     protected function getAuthorizationMethod()
     {
-        return static::AUTHORIZATION_METHOD_HEADER_BEARER;
+        global $conf;
+        return empty($conf->global->OAUTH_WORDPRESS_AUTHORIZATION_METHOD_QUERY_STRING) ? static::AUTHORIZATION_METHOD_HEADER_BEARER : static::AUTHORIZATION_METHOD_QUERY_STRING;
     }
 
     /**
