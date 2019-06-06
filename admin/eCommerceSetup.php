@@ -57,7 +57,7 @@ $siteId = null;
 $errors = array();
 $success = array();
 //CHECK ACCESS
-if (!$user->admin || !$user->rights->ecommerceng->site)
+if (!$user->admin && !$user->rights->ecommerceng->site)
     accessforbidden();
 
 $error = GETPOST('error', 'alpha');
