@@ -2461,15 +2461,24 @@ class eCommerceSynchro
                             $fk_soc_socpeopleFacture = $this->eCommerceSociete->fk_societe;
                             $fk_soc_socpeopleLivraison = $this->eCommerceSociete->fk_societe;
                             if ($this->eCommerceSociete->fk_societe == $this->eCommerceSite->fk_anonymous_thirdparty) {
-                                if (!empty(trim($commandeArray['socpeopleCommande']['email']))) {
-                                    $fk_soc_socpeopleCommande = get_company_by_email($this->db, $commandeArray['socpeopleCommande']['email'], $this->eCommerceSite->id);
-                                }
-                                if (!empty(trim($commandeArray['socpeopleFacture']['email']))) {
-                                    $fk_soc_socpeopleFacture = get_company_by_email($this->db, $commandeArray['socpeopleFacture']['email'], $this->eCommerceSite->id);
-                                }
-                                if (!empty(trim($commandeArray['socpeopleLivraison']['email']))) {
-                                    $fk_soc_socpeopleLivraison = get_company_by_email($this->db, $commandeArray['socpeopleLivraison']['email'], $this->eCommerceSite->id);
-                                }
+	                            if (!empty(trim($commandeArray['socpeopleCommande']['email']))) {
+		                            $res = get_company_by_email($this->db, $commandeArray['socpeopleCommande']['email'], $this->eCommerceSite->id);
+		                            if ($res > 0) {
+			                            $fk_soc_socpeopleCommande = $res;
+		                            }
+	                            }
+	                            if (!empty(trim($commandeArray['socpeopleFacture']['email']))) {
+		                            $res = get_company_by_email($this->db, $commandeArray['socpeopleFacture']['email'], $this->eCommerceSite->id);
+		                            if ($res > 0) {
+			                            $fk_soc_socpeopleFacture = $res;
+		                            }
+	                            }
+	                            if (!empty(trim($commandeArray['socpeopleLivraison']['email']))) {
+		                            $res = get_company_by_email($this->db, $commandeArray['socpeopleLivraison']['email'], $this->eCommerceSite->id);
+		                            if ($res > 0) {
+			                            $fk_soc_socpeopleLivraison = $res;
+		                            }
+	                            }
                             }
                             $commandeArray['socpeopleCommande']['fk_soc'] = $fk_soc_socpeopleCommande;
                             $commandeArray['socpeopleFacture']['fk_soc'] = $fk_soc_socpeopleFacture;
@@ -2481,7 +2490,10 @@ class eCommerceSynchro
 
                                 // First, we check company does not already exists with email
                                 if (!empty($sCompany['email'])) {
-                                    $fk_soc_socpeopleLivraison = get_company_by_email($this->db, $sCompany['email'], $this->eCommerceSite->id);
+	                                $res = get_company_by_email($this->db, $sCompany['email'], $this->eCommerceSite->id);
+	                                if ($res > 0) {
+		                                $fk_soc_socpeopleLivraison = $res;
+	                                }
                                 }
 
                                 // If not, search for the company name
@@ -3734,40 +3746,52 @@ class eCommerceSynchro
 	 */
 	function getContactIdFromInfos($contact)
 	{
+		global $conf;
 		$contactId = -1;
 
-		$sql  = 'SELECT rowid FROM '.MAIN_DB_PREFIX.'socpeople';
-		$sql .= ' WHERE lastname LIKE "'.$this->db->escape(trim($contact->lastname)).'"';
-		$sql .= ' AND firstname LIKE "'.$this->db->escape(trim($contact->firstname)).'"';
-		$sql .= ' AND address LIKE "'.$this->db->escape(trim($contact->address)).'"';
-		$sql .= ' AND town LIKE "'.$this->db->escape(trim($contact->town)).'"';
-        $sql .= ' AND zip LIKE "'.$this->db->escape(trim($contact->zip)).'"';
-        if (isset($contact->country_id)) $sql .= ' AND fk_pays='.($contact->country_id>0?$contact->country_id:'NULL');
-        if (isset($contact->email)) $sql .= ' AND email LIKE "'.$this->db->escape(trim($contact->email)).'"';
-        if (isset($contact->phone_pro)) $sql .= ' AND phone LIKE "'.$this->db->escape(trim($contact->phone_pro)).'"';
-        if (isset($contact->fax)) $sql .= ' AND fax LIKE "'.$this->db->escape(trim($contact->fax)).'"';
-		$sql .= ' AND fk_soc='.$contact->fk_soc;
+		// Clean parameters
+		$lastname = $contact->lastname ? trim($contact->lastname) : trim($contact->name);
+		$firstname = trim($contact->firstname);
+		if (!empty($conf->global->MAIN_FIRST_TO_UPPER)) $lastname = ucwords($lastname);
+		if (!empty($conf->global->MAIN_FIRST_TO_UPPER)) $firstname = ucwords($firstname);
+		$socid = $contact->socid;
+		if (empty($socid)) $contact->socid = 0;
+		$email = trim($contact->email);
+		$phone_pro = trim($contact->phone_pro);
+		$fax = trim($contact->fax);
+		$zip = (empty($contact->zip) ? '' : $contact->zip);
+		$town = (empty($contact->town) ? '' : $contact->town);
+		$country_id = ($contact->country_id > 0 ? $contact->country_id : $contact->country_id);
+		$entity = ((isset($contact->entity) && is_numeric($contact->entity)) ? $contact->entity : $conf->entity);
+
+		$sql = 'SELECT rowid FROM ' . MAIN_DB_PREFIX . 'socpeople';
+		$sql .= ' WHERE lastname LIKE "' . $this->db->escape($lastname) . '"';
+		$sql .= ' AND firstname LIKE "' . $this->db->escape($firstname) . '"';
+		$sql .= ' AND address LIKE "' . $this->db->escape($contact->address) . '"';
+		$sql .= ' AND town LIKE "' . $this->db->escape($town) . '"';
+		$sql .= ' AND zip LIKE "' . $this->db->escape($zip) . '"';
+		if (isset($contact->country_id)) $sql .= ' AND fk_pays ' . ($country_id > 0 ? '= '.$country_id : ' IS NULL');
+		if (isset($contact->email)) $sql .= ' AND email LIKE "' . $this->db->escape($email) . '"';
+		if (isset($contact->phone_pro)) $sql .= ' AND phone LIKE "' . $this->db->escape($phone_pro) . '"';
+		if (isset($contact->fax)) $sql .= ' AND fax LIKE "' . $this->db->escape($fax) . '"';
+		if ($socid > 0) $sql .= ' AND fk_soc = "' . $this->db->escape($socid) . '"';
+		else if ($socid == -1) $sql .= " AND fk_soc IS NULL";
+		$sql .= ' AND entity = ' . $entity;
 
 		$resql = $this->db->query($sql);
-		if($resql)
-		{
-			if ($this->db->num_rows($resql))
-			{
+		if ($resql) {
+			if ($this->db->num_rows($resql)) {
 				$obj = $this->db->fetch_object($resql);
 
 				$contactId = $obj->rowid;
-			}
-			else
-			{
-			    $contactId = 0;
+			} else {
+				$contactId = 0;
 			}
 			$this->db->free($resql);
 			return $contactId;
-		}
-		else
-		{
-			$this->error=$this->db->lasterror();
-			dol_syslog("eCommerceSynchro::getContactIdFromInfos ".$this->error, LOG_ERR);
+		} else {
+			$this->error = $this->db->lasterror();
+			dol_syslog("eCommerceSynchro::getContactIdFromInfos " . $this->error, LOG_ERR);
 			return $contactId;
 		}
 	}

@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.0.33.0
+
+- Correction de la recherche des contacts d'une commande lors de sa synchronisation depuis Woocommerce.
+
 ## 4.0.32.0
 
 - Correction des droits d'accès à la page de configuration des sites.
