@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.0.34.0
+
+- Correction de la modification de la ref dans le cas ou la boutique envoie une ref vide sur un produit deja synchronisé vers Dolibarr.
+
 ## 4.0.33.0
 
 - Correction de la recherche des contacts d'une commande lors de sa synchronisation depuis Woocommerce.
