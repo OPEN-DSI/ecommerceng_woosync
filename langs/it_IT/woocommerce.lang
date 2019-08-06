@@ -1,0 +1,93 @@
+# Dolibarr language file - it_IT - ECommerce - Author Claudio Aschieri <c.aschieri@19.coop>
+CHARSET=UTF-8
+
+ECommerceWoocommerceConnect=Errore di connessione allo shop '%s': %s
+ECommerceWoocommerceConvertRemoteObjectIntoDolibarrCommande=Errore durante il recupero degli ordini dallo shop '%s': %s
+ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct=Errore durante il recupero dei prodotti dallo shop '%s': %s
+ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProductVariations=Errore durante il recupero delle varianti del prodotto remoto 'id:%s' dallo shop '%s': %s
+ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSociete=Errore durante il recupero dei soggetti terzi dallo shop '%s': %s
+ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSocpeople=Errore durante il recupero dei soggetti terzi (per i contatti / indirizzi) dallo shop '%s': %s
+ECommerceWoocommerceCreateRemoteProduct=Errore durante la creazione del prodotto 'id:%s' dallo shop '%s': %s
+ECommerceWoocommerceCreateRemoteProductLink=Errore di creazione del collegamento per il prodotto 'id:%s' per lo shop '%s': %s
+ECommerceWoocommerceGetCategoryData=Errore durante il recupero dei dati dalla categoria remota 'id:%s' per lo shop '%s': %s
+ECommerceWoocommerceGetCommandeToUpdate=Errore durante il recupero dell'elenco degli ordini da aggiornare sullo shop '%s': %s
+ECommerceWoocommerceGetProductToUpdate=Errore durante il recupero dell'elenco dei prodotti da aggiornare sullo shop '%s': %s
+ECommerceWoocommerceGetRemoteCategoryTree=Errore durante il recupero dell'elenco delle categorie da aggiornare sullo shop '%s': %s
+ECommerceWoocommerceGetSocieteToUpdate=Errore durante il recupero dell'elenco dei soggetti terzi da aggiornare sullo shop '%s': %s
+ECommerceWoocommerceSendFileForCommande=Errore durante il collegamento del file con l'ordine cliente remoto'id:%s' per lo shop '%s': %s
+ECommerceWoocommerceSendFileForCommandeInWordpress=Errore durante l'invio del file per il comando remoto 'id:%s' nei media di Wordpress per lo shop '%s': %s
+ECommerceWoocommerceUpdateRemoteCommande=Errore durante l'aggiornamento dell'ordine cliente remoto 'id:%s' per lo shop '%s': %s
+ECommerceWoocommerceUpdateRemoteProduct=Errore durante l'aggiornamento del prodotto remoto 'id:%s' per lo shop '%s': %s
+ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct=Errore durante il recupero del prodotto remoto 'id:%s' per lo shop '%s': %s
+ECommerceWoocommerceUpdateRemoteProductSendImage=Errore durante l'invio di un'immagine per il prodotto remoto 'id:%s' nei media di Wordpress per lo shop '%s': %s
+ECommerceWoocommerceUpdateRemoteProductVariation=Errore durante l'aggiornamento della variazione 'id:%s' del prodotto remoto 'id:%s' per lo shop '%s': %s
+ECommerceWoocommerceUpdateRemoteSociete=Errore durante l'aggiornamento dell'azienda remota 'id:%s' per lo shop '%s': %s
+ECommerceWoocommerceUpdateRemoteSocpeople=Errore durante l'aggiornamento dei contatti / indirizzi dell'azienda remota 'id:%s' per lo shop '%s': %s
+ECommerceWoocommerceUpdateRemoteStockProduct=Errore di aggiornamento delle scorte di magazzino (%s) del prodotto remoto 'id:%s' per lo shop '%s':
+ECommerceWoocommerceUpdateRemoteStockProductVariation=Errore di aggiornamento dello stock (%s) della variante 'id:%s' del prodotto remoto 'id:%s' per lo shop '%s':
+ECommerceWoocommerceGetAllWoocommerceTaxClass=Errore durante la raccolta dei dati sull'aliquota fiscale per lo shop '%s': %s
+ECommerceWoocommerceGetWoocommerceTaxes=Errore durante il recupero delle aliquote fiscali per lo shop '%s': %s
+ECommerceWoocommerceCreateRemoteProductSendImage=Errore durante l'invio di un'immagine per il prodotto 'ref:%s' nei media di Wordpress per lo shop '%s': %s
+
+ECommercengWoocommerceStatus=Stato per lo shop [%s]
+ECommercengWoocommerceDescription=Descrizione lunga shop
+ECommercengWoocommerceShortDescription=Descrizione breve shop
+ECommercengWoocommerceOnlinePayment=Pagamento online
+ECommercengWoocommerceTaxClass=Aliquota IVA per lo shop [%s]
+
+ECommercengWoocommerceDictTaxClass=Elenco aliquote IVA su Woocommerce
+ECommercengWoocommerceDictTaxClassUpdated=Dizionario delle aliquote IVA dall'aggiornamento di Woocommerce
+ECommerceWoocommerceConfirmUpdateDictTaxClasses=Confermare l'aggiornamento del dizionario delle aliquote IVA per questo shop?
+ECommerceWoocommerceUpdateDictTaxClasses=Aggiornamento del dizionario delle aliquote IVA
+ECommerceWoocommerceErrorDisableDictTaxClass=Errore durante la disattivazione di un'aliquota IVA, codice:"%s", errore:"%s"
+ECommerceWoocommerceErrorAddDictTaxClass=Errore durante l'inserimento di un'aliquota IVA, codice:"%s", nome:"%s", errore:"%s"
+
+ECommercengWoocommerceStatusDraft=Bozza
+ECommercengWoocommerceStatusPending=In attesa
+ECommercengWoocommerceStatusPrivate=Privato
+ECommercengWoocommerceStatusPublish=Pubblico
+
+ECommercengWoocommerceWithoutFirstnameLastname=Nessun nome / cognome inserito
+ECommercengWoocommerceLastnameNotInformed=[Nome non specificato]
+
+ECommercengWoocommerceOrderStatus=Stati per lo shop [%s]
+ECommercengWoocommerceOrderStatusPending=In attesa di pagamento
+ECommercengWoocommerceOrderStatusProcessing=In corso
+ECommercengWoocommerceOrderStatusOnHold=In attesa
+ECommercengWoocommerceOrderStatusCompleted=Terminato
+ECommercengWoocommerceOrderStatusCancelled=Annullato
+ECommercengWoocommerceOrderStatusRefunded=Rimborsato
+ECommercengWoocommerceOrderStatusFailed=Fallito
+
+ECommercengWoocommerceExtrafieldsCorrespondence                 = Abbina attributi aggiuntivi ai metadati di Woocommerce
+ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription = Inserisci il nome dei metadati corrispondenti a questo attributo aggiuntivo: %s
+
+ECommerceWoocommerceCreateRemoteCategoryParentNotCreated    = Errore per lo shop '%s' durante la ricerca dell'ID principale della categoria '%s' (slug: '%s')
+ECommerceWoocommerceCreateRemoteBatchCategories             = Errore durante la creazione delle categorie lotto sullo shop '%s': %s
+ECommerceWoocommerceCreateRemoteBatchProducts               = Errore durante la creazione di lotti di prodotto sullo shop '%s': %s
+
+ECommerceWoocommerceCreateRemoteBatchCategory               = Errore durante la creazione della categoria (slug : %s) per lo shop '%s': %s
+ECommerceWoocommerceCreateRemoteBatchProduct                = Errore durante la creazione del prodotto (sku : %s) per lo shop'%s': %s
+ECommerceWoocommerceUpdateRemoteBatchProduct                = Errore durante l'aggiornamento del prodotto (sku : %s) per lo shop'%s': %s
+
+ECommerceWoocommerceErrorBaseTypeOfProductWithSiteParameter = Errore del prezzo base (HT/TTC) durante l'inserimento del prezzo del prodotto '%s', deve essere inserito in '%s' per lo shop '%s'.
+
+ECommerceWoocommerceProductSyncPrice               = Sincronizzazione dei prezzi di vendita
+ECommerceWoocommerceProductSyncPriceDescription    = Questa impostazione determina quale tipo di prezzo in WooCommerce deve essere sincronizzato con il prezzo di vendita in Dolibarr
+ECommerceWoocommerceRegularPrice                   = Prezzo regolare
+ECommerceWoocommerceSellingPrice                   = Prezzo di vendita
+
+ECommercengWoocommerceRegularPrice      = Prezzo regolare per lo shop [%s]
+ECommercengWoocommerceSalePrice         = Prezzo promozionale per lo shop [%s]
+ECommercengWoocommerceDateOnSaleFrom    = Data di inizio della promozione per lo shop [%s]
+ECommercengWoocommerceDateOnSaleTo      = Data di fine della promozione per lo shop [%s]
+
+ECommercengWoocommerceCompanyRole               = Ruolo per lo shop "%s"
+ECommercengWoocommerceCompanyRole_administrator = Amministratore
+ECommercengWoocommerceCompanyRole_author        = Autore
+ECommercengWoocommerceCompanyRole_contributor   = Contributore
+ECommercengWoocommerceCompanyRole_customer      = Cliente
+ECommercengWoocommerceCompanyRole_editor        = Editore
+ECommercengWoocommerceCompanyRole_subscriber    = Sottoscrittore
+ECommercengWoocommerceCompanyRole_shop_manager  = Gestore negozio
+ECommercengWoocommerceCompanyRole_              = Nessun ruolo su questo shop
