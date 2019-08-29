@@ -823,7 +823,7 @@ class InterfaceECommerceng
 		if (empty($site->parameters['realtime_dtoe']['order'])) {
                     dol_syslog("Triggers disabled from the config of the module");
                     continue;
-                }    
+                }
 
             	try
             	{
