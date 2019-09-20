@@ -39,7 +39,7 @@ class ActionsECommerceNg
         global $conf, $user, $langs;
 
         if (in_array('productdocuments', explode(':', $parameters['context'])) && $action == 'synchronize_images') {
-            if ($this->isImageSync($object) && $this->isLinkedToECommerce($object)) {
+            if ($this->isImageSync($object) && $this->isProductLinkedToECommerce($object)) {
                 $result = $object->call_trigger('PRODUCT_MODIFY', $user);
                 if ($result < 0) {
                     if (count($object->errors)) setEventMessages($object->error, $object->errors, 'errors');
@@ -51,7 +51,7 @@ class ActionsECommerceNg
         } elseif (in_array('productcard', explode(':', $parameters['context']))) {
             $confirm = GETPOST('confirm', 'alpha');
 
-            if ($action == 'confirm_unlink_product_to_ecommerce' && $confirm == 'yes' && $this->isLinkedToECommerce($object)) {
+            if ($action == 'confirm_unlink_product_to_ecommerce' && $confirm == 'yes' && $this->isProductLinkedToECommerce($object)) {
                 $site_id = GETPOST('siteid', 'int');
                 $error = 0;
                 $object->db->begin();
@@ -104,10 +104,65 @@ class ActionsECommerceNg
                     $object->db->commit();
                 }
             }
+        } elseif (in_array('thirdpartycard', explode(':', $parameters['context']))) {
+            $confirm = GETPOST('confirm', 'alpha');
+
+            if ($action == 'confirm_update_company_from_ecommerce' && $confirm == 'yes' && $this->isCompanyLinkedToECommerce($object)) {
+                $site_id = GETPOST('siteid', 'int');
+                $langs->load('ecommerceng@ecommerceng');
+                $langs->load('woocommerce@ecommerceng');
+
+                $error = 0;
+                $object->db->begin();
+
+                dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
+                $siteDb = new eCommerceSite($object->db);
+                $result = $siteDb->fetch($site_id);
+                if ($result == 0) {
+                    setEventMessage($langs->trans('EcommerceSiteNotFound', $site_id), 'errors');
+                    $error++;
+                } elseif ($result < 0) {
+                    setEventMessage($langs->trans('EcommerceSiteNotFound', $site_id) . ' : ' . $siteDb->error, 'errors');
+                    $error++;
+                }
+
+                if (!$error) {
+                    dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
+                    $synchro = new eCommerceSynchro($object->db, $siteDb, 0, 0);
+                    $synchro->connect();
+                    if (count($synchro->errors)) {
+                        setEventMessages($synchro->error, $synchro->errors, 'errors');
+                        $error++;
+                    }
+                }
+
+                if (!$error) {
+                    $eCommerceSociete = new eCommerceSociete($object->db);
+                    $eCommerceSociete->fetchByFkSociete($object->id, $siteDb->id);
+
+                    $toNb = empty($conf->global->ECOMMERCENG_MAXRECORD_PERSYNC) ? '' : $conf->global->ECOMMERCENG_MAXRECORD_PERSYNC;
+                    $result = $synchro->updateCompaniesToDolibarr(array($eCommerceSociete->remote_id), $toNb);
+                    if ($result <= 0) {
+                        setEventMessages($synchro->error, $synchro->errors, 'errors');
+                        $error++;
+                    }
+                }
+
+                $action = '';
+
+                if ($error) {
+                    $object->db->rollback();
+                    return -1;
+                } else {
+                    setEventMessage($langs->trans('EcommerceUpdateCompanyFromECommerceSuccess'));
+                    $object->db->commit();
+                }
+            }
         }
 
         return 0; // or return 1 to replace standard code
     }
+
     /**
      * Overloading the addMoreActionsButtons function : replacing the parent's function with the one below
      *
@@ -124,7 +179,7 @@ class ActionsECommerceNg
         if (in_array('productcard', explode(':', $parameters['context']))) {
             if ($user->rights->ecommerceng->write) {
                 // Site list
-                $sites = $this->getLinkedToECommerce($object);
+                $sites = $this->getProductLinkedSite($object);
                 if (count($sites) > 0) {
                     if ($action == 'unlink_product_to_ecommerce') {
                         $sites_array = array();
@@ -147,6 +202,32 @@ class ActionsECommerceNg
                     print '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . $params . '">' . $langs->trans("EcommerceNGUnlinkToECommerce") . '</a></div>';
                 }
             }
+        } elseif (in_array('thirdpartycard', explode(':', $parameters['context']))) {
+            if ($user->rights->ecommerceng->write) {
+                // Site list
+                $sites = $this->getCompanyLinkedSite($object);
+                if (count($sites) > 0) {
+                    if ($action == 'update_company_from_ecommerce') {
+                        $sites_array = array();
+                        foreach ($sites as $site) {
+                            $sites_array[$site->id] = $site->name;
+                        }
+
+                        require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
+                        $form = new Form($object->db);
+
+                        // Define confirmation messages
+                        $formquestionclone = array(
+                            array('type' => 'select', 'name' => 'siteid', 'label' => $langs->trans("ECommerceSite"), 'values' => $sites_array),
+                        );
+                        print $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id, $langs->trans('EcommerceUpdateCompanyFromECommerce'), $langs->trans('EcommerceConfirmUpdateCompanyFromECommerce', $object->ref), 'confirm_update_company_from_ecommerce', $formquestionclone, 'yes', 1, 250, 600);
+                    }
+
+                    $site_ids = array_keys($sites);
+                    $params = count($sites) > 1 ? '&action=update_company_from_ecommerce' : '&action=confirm_update_company_from_ecommerce&confirm=yes&siteid=' . $site_ids[0];
+                    print '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . $params . '">' . $langs->trans("EcommerceUpdateCompanyFromECommerce") . '</a></div>';
+                }
+            }
         }
 
         return 0; // or return 1 to replace standard code
@@ -166,7 +247,7 @@ class ActionsECommerceNg
         global $conf, $langs;
 
         if (in_array('productdocuments', explode(':', $parameters['context']))) {
-            if ($this->isImageSync($object) && $this->isLinkedToECommerce($object)) {
+            if ($this->isImageSync($object) && $this->isProductLinkedToECommerce($object)) {
                 $buttons = '<div class="tabsAction">';
                 $buttons .= '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?action=synchronize_images&amp;id=' . $object->id . '">' . $langs->trans("ECommerceSynchronizeProductImages") . '</a></div>';
                 $buttons .= '</div>';
@@ -346,9 +427,10 @@ class ActionsECommerceNg
      * @param   Product     &$object    Product object
      * @return  bool
      */
-    private function isLinkedToECommerce(&$object)
+    private function isProductLinkedToECommerce(&$object)
     {
         dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
+        dol_include_once('/ecommerceng/class/data/eCommerceProduct.class.php');
         $isLinkedToECommerce = false;
 
         // Get current categories and subcategories
@@ -388,12 +470,60 @@ class ActionsECommerceNg
     }
 
     /**
+     * Test if company is linked with a ECommerce
+     *
+     * @param   Societe     &$object    Company object
+     * @return  bool
+     */
+    private function isCompanyLinkedToECommerce(&$object)
+    {
+        dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
+        dol_include_once('/ecommerceng/class/data/eCommerceSociete.class.php');
+        $isLinkedToECommerce = false;
+
+        // Get current categories and subcategories
+        require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+        $c = new Categorie($object->db);
+        $categories = array();
+        if (isset($_POST['categories'])) {
+            $cats = GETPOST('categories');
+        } else {
+            $cats = $c->containing($object->id, Categorie::TYPE_CUSTOMER, 'id');
+        }
+        foreach ($cats as $cat) {
+            $c->id = $cat;
+            $catslist = $c->get_all_ways();
+            if (isset($catslist[0])) {
+                foreach ($catslist[0] as $catinfos) {
+                    $categories[$catinfos->id] = $catinfos->id;
+                }
+            }
+        }
+
+        $eCommerceSite = new eCommerceSite($object->db);
+        $sites = $eCommerceSite->listSites('object');
+        foreach ($sites as $site) {
+            if (in_array($site->fk_cat_societe, $categories)) {
+                $eCommerceSociete = new eCommerceSociete($object->db);
+                $eCommerceSociete->fetchByFkSociete($object->id, $site->id);
+
+                if ($eCommerceSociete->remote_id > 0) {
+                    $isLinkedToECommerce = true;
+                    break;
+                }
+            }
+        }
+
+        return $isLinkedToECommerce;
+    }
+
+    /**
      * Get ECommerce linked to the product
      *
      * @param   Product     &$object    Product object
      * @return  array
      */
-    private function getLinkedToECommerce(&$object)
+    private function getProductLinkedSite(&$object)
     {
         dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
         $linkedToECommerce = array();
@@ -425,6 +555,54 @@ class ActionsECommerceNg
                 $eCommerceProduct->fetchByProductId($object->id, $site->id);
 
                 if ($eCommerceProduct->remote_id > 0) {
+                    $linkedToECommerce[$site->id] = $site;
+                    break;
+                }
+            }
+        }
+
+        return $linkedToECommerce;
+    }
+
+
+    /**
+     * Get ECommerce linked to the product
+     *
+     * @param   Product     &$object    Product object
+     * @return  array
+     */
+    private function getCompanyLinkedSite(&$object)
+    {
+        dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
+        $linkedToECommerce = array();
+
+        // Get current categories and subcategories
+        require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+        $c = new Categorie($object->db);
+        $categories = array();
+        if (isset($_POST['categories'])) {
+            $cats = GETPOST('categories');
+        } else {
+            $cats = $c->containing($object->id, Categorie::TYPE_CUSTOMER, 'id');
+        }
+        foreach ($cats as $cat) {
+            $c->id = $cat;
+            $catslist = $c->get_all_ways();
+            if (isset($catslist[0])) {
+                foreach ($catslist[0] as $catinfos) {
+                    $categories[$catinfos->id] = $catinfos->id;
+                }
+            }
+        }
+
+        $eCommerceSite = new eCommerceSite($object->db);
+        $sites = $eCommerceSite->listSites('object');
+        foreach ($sites as $site) {
+            if (in_array($site->fk_cat_societe, $categories)) {
+                $eCommerceSociete = new eCommerceSociete($object->db);
+                $eCommerceSociete->fetchByFkSociete($object->id, $site->id);
+
+                if ($eCommerceSociete->remote_id > 0) {
                     $linkedToECommerce[$site->id] = $site;
                     break;
                 }

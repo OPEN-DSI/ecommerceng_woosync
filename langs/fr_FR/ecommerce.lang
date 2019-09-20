@@ -259,9 +259,63 @@ EcommerceNGUnlinkToECommerce=Enlever le produit du site ECommerce
 EcommerceNGConfirmUnlinkToECommerce=Êtes-vous sûr de vouloir enlever ce produit du site ECommerce ?
 ECommerceResetCategoriesProductSuccess=catégories du site sur les produits ont bien été retirées.
 
+EcommerceUpdateCompanyFromECommerce           = Mise à jour depuis le site ECommerce
+EcommerceConfirmUpdateCompanyFromECommerce    = Êtes-vous sûr de vouloir mettre à jour ce tiers depuis ce site ECommerce ?
+EcommerceUpdateCompanyFromECommerceSuccess    = Ce tiers à bien été mis à jour.
+EcommerceSiteNotFound                         = Le site avec l'ID %s n'a pas pu être chargé
+
 ECommerceSynchProductError=Erreur lors de la synchronisation du produit distant:
 ECommerceErrorProductAlreadyLinkedWithRemoteProduct=Le produit avec cette réf. est déjà lié au produit distant ID: %s.
 
 ECommerceOnlyNew = Seulement les nouveaux
 
 ECommerceUpdateRemoteCompanyLinkWhenMergeCompany    = Erreur de mise à jour des lien de la société 'id:%s' lors de la fusion avec la société 'id:%s': %s
+ECommerceSynchronizeStockToECommerce=Synchronisation du stock du produit sur le site %s.
+
+ECommerceCreateOrderInvoiceWhenSyncOrder    = Actions lors de la récupération des commandes WooCommerce
+ECommerceCreateOrder                        = Créer la commande
+ECommerceCreateInvoice                      = Créer la facture
+ECommerceCreateSupplierInvoiceFromFee       = Créer la facture fournisseur à partir des frais
+ECommerceSendInvoiceByMail                  = Envoyer la facture par mail
+ECommerceCreateOrderDescription             = Actions associées lors de la récupération des commandes WooCommerce (Renseigner les modes de paiements associés à WooCommerce)
+
+ECommercePaymentGatewaysCorrespondence              = Correspondance des modes de paiements avec le site
+ECommercePaymentGatewayLabel                        = Mode de paiement sur le site
+ECommerceUpdatePaymentGateways                      = Mise à jour des modes de paiements
+ECommerceConfirmUpdatePaymentGateways               = Confirmer la mise à jour des modes de paiements pour ce site ?
+ECommercePaymentGatewaysUpdated                     = Modes de paiements depuis le site mise à jour.
+ECommerceCreateAssociatePaymentForInvoice           = Créer le règlement associé pour la facture
+ECommerceSelectMailModelForSendInvoice              = Choix du modèle de mail pour l'envoi de la facture
+ECommerceProductForFee                              = Produit pour les frais de la facture fournisseur
+ECommerceCreateAssociatePaymentForSupplierInvoice   = Créer le règlement associé pour la facture fournisseur
+
+ECommerceSynchCommandeErrorGetPaymentGateways                   = Récupération des correspondances des modes de paiements échoués pour le site %s :
+ECommerceSynchCommandeErrorPaymentMethodNotFound                = Correspondances du mode de paiement non trouvée pour "%s"
+ECommerceSynchCommandeErrorSupplierNotDefinedForPaymentType     = Erreur le tiers fournisseur n'est pas définie pour le mode de paiement "%s" du site "%s"
+ECommerceSynchCommandeErrorPaymentGatewayBankNotDefined         = Erreur le compte bancaire n'est pas définie pour le mode de paiement "%s" du site "%s"
+ECommerceSynchCommandeErrorPaymentGatewayBankNotFound           = Erreur le compte bancaire ID "%s" n'a pas été trouvé pour le mode de paiement "%s" du site "%s"
+ECommerceSynchCommandeErrorMailModelNotDefinedForPaymentType    = Erreur le modèle de mail n'est pas définie pour le mode de paiement "%s" du site "%s"
+ECommerceSynchCommandeErrorGetLastFakeOrderId                   = Erreur lors de la récupération du dernier ID de la commande fictive (ref ext.: %s) :
+ECommerceSynchCommandeErrorCreateFakeOrderLink                  = Erreur lors de la creation du lien avec la commande fictive (ref ext.: %s) :
+ECommerceSynchCommandeErrorCopyContactsToInvoice                = Erreur lors de la copie des contacts dans la facture (ref ext.: %s) :
+ECommerceSynchCommandeErrorCreateDiscountToInvoice              = Erreur lors de la creation de la remise dans la facture (ref ext.: %s) :
+ECommerceSynchCommandeErrorAddLineToInvoice                     = Erreur lors de l'ajout d'une ligne dans la facture (ref ext.: %s) :
+ECommerceSynchCommandeCreateInvoice                             = Erreur lors de la creation de la facture (ref ext.: %s) :
+ECommerceSynchCommandeErrorValidateInvoice                      = Erreur lors de la validation de la facture (ref ext.: %s) :
+ECommerceSynchCommandeErrorGenerateInvoiceDocument              = Erreur lors de la génération du document de la facture (ref ext.: %s) :
+ECommerceSynchCommandeErrorWarehouseNotDefined                  = Erreur l'entrepot n'est pas définie dans les paramètres du site "%s"
+ECommerceSynchCommandeErrorInvoiceCreatePayment                 = Erreur lors de la creation du paiement de la facture (ref ext.: %s) :
+ECommerceSynchCommandeErrorInvoiceAddPaymentToBank              = Erreur lors de l'ajout du paiement de la facture dans le compte bancaire (ref ext.: %s) :
+ECommerceSynchCommandeErrorAddLineToSupplierInvoice             = Erreur lors de l'ajout d'une ligne dans la facture fournisseur (ref ext.: %s) :
+ECommerceSynchCommandeErrorGenerateSupplierInvoiceDocument      = Erreur lors de la génération du document de la facture fournisseur (ref ext.: %s) :
+ECommerceSynchCommandeErrorValidateSupplierInvoice              = Erreur lors de la validation de la facture fournisseur (ref ext.: %s) :
+ECommerceSynchCommandeErrorSupplierInvoiceCreatePayment         = Erreur lors de la creation du paiement de la facture fournisseur (ref ext.: %s) :
+ECommerceSynchCommandeErrorSupplierInvoiceAddPaymentToBank      = Erreur lors de l'ajout du paiement de la facture fournisseur dans le compte bancaire (ref ext.: %s) :
+ECommerceSynchCommandeErrorCreateSupplierInvoice                = Erreur lors de la creation de la facture fournisseur (ref ext.: %s) :
+ECommerceSynchCommandeErrorSendInvoiceEmailEmpty                = Erreur email du destinataire vide lors de l'envoi de la facture (ref ext.: %s)
+ECommerceSynchCommandeErrorWhenCreateInvoiceMailToSend          = Erreur lors de la création de l'email de la facture à envoyer (ref ext.: %s) :
+ECommerceSynchCommandeErrorWhenCreateInvoiceMailSendEvent       = Erreur lors de la création de l'événement d'envoi de la facture par email (ref ext.: %s) :
+ECommerceSynchCommandeErrorWhenInvoiceMailSend                  = Erreur lors de l'envoi de la facture par email (ref ext.: %s) :
+
+ECommerceCreateOrderSalesRepresentativeFollowByDefault              = Responsable suivi client
+ECommerceCreateOrderSalesRepresentativeFollowByDefaultDescription   = Utilisateur de type "Responsable suivi commande/facture/... client" par défaut affecté lors de la synchro d'une commande depuis le site

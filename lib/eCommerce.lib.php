@@ -377,6 +377,8 @@ function ecommerceng_remove_obsolete_image($product, $images, &$error_message)
 }
 
 function ecommerceng_add_extrafields($db, $langs, $extrafields, &$error) {
+    $result = 1;
+
     $efields = new ExtraFields($db);
     foreach ($extrafields as $extrafield) {
         $result = $efields->addExtraField(
@@ -399,6 +401,8 @@ function ecommerceng_add_extrafields($db, $langs, $extrafields, &$error) {
             return -1;
         }
     }
+
+    return $result;
 }
 
 function ecommerceng_update_woocommerce_dict_tax_class($db, $site)
@@ -448,6 +452,56 @@ function ecommerceng_update_woocommerce_dict_tax_class($db, $site)
                 return false;
             }
         }
+    }
+
+    return true;
+}
+
+function ecommerceng_update_payment_gateways($db, $site)
+{
+    global $conf, $langs;
+    $langs->load('woocommerce@ecommerceng');
+
+    dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
+    $synchro = new eCommerceSynchro($db, $site, 0, 0);
+
+    dol_syslog("site.php Try to connect to eCommerce site ".$site->name);
+    $synchro->connect();
+    if (count($synchro->errors))
+    {
+        setEventMessages($synchro->error, $synchro->errors, 'errors');
+        return false;
+    }
+
+    $paymentGateways = $synchro->getAllPaymentGateways();
+    if ($paymentGateways === false) {
+        setEventMessages($synchro->error, $synchro->errors, 'errors');
+        return false;
+    }
+
+    // Get all payment gateways
+    dol_include_once('/ecommerceng/class/data/eCommercePaymentGateways.class.php');
+    $pay_gateways = new eCommercePaymentGateways($db);
+    $currentPaymentGateways = $pay_gateways->get_all($site->id);
+    if (!is_array($currentPaymentGateways) && $currentPaymentGateways < 0) {
+        setEventMessages('', $pay_gateways->errors, 'errors');
+        return false;
+    }
+
+    $payment_gateways = array();
+    foreach ($paymentGateways as $id => $label) {
+        $payment_gateways[$id] = array(
+            'payment_gateway_label' => $label,
+            'payment_mode_id' => $currentPaymentGateways[$id]['payment_mode_id'] > 0 ? $currentPaymentGateways[$id]['payment_mode_id'] : 0,
+            'bank_account_id' => $currentPaymentGateways[$id]['bank_account_id'] > 0 ? $currentPaymentGateways[$id]['bank_account_id'] : 0,
+            'supplier_id' => $currentPaymentGateways[$id]['supplier_id'] > 0 ? $currentPaymentGateways[$id]['supplier_id'] : 0,
+        );
+    }
+
+    $result = $pay_gateways->set($site->id, $payment_gateways);
+    if ($result < 0) {
+        setEventMessages($pay_gateways->error, $pay_gateways->errors, 'errors');
+        return false;
     }
 
     return true;

@@ -27,6 +27,8 @@ ECommerceWoocommerceUpdateRemoteStockProduct=Erreur de mise à jour des stocks (
 ECommerceWoocommerceUpdateRemoteStockProductVariation=Erreur de mise à jour des stocks (%s) de la variation 'id:%s' du produit distant 'id:%s' sur le site '%s':
 ECommerceWoocommerceGetAllWoocommerceTaxClass=Erreur de récupération des données des classes de taxes sur le site '%s': %s
 ECommerceWoocommerceGetWoocommerceTaxes=Erreur de récupération des données des taxes sur le site '%s': %s
+ECommerceWoocommerceCreateRemoteProductSendImage=Erreur de l'envoi d'une image pour le produit 'ref:%s' dans les média de Wordpress sur le site '%s': %s
+ECommerceWoocommerceGetAllWoocommercePaymentGateways=Erreur de récupération des données des classes de taxes sur le site '%s': %s
 
 ECommercengWoocommerceStatus=Statut pour le site "%s"
 ECommercengWoocommerceDescription=Description boutique
@@ -46,9 +48,40 @@ ECommercengWoocommerceStatusPending=Pending
 ECommercengWoocommerceStatusPrivate=Private
 ECommercengWoocommerceStatusPublish=Publish
 
+ECommercengWoocommerceWithoutFirstnameLastname=Pas de nom/prénom renseigné
+ECommercengWoocommerceLastnameNotInformed=[Nom non renseigné]
+
+ECommercengWoocommerceOrderStatus=Statut sur le site [%s]
+ECommercengWoocommerceOrderStatusPending=Attente paiement
+ECommercengWoocommerceOrderStatusProcessing=En cours
+ECommercengWoocommerceOrderStatusOnHold=En attente
+ECommercengWoocommerceOrderStatusCompleted=Terminée
+ECommercengWoocommerceOrderStatusCancelled=Annulée
+ECommercengWoocommerceOrderStatusRefunded=Remboursée
+ECommercengWoocommerceOrderStatusFailed=Échouée
+
+ECommercengWoocommerceExtrafieldsCorrespondence                 = Correspondance des attributs supplémentaires avec les méta-données de Woocommerce
+ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription = Renseigner le nom de la méta-donnée correspondant à cet attribut supplémentaire : %s
+
+ECommerceWoocommerceCreateRemoteCategoryParentNotCreated    = Erreur pour le site '%s' lors de la recherche de l'ID parent da la catégorie '%s' (slug: '%s')
+ECommerceWoocommerceCreateRemoteBatchCategories             = Erreur lors de creation des catégories par lot sur le site '%s': %s
+ECommerceWoocommerceCreateRemoteBatchProducts               = Erreur lors de creation des produits par lot sur le site '%s': %s
+
 ECommercengWoocommerceWithoutFirstnameLastname=No firstname/lastname informed
 ECommercengWoocommerceLastnameNotInformed=[Lastname not informed]
 ECommerceWoocommerceUpdateRemoteBatchProduct                = Erreur lors de la mise à jour du produit (sku : %s) sur le site '%s': %s
+
+ECommerceWoocommerceErrorBaseTypeOfProductWithSiteParameter = Erreur de base de prix (HT/TTC) pour la saisie du prix du produit '%s', il doit être en '%s' pour le site '%s'.
+
+ECommerceWoocommerceProductSyncPrice               = Synchronisation des prix de vente
+ECommerceWoocommerceProductSyncPriceDescription    = Ce paramètre détermine quel type de prix dans WooCommerce doit être synchronisé avec le prix de vente dans Dolibarr
+ECommerceWoocommerceRegularPrice                   = Prix régulier
+ECommerceWoocommerceSellingPrice                   = Prix de vente
+
+ECommercengWoocommerceRegularPrice      = Prix régulier pour le site [%s]
+ECommercengWoocommerceSalePrice         = Prix promo pour le site [%s]
+ECommercengWoocommerceDateOnSaleFrom    = Date de début de la promo pour le site [%s]
+ECommercengWoocommerceDateOnSaleTo      = Date de fin de la promo pour le site [%s]
 
 ECommercengWoocommerceCompanyRole               = Role for the site "%s"
 ECommercengWoocommerceCompanyRole_administrator = Administrator

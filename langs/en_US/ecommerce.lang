@@ -185,6 +185,11 @@ ECommerceSiteOAuthSecret=OAuth secret
 ECommerceSiteOAuthSecretDescription=Secret de connexion au service OAuth
 ECommerceOAuthCheckToken=Allez sur <a class="notasortlink" href="%s" target="_blank">cette page</a> pour vérifier/effacer les autorisations sauvées par le fournisseur OAuth2.
 
+ECommerceOrderStatusSetup=Synchronisation des statuts des commandes
+ECommerceOrderStatusSetupDescription=Choississez le statut correspondant lors de la synchronisation.
+ECommerceOrderStatusDtoECheckLvlStatus=Ne change le statut que si le niveau est plus élevé que le statut précédant
+ECommerceOrderStatusDtoECheckLvlStatusDescription=Le niveau du statut se renseigne dans les valeurs de l'attribut complémentaire du statut de la commande (Index sous la forme: niveau_statut,libellé). ex: 0_on-hold,En attente
+
 ECommerceSynchronizeProductImages=Synchronize images
 ECommerceProductImagesSynchronized=Images synchronized.
 
@@ -241,6 +246,86 @@ ECommerceCreateRemoteCategoryLink   = Erreur de la création du lien de la caté
 
 ECommerceSyncheCommerceMotherCategoryCreateError=Erreur de création du lien de la catégorie racine pour la catégorie distante '%s' 'id:%s' sur le site '%s'.
 ECommerceNGUpdateElementDateMoreRecent=Inclus aussi les éléments dont la date de mise à jour est plus récente que celle de synchronisation
-ECommerceOnlyNew     = Only new
+ProductsSyncSetup=Synchronisation des produits
+AllDirection=Dans les deux sens
+ECommerceProductImageSyncDirection=Synchronisation des images
+ECommerceProductImageSyncDirectionDescription=Ce paramètre détermine le sens de mise à jour des images
+ECommerceProductRefSyncDirection=Synchronisation de la référence
+ECommerceProductRefSyncDirectionDescription=Ce paramètre détermine le sens de mise à jour de la référence
+ECommerceProductDescriptionSyncDirection=Synchronisation de la description
+ECommerceProductDescriptionSyncDirectionDescription=Ce paramètre détermine le sens de mise à jour de la description
+ECommerceProductShortDescriptionSyncDirection=Synchronisation de la description courte
+ECommerceProductShortDescriptionSyncDirectionDescription=Ce paramètre détermine le sens de mise à jour de la description courte
+ECommerceProductWeightSyncDirection=Synchronisation du poids du produit
+ECommerceProductWeightSyncDirectionDescription=Ce paramètre détermine le sens de mise à jour du poids du produit
+ECommerceProductTaxSyncDirection=Synchronisation de la classes de TVA sur la boutique
+ECommerceProductTaxSyncDirectionDescription=Ce paramètre détermine le sens de mise à jour de la classes de TVA sur la boutique
+ECommerceProductStatusSyncDirection=Synchronisation du status sur la boutique
+ECommerceProductStatusSyncDirectionDescription=Ce paramètre détermine le sens de mise à jour du status sur la boutique
+
+ECommerceExportProductsPrices=Export des prix des produits (WooSync)
+ECommerceImportProductsPrices=Import des prix des produits (WooSync) (Ne support pas l'ajout de nouveaux produits, la mis à jour n'est supporté que par le CSV)
+
+EcommerceNGUnlinkToECommerce=Enlever le produit du site ECommerce
+EcommerceNGConfirmUnlinkToECommerce=Êtes-vous sûr de vouloir enlever ce produit du site ECommerce ?
+ECommerceResetCategoriesProductSuccess=catégories du site sur les produits ont bien été retirées.
+
+EcommerceUpdateCompanyFromECommerce           = Mise à jour depuis le site ECommerce
+EcommerceConfirmUpdateCompanyFromECommerce    = Êtes-vous sûr de vouloir mettre à jour ce tiers depuis ce site ECommerce ?
+EcommerceUpdateCompanyFromECommerceSuccess    = Ce tiers à bien été mis à jour.
+EcommerceSiteNotFound                         = Le site avec l'ID %s n'a pas pu être chargé
+
+ECommerceSynchProductError=Erreur lors de la synchronisation du produit distant:
+ECommerceErrorProductAlreadyLinkedWithRemoteProduct=Le produit avec cette réf. est déjà lié au produit distant ID: %s.
+
+ECommerceOnlyNew = Seulement les nouveaux
 
 ECommerceUpdateRemoteCompanyLinkWhenMergeCompany    = Erreur de mise à jour des lien de la société 'id:%s' lors de la fusion avec la société 'id:%s': %s
+ECommerceSynchronizeStockToECommerce=Synchronisation du stock du produit sur le site %s.
+
+ECommerceCreateOrderInvoiceWhenSyncOrder    = Actions lors de la récupération des commandes WooCommerce
+ECommerceCreateOrder                        = Créer la commande
+ECommerceCreateInvoice                      = Créer la facture
+ECommerceCreateSupplierInvoiceFromFee       = Créer la facture fournisseur à partir des frais
+ECommerceSendInvoiceByMail                  = Envoyer la facture par mail
+ECommerceCreateOrderDescription             = Actions associées lors de la récupération des commandes WooCommerce (Renseigner les modes de paiements associés à WooCommerce)
+
+ECommercePaymentGatewaysCorrespondence              = Correspondance des modes de paiements avec le site
+ECommercePaymentGatewayLabel                        = Mode de paiement sur le site
+ECommerceUpdatePaymentGateways                      = Mise à jour des modes de paiements
+ECommerceConfirmUpdatePaymentGateways               = Confirmer la mise à jour des modes de paiements pour ce site ?
+ECommercePaymentGatewaysUpdated                     = Modes de paiements depuis le site mise à jour.
+ECommerceCreateAssociatePaymentForInvoice           = Créer le règlement associé pour la facture
+ECommerceSelectMailModelForSendInvoice              = Choix du modèle de mail pour l'envoi de la facture
+ECommerceProductForFee                              = Produit pour les frais de la facture fournisseur
+ECommerceCreateAssociatePaymentForSupplierInvoice   = Créer le règlement associé pour la facture fournisseur
+
+ECommerceSynchCommandeErrorGetPaymentGateways                   = Récupération des correspondances des modes de paiements échoués pour le site %s :
+ECommerceSynchCommandeErrorPaymentMethodNotFound                = Correspondances du mode de paiement non trouvée pour "%s"
+ECommerceSynchCommandeErrorSupplierNotDefinedForPaymentType     = Erreur le tiers fournisseur n'est pas définie pour le mode de paiement "%s" du site "%s"
+ECommerceSynchCommandeErrorPaymentGatewayBankNotDefined         = Erreur le compte bancaire n'est pas définie pour le mode de paiement "%s" du site "%s"
+ECommerceSynchCommandeErrorMailModelNotDefinedForPaymentType    = Erreur le modèle de mail n'est pas définie pour le mode de paiement "%s" du site "%s"
+ECommerceSynchCommandeErrorGetLastFakeOrderId                   = Erreur lors de la récupération du dernier ID de la commande fictive (ref ext.: %s) :
+ECommerceSynchCommandeErrorCreateFakeOrderLink                  = Erreur lors de la creation du lien avec la commande fictive (ref ext.: %s) :
+ECommerceSynchCommandeErrorCopyContactsToInvoice                = Erreur lors de la copie des contacts dans la facture (ref ext.: %s) :
+ECommerceSynchCommandeErrorCreateDiscountToInvoice              = Erreur lors de la creation de la remise dans la facture (ref ext.: %s) :
+ECommerceSynchCommandeErrorAddLineToInvoice                     = Erreur lors de l'ajout d'une ligne dans la facture (ref ext.: %s) :
+ECommerceSynchCommandeCreateInvoice                             = Erreur lors de la creation de la facture (ref ext.: %s) :
+ECommerceSynchCommandeErrorValidateInvoice                      = Erreur lors de la validation de la facture (ref ext.: %s) :
+ECommerceSynchCommandeErrorGenerateInvoiceDocument              = Erreur lors de la génération du document de la facture (ref ext.: %s) :
+ECommerceSynchCommandeErrorWarehouseNotDefined                  = Erreur l'entrepot n'est pas définie dans les paramètres du site "%s"
+ECommerceSynchCommandeErrorInvoiceCreatePayment                 = Erreur lors de la creation du paiement de la facture (ref ext.: %s) :
+ECommerceSynchCommandeErrorInvoiceAddPaymentToBank              = Erreur lors de l'ajout du paiement de la facture dans le compte bancaire (ref ext.: %s) :
+ECommerceSynchCommandeErrorAddLineToSupplierInvoice             = Erreur lors de l'ajout d'une ligne dans la facture fournisseur (ref ext.: %s) :
+ECommerceSynchCommandeErrorGenerateSupplierInvoiceDocument      = Erreur lors de la génération du document de la facture fournisseur (ref ext.: %s) :
+ECommerceSynchCommandeErrorValidateSupplierInvoice              = Erreur lors de la validation de la facture fournisseur (ref ext.: %s) :
+ECommerceSynchCommandeErrorSupplierInvoiceCreatePayment         = Erreur lors de la creation du paiement de la facture fournisseur (ref ext.: %s) :
+ECommerceSynchCommandeErrorSupplierInvoiceAddPaymentToBank      = Erreur lors de l'ajout du paiement de la facture fournisseur dans le compte bancaire (ref ext.: %s) :
+ECommerceSynchCommandeErrorCreateSupplierInvoice                = Erreur lors de la creation de la facture fournisseur (ref ext.: %s) :
+ECommerceSynchCommandeErrorSendInvoiceEmailEmpty                = Erreur email du destinataire vide lors de l'envoi de la facture (ref ext.: %s)
+ECommerceSynchCommandeErrorWhenCreateInvoiceMailToSend          = Erreur lors de la création de l'email de la facture à envoyer (ref ext.: %s) :
+ECommerceSynchCommandeErrorWhenCreateInvoiceMailSendEvent       = Erreur lors de la création de l'événement d'envoi de la facture par email (ref ext.: %s) :
+ECommerceSynchCommandeErrorWhenInvoiceMailSend                  = Erreur lors de l'envoi de la facture par email (ref ext.: %s) :
+
+ECommerceCreateOrderSalesRepresentativeFollowByDefault              = Responsable suivi client
+ECommerceCreateOrderSalesRepresentativeFollowByDefaultDescription   = Utilisateur de type "Responsable suivi commande/facture/... client" par défaut affecté lors de la synchro d'une commande depuis le site

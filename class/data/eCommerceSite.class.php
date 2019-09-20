@@ -88,7 +88,7 @@ class eCommerceSite // extends CommonObject
         $this->db->query($sql);
         $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_socpeople WHERE fk_socpeople NOT IN (select rowid from ".MAIN_DB_PREFIX."socpeople)";
         $this->db->query($sql);
-        $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_commande WHERE fk_commande NOT IN (select rowid from ".MAIN_DB_PREFIX."commande)";
+        $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_commande WHERE (fk_commande > 0 AND fk_commande NOT IN (select rowid from ".MAIN_DB_PREFIX."commande)) OR fk_site NOT IN (select rowid from ".MAIN_DB_PREFIX."ecommerce_site))";
         $this->db->query($sql);
         $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_facture WHERE fk_facture NOT IN (select rowid from ".MAIN_DB_PREFIX."facture)";
         $this->db->query($sql);
@@ -280,10 +280,12 @@ class eCommerceSite // extends CommonObject
 				$this->oauth_secret = $obj->oauth_secret;
 
                 $this->parameters = json_decode($obj->parameters, true);
+
+                return 1;
             }
             $this->db->free($resql);
 
-            return 1;
+            return 0;
         }
         else
         {

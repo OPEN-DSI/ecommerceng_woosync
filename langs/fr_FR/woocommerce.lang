@@ -28,6 +28,7 @@ ECommerceWoocommerceUpdateRemoteStockProductVariation=Erreur de mise à jour des
 ECommerceWoocommerceGetAllWoocommerceTaxClass=Erreur de récupération des données des classes de taxes sur le site '%s': %s
 ECommerceWoocommerceGetWoocommerceTaxes=Erreur de récupération des données des taxes sur le site '%s': %s
 ECommerceWoocommerceCreateRemoteProductSendImage=Erreur de l'envoi d'une image pour le produit 'ref:%s' dans les média de Wordpress sur le site '%s': %s
+ECommerceWoocommerceGetAllWoocommercePaymentGateways=Erreur de récupération des données des classes de taxes sur le site '%s': %s
 
 ECommercengWoocommerceStatus=Statut pour le site [%s]
 ECommercengWoocommerceDescription=Description boutique

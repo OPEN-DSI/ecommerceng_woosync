@@ -61,7 +61,7 @@ class modECommerceNg extends DolibarrModules
 		$this->editor_url = 'http://www.open-dsi.fr';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '4.0.34';
+		$this->version = '4.0.37';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
@@ -88,7 +88,7 @@ class modECommerceNg extends DolibarrModules
 		//                        );
 		$this->module_parts = array(
             'triggers' => 1,
-			'hooks' => array('expeditioncard','invoicecard','productdocuments','productcard'),
+			'hooks' => array('expeditioncard','invoicecard','productdocuments','productcard','thirdpartycard'),
 		);
 
 		// Data directories to create when module is enabled.
@@ -281,8 +281,7 @@ class modECommerceNg extends DolibarrModules
 	function init($options = '')
 	{
 		$sql = array();
-
-		$result=$this->load_tables($options);
+        $result=$this->load_tables($options);
 		$this->addSettlementTerms();
 		$this->addAnonymousCompany();
         $this->addFiles();

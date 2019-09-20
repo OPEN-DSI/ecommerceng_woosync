@@ -36,7 +36,10 @@ require_once(DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/product/class/product.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php');
+require_once(DOL_DOCUMENT_ROOT . '/fourn/class/fournisseur.facture.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/compta/paiement/class/paiement.class.php');
+require_once(DOL_DOCUMENT_ROOT . '/fourn/class/paiementfourn.class.php');
+require_once(DOL_DOCUMENT_ROOT . '/core/class/discount.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/expedition/class/expedition.class.php');
@@ -1092,6 +1095,7 @@ class eCommerceSynchro
 
                     //check if societe exists in eCommerceSociete
                     dol_syslog("-- Start thirdparty remote_id=".$societeArray['remote_id']." site=".$this->eCommerceSite->id);
+                    $this->initECommerceSociete();
                     $synchExists = $this->eCommerceSociete->fetchByRemoteId($societeArray['remote_id'], $this->eCommerceSite->id);
                     $dBSociete = new Societe($this->db);
 
@@ -1760,7 +1764,7 @@ class eCommerceSynchro
 
                         // We must set the initial stock
                         if ($dBProduct->type == 0) {
-                            if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr' && ($productArray['stock_qty'] != $dBProduct->stock_reel)) // Note: $dBProduct->stock_reel is 0 after a creation
+                            if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr')
                             {
                                 dol_syslog("Stock for product updated is " . $productArray['stock_qty'] . " in ecommerce, but " . $dBProduct->stock_reel . " in Dolibarr, we must update it");
                                 if (empty($this->eCommerceSite->fk_warehouse)) {
@@ -1768,20 +1772,25 @@ class eCommerceSynchro
                                     $this->errors[] = 'SetupOfWarehouseNotDefinedForThisSite';
                                 }
 
-                                // Update/init stock
-                                if (!$error) {
-                                    include_once DOL_DOCUMENT_ROOT . '/product/stock/class/mouvementstock.class.php';
-                                    $movement = new MouvementStock($this->db);
-                                    $movement->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                                $dBProduct->load_stock();
+                                $current_stock = isset($dbProduct->stock_warehouse[$this->eCommerceSite->fk_warehouse]->real) ? $dBProduct->stock_warehouse[$this->eCommerceSite->fk_warehouse]->real : 0;
 
-                                    $lot = null;
-                                    if ($dBProduct->status_batch) $lot = '000000';
-                                    $result = $movement->reception($this->user, $dBProduct->id, $this->eCommerceSite->fk_warehouse, ($productArray['stock_qty'] - $dBProduct->stock_reel), 0, '(StockUpdateFromeCommerceSync)', '', '', $lot);
-                                    if ($result <= 0) {
-                                        $error++;
-                                        $this->error = $this->langs->trans('ECommerceSynchMouvementStockChangeError') . ' ' . $movement->error;
-                                        $this->errors[] = $this->error;
-                                        $this->errors = array_merge($this->errors, $movement->errors);
+                                if ($productArray['stock_qty'] != $current_stock) {
+                                    // Update/init stock
+                                    if (!$error) {
+                                        include_once DOL_DOCUMENT_ROOT . '/product/stock/class/mouvementstock.class.php';
+                                        $movement = new MouvementStock($this->db);
+                                        $movement->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+
+                                        $lot = null;
+                                        if ($dBProduct->status_batch) $lot = '000000';
+                                        $result = $movement->reception($this->user, $dBProduct->id, $this->eCommerceSite->fk_warehouse, ($productArray['stock_qty'] - $current_stock), 0, '(StockUpdateFromeCommerceSync)', '', '', $lot);
+                                        if ($result <= 0) {
+                                            $error++;
+                                            $this->error = $this->langs->trans('ECommerceSynchMouvementStockChangeError') . ' ' . $movement->error;
+                                            $this->errors[] = $this->error;
+                                            $this->errors = array_merge($this->errors, $movement->errors);
+                                        }
                                     }
                                 }
                             }
@@ -1821,7 +1830,7 @@ class eCommerceSynchro
 
                         // We must set the initial stock
                         if ($dBProduct->type == 0) {
-                            if (!$error && $this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr' && ($productArray['stock_qty'] != $dBProduct->stock_reel)) // Note: $dBProduct->stock_reel is 0 after a creation
+                            if (!$error && $this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr')
                             {
                                 dol_syslog("Stock for product created is " . $productArray['stock_qty'] . " in ecommerce, but " . $dBProduct->stock_reel . " in Dolibarr, we must update it");
                                 if (empty($this->eCommerceSite->fk_warehouse)) {
@@ -1830,19 +1839,24 @@ class eCommerceSynchro
                                     break;
                                 }
 
-                                // Update/init stock
-                                include_once DOL_DOCUMENT_ROOT . '/product/stock/class/mouvementstock.class.php';
-                                $movement = new MouvementStock($this->db);
-                                $movement->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                                $dBProduct->load_stock();
+                                $current_stock = isset($dbProduct->stock_warehouse[$this->eCommerceSite->fk_warehouse]->real) ? $dBProduct->stock_warehouse[$this->eCommerceSite->fk_warehouse]->real : 0;
 
-                                $lot = null;
-                                if ($dBProduct->status_batch) $lot = '000000';
-                                $result = $movement->reception($this->user, $dBProduct->id, $this->eCommerceSite->fk_warehouse, ($productArray['stock_qty'] - $dBProduct->stock_reel), 0, '(StockInitFromeCommerceSync)', '', '', $lot);
-                                if ($result <= 0) {
-                                    $error++;
-                                    $this->error = $this->langs->trans('ECommerceSynchMouvementStockChangeError') . ' ' . $movement->error;
-                                    $this->errors[] = $this->error;
-                                    $this->errors = array_merge($this->errors, $movement->errors);
+                                if ($productArray['stock_qty'] != $current_stock) {
+                                    // Update/init stock
+                                    include_once DOL_DOCUMENT_ROOT . '/product/stock/class/mouvementstock.class.php';
+                                    $movement = new MouvementStock($this->db);
+                                    $movement->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+
+                                    $lot = null;
+                                    if ($dBProduct->status_batch) $lot = '000000';
+                                    $result = $movement->reception($this->user, $dBProduct->id, $this->eCommerceSite->fk_warehouse, ($productArray['stock_qty'] - $current_stock), 0, '(StockInitFromeCommerceSync)', '', '', $lot);
+                                    if ($result <= 0) {
+                                        $error++;
+                                        $this->error = $this->langs->trans('ECommerceSynchMouvementStockChangeError') . ' ' . $movement->error;
+                                        $this->errors[] = $this->error;
+                                        $this->errors = array_merge($this->errors, $movement->errors);
+                                    }
                                 }
                             }
                         }
@@ -2035,6 +2049,12 @@ class eCommerceSynchro
 
         $error = 0;
 
+        $ecommerceOrderActions = isset($this->eCommerceSite->parameters['order_actions']) ? $this->eCommerceSite->parameters['order_actions'] : array();
+        if (empty($ecommerceOrderActions['create_order']) && empty($ecommerceOrderActions['create_invoice']) && empty($ecommerceOrderActions['create_supplier_invoice'])) {
+            dol_syslog("***** eCommerceSynchro synchCommande bypassed (disabled)");
+            return 0;
+        }
+
         try {
             $nbgoodsunchronize = 0;
             $nbrecorderror =0;
@@ -2056,6 +2076,18 @@ class eCommerceSynchro
             if (is_array($resulttoupdate) && count($resulttoupdate) > 0 && (! is_array($commandes) || count($commandes) == 0))    // return of remote is bad or empty when input was not empty
             {
                 $error++;
+            }
+
+            if (! $error && is_array($commandes)) {
+                // Payment gateways correspondence
+                dol_include_once('/ecommerceng/class/data/eCommercePaymentGateways.class.php');
+                $pay_gateways = new eCommercePaymentGateways($this->db);
+                $ecommercePaymentGateways = $pay_gateways->get_all($this->eCommerceSite->id);
+                if (!is_array($ecommercePaymentGateways) && $ecommercePaymentGateways < 0) {
+                    $error++;
+                    $this->errors[] = $this->langs->trans('ECommerceSynchCommandeErrorGetPaymentGateways', $this->eCommerceSite->id) . ' ' . $pay_gateways->error;
+                    $this->errors = array_merge($this->errors, $pay_gateways->errors);
+                }
             }
 
             if (! $error && is_array($commandes))
@@ -2358,7 +2390,7 @@ class eCommerceSynchro
                                 }
 
                                 // Add specific line for delivery
-                                if (! $error && $commandeArray['delivery']['qty'] > 0)
+                                if (! $error && $commandeArray['delivery']['qty'] > 0 && $commandeArray['delivery']['price'] > 0)
                                 {
                                     $delivery = $commandeArray['delivery'];
 
@@ -2565,9 +2597,25 @@ class eCommerceSynchro
                             }
                         }
 
+                        if ($this->eCommerceSite->parameters['default_sales_representative_follow'] > 0) {
+                            $dBCommande->add_contact($this->eCommerceSite->parameters['default_sales_representative_follow'], 'SALESREPFOLL', 'internal');
+                        }
+
                         // Update Payment method
                         if (! $error) {
-                            if (isset($commandeArray['payment_method'])) {
+                            if (isset($commandeArray['payment_method_id'])) {
+                                if (isset($ecommercePaymentGateways[$commandeArray['payment_method_id']]['payment_mode_id'])) {
+                                    $ecommerceSelectedPaymentGateway = $ecommercePaymentGateways[$commandeArray['payment_method_id']];
+                                    if ($ecommerceSelectedPaymentGateway['payment_mode_id'] > 0) {
+                                        $dBCommande->setPaymentMethods($ecommerceSelectedPaymentGateway['payment_mode_id']);
+                                    }
+                                } else {
+                                    $error++;
+                                    $this->error = $this->langs->trans('ECommerceSynchCommandeErrorPaymentMethodNotFound', $commandeArray['payment_method']);
+                                    $this->errors[] = $this->error;
+                                }
+                            }
+                            if (!($dBCommande->mode_reglement_id > 0) && isset($commandeArray['payment_method'])) {
                                 $payment_method = dol_getIdFromCode($this->db, $commandeArray['payment_method'], 'c_paiement', 'libelle', 'id');
                                 if ($payment_method != '' && $payment_method > 0) {
                                     $dBCommande->setPaymentMethods($payment_method);
@@ -2630,6 +2678,594 @@ class eCommerceSynchro
                             }
                         }
                     }
+
+                    if (!$error && !empty($this->eCommerceSite->parameters['order_actions']['create_invoice']) && !empty($commandeArray['billed'])) {
+                        $ref_ext = 'eCommerce-' . $this->eCommerceSite->id . '-' . $dBCommande->ref_client;
+                        $dBInvoice = new Facture($this->db);
+
+                        $result = $dBInvoice->fetch('', '', $ref_ext);
+                        if ($result == 0) {
+                            // Fetch order
+                            $dBCommande->fetch($dBCommande->id);
+                            foreach ($dBCommande->lines as $line_id => $line) {
+                                // Extrafields
+                                if (empty($conf->global->MAIN_EXTRAFIELDS_DISABLED)) {
+                                    $dBCommande->lines[$line_id]->fetch_optionals($line->rowid);
+                                }
+                            }
+
+                            // Get order contacts
+                            $order_contacts = array();
+                            $sql = "SELECT ctc.code, ctc.source, ec.fk_socpeople FROM " . MAIN_DB_PREFIX . "element_contact as ec, " . MAIN_DB_PREFIX . "c_type_contact as ctc";
+                            $sql .= " WHERE element_id = " . $dBCommande->id . " AND ec.fk_c_type_contact = ctc.rowid AND ctc.element = '" . $dBCommande->element . "'";
+                            $resql = $this->db->query($sql);
+                            if ($resql) {
+                                while ($obj = $this->db->fetch_object($resql)) {
+                                    $order_contacts[] = array('fk_socpeople' => $obj->fk_socpeople, 'code' => $obj->code, 'source' => $obj->source);
+                                }
+                            } else {
+                                $error++;
+                                $this->errors[] = $this->langs->trans('ECommerceSynchCommandeErrorCopyContactsToInvoice', $ref_ext) . ' ' . $this->db->lasterror();
+                                dol_syslog(__METHOD__ . " ref_ext: " . $ref_ext . "; SQL: " . $sql . "; Error: " . $this->db->lasterror(), LOG_ERR);
+                            }
+
+                            if (!$error && empty($this->eCommerceSite->parameters['order_actions']['create_order'])) {
+                                $this->db->rollback();
+                                $this->db->begin();
+
+                                // Get next fake order id
+                                $fake_order_id = 0;
+                                $sql = "SELECT MIN(fk_commande) AS min_id FROM " . MAIN_DB_PREFIX . "ecommerce_commande WHERE fk_site = " . $this->eCommerceSite->id;
+                                $resql = $this->db->query($sql);
+                                if ($resql) {
+                                    if ($obj = $this->db->fetch_object($resql)) {
+                                        $fake_order_id = min($fake_order_id, $obj->min_id);
+                                    }
+                                } else {
+                                    $error++;
+                                    $this->error = $this->langs->trans('ECommerceSynchCommandeErrorGetLastFakeOrderId', $ref_ext) . ' ' . $this->db->lasterror();
+                                    $this->errors[] = $this->error;
+                                    dol_syslog(__METHOD__ . " " . $this->error, LOG_ERR);
+                                }
+                                $fake_order_id--;
+
+                                //eCommerce create
+                                $this->eCommerceCommande->fk_site = $this->eCommerceSite->id;
+                                $this->eCommerceCommande->fk_commande = $fake_order_id;
+                                $this->eCommerceCommande->remote_id = $commandeArray['remote_id'];
+                                if ($this->eCommerceCommande->create($this->user) < 0) {
+                                    $error++;
+                                    $this->error = $this->langs->trans('ECommerceSynchCommandeErrorCreateFakeOrderLink', $ref_ext) . ' ' . $this->eCommerceCommande->error;
+                                    $this->errors[] = $this->error;
+                                    dol_syslog(__METHOD__ . " " . $this->error, LOG_ERR);
+                                }
+                            }
+
+                            $fk_account = 0;
+                            if (!$error && $conf->banque->enabled && !empty($ecommerceSelectedPaymentGateway['create_invoice_payment']) && !empty($ecommerceSelectedPaymentGateway['create_supplier_invoice_payment'])) {
+                                if (!isset($ecommerceSelectedPaymentGateway['bank_account_id'])) {
+                                    $error++;
+                                    $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorPaymentGatewayBankNotFound', $ref_ext);
+                                    $this->errors[] = $msg_error;
+                                    dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                } elseif (!($ecommerceSelectedPaymentGateway['bank_account_id'] > 0)) {
+                                    $error++;
+                                    $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorPaymentGatewayBankNotDefined', $commandeArray['payment_method_id'], $this->eCommerceSite->id);
+                                    $this->errors[] = $msg_error;
+                                    dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                } else {
+                                    $fk_account = $ecommerceSelectedPaymentGateway['bank_account_id'];
+                                }
+                            }
+
+                            if (!$error) {
+                                $now = dol_now();
+
+                                // Create invoice
+                                $dBInvoice->socid = $dBCommande->socid;
+                                $dBInvoice->type = Facture::TYPE_STANDARD;
+                                $dBInvoice->date = $now;
+                                $dBInvoice->ref_ext = $ref_ext;
+                                $dBInvoice->modelpdf = $conf->global->FACTURE_ADDON_PDF;
+                                $dBInvoice->cond_reglement_id = $dBCommande->cond_reglement_id;
+                                $dBInvoice->mode_reglement_id = $dBCommande->mode_reglement_id;
+                                $dBInvoice->fk_account = $fk_account;
+                                $dBInvoice->multicurrency_code = $dBCommande->multicurrency_code;
+                                $dBInvoice->multicurrency_tx = $dBCommande->multicurrency_tx;
+                                $dBInvoice->array_options = $dBCommande->array_options;
+
+                                if (!empty($this->eCommerceSite->parameters['order_actions']['create_order'])) {
+                                    $dBInvoice->linkedObjectsIds[$dBCommande->element] = $dBCommande->id;
+                                }
+
+                                $id = $dBInvoice->create($user);
+                                if ($id > 0) {
+                                    // Copy contacts
+                                    foreach ($order_contacts as $contact_infos) {
+                                        $dBInvoice->add_contact($contact_infos['fk_socpeople'], $contact_infos['code'], $contact_infos['source']);    // May failed because of duplicate key or because code of contact type does not exists for new object
+                                    }
+
+                                    $fk_parent_line = 0;
+                                    foreach ($dBCommande->lines as $line) {
+                                        $label = (!empty($line->label) ? $line->label : '');
+                                        $desc = (!empty($line->desc) ? $line->desc : $line->libelle);
+
+                                        if ($line->subprice < 0) {
+                                            // Negative line, we create a discount line
+                                            $discount = new DiscountAbsolute($this->db);
+                                            $discount->fk_soc = $dBInvoice->socid;
+                                            $discount->amount_ht = abs($line->total_ht);
+                                            $discount->amount_tva = abs($line->total_tva);
+                                            $discount->amount_ttc = abs($line->total_ttc);
+                                            $discount->tva_tx = $line->tva_tx;
+                                            $discount->fk_user = $user->id;
+                                            $discount->description = $desc;
+                                            $discountid = $discount->create($user);
+                                            if ($discountid > 0) {
+                                                $result = $dBInvoice->insert_discount($discountid); // This include link_to_invoice
+                                            } else {
+                                                $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorCreateDiscountToInvoice', $ref_ext) . ' ' . $discount->error . (is_array($discount->errors) ? ';' . implode('; ', $discount->errors) : '');
+                                                $this->errors[] = $msg_error;
+                                                dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                                $error++;
+                                                break;
+                                            }
+                                        } else {
+                                            // Positive line
+                                            $product_type = ($line->product_type ? $line->product_type : 0);
+
+                                            // Date start
+                                            $date_start = false;
+                                            if ($line->date_debut_prevue)
+                                                $date_start = $line->date_debut_prevue;
+                                            if ($line->date_debut_reel)
+                                                $date_start = $line->date_debut_reel;
+                                            if ($line->date_start)
+                                                $date_start = $line->date_start;
+
+                                            // Date end
+                                            $date_end = false;
+                                            if ($line->date_fin_prevue)
+                                                $date_end = $line->date_fin_prevue;
+                                            if ($line->date_fin_reel)
+                                                $date_end = $line->date_fin_reel;
+                                            if ($line->date_end)
+                                                $date_end = $line->date_end;
+
+                                            // Reset fk_parent_line for no child products and special product
+                                            if (($line->product_type != 9 && empty($line->fk_parent_line)) || $line->product_type == 9) {
+                                                $fk_parent_line = 0;
+                                            }
+
+                                            // Extrafields
+                                            if (empty($conf->global->MAIN_EXTRAFIELDS_DISABLED)) {
+                                                $array_options = $line->array_options;
+                                            }
+
+                                            $tva_tx = $line->tva_tx;
+                                            if (!empty($line->vat_src_code) && !preg_match('/\(/', $tva_tx)) $tva_tx .= ' (' . $line->vat_src_code . ')';
+
+                                            // View third's localtaxes for NOW and do not use value from origin.
+                                            // TODO Is this really what we want ? Yes if source if template invoice but what if proposal or order ?
+                                            $localtax1_tx = get_localtax($tva_tx, 1, $dBInvoice->thirdparty);
+                                            $localtax2_tx = get_localtax($tva_tx, 2, $dBInvoice->thirdparty);
+
+                                            $result = $dBInvoice->addline($desc, $line->subprice, $line->qty, $tva_tx, $localtax1_tx, $localtax2_tx, $line->fk_product,
+                                                $line->remise_percent, $date_start, $date_end, 0, $line->info_bits, $line->fk_remise_except, 'HT',
+                                                0, $product_type, $line->rang, $line->special_code, $dBCommande->element, $line->rowid, $fk_parent_line, $line->fk_fournprice,
+                                                $line->pa_ht, $label, $array_options, $line->situation_percent, $line->fk_prev_id, $line->fk_unit);
+
+                                            if ($result < 0) {
+                                                $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorAddLineToInvoice', $ref_ext) . ' ' . $dBInvoice->errorsToString();
+                                                $this->errors[] = $msg_error;
+                                                dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                                $error++;
+                                                break;
+                                            }
+
+                                            // Defined the new fk_parent_line
+                                            if ($result > 0 && $line->product_type == 9) {
+                                                $fk_parent_line = $result;
+                                            }
+                                        }
+                                    }
+
+                                    if (!$error && !empty($conf->global->STOCK_CALCULATE_ON_BILL) && $this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') {
+                                        if (empty($conf->global->STOCK_SUPPORTS_SERVICES)) {
+                                            $qualified_for_stock_change = $dBInvoice->hasProductsOrServices(2);
+                                        } else {
+                                            $qualified_for_stock_change = $dBInvoice->hasProductsOrServices(1);
+                                        }
+
+                                        if ($qualified_for_stock_change && !($this->eCommerceSite->fk_warehouse > 0)) {
+                                            $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorWarehouseNotDefined', $this->eCommerceSite->id);
+                                            $this->errors[] = $msg_error;
+                                            dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                            $error++;
+                                        }
+                                    }
+
+                                    if (!$error) {
+                                        // Validate invoice
+                                        $result = $dBInvoice->validate($user, '', $this->eCommerceSite->fk_warehouse > 0 ? $this->eCommerceSite->fk_warehouse : 0);
+                                        if ($result >= 0) {
+                                            // Define output language
+                                            $model = $dBInvoice->modelpdf;
+                                            if (!empty($model) && empty($conf->global->MAIN_DISABLE_PDF_AUTOUPDATE) && empty($this->eCommerceSite->parameters['order_actions']['create_invoice_associate_payment'])) {
+                                                $outputlangs = $this->langs;
+                                                $newlang = '';
+                                                if ($conf->global->MAIN_MULTILANGS && empty($newlang)) $newlang = $dBInvoice->thirdparty->default_lang;
+                                                if (!empty($newlang)) {
+                                                    $outputlangs = new Translate("", $conf);
+                                                    $outputlangs->setDefaultLang($newlang);
+                                                    $outputlangs->load('products');
+                                                }
+                                                $ret = $dBInvoice->fetch($id); // Reload to get new records
+
+                                                $hidedetails = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DETAILS) ? 1 : 0;
+                                                $hidedesc = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DESC) ? 1 : 0;
+                                                $hideref = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_REF) ? 1 : 0;
+                                                $result = $dBInvoice->generateDocument($model, $outputlangs, $hidedetails, $hidedesc, $hideref);
+                                                if ($result < 0) {
+                                                    $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorGenerateInvoiceDocument', $ref_ext) . ' ' . $dBInvoice->errorsToString();
+                                                    $this->errors[] = $msg_error;
+                                                    dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                                    $error++;
+                                                }
+                                            }
+                                        } else {
+                                            $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorValidateInvoice', $ref_ext) . ' ' . $dBInvoice->errorsToString();
+                                            $this->errors[] = $msg_error;
+                                            dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                            $error++;
+                                        }
+                                    }
+
+                                    if (!$error) {
+                                        if (!empty($ecommerceSelectedPaymentGateway['create_invoice_payment'])) {
+                                            // Creation of payment line
+                                            $paiement = new Paiement($this->db);
+                                            $paiement->datepaye = $now;
+                                            $paiement->amounts = array($dBInvoice->id => $dBInvoice->total_ttc);   // Array with all payments dispatching with invoice id
+                                            $paiement->multicurrency_amounts = array();   // Array with all payments dispatching
+                                            $paiement->paiementid = $dBCommande->mode_reglement_id;
+                                            $paiement->num_paiement = '';
+                                            $paiement->note = '';
+
+                                            $paiement_id = $paiement->create($user, 1);
+                                            if ($paiement_id < 0) {
+                                                $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorInvoiceCreatePayment', $ref_ext) . ' ' . $paiement->errorsToString();
+                                                $this->errors[] = $msg_error;
+                                                dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                                $error++;
+                                            }
+
+                                            if (!$error) {
+                                                $result = $paiement->addPaymentToBank($user, 'payment', '(CustomerInvoicePayment)', $fk_account, '', '');
+                                                if ($result < 0) {
+                                                    $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorInvoiceAddPaymentToBank', $ref_ext) . ' ' . $paiement->errorsToString();
+                                                    $this->errors[] = $msg_error;
+                                                    dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                                    $error++;
+                                                }
+                                            }
+                                        }
+
+                                        if (!$error && !empty($this->eCommerceSite->parameters['order_actions']['create_supplier_invoice']) && is_array($commandeArray['fee_lines']) && count($commandeArray['fee_lines']) > 0) {
+                                            if (!($ecommerceSelectedPaymentGateway['supplier_id'] > 0)) {
+                                                $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorSupplierNotDefinedForPaymentType', $commandeArray['payment_method_id'], $this->eCommerceSite->id);
+                                                $this->errors[] = $msg_error;
+                                                dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                                $error++;
+                                            }
+
+                                            if (!$error) {
+                                                // Create supplier payment
+                                                $dBSupplierInvoice = new FactureFournisseur($this->db);
+                                                $dBSupplierInvoice->type = FactureFournisseur::TYPE_STANDARD;
+                                                $dBSupplierInvoice->ref = '';
+                                                $dBSupplierInvoice->ref_supplier = $ref_ext;
+                                                $dBSupplierInvoice->socid = $ecommerceSelectedPaymentGateway['supplier_id'];
+                                                $dBSupplierInvoice->libelle = '';
+                                                $dBSupplierInvoice->date = $now;
+                                                $dBSupplierInvoice->date_echeance = '';
+                                                $dBSupplierInvoice->cond_reglement_id = 0;
+                                                $dBSupplierInvoice->mode_reglement_id = $dBCommande->mode_reglement_id;
+                                                $dBSupplierInvoice->fk_account = $fk_account;
+
+                                                $dBSupplierInvoice->linkedObjectsIds[$dBInvoice->element] = $dBInvoice->id;
+                                                if (!empty($this->eCommerceSite->parameters['order_actions']['create_order'])) {
+                                                    $dBSupplierInvoice->linkedObjectsIds[$dBCommande->element] = $dBCommande->id;
+                                                }
+
+                                                $id = $dBSupplierInvoice->create($user);
+                                                if ($id > 0) {
+                                                    $product_id = $ecommerceSelectedPaymentGateway['product_id_for_fee'] > 0 ? $ecommerceSelectedPaymentGateway['product_id_for_fee'] : 0;
+                                                    foreach ($commandeArray['fee_lines'] as $fee_line) {
+                                                        if ((float)DOL_VERSION < 8) $this->db->begin(); // Not exist in addline function but commit and rollback exist
+                                                        $result = $dBSupplierInvoice->addline(
+                                                            $fee_line['label'],
+                                                            $fee_line['amount'],
+                                                            $fee_line['tax'],
+                                                            0,
+                                                            0,
+                                                            1,
+                                                            $product_id);
+                                                        if ($result < 0) {
+                                                            $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorAddLineToSupplierInvoice', $ref_ext) . ' ' . $dBSupplierInvoice->errorsToString();
+                                                            $this->errors[] = $msg_error;
+                                                            dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                                            $error++;
+                                                            break;
+                                                        }
+                                                    }
+
+                                                    if (!$error) {
+                                                        // Validate invoice
+                                                        $result = $dBSupplierInvoice->validate($user);
+                                                        if ($result >= 0) {
+                                                            // Define output language
+                                                            $model = $conf->global->INVOICE_SUPPLIER_ADDON_PDF;
+                                                            if (!empty($model) && empty($conf->global->MAIN_DISABLE_PDF_AUTOUPDATE) && empty($this->eCommerceSite->parameters['order_actions']['create_supplier_invoice_associate_payment'])) {
+                                                                $outputlangs = $this->langs;
+                                                                $newlang = '';
+                                                                if ($conf->global->MAIN_MULTILANGS && empty($newlang)) $newlang = $dBSupplierInvoice->thirdparty->default_lang;
+                                                                if (!empty($newlang)) {
+                                                                    $outputlangs = new Translate("", $conf);
+                                                                    $outputlangs->setDefaultLang($newlang);
+                                                                    $outputlangs->load('products');
+                                                                }
+                                                                $ret = $dBSupplierInvoice->fetch($id); // Reload to get new records
+
+                                                                $hidedetails = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DETAILS) ? 1 : 0;
+                                                                $hidedesc = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DESC) ? 1 : 0;
+                                                                $hideref = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_REF) ? 1 : 0;
+                                                                $result = $dBSupplierInvoice->generateDocument($model, $outputlangs, $hidedetails, $hidedesc, $hideref);
+                                                                if ($result < 0) {
+                                                                    $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorGenerateSupplierInvoiceDocument', $ref_ext) . ' ' . $dBSupplierInvoice->errorsToString();
+                                                                    $this->errors[] = $msg_error;
+                                                                    dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                                                    $error++;
+                                                                }
+                                                            }
+                                                        } else {
+                                                            $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorValidateSupplierInvoice', $ref_ext) . ' ' . $dBSupplierInvoice->errorsToString();
+                                                            $this->errors[] = $msg_error;
+                                                            dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                                            $error++;
+                                                        }
+                                                    }
+
+                                                    if (!$error && !empty($ecommerceSelectedPaymentGateway['create_supplier_invoice_payment'])) {
+                                                        // Creation of payment line
+                                                        $paiement = new PaiementFourn($this->db);
+                                                        $paiement->datepaye = $now;
+                                                        $paiement->amounts = array($dBSupplierInvoice->id => $dBSupplierInvoice->total_ttc);   // Array of amounts
+                                                        $paiement->multicurrency_amounts = array();
+                                                        $paiement->paiementid = $dBSupplierInvoice->mode_reglement_id;
+                                                        $paiement->num_paiement = '';
+                                                        $paiement->note = '';
+
+                                                        if (!$error) {
+                                                            $paiement_id = $paiement->create($user, 1);
+                                                            if ($paiement_id < 0) {
+                                                                $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorSupplierInvoiceCreatePayment', $ref_ext) . ' ' . $paiement->errorsToString();
+                                                                $this->errors[] = $msg_error;
+                                                                dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                                                $error++;
+                                                            }
+                                                        }
+
+                                                        if (!$error) {
+                                                            $result = $paiement->addPaymentToBank($user, 'payment_supplier', '(SupplierInvoicePayment)', $fk_account, '', '');
+                                                            if ($result < 0) {
+                                                                $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorSupplierInvoiceAddPaymentToBank', $ref_ext) . ' ' . $paiement->errorsToString();
+                                                                $this->errors[] = $msg_error;
+                                                                dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                                                $error++;
+                                                            }
+                                                        }
+                                                    }
+                                                } else {
+                                                    $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorCreateSupplierInvoice', $ref_ext) . ' ' . $dBSupplierInvoice->errorsToString();
+                                                    $this->errors[] = $msg_error;
+                                                    dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                                    $error++;
+                                                }
+                                                unset($dBSupplierInvoice);
+                                            }
+                                        }
+                                    }
+
+                                    // Auto send invoice by mail
+                                    if (!$error && !empty($this->eCommerceSite->parameters['order_actions']['send_invoice_by_mail'])) {
+                                        $sendto = trim($commandeArray['socpeopleCommande']['email']);
+                                        if (empty($sendto)) {
+                                            $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorSendInvoiceEmailEmpty', $ref_ext);
+                                            $this->errors[] = $msg_error;
+                                            dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                            $error++;
+                                        } elseif (!($ecommerceSelectedPaymentGateway['mail_model_for_send_invoice'] > 0)) {
+                                            $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorMailModelNotDefinedForPaymentType', $commandeArray['payment_method_id'], $this->eCommerceSite->id);
+                                            $this->errors[] = $msg_error;
+                                            dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                            $error++;
+                                        }
+
+                                        if (!$error) {
+                                            $ret = $dBInvoice->fetch($dBInvoice->id);
+                                            $ret = $dBInvoice->fetch_thirdparty();
+
+                                            require_once DOL_DOCUMENT_ROOT . '/core/class/html.formmail.class.php';
+                                            $formmail = new FormMail($this->db);
+
+                                            $this->langs->load('mails');
+                                            $this->langs->load("commercial");
+                                            if (!empty($conf->dolimail->enabled)) $this->langs->load("dolimail@dolimail");
+
+                                            $trackid = 'inv' . $dBInvoice->id;
+                                            $deliveryreceipt = 0;
+
+                                            // from / send to / ...
+                                            $from = $conf->global->MAIN_INFO_SOCIETE_NOM . ' <' . $conf->global->MAIN_INFO_SOCIETE_MAIL . '>';
+                                            $sendtocc = '';
+                                            $sendtobcc = !empty($conf->global->MAIN_MAIL_AUTOCOPY_INVOICE_TO) ? $conf->global->MAIN_MAIL_AUTOCOPY_INVOICE_TO : '';
+
+                                            // Define output language
+                                            $outputlangs = $this->langs;
+                                            $newlang = $conf->global->MAIN_MULTILANGS ? $dBInvoice->thirdparty->default_lang : '';
+                                            if (!empty($newlang)) {
+                                                $outputlangs = new Translate('', $conf);
+                                                $outputlangs->setDefaultLang($newlang);
+                                                $outputlangs->loadLangs(array('commercial', 'bills', 'orders', 'contracts', 'members', 'propal', 'products', 'supplier_proposal', 'interventions'));
+                                            }
+
+                                            // Make substitution in email content
+                                            $substitutionarray = getCommonSubstitutionArray($outputlangs, 0, null, $dBInvoice);
+                                            $substitutionarray['__CHECK_READ__'] = (is_object($dBInvoice) && is_object($dBInvoice->thirdparty)) ? '<img src="' . DOL_MAIN_URL_ROOT . '/public/emailing/mailing-read.php?tag=' . $dBInvoice->thirdparty->tag . '&securitykey=' . urlencode($conf->global->MAILING_EMAIL_UNSUBSCRIBE_KEY) . '" width="1" height="1" style="width:1px;height:1px" border="0"/>' : '';
+                                            $substitutionarray['__PERSONALIZED__'] = '';    // deprecated
+                                            $substitutionarray['__CONTACTCIVNAME__'] = '';
+                                            $parameters = array('mode' => 'formemail');
+                                            complete_substitutions_array($substitutionarray, $outputlangs, $dBInvoice, $parameters);
+
+                                            // Get email template
+                                            $type_template = 'facture_send';
+                                            $arraydefaultmessage = $formmail->getEMailTemplate($this->db, $type_template, $user, $outputlangs, $ecommerceSelectedPaymentGateway['mail_model_for_send_invoice']);
+
+                                            // Complete substitution array
+                                            if (empty($substitutionarray['__REF__'])) {
+                                                $paymenturl = '';
+                                            } else {
+                                                // Set the online payment url link into __ONLINE_PAYMENT_URL__ key
+                                                require_once DOL_DOCUMENT_ROOT . '/core/lib/payments.lib.php';
+                                                $outputlangs->load('paypal');
+                                                $paymenturl = getOnlinePaymentUrl(0, 'invoice', $substitutionarray['__REF__']);
+                                            }
+                                            $substitutionarray['__ONLINE_PAYMENT_URL__'] = $paymenturl;
+
+                                            // Define subject / message
+                                            $message = str_replace('\n', "\n", $arraydefaultmessage['content']);
+                                            // Deal with format differences between message and signature (text / HTML)
+                                            if (dol_textishtml($message) && !dol_textishtml($substitutionarray['__USER_SIGNATURE__'])) {
+                                                $substitutionarray['__USER_SIGNATURE__'] = dol_nl2br($substitutionarray['__USER_SIGNATURE__']);
+                                            } else if (!dol_textishtml($message) && dol_textishtml($substitutionarray['__USER_SIGNATURE__'])) {
+                                                $message = dol_nl2br($message);
+                                            }
+
+                                            $subject = make_substitutions($arraydefaultmessage['topic'], $substitutionarray);
+                                            $message = make_substitutions($message, $substitutionarray);
+                                            if (method_exists($dBInvoice, 'makeSubstitution')) {
+                                                $subject = $dBInvoice->makeSubstitution($subject);
+                                                $message = $dBInvoice->makeSubstitution($message);
+                                            }
+
+                                            // Clean first \n and br (to avoid empty line when CONTACTCIVNAME is empty)
+                                            $message = preg_replace("/^(<br>)+/", "", $message);
+                                            $message = preg_replace("/^\n+/", "", $message);
+
+                                            // Define $urlwithroot
+                                            global $dolibarr_main_url_root;
+                                            $urlwithouturlroot = preg_replace('/' . preg_quote(DOL_URL_ROOT, '/') . '$/i', '', trim($dolibarr_main_url_root));
+                                            $urlwithroot = $urlwithouturlroot . DOL_URL_ROOT;        // This is to use external domain name found into config file
+                                            //$urlwithroot=DOL_MAIN_URL_ROOT;					// This is to use same domain name than current
+                                            // Make a change into HTML code to allow to include images from medias directory with an external reabable URL.
+                                            // <img alt="" src="/dolibarr_dev/htdocs/viewimage.php?modulepart=medias&amp;entity=1&amp;file=image/ldestailleur_166x166.jpg" style="height:166px; width:166px" />
+                                            // become
+                                            // <img alt="" src="'.$urlwithroot.'viewimage.php?modulepart=medias&amp;entity=1&amp;file=image/ldestailleur_166x166.jpg" style="height:166px; width:166px" />
+                                            $message = preg_replace('/(<img.*src=")[^\"]*viewimage\.php([^\"]*)modulepart=medias([^\"]*)file=([^\"]*)("[^\/]*\/>)/', '\1' . $urlwithroot . '/viewimage.php\2modulepart=medias\3file=\4\5', $message);
+
+                                            // Attach invoice file
+                                            $formmail->trackid = $trackid;      // $trackid must be defined
+                                            $formmail->clear_attached_files();
+                                            if (!empty($arraydefaultmessage['joinfiles'])) {
+                                                $ref = dol_sanitizeFileName($dBInvoice->ref);
+                                                $fileparams = dol_most_recent_file($conf->facture->dir_output . '/' . $ref, preg_quote($ref, '/') . '[^\-]+');
+                                                $file = $fileparams['fullname'];
+                                                $formmail->add_attached_files($file, basename($file), dol_mimetype($file));
+                                            }
+                                            $attachedfiles = $formmail->get_attached_files();
+                                            $filepath = $attachedfiles['paths'];
+                                            $filename = $attachedfiles['names'];
+                                            $mimetype = $attachedfiles['mimes'];
+
+                                            // Send mail (substitutionarray must be done just before this)
+                                            require_once DOL_DOCUMENT_ROOT . '/core/class/CMailFile.class.php';
+                                            $sendcontext = 'standard';
+                                            $mailfile = new CMailFile($subject, $sendto, $from, $message, $filepath, $mimetype, $filename, $sendtocc, $sendtobcc, $deliveryreceipt, -1, '', '', $trackid, '', $sendcontext);
+                                            if ($mailfile->error) {
+                                                $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorWhenCreateInvoiceMailToSend', $ref_ext) . ' ' . $mailfile->error . (is_array($mailfile->errors) ? ';' . implode('; ', $mailfile->errors) : '');
+                                                $this->errors[] = $msg_error;
+                                                dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                                $error++;
+                                            } else {
+                                                $result = $mailfile->sendfile();
+                                                if ($result) {
+                                                    // Event send email
+                                                    $sendtoid = array();
+                                                    foreach ($order_contacts as $contact_infos) {
+                                                        $sendtoid[$contact_infos['fk_socpeople']] = $contact_infos['fk_socpeople'];
+                                                    }
+                                                    $sendtoid = array_values($sendtoid);
+
+                                                    require_once DOL_DOCUMENT_ROOT . '/core/class/CMailFile.class.php';
+                                                    $actionmsg = '';
+                                                    $actionmsg2 = $this->langs->transnoentities('MailSentBy') . ' ' . CMailFile::getValidAddress($from, 4, 0, 1) . ' ' . $this->langs->transnoentities('To') . ' ' . CMailFile::getValidAddress($sendto, 4, 0, 1);
+                                                    if ($message) {
+                                                        $actionmsg = $this->langs->transnoentities('MailFrom') . ': ' . dol_escape_htmltag($from);
+                                                        $actionmsg = dol_concatdesc($actionmsg, $this->langs->transnoentities('MailTo') . ': ' . dol_escape_htmltag($sendto));
+                                                        $actionmsg = dol_concatdesc($actionmsg, $this->langs->transnoentities('MailTopic') . ": " . $subject);
+                                                        $actionmsg = dol_concatdesc($actionmsg, $this->langs->transnoentities('TextUsedInTheMessageBody') . ":");
+                                                        $actionmsg = dol_concatdesc($actionmsg, $message);
+                                                    }
+
+                                                    $dBInvoice->sendtoid = $sendtoid;       // To link to contacts/addresses. This is an array.
+                                                    $dBInvoice->actiontypecode = 'AC_OTH_AUTO'; // Type of event ('AC_OTH', 'AC_OTH_AUTO', 'AC_XXX'...)
+                                                    $dBInvoice->actionmsg = $actionmsg;      // Long text
+                                                    $dBInvoice->actionmsg2 = $actionmsg2;     // Short text
+                                                    $dBInvoice->trackid = $trackid;
+                                                    $dBInvoice->fk_element = $dBInvoice->id;
+                                                    $dBInvoice->elementtype = $dBInvoice->element;
+                                                    if (is_array($attachedfiles) && count($attachedfiles) > 0) {
+                                                        $dBInvoice->attachedfiles = $attachedfiles;
+                                                    }
+
+                                                    include_once DOL_DOCUMENT_ROOT . '/core/class/interfaces.class.php';
+                                                    $interface = new Interfaces($this->db);
+                                                    $result = $interface->run_triggers('BILL_SENTBYMAIL', $dBInvoice, $user, $this->langs, $conf);
+                                                    if ($result < 0) {
+                                                        $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorWhenCreateInvoiceMailSendEvent', $ref_ext) . ' ' . $dBInvoice->errorsToString();
+                                                        $this->errors[] = $msg_error;
+                                                        dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                                        $error++;
+                                                    }
+                                                } else {
+                                                    $this->langs->load("other");
+                                                    $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorWhenInvoiceMailSend', $ref_ext);
+                                                    if ($mailfile->error) {
+                                                        $msg_error .= ' ' . $this->langs->trans('ErrorFailedToSendMail', $from, $sendto);
+                                                        $msg_error .= '<br>' . $mailfile->error;
+                                                    } else {
+                                                        $msg_error .= ' No mail sent. Feature is disabled by option MAIN_DISABLE_ALL_MAILS';
+                                                    }
+                                                    $this->errors[] = $msg_error;
+                                                    dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                                    $error++;
+                                                }
+
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    $msg_error = $this->langs->trans('ECommerceSynchCommandeCreateInvoice', $ref_ext) . ' ' . $dBInvoice->errorsToString();
+                                    $this->errors[] = $msg_error;
+                                    dol_syslog(__METHOD__ . " " . $msg_error, LOG_ERR);
+                                    $error++;
+                                }
+                                unset($dBInvoice);
+                            }
+                        }
+                    }
+
                     unset($dBCommande);
                     unset($this->eCommerceSociete);
                     unset($this->eCommerceCommande);
@@ -3795,5 +4431,295 @@ class eCommerceSynchro
 			return $contactId;
 		}
 	}
+
+    /**
+     * Get all payment gateways
+     *
+     * @return array|false    List of payment gateways or false if error
+     */
+    public function getAllPaymentGateways()
+    {
+        return $this->eCommerceRemoteAccess->getAllPaymentGateways();
+    }
+
+
+    /**
+     * Synchronize selected companies to update to dolibarr
+     *
+     * @param  array     $companies_id      List of companies ID to upadate from ECommerce to Dolibarr
+     * @param  int      $toNb               Max nb to synch
+     * @return int                          >0 if OK, <0 if KO
+     */
+    public function updateCompaniesToDolibarr($companies_id, $toNb)
+    {
+        global $conf;
+
+        $error = 0;
+
+        try {
+            $nbrecorderror = 0;
+            $nbgoodsunchronize = 0;
+            $societes = array();
+
+            dol_syslog("***** eCommerceSynchro synchSociete");
+            if (is_array($companies_id)) {
+                if (count($companies_id) > 0) $societes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSociete($companies_id, $toNb);
+            } else {
+                $error++;
+            }
+
+            // Check return of remote...
+            if (is_array($companies_id) && count($companies_id) > 0 && (!is_array($societes) || count($societes) == 0))    // return of remote is bad or empty when input was not empty
+            {
+                $error++;
+            }
+
+            if (!$error && is_array($societes)) {
+                $counter = 0;
+                foreach ($societes as $societeArray) {
+                    $counter++;
+                    if ($toNb > 0 && $counter > $toNb) break;
+
+                    $this->db->begin();
+
+                    //check if societe exists in eCommerceSociete
+                    dol_syslog("-- Start thirdparty remote_id=" . $societeArray['remote_id'] . " site=" . $this->eCommerceSite->id);
+                    $this->initECommerceSociete();
+                    $synchExists = $this->eCommerceSociete->fetchByRemoteId($societeArray['remote_id'], $this->eCommerceSite->id);
+                    $dBSociete = new Societe($this->db);
+
+                    //if societe exists in eCommerceSociete, societe must exists in societe
+                    if ($synchExists > 0 && isset($this->eCommerceSociete->fk_societe)) {
+                        $refExists = $dBSociete->fetch($this->eCommerceSociete->fk_societe);
+                        if ($refExists >= 0) {
+                            $dBSociete->name = $societeArray['name'];
+                            //$dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];      // No need of ref_ext, we will search if already exists on name
+                            $dBSociete->client = $societeArray['client'];
+                            if (isset($societeArray['name_alias'])) $dBSociete->name_alias = $societeArray['name_alias'];
+                            if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
+                            if (!empty($societeArray['vatnumber'])) {
+                                $dBSociete->tva_intra = $societeArray['vatnumber']; //dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
+                                $dBSociete->tva_assuj = 1;                          // tva_intra is not saved if this field is not set
+                            } else {
+                                $dBSociete->tva_assuj = 0;                          // tva_intra is not saved if this field is not set
+                            }
+                            if (isset($societeArray['country_id'])) $dBSociete->country_id = $societeArray['country_id'];
+                            if (isset($societeArray['default_lang'])) $dBSociete->default_lang = $societeArray['default_lang'];
+                            $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+
+                            if (is_array($societeArray['extrafields'])) {
+                                foreach ($societeArray['extrafields'] as $extrafield => $extrafield_value) {
+                                    $dBSociete->array_options['options_' . $extrafield] = $extrafield_value;
+                                }
+                            }
+
+                            $result = $dBSociete->update($dBSociete->id, $this->user);
+                            if ($result < 0) {
+                                $error++;
+                                $this->errors[] = $this->langs->trans('ECommerceSynchSocieteUpdateError') . ' ' . $dBSociete->error;
+                                $this->errors = array_merge($this->errors, $dBSociete->errors);
+                            }
+                        } else {
+                            $error++;
+                            $this->errors[] = $this->langs->trans('ECommerceSynchSocieteErrorBetweenECommerceSocieteAndSociete');
+                        }
+                    } //if societe not exists in eCommerceSociete, societe is created
+                    else {
+                        $result = 0;
+
+                        // First, we check object does not alreay exists. If not, we create it, if it exists, do nothing.
+                        if (isset($societeArray['email_key']) && !empty($societeArray['email_key'])) {
+                            // Search into email company and contact
+                            $result = get_company_by_email($this->db, $societeArray['email_key']);
+
+                            if ($result > 0 && $result != $this->eCommerceSite->fk_anonymous_thirdparty) {
+                                $result = $dBSociete->fetch($result);
+                            }
+                        }
+
+                        if ($result < 1 && (!isset($societeArray['type']) || $societeArray['type'] == 'company')) {
+                            // Search for the company name
+                            $result = $dBSociete->fetch(0, $societeArray['name']);
+                        }
+
+                        if ($result == -2) {
+                            $error++;
+                            $this->error = 'Several thirdparties with name "' . $societeArray['name'] . '" were found in Dolibarr. Sync is not possible. Please rename one of it to avoid duplicate.';
+                            $this->errors[] = $this->error;
+                        }
+
+//                        if (! $error && $result > 0)    // We did not found with remote id but we found one with the fetch on name.
+//                        {
+//                            $eCommerceSocieteBis=new eCommerceSociete($this->db);
+//                            $synchExistsBis = $eCommerceSocieteBis->fetchByFkSociete($dBSociete->id, $this->eCommerceSite->id);
+//                            dol_syslog("Warning: we did not found the remote id into dolibarr eCommerceSociete table but we found a record with the name.");
+//                            if ($synchExistsBis > 0 && $eCommerceSocieteBis->id != $this->eCommerceSociete->id)
+//                            {
+//                                // We found a dolibarr record with name, but this one is alreayd linked and we know it is linked with another remote id because
+//                                // the current remote_id was not found  when we previously did the fetchByRemoteId
+//                                // So we make as if we didn't found the thirdparty. It may be a duplicate name created in same transaction from Magento
+//                                dol_syslog("Warning: the record found with the name already has a remote_id in the eCommerceSite. So what we found is not what we want. We forget the find.");
+//                                unset($dBSociete);  // Clear object, fetch was not what we wanted
+//                                $dBSociete = new Societe($this->db);
+//                                $result = 0;
+//                            }
+//                        }
+
+                        if ($result == 0) {
+                            $dBSociete->name = $societeArray['name'];
+                            //$dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];      // No need of ref_ext, we will search if already exists on name
+                            $dBSociete->client = $societeArray['client'];
+                            if (isset($societeArray['name_alias'])) $dBSociete->name_alias = $societeArray['name_alias'];
+                            if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
+                            if (!empty($societeArray['vatnumber'])) {
+                                $dBSociete->tva_intra = $societeArray['vatnumber']; //dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
+                                $dBSociete->tva_assuj = 1;                          // tva_intra is not saved if this field is not set
+                            } else {
+                                $dBSociete->tva_assuj = 0;                          // tva_intra is not saved if this field is not set
+                            }
+                            if (isset($societeArray['country_id'])) $dBSociete->country_id = $societeArray['country_id'];
+                            if (isset($societeArray['default_lang'])) $dBSociete->default_lang = $societeArray['default_lang'];
+                            $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                            $dBSociete->code_client = -1;           // Automatic code
+                            $dBSociete->code_fournisseur = -1;      // Automatic code
+
+                            if (is_array($societeArray['extrafields'])) {
+                                foreach ($societeArray['extrafields'] as $extrafield => $extrafield_value) {
+                                    $dBSociete->array_options['options_' . $extrafield] = $extrafield_value;
+                                }
+                            }
+
+                            $result = $dBSociete->create($this->user);
+                            if ($result < 0) {
+                                $error++;
+                                $this->errors[] = $this->langs->trans('ECommerceSynchSocieteCreateError') . ' ' . $dBSociete->error;
+                                $this->errors = array_merge($this->errors, $dBSociete->errors);
+                            }
+
+                            $dBSociete->update_note($societeArray['note_private'], '_private');
+                        } else if ($result > 0) {
+                            $dBSociete->name = $societeArray['name'];
+                            //$dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];      // No need of ref_ext, we will search if already exists on name
+                            $dBSociete->client = $societeArray['client'];
+                            if (isset($societeArray['name_alias'])) $dBSociete->name_alias = $societeArray['name_alias'];
+                            if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
+                            if (!empty($societeArray['vatnumber'])) {
+                                $dBSociete->tva_intra = $societeArray['vatnumber']; //dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
+                                $dBSociete->tva_assuj = 1;                          // tva_intra is not saved if this field is not set
+                            } else {
+                                $dBSociete->tva_assuj = 0;                          // tva_intra is not saved if this field is not set
+                            }
+                            if (isset($societeArray['country_id'])) $dBSociete->country_id = $societeArray['country_id'];
+                            if (isset($societeArray['default_lang'])) $dBSociete->default_lang = $societeArray['default_lang'];
+                            $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+
+                            if (is_array($societeArray['extrafields'])) {
+                                foreach ($societeArray['extrafields'] as $extrafield => $extrafield_value) {
+                                    $dBSociete->array_options['options_' . $extrafield] = $extrafield_value;
+                                }
+                            }
+
+                            $result = $dBSociete->update($dBSociete->id, $this->user);
+                            if ($result < 0) {
+                                $error++;
+                                $this->errors[] = $this->langs->trans('ECommerceSynchSocieteUpdateError') . ' ' . $dBSociete->error;
+                                $this->errors = array_merge($this->errors, $dBSociete->errors);
+                            }
+                        }
+                    }
+
+                    //if create/update of societe table ok
+                    if ($result >= 0) {
+                        dol_syslog("synchSociete Now we will set the tags id=" . $this->eCommerceSite->fk_cat_societe . " to the thirdparty id=" . $dBSociete->id . " created or modified");
+
+                        //set category
+                        $cat = new Categorie($this->db);
+                        $cat->fetch($this->eCommerceSite->fk_cat_societe);
+                        $cat->add_type($dBSociete, 'customer');
+
+                        dol_syslog("synchSociete Now we will update link rowid=" . $this->eCommerceSociete->id . " with last_update = " . $societeArray['last_update']);
+                        $this->eCommerceSociete->last_update = $societeArray['last_update'];
+                        $this->eCommerceSociete->fk_societe = $dBSociete->id;
+                        //if a previous synchro exists
+                        if ($synchExists > 0 && !isset($this->error)) {
+//                            $old_remote_ids = explode(',', $this->eCommerceSociete->remote_id);
+//                            if (!in_array($societeArray['remote_id'], $old_remote_ids)) {
+//                                $this->eCommerceSociete->remote_id = $this->eCommerceSociete->remote_id.','.$societeArray['remote_id'];
+//                            }
+                            //eCommerce update
+                            if ($this->eCommerceSociete->update($this->user) < 0) {
+                                $error++;
+                                $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceSocieteUpdateError') . ' ' . $societeArray['name'] . ' ' . $societeArray['email'] . ' ' . $societeArray['client'];
+                                $this->errors = array_merge($this->errors, $this->eCommerceSociete->errors);
+                            }
+                        } //if no previous synchro exists
+                        else {
+                            //eCommerce create
+                            $this->eCommerceSociete->fk_site = $this->eCommerceSite->id;
+                            $this->eCommerceSociete->remote_id = $societeArray['remote_id'];
+                            if ($this->eCommerceSociete->create($this->user) < 0) {
+                                $error++;
+                                $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceSocieteCreateError') . ' ' . $societeArray['name'] . ' ' . $societeArray['email'] . ' ' . $societeArray['client'] . ' ' . $this->eCommerceSociete->error;
+                                $this->errors = array_merge($this->errors, $this->eCommerceSociete->errors);
+                            }
+                        }
+
+                        // Sync also people of thirdparty
+                        // We can disable this to have contact/address of thirdparty synchronize only when an order or invoice is synchronized
+                        if (!$error) {
+                            dol_syslog("Make a remote call to get contacts");   // Slow because done on each thirdparty to sync.
+                            $listofaddressids = $this->eCommerceRemoteAccess->getRemoteAddressIdForSociete($societeArray['remote_id']);   // Ask contacts to magento
+                            if (is_array($listofaddressids) || $this->eCommerceSite->type == 2) {
+                                if ($this->eCommerceSite->type == 2) { // Woocommerce
+                                    $listofaddressids = $societeArray['remote_datas'];
+                                }
+
+                                $socpeoples = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSocpeople($listofaddressids);
+                                foreach ($socpeoples as $tmpsocpeople) {
+                                    $tmpsocpeople['fk_soc'] = $dBSociete->id;
+                                    $tmpsocpeople['type'] = 1;    // address of company
+                                    $socpeopleCommandeId = $this->synchSocpeople($tmpsocpeople);
+                                }
+                            }
+                        }
+                    } else {
+                        $error++;
+                        $this->errors[] = $this->langs->trans('ECommerceSynchSocieteErrorCreateUpdateSociete') . ' "' . $societeArray['name'] . '" "' . $societeArray['email'] . '" "' . $societeArray['client'] . '"';
+                    }
+
+                    unset($dBSociete);
+
+                    if ($error || !empty($this->errors)) {
+                        $this->db->rollback();
+                        $nbrecorderror++;
+                        break;      // We decide to stop on first error
+                    } else {
+                        $this->db->commit();
+                        $nbgoodsunchronize = $nbgoodsunchronize + 1;
+                    }
+                }   // end foreach
+
+                if (empty($this->errors) && !$error) {
+                    $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchSocieteSuccess');
+
+                    // TODO If we commit even if there was an error (to validate previous record ok), we must also remove 1 second the the higher
+                    // date into table of links to be sure we will retry (during next synch) also record with same update_at than the last record ok.
+
+                    return $nbgoodsunchronize;
+                } else {
+                    if (!empty($nbgoodsunchronize)) $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchSocieteSuccess');
+                    if (!empty($nbrecorderror)) $this->errors[] = $this->langs->trans('ECommerceSynchSocieteFailed', $nbrecorderror);
+                    return -1;
+                }
+            } else {
+                $this->error = $this->langs->trans('ECommerceErrorsynchSociete') . ' (Code FailToGetDetailsOfRecord)';
+                $this->errors[] = $this->error;
+            }
+        } catch (Exception $e) {
+            $this->errors[] = $this->langs->trans('ECommerceErrorsynchSociete') . ': ' . $e->getMessage();
+        }
+
+        return -1;
+    }
 }
 

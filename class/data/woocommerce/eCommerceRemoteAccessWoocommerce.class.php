@@ -1181,12 +1181,11 @@ class eCommerceRemoteAccessWoocommerce
                     }
 
                     // Set delivery as service
-                    $shippingDisplayIfNull = (empty($conf->global->ECOMMERCENG_SHIPPING_NOT_DISPLAY_IF_NULL) ? true : false);
                     $delivery = [
                         'description' => $langs->trans('ECommerceShipping') . (isset($order->shipping_lines[0]) ? ' - ' .
                                 $order->shipping_lines[0]->method_title : ''), // $order->customer_note
                         'price' => $order->shipping_total,
-                        'qty' => $shippingDisplayIfNull || isset($order->shipping_lines[0]) ? 1 : 0, //0 to not show
+                        'qty' => isset($order->shipping_lines[0]) ? 1 : 0, //0 to not show
                         'tva_tx' => $this->getClosestDolibarrTaxRate($order->shipping_total, $order->shipping_tax)
                     ];
 
@@ -1221,6 +1220,18 @@ class eCommerceRemoteAccessWoocommerce
                         }
                     }
 
+                    $fee_lines = [];
+                    if (is_array($order->fee_lines)) {
+                        foreach ($order->fee_lines as $fee_line) {
+                            $tax = $this->getClosestDolibarrTaxRate($fee_line->total, $fee_line->total_tax);
+                            $fee_lines[] = [
+                                'label' => $fee_line->name,
+                                'amount' => $fee_line->total * (100 - $tax) / 100,
+                                'tax' => $tax,
+                            ];
+                        }
+                    }
+
                     // Add order content to array or orders
                     $orders[$order->id] = [
                         'last_update' => $last_update->format('Y-m-d H:i:s'),
@@ -1242,6 +1253,8 @@ class eCommerceRemoteAccessWoocommerce
                         'remote_status' => $order->status,      // remote status, for information only (more accurate than state)
                         'remote_order' => $order,
                         'payment_method' => $order->payment_method_title,
+                        'payment_method_id' => $order->payment_method,
+                        'fee_lines' => $fee_lines,
                         'extrafields' => [
                             "ecommerceng_online_payment_{$conf->entity}" => empty($order->date_paid) ? 0 : 1,
                             "ecommerceng_wc_status_{$this->site->id}_{$conf->entity}" => $orderStatus,
@@ -1935,7 +1948,7 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Update stock of the remote product ID $remote_id for MouvementStock ID {$object->id}, new qty: {$object->qty_after} for site ID {$this->site->id}", LOG_DEBUG);
         global $langs, $user;
 
-        $new_stocks = ceil($object->qty_after);
+        $new_stocks = floor($object->qty_after);
         $stocks_label = $object->qty_after . ' -> ' . $new_stocks;
 
         if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsProduct) == 1) {
@@ -3496,6 +3509,35 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": end, return ".(isset($tax)?json_encode($tax):'null'), LOG_DEBUG);
         return $tax;
     }*/
+
+    /**
+     * Get all payment gateways
+     *
+     * @return array|false    List of payment gateways or false if error
+     */
+    public function getAllPaymentGateways()
+    {
+        dol_syslog(__METHOD__ . ": Retrieve all Woocommerce payment gateways", LOG_DEBUG);
+        global $langs;
+
+        try {
+            $payment_gateways = $this->client->get('payment_gateways');
+        } catch (HttpClientException $fault) {
+            $this->errors[] = $langs->trans('ECommerceWoocommerceGetAllWoocommercePaymentGateways', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+            dol_syslog(__METHOD__ .
+                ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetAllWoocommercePaymentGateways', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+                ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+            return false;
+        }
+
+        $paymentGatewaysTable = [];
+        foreach ($payment_gateways as $infos) {
+            $paymentGatewaysTable[$infos->id] = $infos->title;
+        }
+
+        dol_syslog(__METHOD__ . ": end, return: ".json_encode($paymentGatewaysTable), LOG_DEBUG);
+        return $paymentGatewaysTable;
+    }
 
     /**
      * Get request groups of ID for get datas of remotes objects.

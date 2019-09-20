@@ -21,6 +21,15 @@ function eCommerceConfirmWoocommerceUpdateDictTaxClass(id_form, confirmation)
   }
 }
 
+function eCommerceConfirmUpdatePaymentGateways(id_form, confirmation)
+{
+  if (confirm(confirmation))
+  {
+    document.getElementById(id_form+'_action').value = 'update_payment_gateways';
+    eCommerceSubmitForm(id_form);
+  }
+}
+
 function eCommerceConfirmUpdatePriceLevel(id_form, confirmation, price_level)
 {
   jQuery('#'+id_form).on('submit', function(e) {

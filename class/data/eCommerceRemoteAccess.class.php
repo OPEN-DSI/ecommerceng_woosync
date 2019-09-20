@@ -461,4 +461,17 @@ class eCommerceRemoteAccess
         $this->errors=$this->class->errors;
         return $result;
     }
+
+    /**
+     * Get all payment gateways
+     *
+     * @return array|false    List of payment gateways or false if error
+     */
+    public function getAllPaymentGateways()
+    {
+        $result=$this->class->getAllPaymentGateways();
+        $this->error=$this->class->error;
+        $this->errors=$this->class->errors;
+        return $result;
+    }
 }

@@ -1,5 +1,23 @@
 # ChangeLog
 
+## 4.0.37.0
+- Ajout d'un bouton de mise à jour manuellement depuis un site sur la fiche du tiers
+- Ajout d'une option pour ajout un utilisateur de type "Responsable suivi commande client" lors de la création d'une commande lors d'une synchro
+
+## 4.0.36.0
+- Suppression de la variable ECOMMERCENG_SHIPPING_NOT_DISPLAY_IF_NULL (n'affiche pas de frais de port si la quantité est a 0 (pas de frais de port))
+- Ajout de la gestion des modes de payments
+- Ajout de la possibilité de créer une facture et une facture fournisseur pour les frais lors de la synchronisation de la commande
+- Possibilité de ne créer que la facture
+- Possibilité d'envoyer automatiquement la facture par email au client
+- Suppression des extrafields, des modes de paiements et des tva liés au site lors sa suppression
+
+## 4.0.35.0
+
+- Correction des stocks lors des mises à jour avec les boutiques (arrondie à l'inferieur si le stock à des decimales)
+- Ajout d'un script de mises à jour de tous les produits vers les boutiques.
+- Correction des valeurs par default à la création d'un site.
+
 ## 4.0.34.0
 
 - Correction de la modification de la ref dans le cas ou la boutique envoie une ref vide sur un produit deja synchronisé vers Dolibarr.

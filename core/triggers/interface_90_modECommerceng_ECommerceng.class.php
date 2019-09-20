@@ -931,7 +931,7 @@ class InterfaceECommerceng
                 try
                 {
                     // Do we sync the stock ?
-                    if (! $error && $site->stock_sync_direction == 'dolibarr2ecommerce')
+                    if (! $error && $site->stock_sync_direction == 'dolibarr2ecommerce' && $site->fk_warehouse == $object->entrepot_id)
                     {
                         $eCommerceProduct = new eCommerceProduct($this->db);
                         $eCommerceProduct->fetchByProductId($object->product_id, $site->id);
@@ -939,8 +939,9 @@ class InterfaceECommerceng
                         // Get new qty. We read stock_reel of product. Trigger is called after creating movement and updating table product, so we get total after move.
                         $dbProduct = new Product($this->db);
                         $dbProduct->fetch($object->product_id);
+                        $dbProduct->load_stock();
 
-                        $object->qty_after = $dbProduct->stock_reel;
+                        $object->qty_after = isset($dbProduct->stock_warehouse[$object->entrepot_id]->real) ? $dbProduct->stock_warehouse[$object->entrepot_id]->real : 0;
 
                         if ($eCommerceProduct->remote_id > 0)
                         {
