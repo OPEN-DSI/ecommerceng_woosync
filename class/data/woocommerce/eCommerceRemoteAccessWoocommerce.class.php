@@ -3532,7 +3532,9 @@ class eCommerceRemoteAccessWoocommerce
 
         $paymentGatewaysTable = [];
         foreach ($payment_gateways as $infos) {
-            $paymentGatewaysTable[$infos->id] = $infos->title;
+            if ($infos->enabled) {
+                $paymentGatewaysTable[$infos->id] = $infos->method_title . (!empty($infos->title) ? ' - ' . $infos->title : '');
+            }
         }
 
         dol_syslog(__METHOD__ . ": end, return: ".json_encode($paymentGatewaysTable), LOG_DEBUG);

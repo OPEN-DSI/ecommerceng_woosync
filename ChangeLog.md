@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.38.0
+- Correction de la récupération des modes de paiements de la boutique (libellé et ne recupère que ceux activés)
+
 ## 4.0.37.0
 - Ajout d'un bouton de mise à jour manuellement depuis un site sur la fiche du tiers
 - Ajout d'une option pour ajout un utilisateur de type "Responsable suivi commande client" lors de la création d'une commande lors d'une synchro
