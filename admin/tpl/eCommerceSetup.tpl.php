@@ -1053,7 +1053,7 @@ if ($ecommerceType == 2)
         if (!empty($ecommerceOrderActions['create_supplier_invoice'])) {
         ?>
             <td><?php print $form->select_company($infos['supplier_id'], 'supplier_id_'.$key, 's.fournisseur=1 AND status=1', 'SelectThirdParty', 0, 0, null, 0, 'minwidth300') ?></td>
-            <td><?php print $form->select_produits($infos['product_id_for_fee'], 'product_id_for_fee_'.$key, (empty($conf->global->STOCK_SUPPORTS_SERVICES)?'0':''), 20, 0, -1, 2, '', 0, null, 0, 1, 0, 'maxwidth500') ?></td>
+            <td><?php $form->select_produits($infos['product_id_for_fee'], 'product_id_for_fee_'.$key, '', $conf->product->limit_size, 0, 1, 2, '', 0, array(), 0, '1', 0, 'maxwidth300') ?></td>
             <td align="center"><input type="checkbox" id="<?php print 'create_supplier_invoice_payment_'.$key ?>" name="<?php print 'create_supplier_invoice_payment_'.$key ?>" value="1" <?php print !empty($infos['create_supplier_invoice_payment']) ? ' checked' : '' ?>></td>
             <?php
         }

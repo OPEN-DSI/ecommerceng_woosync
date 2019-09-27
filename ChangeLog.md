@@ -2,6 +2,7 @@
 
 ## 4.0.38.0
 - Correction de la récupération des modes de paiements de la boutique (libellé et ne recupère que ceux activés)
+- Correction de la recherche du produit/service utilisé pour les frais de la facture fournisseur
 
 ## 4.0.37.0
 - Ajout d'un bouton de mise à jour manuellement depuis un site sur la fiche du tiers
