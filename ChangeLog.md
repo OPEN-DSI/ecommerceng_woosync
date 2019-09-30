@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.0.39.0
+- Correction de la récupération des frais stripe
+- Correction mineure
+
 ## 4.0.38.0
 - Correction de la récupération des modes de paiements de la boutique (libellé et ne recupère que ceux activés)
 - Correction de la recherche du produit/service utilisé pour les frais de la facture fournisseur

@@ -2759,12 +2759,10 @@ class eCommerceSynchro
                             }
 
                             if (!$error) {
-                                $now = dol_now();
-
                                 // Create invoice
                                 $dBInvoice->socid = $dBCommande->socid;
                                 $dBInvoice->type = Facture::TYPE_STANDARD;
-                                $dBInvoice->date = $now;
+                                $dBInvoice->date = $dBCommande->date;
                                 $dBInvoice->ref_ext = $ref_ext;
                                 $dBInvoice->modelpdf = $conf->global->FACTURE_ADDON_PDF;
                                 $dBInvoice->cond_reglement_id = $dBCommande->cond_reglement_id;
@@ -2925,7 +2923,7 @@ class eCommerceSynchro
                                         if (!empty($ecommerceSelectedPaymentGateway['create_invoice_payment'])) {
                                             // Creation of payment line
                                             $paiement = new Paiement($this->db);
-                                            $paiement->datepaye = $now;
+                                            $paiement->datepaye = $dBCommande->date;
                                             $paiement->amounts = array($dBInvoice->id => $dBInvoice->total_ttc);   // Array with all payments dispatching with invoice id
                                             $paiement->multicurrency_amounts = array();   // Array with all payments dispatching
                                             $paiement->paiementid = $dBCommande->mode_reglement_id;
@@ -2967,7 +2965,7 @@ class eCommerceSynchro
                                                 $dBSupplierInvoice->ref_supplier = $ref_ext;
                                                 $dBSupplierInvoice->socid = $ecommerceSelectedPaymentGateway['supplier_id'];
                                                 $dBSupplierInvoice->libelle = '';
-                                                $dBSupplierInvoice->date = $now;
+                                                $dBSupplierInvoice->date = $dBCommande->date;
                                                 $dBSupplierInvoice->date_echeance = '';
                                                 $dBSupplierInvoice->cond_reglement_id = 0;
                                                 $dBSupplierInvoice->mode_reglement_id = $dBCommande->mode_reglement_id;
@@ -2982,7 +2980,7 @@ class eCommerceSynchro
                                                 if ($id > 0) {
                                                     $product_id = $ecommerceSelectedPaymentGateway['product_id_for_fee'] > 0 ? $ecommerceSelectedPaymentGateway['product_id_for_fee'] : 0;
                                                     foreach ($commandeArray['fee_lines'] as $fee_line) {
-                                                        if ((float)DOL_VERSION < 8) $this->db->begin(); // Not exist in addline function but commit and rollback exist
+                                                        if (floatval(DOL_VERSION) < 8) $this->db->begin(); // Not exist in addline function but commit and rollback exist
                                                         $result = $dBSupplierInvoice->addline(
                                                             $fee_line['label'],
                                                             $fee_line['amount'],
@@ -3039,7 +3037,7 @@ class eCommerceSynchro
                                                     if (!$error && !empty($ecommerceSelectedPaymentGateway['create_supplier_invoice_payment'])) {
                                                         // Creation of payment line
                                                         $paiement = new PaiementFourn($this->db);
-                                                        $paiement->datepaye = $now;
+                                                        $paiement->datepaye = $dBCommande->date;
                                                         $paiement->amounts = array($dBSupplierInvoice->id => $dBSupplierInvoice->total_ttc);   // Array of amounts
                                                         $paiement->multicurrency_amounts = array();
                                                         $paiement->paiementid = $dBSupplierInvoice->mode_reglement_id;

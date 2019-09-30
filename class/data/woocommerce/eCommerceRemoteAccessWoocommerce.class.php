@@ -1232,6 +1232,22 @@ class eCommerceRemoteAccessWoocommerce
                         }
                     }
 
+                    $meta_data = [];
+                    if (!empty($order->meta_data)) {
+                        foreach ($order->meta_data as $meta) {
+                            $meta_data[$meta->key] = [ 'id' => $meta->id, 'value' => $meta->value ];
+                        }
+                    }
+
+                    // Manage stripe payment
+                    if (isset($meta_data['_stripe_fee']) && $meta_data['_stripe_fee']['value'] > 0) {
+                        $fee_lines[] = [
+                            'label' => 'Stripe',
+                            'amount' => $meta_data['_stripe_fee']['value'],
+                            'tax' => 0,
+                        ];
+                    }
+
                     // Add order content to array or orders
                     $orders[$order->id] = [
                         'last_update' => $last_update->format('Y-m-d H:i:s'),
