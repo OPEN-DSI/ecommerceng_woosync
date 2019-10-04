@@ -265,15 +265,28 @@ $var=!$var;
         <td><?php print $langs->trans('ECommercePriceTypeDescription') ?></td>
     </tr>
 <?php
+if ($ecommerceType == 2) {
+    $var = !$var;
+    ?>
+    <tr <?php print $bc[$var] ?>>
+        <td><?php print $langs->trans('ECommercePriceType') ?></td>
+        <td>
+            <select class="flat" name="ecommerce_price_type">
+                <option value="HT" <?php print ($ecommercePriceType == 'HT' ? 'selected="selected"' : '') ?>><?php print $langs->trans('ECommercePriceTypeHT') ?></option>
+                <option value="TTC"<?php print ($ecommercePriceType == 'TTC' ? 'selected="selected"' : '') ?>><?php print $langs->trans('ECommercePriceTypeTTC') ?></option>
+            </select>
+        </td>
+        <td><?php print $langs->trans('ECommercePriceTypeDescription') ?></td>
+    </tr>
+    <?php
+}
 if (!empty($conf->commande->enabled)) {
   $var = !$var;
 ?>
     <tr <?php print $bc[$var] ?>>
-        <td><?php print $langs->trans('ECommercePaymentCondition') ?></td>
-        <td>
-          <?php $form->select_conditions_paiements($ecommercePaymentCondition, 'ecommerce_payment_cond', -1, 1); ?>
-        </td>
-        <td><?php print $langs->trans('ECommercePaymentConditionDescription') ?></td>
+        <td><?php print $langs->trans('ECommerceWoocommerceCustomerRolesSupported') ?></td>
+        <td><input type="text" class="flat" name="ecommerce_woocommerce_customer_roles" value="<?php print $ecommerceWoocommerceCustomerRoles ?>" size="20"></td>
+        <td><?php print $langs->trans('ECommerceWoocommerceCustomerRolesSupportedDescription') ?></td>
     </tr>
 <?php
     $var=!$var;
@@ -1032,7 +1045,7 @@ if ($ecommerceType == 2)
         }
         if (!empty($ecommerceOrderActions['create_invoice'])) {
             ?>
-            <td align="center"><input type="checkbox" id="<?php print 'create_invoice_payment_'.$key ?>" name="<?php print 'create_invoice_payment_'.$key ?>" value="1" <?php print !empty($infos['create_invoice_payment']) ? ' checked' : '' ?>></td>
+            <td><input type="checkbox" id="<?php print 'create_invoice_payment_'.$key ?>" name="<?php print 'create_invoice_payment_'.$key ?>" value="1" <?php print !empty($infos['create_invoice_payment']) ? ' checked' : '' ?>></td>
             <?php
             if (!empty($ecommerceOrderActions['send_invoice_by_mail'])) {
             ?>
@@ -1054,7 +1067,7 @@ if ($ecommerceType == 2)
         ?>
             <td><?php print $form->select_company($infos['supplier_id'], 'supplier_id_'.$key, 's.fournisseur=1 AND status=1', 'SelectThirdParty', 0, 0, null, 0, 'minwidth300') ?></td>
             <td><?php $form->select_produits($infos['product_id_for_fee'], 'product_id_for_fee_'.$key, '', $conf->product->limit_size, 0, -1, 2, '', 0, array(), 0, '1', 0, 'maxwidth300') ?></td>
-            <td align="center"><input type="checkbox" id="<?php print 'create_supplier_invoice_payment_'.$key ?>" name="<?php print 'create_supplier_invoice_payment_'.$key ?>" value="1" <?php print !empty($infos['create_supplier_invoice_payment']) ? ' checked' : '' ?>></td>
+            <td><input type="checkbox" id="<?php print 'create_supplier_invoice_payment_'.$key ?>" name="<?php print 'create_supplier_invoice_payment_'.$key ?>" value="1" <?php print !empty($infos['create_supplier_invoice_payment']) ? ' checked' : '' ?>></td>
             <?php
         }
         ?>

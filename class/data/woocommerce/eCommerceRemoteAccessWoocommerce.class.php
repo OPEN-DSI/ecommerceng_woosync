@@ -269,7 +269,7 @@ class eCommerceRemoteAccessWoocommerce
                         'per_page' => $per_page,
                         'orderby' => 'registered_date',
                         'order' => 'desc',
-                        'role' => 'all',
+                        'role' => empty($this->site->parameters['customer_roles']) ? 'all' : $this->site->parameters['customer_roles'],
                     ]
                 );
             } catch (HttpClientException $fault) {
@@ -467,6 +467,7 @@ class eCommerceRemoteAccessWoocommerce
         $filter = ['limit' => $per_page];
         if (isset($fromDate) && !empty($fromDate)) $filter['updated_at_min'] = dol_print_date($fromDate - (24 * 60 * 60), 'dayrfc');
         if (isset($toDate) && !empty($toDate)) $filter['updated_at_max'] = dol_print_date($toDate + (24 * 60 * 60), 'dayrfc');
+        $filter['role'] = empty($this->site->parameters['customer_roles']) ? 'all' : $this->site->parameters['customer_roles'];
 
         while (true) {
             try {
@@ -560,7 +561,7 @@ class eCommerceRemoteAccessWoocommerce
                         'include' => implode(',', $request),
                         'orderby' => 'registered_date',
                         'order' => 'desc',
-                        'role' => 'all',
+                        'role' => empty($this->site->parameters['ecommerce_woocommerce_customer_roles']) ? 'all' : $this->site->parameters['ecommerce_woocommerce_customer_roles'],
                     ]
                 );
             } catch (HttpClientException $fault) {
@@ -585,11 +586,11 @@ class eCommerceRemoteAccessWoocommerce
                             'vatnumber' => null,
                             'note_private' => "Site: '{$this->site->name}' - ID: {$company->id}",
                             'country_id' => getCountry($company->billing->country, 3),
-                        'default_lang' => $mysoc->default_lang,
+                            'default_lang' => $mysoc->default_lang,
                             'remote_datas' => $company,
-                        'extrafields' => [
-                            "ecommerceng_wc_role_{$this->site->id}_{$conf->entity}" => $langs->trans('ECommercengWoocommerceCompanyRole_' . $company->role),
-                        ],
+                            'extrafields' => [
+                                "ecommerceng_wc_role_{$this->site->id}_{$conf->entity}" => $langs->trans('ECommercengWoocommerceCompanyRole_' . $company->role),
+                            ],
                         ];
 
                     // Default language
@@ -1087,9 +1088,11 @@ class eCommerceRemoteAccessWoocommerce
 
                     // Set remote id company : 0 for anonymous
                     $eCommerceTempSoc = new eCommerceSociete($this->db);
-                    if (empty($order->customer_id) || $eCommerceTempSoc->fetchByRemoteId($order->customer_id, $this->site->id) < 0) {
-                        dol_syslog(__METHOD__ . ": The customer of the remote order ID " . $order->id . " was not found into companies table link", LOG_WARNING);
-                        $remoteCompanyID = 0;   // If company was not found into companies table link
+                    if (empty($order->customer_id)) {
+                        $remoteCompanyID = 0;   // If is a guest order
+                    } elseif ($eCommerceTempSoc->fetchByRemoteId($order->customer_id, $this->site->id) < 0) {
+                        dol_syslog(__METHOD__ . " The customer (" . $order->customer_id . ") of the remote order ID " . $order->id . " was not found into companies table link", LOG_WARNING);
+                        $remoteCompanyID = -1;   // If company was not found into companies table link so is a user role not supported
                     } else {
                         $remoteCompanyID = $order->customer_id;
                     }

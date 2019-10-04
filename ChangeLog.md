@@ -1,5 +1,11 @@
 # ChangeLog
 
+## 4.0.40.0
+- Ajout du choix des roles utilisateurs synchronisés dans les options du site.
+- Seul les clients des roles supportés seront synchronisés.
+- Seules les commandes invités ou ceux dont le client est enregistré seront synchronisées.
+- Correction si la commande n'a pas de mode de paiement lors de la synchro.
+
 ## 4.0.39.0
 - Correction de la récupération des frais stripe
 - Correction mineure

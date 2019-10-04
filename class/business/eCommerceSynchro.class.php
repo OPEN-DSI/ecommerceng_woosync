@@ -2104,6 +2104,64 @@ class eCommerceSynchro
                     $counter++;
                     if ($toNb > 0 && $counter > $toNb) break;
 
+                    if ($commandeArray['remote_id_societe'] < 0) {
+                        dol_syslog(__METHOD__ . " Order (remote_id=" . $commandeArray['remote_id'] . ") bypassed because customer not synchronised so is not a customer role supported", LOG_WARNING);
+
+                        $this->db->begin();
+
+                        $synchExists = $this->eCommerceCommande->fetchByRemoteId($commandeArray['remote_id'], $this->eCommerceSite->id);
+
+                        $this->eCommerceCommande->last_update = $commandeArray['last_update'];
+                        if ($synchExists > 0) {
+                            //eCommerce update
+                            if ($this->eCommerceCommande->update($this->user) < 0) {
+                                $error++;
+                                $this->error = $this->langs->trans('ECommerceSyncheCommerceCommandeUpdateError') . ' ' . $this->eCommerceCommande->error;
+                                $this->errors[] = $this->error;
+                            }
+                        } else {
+                            // May be an old record with an old product removed on eCommerce still exists, we delete it before insert.
+                            $sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_commande WHERE remote_id='" . $this->db->escape($commandeArray['remote_id']) . "' AND fk_site=" . $this->eCommerceSite->id;
+                            $resql = $this->db->query($sql);
+
+                            // Get next fake order id
+                            $fake_order_id = 0;
+                            $sql = "SELECT MIN(fk_commande) AS min_id FROM " . MAIN_DB_PREFIX . "ecommerce_commande WHERE fk_site = " . $this->eCommerceSite->id;
+                            $resql = $this->db->query($sql);
+                            if ($resql) {
+                                if ($obj = $this->db->fetch_object($resql)) {
+                                    $fake_order_id = min($fake_order_id, $obj->min_id);
+                                }
+                            } else {
+                                $error++;
+                                $this->error = $this->langs->trans('ECommerceSynchCommandeErrorGetLastFakeOrderId', $commandeArray['remote_id']) . ' ' . $this->db->lasterror();
+                                $this->errors[] = $this->error;
+                                dol_syslog(__METHOD__ . " " . $this->error, LOG_ERR);
+                            }
+                            $fake_order_id--;
+
+                            //eCommerce create
+                            $this->eCommerceCommande->fk_site = $this->eCommerceSite->id;
+                            $this->eCommerceCommande->fk_commande = $fake_order_id;
+                            $this->eCommerceCommande->remote_id = $commandeArray['remote_id'];
+                            if ($this->eCommerceCommande->create($this->user) < 0) {
+                                $error++;
+                                $this->error = $this->langs->trans('ECommerceSynchCommandeErrorCreateFakeOrderLink', $commandeArray['remote_id']) . ' ' . $this->eCommerceCommande->error;
+                                $this->errors[] = $this->error;
+                                dol_syslog(__METHOD__ . " " . $this->error, LOG_ERR);
+                            }
+                        }
+
+                        if ($error) {
+                            $this->db->rollback();
+                            $error = 0;
+                        } else {
+                            $this->db->commit();
+                        }
+
+                        continue;
+                    }
+
                     $this->db->begin();
 
                     $this->initECommerceCommande();
@@ -2603,7 +2661,7 @@ class eCommerceSynchro
 
                         // Update Payment method
                         if (! $error) {
-                            if (isset($commandeArray['payment_method_id'])) {
+                            if (!empty($commandeArray['payment_method_id'])) {
                                 if (isset($ecommercePaymentGateways[$commandeArray['payment_method_id']]['payment_mode_id'])) {
                                     $ecommerceSelectedPaymentGateway = $ecommercePaymentGateways[$commandeArray['payment_method_id']];
                                     if ($ecommerceSelectedPaymentGateway['payment_mode_id'] > 0) {
@@ -2615,7 +2673,7 @@ class eCommerceSynchro
                                     $this->errors[] = $this->error;
                                 }
                             }
-                            if (!($dBCommande->mode_reglement_id > 0) && isset($commandeArray['payment_method'])) {
+                            if (!($dBCommande->mode_reglement_id > 0) && !empty($commandeArray['payment_method'])) {
                                 $payment_method = dol_getIdFromCode($this->db, $commandeArray['payment_method'], 'c_paiement', 'libelle', 'id');
                                 if ($payment_method != '' && $payment_method > 0) {
                                     $dBCommande->setPaymentMethods($payment_method);
@@ -2733,6 +2791,7 @@ class eCommerceSynchro
                                 $this->eCommerceCommande->fk_site = $this->eCommerceSite->id;
                                 $this->eCommerceCommande->fk_commande = $fake_order_id;
                                 $this->eCommerceCommande->remote_id = $commandeArray['remote_id'];
+                                $this->eCommerceCommande->last_update = $commandeArray['last_update'];
                                 if ($this->eCommerceCommande->create($this->user) < 0) {
                                     $error++;
                                     $this->error = $this->langs->trans('ECommerceSynchCommandeErrorCreateFakeOrderLink', $ref_ext) . ' ' . $this->eCommerceCommande->error;

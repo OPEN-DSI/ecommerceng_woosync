@@ -92,3 +92,6 @@ ECommercengWoocommerceCompanyRole_editor        = Editor
 ECommercengWoocommerceCompanyRole_subscriber    = Subscriber
 ECommercengWoocommerceCompanyRole_shop_manager  = Shop manager
 ECommercengWoocommerceCompanyRole_              = No role for this site
+
+ECommerceWoocommerceCustomerRolesSupported              = Roles utilisateurs supportés
+ECommerceWoocommerceCustomerRolesSupportedDescription   = Listes des roles utilisateurs supportées pour la synchronisation.(vide pour tous les roles; liste de valeurs séparées par des virgules)<br>Seules les valeurs retournées par l'API sont supportées. ex: customer, administrator, author, contributor, editor, subscriber, shop_manager, ...<br>Seul les utilisateurs des roles définits seront traitées<br>Seul les commandes invités ou dont le client est synchronisé seront traitées

@@ -279,6 +279,7 @@ if ($_POST['site_form_detail_action'] == 'save')
             }
 
             $ecommerceProductSynchPrice = GETPOST('ecommerce_product_synch_price', 'alpha');
+            $ecommerceWoocommerceCustomerRoles = GETPOST('ecommerce_woocommerce_customer_roles', 'alpha');
 
             $ecommerceProductSynchDirection = array(
                 'image' => isset($_POST['ecommerce_product_image_synch_direction']) ? GETPOST('ecommerce_product_image_synch_direction', 'alpha') : 'etod',
@@ -298,6 +299,7 @@ if ($_POST['site_form_detail_action'] == 'save')
                 'realtime_dtoe' => $ecommerceRealtimeDolibarrToECommerce,
                 'product_synch_direction' => $ecommerceProductSynchDirection,
                 'product_synch_price' => $ecommerceProductSynchPrice,
+                'customer_roles' => $ecommerceWoocommerceCustomerRoles,
             );
             if ($conf->commande->enabled || $conf->facture->enabled || $conf->supplier_invoice->enabled) {
                 $siteDb->parameters['order_actions'] = $ecommerceOrderActions;
@@ -855,6 +857,7 @@ if ($ecommerceId > 0) {
         $ecommerceProductWeightSynchDirection = isset($siteDb->parameters['product_synch_direction']['weight']) ? $siteDb->parameters['product_synch_direction']['weight'] : 'etod';
         $ecommerceProductTaxSynchDirection = isset($siteDb->parameters['product_synch_direction']['tax']) ? $siteDb->parameters['product_synch_direction']['tax'] : 'etod';
         $ecommerceProductStatusSynchDirection = isset($siteDb->parameters['product_synch_direction']['status']) ? $siteDb->parameters['product_synch_direction']['status'] : 'etod';
+        $ecommerceWoocommerceCustomerRoles = isset($siteDb->parameters['customer_roles']) ? $siteDb->parameters['customer_roles'] : 'customer';
     }
 }
 
