@@ -4,6 +4,7 @@
 - Add Italian translations file (module version 4.0.34) by aschio
 - Fix on order modification configuration is ignored by mkdgs
 - Fix work with other custom dirs by altatof
+- Fix create mother category link
 
 ## 4.0.40.0
 - Ajout du choix des roles utilisateurs synchronisés dans les options du site.
