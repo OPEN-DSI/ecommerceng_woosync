@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 4.0.41.0
+- Add Italian translations file (module version 4.0.34) by aschio
+- Fix on order modification configuration is ignored by mkdgs
+- Fix work with other custom dirs by altatof
+
 ## 4.0.40.0
 - Ajout du choix des roles utilisateurs synchronisés dans les options du site.
 - Seul les clients des roles supportés seront synchronisés.
