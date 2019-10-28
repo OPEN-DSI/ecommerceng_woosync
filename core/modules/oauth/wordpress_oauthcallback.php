@@ -67,8 +67,8 @@ if ($res < 0) {
 $uriFactory = new \OAuth\Common\Http\Uri\UriFactory();
 //$currentUri = $uriFactory->createFromSuperGlobalArray($_SERVER);
 //$currentUri->setQuery('');
-//$currentUri = $uriFactory->createFromAbsolute($urlwithroot.'/custom/ecommerceng/core/modules/oauth/wordpress_oauthcallback.php?ecommerce_id='.$siteId);
-$currentUri = $uriFactory->createFromAbsolute(dol_buildpath('/custom/ecommerceng/core/modules/oauth/wordpress_oauthcallback.php', 2).'?ecommerce_id='.$siteId);
+//$currentUri = $uriFactory->createFromAbsolute($urlwithroot.'/ecommerceng/core/modules/oauth/wordpress_oauthcallback.php?ecommerce_id='.$siteId);
+$currentUri = $uriFactory->createFromAbsolute(dol_buildpath('/ecommerceng/core/modules/oauth/wordpress_oauthcallback.php', 2).'?ecommerce_id='.$siteId);
 
 
 /**

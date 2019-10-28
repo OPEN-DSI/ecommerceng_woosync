@@ -685,10 +685,10 @@ if ($ecommerceId > 0) {
         //$urlwithouturlroot=preg_replace('/'.preg_quote(DOL_URL_ROOT,'/').'$/i','',trim($dolibarr_main_url_root));
         //$urlwithroot=$urlwithouturlroot.DOL_URL_ROOT;		// This is to use external domain name found into config file
         $uriFactory = new \OAuth\Common\Http\Uri\UriFactory();
-        //$currentUri = $uriFactory->createFromAbsolute($urlwithroot.'/custom/ecommerceng/core/modules/oauth/wordpress_oauthcallback.php?ecommerce_id='.$siteId);
-        $currentUri = $uriFactory->createFromAbsolute(dol_buildpath('/custom/ecommerceng/core/modules/oauth/wordpress_oauthcallback.php', 2).'?ecommerce_id='.$siteId);
+        //$currentUri = $uriFactory->createFromAbsolute($urlwithroot.'/ecommerceng/core/modules/oauth/wordpress_oauthcallback.php?ecommerce_id='.$siteId);
+        $currentUri = $uriFactory->createFromAbsolute(dol_buildpath('/ecommerceng/core/modules/oauth/wordpress_oauthcallback.php', 2).'?ecommerce_id='.$siteId);
         $ecommerceOAuthRedirectUri = $currentUri->getAbsoluteUri();
-//        $ecommerceOAuthRedirectUri = dol_buildpath('/custom/ecommerceng/core/modules/oauth/wordpress_oauthcallback.php', 2).'?ecommerce_id='.$ecommerceId;
+//        $ecommerceOAuthRedirectUri = dol_buildpath('/ecommerceng/core/modules/oauth/wordpress_oauthcallback.php', 2).'?ecommerce_id='.$ecommerceId;
         $ecommerceOAuthId = ($_POST['ecommerce_oauth_id'] ? $_POST['ecommerce_oauth_id'] : $siteDb->oauth_id);
         $ecommerceOAuthSecret = ($_POST['ecommerce_oauth_secret'] ? $_POST['ecommerce_oauth_secret'] : $siteDb->oauth_secret);
 
@@ -700,7 +700,7 @@ if ($ecommerceId > 0) {
         } catch(Exception $e) {}
         $ecommerceOAuthGenerateToken = (!empty($ecommerceOAuthId) && !empty($ecommerceOAuthSecret) || is_object($ecommerceOAuthTokenObj));
 
-        $ecommerceOAuthBackToUri = urlencode(dol_buildpath('/custom/ecommerceng/admin/eCommerceSetup.php', 2).'?ecommerce_id='.$ecommerceId);
+        $ecommerceOAuthBackToUri = urlencode(dol_buildpath('/ecommerceng/admin/eCommerceSetup.php', 2).'?ecommerce_id='.$ecommerceId);
 
         if (is_object($ecommerceOAuthTokenObj)) {
             $ecommerceOAuthTokenExpired = ($ecommerceOAuthTokenObj->getEndOfLife() !== $ecommerceOAuthTokenObj::EOL_NEVER_EXPIRES && $ecommerceOAuthTokenObj->getEndOfLife() !== $ecommerceOAuthTokenObj::EOL_UNKNOWN && time() > ($ecommerceOAuthTokenObj->getEndOfLife() - 30));

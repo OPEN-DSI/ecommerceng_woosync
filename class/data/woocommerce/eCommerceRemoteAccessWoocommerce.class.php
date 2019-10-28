@@ -226,7 +226,7 @@ class eCommerceRemoteAccessWoocommerce
                 $this->site->webservice_address,
                 $this->site->oauth_id,
                 $this->site->oauth_secret,
-                dol_buildpath('/custom/ecommerceng/core/modules/oauth/wordpress_oauthcallback.php', 2) . '?ecommerce_id=' . $this->site->id
+                dol_buildpath('/ecommerceng/core/modules/oauth/wordpress_oauthcallback.php', 2) . '?ecommerce_id=' . $this->site->id
             );
         } catch (Exception $e) {
             $this->errors[] = $langs->trans('ECommerceWoocommerceConnect', $this->site->name, $e->getMessage());
