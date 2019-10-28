@@ -819,6 +819,11 @@ class InterfaceECommerceng
                     dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
                     continue;
                 }
+		    
+		if (empty($site->parameters['realtime_dtoe']['order'])) {
+                    dol_syslog("Triggers disabled from the config of the module");
+                    continue;
+                }
 
             	try
             	{
