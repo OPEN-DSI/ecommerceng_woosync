@@ -1963,9 +1963,10 @@ class eCommerceSynchro
                         // if not previous synchro exists into link table (we faild to find it from the remote_id)
                         else
                         {
-                            // May be an old record with an old product removed on eCommerce still exists, we delete it before insert.
-                            $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_product WHERE fk_product=".$this->eCommerceProduct->fk_product;
-                            $resql = $this->db->query($sql);
+                            // May be an old record with an old product removed on eCommerce (or another reference) still exists, we delete it before insert.
+                            $sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_product WHERE fk_site=".$this->eCommerceSite->id
+                                    ." AND ( fk_product=" . $this->eCommerceProduct->fk_product." OR remote_id=" . $productArray['remote_id']. " )";
+			    $resql = $this->db->query($sql);
 
                             //eCommerce create
                             $this->eCommerceProduct->fk_site = $this->eCommerceSite->id;
