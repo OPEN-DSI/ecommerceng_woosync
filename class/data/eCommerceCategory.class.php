@@ -97,7 +97,7 @@ class eCommerceCategory // extends CommonObject
         $sql.= " " . $this->db->escape($this->fk_site) . ",";
         $sql.= " " . (isset($this->remote_id) ? intval($this->remote_id) : 0) . ",";
         $sql.= " " . (isset($this->remote_parent_id) ? intval($this->remote_parent_id) : 0) . ",";
-        $sql.= " '" . $this->db->idate($this->last_update) . "'";
+        $sql.= " " . ($this->last_update > 0 ? "'" . $this->db->idate($this->last_update) . "'" : "NULL");
         $sql.= ")";
 
         $this->db->begin();

@@ -891,6 +891,7 @@ class eCommerceSynchro
                             $this->eCommerceMotherCategory->fk_category = $dBCategorie->id;
                             $this->eCommerceMotherCategory->fk_site = $this->eCommerceSite->id;
                             $this->eCommerceMotherCategory->remote_id = $categoryArray['parent_id'];
+                            $this->eCommerceMotherCategory->last_update = '';
 
                             // Create an entry to map importRootCategory in eCommerceCategory
                             $result = $this->eCommerceMotherCategory->create($this->user);
