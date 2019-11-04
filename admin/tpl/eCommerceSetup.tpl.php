@@ -265,23 +265,9 @@ $var=!$var;
         <td><?php print $langs->trans('ECommercePriceTypeDescription') ?></td>
     </tr>
 <?php
-if ($ecommerceType == 2) {
-    $var = !$var;
-    ?>
-    <tr <?php print $bc[$var] ?>>
-        <td><?php print $langs->trans('ECommercePriceType') ?></td>
-        <td>
-            <select class="flat" name="ecommerce_price_type">
-                <option value="HT" <?php print ($ecommercePriceType == 'HT' ? 'selected="selected"' : '') ?>><?php print $langs->trans('ECommercePriceTypeHT') ?></option>
-                <option value="TTC"<?php print ($ecommercePriceType == 'TTC' ? 'selected="selected"' : '') ?>><?php print $langs->trans('ECommercePriceTypeTTC') ?></option>
-            </select>
-        </td>
-        <td><?php print $langs->trans('ECommercePriceTypeDescription') ?></td>
-    </tr>
-    <?php
-}
 if (!empty($conf->commande->enabled)) {
-  $var = !$var;
+    if ($ecommerceType == 2) {
+        $var = !$var;
 ?>
     <tr <?php print $bc[$var] ?>>
         <td><?php print $langs->trans('ECommerceWoocommerceCustomerRolesSupported') ?></td>
@@ -289,6 +275,7 @@ if (!empty($conf->commande->enabled)) {
         <td><?php print $langs->trans('ECommerceWoocommerceCustomerRolesSupportedDescription') ?></td>
     </tr>
 <?php
+    }
     $var=!$var;
     if ($conf->commande->enabled || $conf->facture->enabled || ($conf->supplier_invoice->enabled && !empty($ecommerceOrderActions['create_invoice']))) {
 ?>
