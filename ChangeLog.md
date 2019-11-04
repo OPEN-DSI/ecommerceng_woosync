@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.42.0
+- Correction de l'ajout du lien de la catégorie racine des produits
+
 ## 4.0.41.0
 - Add Italian translations file (module version 4.0.34) by aschio
 - Fix on order modification configuration is ignored by mkdgs
