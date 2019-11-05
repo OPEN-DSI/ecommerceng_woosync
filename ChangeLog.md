@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.42.1
+- Mise à jour de la documentation
+
 ## 4.0.42.0
 - Correction de l'ajout du lien de la catégorie racine des produits
 
