@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.43.0
+- Correction de la mise a jour du statut "virtuel" du produit sur WooCommerce si le produit Dolibarr est un service
+
 ## 4.0.42.1
 - Mise à jour de la documentation
 

@@ -1862,7 +1862,7 @@ class eCommerceRemoteAccessWoocommerce
                 //'date_on_sale_from_gmt' => '',                                      // date-time	Start date of sale price, as GMT.
                 //'date_on_sale_to'       => '',                                      // date-time	End date of sale price, in the site’s timezone.
                 //'date_on_sale_to_gmt'   => '',                                      // date-time	End date of sale price, in the site’s timezone.
-                //'virtual'               => $object->type == Product::TYPE_SERVICE,  // boolean		If the product is virtual. Default is false.
+                'virtual'               => $object->type == Product::TYPE_SERVICE,  // boolean		If the product is virtual. Default is false.
                 //'downloadable'          => false,                                   // boolean		If the product is downloadable. Default is false.
                 //'downloads'             => $downloads,                              // array		List of downloadable files. See Product - Downloads properties
                 //'download_limit'        => -1,                                      // integer		Number of times downloadable files can be downloaded after purchase. Default is -1.
