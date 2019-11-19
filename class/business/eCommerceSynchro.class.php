@@ -1677,13 +1677,17 @@ class eCommerceSynchro
                             if ($refExists > 0) {
                                 $synchExists = $this->eCommerceProduct->fetchByProductId($dBProduct->id, $this->eCommerceSite->id);
                                 $productVariations = explode('|', $productArray['remote_id']);
-                                if ($synchExists > 0 && !in_array($this->eCommerceProduct->remote_id, $productVariations) ) {
+                                if ($synchExists > 0 && 
+                                        !in_array($this->eCommerceProduct->remote_id, $productVariations)  // Is variable product but without UGS for this variation
+                                        && 
+                                        $this->eCommerceProduct->remote_id !== $productArray['remote_id'] // Is variable product variations with an UGS for this variation
+                                        ) {
                                     dol_syslog('Error: Remote product (ref: ' . $ref . ', remote id: ' . $productArray['remote_id'] . ') already linked with other remote product (remote id: ' . $this->eCommerceProduct->remote_id . ")", LOG_DEBUG);
                                     $error++;
                                     $this->errors[] = $this->langs->trans('ECommerceSynchProductError') . ' Ref: ' . $productArray['ref'] . ', Nom: ' . $productArray['label'] . ', remote ID: ' . $productArray['remote_id'];
                                     $this->errors[] = $this->langs->trans('ECommerceErrorProductAlreadyLinkedWithRemoteProduct', $this->eCommerceProduct->remote_id);
                                     break;
-                                }
+                                }                                  
                             }
                         } else {
                             $dBProduct->id = 0;
