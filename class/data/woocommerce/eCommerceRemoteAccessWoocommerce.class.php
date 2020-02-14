@@ -467,7 +467,6 @@ class eCommerceRemoteAccessWoocommerce
         $filter = ['limit' => $per_page];
         if (isset($fromDate) && !empty($fromDate)) $filter['updated_at_min'] = dol_print_date($fromDate - (24 * 60 * 60), 'dayrfc');
         if (isset($toDate) && !empty($toDate)) $filter['updated_at_max'] = dol_print_date($toDate + (24 * 60 * 60), 'dayrfc');
-        $filter['role'] = empty($this->site->parameters['customer_roles']) ? 'all' : $this->site->parameters['customer_roles'];
 
         while (true) {
             try {

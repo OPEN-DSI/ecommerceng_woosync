@@ -2106,6 +2106,9 @@ class eCommerceSynchro
                     $counter++;
                     if ($toNb > 0 && $counter > $toNb) break;
 
+                    $this->initECommerceCommande();
+                    $this->initECommerceSociete();
+
                     if ($commandeArray['remote_id_societe'] < 0) {
                         dol_syslog(__METHOD__ . " Order (remote_id=" . $commandeArray['remote_id'] . ") bypassed because customer not synchronised so is not a customer role supported", LOG_WARNING);
 
@@ -2166,8 +2169,6 @@ class eCommerceSynchro
 
                     $this->db->begin();
 
-                    $this->initECommerceCommande();
-                    $this->initECommerceSociete();
                     $dBCommande = new Commande($this->db);
 
                     //check if commande exists in eCommerceCommande (with remote id). It set ->fk_commande. This is a sql request.
@@ -2803,7 +2804,7 @@ class eCommerceSynchro
                             }
 
                             $fk_account = 0;
-                            if (!$error && $conf->banque->enabled && !empty($ecommerceSelectedPaymentGateway['create_invoice_payment']) && !empty($ecommerceSelectedPaymentGateway['create_supplier_invoice_payment'])) {
+                            if (!$error && $conf->banque->enabled && (!empty($ecommerceSelectedPaymentGateway['create_invoice_payment']) || !empty($ecommerceSelectedPaymentGateway['create_supplier_invoice_payment']))) {
                                 if (!isset($ecommerceSelectedPaymentGateway['bank_account_id'])) {
                                     $error++;
                                     $msg_error = $this->langs->trans('ECommerceSynchCommandeErrorPaymentGatewayBankNotFound', $ref_ext);
