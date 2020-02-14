@@ -3,6 +3,7 @@
 ## 4.0.44.0
 - Correction bug lors de la synchro des commandes
 - Correction mineure
+- Fix update product with UGS code and variations fail by mkdgs
 
 ## 4.0.43.0
 - Correction de la mise a jour du statut "virtuel" du produit sur WooCommerce si le produit Dolibarr est un service
