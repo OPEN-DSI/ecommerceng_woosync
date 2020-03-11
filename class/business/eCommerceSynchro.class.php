@@ -1099,6 +1099,7 @@ class eCommerceSynchro
                     $this->initECommerceSociete();
                     $synchExists = $this->eCommerceSociete->fetchByRemoteId($societeArray['remote_id'], $this->eCommerceSite->id);
                     $dBSociete = new Societe($this->db);
+					$is_anonymous_thirdparty = false;
 
                     //if societe exists in eCommerceSociete, societe must exists in societe
                     if ($synchExists > 0 && isset($this->eCommerceSociete->fk_societe))
@@ -1145,14 +1146,19 @@ class eCommerceSynchro
                     else
                     {
                         $result = 0;
-			    
+
                         // First, we check object does not alreay exists. If not, we create it, if it exists, do nothing.
                         if (isset($societeArray['email_key']) && !empty($societeArray['email_key'])) {
                             // Search into email company and contact
                             $result = get_company_by_email($this->db, $societeArray['email_key']);
 
-                            if ($result > 0 && $result != $this->eCommerceSite->fk_anonymous_thirdparty) {
-                                $result = $dBSociete->fetch($result);
+                            if ($result > 0) {
+                            	if ($result != $this->eCommerceSite->fk_anonymous_thirdparty) {
+									$result = $dBSociete->fetch($result);
+								} else {
+									$is_anonymous_thirdparty = true;
+									$result = 0;
+								}
                             }
                         }
 
@@ -1293,6 +1299,20 @@ class eCommerceSynchro
                                 $this->errors = array_merge($this->errors, $this->eCommerceSociete->errors);
                             }
                         }
+
+                        // Move the anonymous contact found with the email
+						if ($is_anonymous_thirdparty) {
+							$sql = "UPDATE " . MAIN_DB_PREFIX . "socpeople AS sp";
+							$sql .= " SET sp.fk_soc = " . $dBSociete->id;
+							$sql .= " WHERE sp.email = '" . $this->db->escape($societeArray['email_key']) . "'";
+							$sql .= " AND sp.fk_soc = " . $this->eCommerceSite->fk_anonymous_thirdparty;
+
+							$resql = $this->db->query($sql);
+							if (!$resql) {
+								$error++;
+								$this->errors[] = $this->langs->trans('ECommerceSyncheCommerceSocieteMoveAnonymousContacts') . ' email:' . $societeArray['email_key'] . ', anonymous company ID:' . $this->eCommerceSite->fk_anonymous_thirdparty . ', company ID:' . $dBSociete->id . ', Error:' . $this->db->lasterror();
+							}
+						}
 
                         // Sync also people of thirdparty
                         // We can disable this to have contact/address of thirdparty synchronize only when an order or invoice is synchronized
@@ -1677,9 +1697,9 @@ class eCommerceSynchro
                             if ($refExists > 0) {
                                 $synchExists = $this->eCommerceProduct->fetchByProductId($dBProduct->id, $this->eCommerceSite->id);
                                 $productVariations = explode('|', $productArray['remote_id']);
-                                if ($synchExists > 0 && 
+                                if ($synchExists > 0 &&
                                         !in_array($this->eCommerceProduct->remote_id, $productVariations)  // Is variable product but without UGS for this variation
-                                        && 
+                                        &&
                                         $this->eCommerceProduct->remote_id !== $productArray['remote_id'] // Is variable product variations with an UGS for this variation
                                         ) {
                                     dol_syslog('Error: Remote product (ref: ' . $ref . ', remote id: ' . $productArray['remote_id'] . ') already linked with other remote product (remote id: ' . $this->eCommerceProduct->remote_id . ")", LOG_DEBUG);
@@ -1687,7 +1707,7 @@ class eCommerceSynchro
                                     $this->errors[] = $this->langs->trans('ECommerceSynchProductError') . ' Ref: ' . $productArray['ref'] . ', Nom: ' . $productArray['label'] . ', remote ID: ' . $productArray['remote_id'];
                                     $this->errors[] = $this->langs->trans('ECommerceErrorProductAlreadyLinkedWithRemoteProduct', $this->eCommerceProduct->remote_id);
                                     break;
-                                }                                  
+                                }
                             }
                         } else {
                             $dBProduct->id = 0;

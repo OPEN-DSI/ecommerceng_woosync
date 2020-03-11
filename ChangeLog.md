@@ -1,7 +1,10 @@
 # ChangeLog
 
+## 4.0.45.0
+- Correction lorsque de la synchronisation des tiers si le tiers trouvé par l'adresse email est le tiers par défaut (deplacement du contact avec l'adresse email dans le nouveau tiers ou aillant le même nom si c'est une companie).
+
 ## 4.0.44.0
-- Correction bug lors de la synchro des commandes
+- Correction lors de la recuperation du compte bancaire pour la creation des paiements sur la facture a la synchronisation d'une commande.
 - Correction mineure
 - Fix update product with UGS code and variations fail by mkdgs
 
