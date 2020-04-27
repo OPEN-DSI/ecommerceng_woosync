@@ -1763,7 +1763,7 @@ class eCommerceSynchro
 
                             $price_base_type = $this->eCommerceSite->ecommerce_price_type;
                             if (isset($productArray['price_base_type'])) $price_base_type = $productArray['price_base_type'];
-				
+
                             if ($price_base_type_org != $price_base_type ||
                                 $price_org != $productArray['price'] ||
                                 (isset($productArray['price_min']) && $price_min_org != $productArray['price_min']) ||
@@ -3229,7 +3229,7 @@ class eCommerceSynchro
                                             $substitutionarray['__ONLINE_PAYMENT_URL__'] = $paymenturl;
 
                                             // Define subject / message
-                                            $message = str_replace('\n', "\n", $arraydefaultmessage['content']);
+                                            $message = str_replace('\n', "\n", $arraydefaultmessage->content);
                                             // Deal with format differences between message and signature (text / HTML)
                                             if (dol_textishtml($message) && !dol_textishtml($substitutionarray['__USER_SIGNATURE__'])) {
                                                 $substitutionarray['__USER_SIGNATURE__'] = dol_nl2br($substitutionarray['__USER_SIGNATURE__']);
@@ -3237,7 +3237,7 @@ class eCommerceSynchro
                                                 $message = dol_nl2br($message);
                                             }
 
-                                            $subject = make_substitutions($arraydefaultmessage['topic'], $substitutionarray);
+                                            $subject = make_substitutions($arraydefaultmessage->topic, $substitutionarray);
                                             $message = make_substitutions($message, $substitutionarray);
                                             if (method_exists($dBInvoice, 'makeSubstitution')) {
                                                 $subject = $dBInvoice->makeSubstitution($subject);
@@ -3262,7 +3262,7 @@ class eCommerceSynchro
                                             // Attach invoice file
                                             $formmail->trackid = $trackid;      // $trackid must be defined
                                             $formmail->clear_attached_files();
-                                            if (!empty($arraydefaultmessage['joinfiles'])) {
+                                            if (!empty($arraydefaultmessage->joinfiles)) {
                                                 $ref = dol_sanitizeFileName($dBInvoice->ref);
                                                 $fileparams = dol_most_recent_file($conf->facture->dir_output . '/' . $ref, preg_quote($ref, '/') . '[^\-]+');
                                                 $file = $fileparams['fullname'];
@@ -4807,4 +4807,3 @@ class eCommerceSynchro
         return -1;
     }
 }
-
