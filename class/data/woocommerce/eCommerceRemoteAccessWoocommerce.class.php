@@ -185,7 +185,6 @@ class eCommerceRemoteAccessWoocommerce
         global $conf, $langs;
 
         $response_timeout = (empty($conf->global->MAIN_USE_RESPONSE_TIMEOUT) ? 30 : $conf->global->MAIN_USE_RESPONSE_TIMEOUT);    // Response timeout
-        $isHTTPS = (bool) preg_match('/^https/i', $this->site->webservice_address);
 
         try {
             $this->client = new Client(
@@ -196,7 +195,7 @@ class eCommerceRemoteAccessWoocommerce
                     'wp_api' => true,
                     'version' => 'wc/v3',
                     'timeout' => $response_timeout,
-                    'query_string_auth' => $isHTTPS,
+                    'query_string_auth' => !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_QUERY_STRING_AUTH),
                 ]
             );
             $this->client->get('customers', [ 'page' => 1, 'per_page' => 1 ]);
@@ -209,7 +208,7 @@ class eCommerceRemoteAccessWoocommerce
                     'wp_api' => false,
                 	'version' => 'v3',
                     'timeout' => $response_timeout,
-                    'query_string_auth' => $isHTTPS,
+                    'query_string_auth' => !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_QUERY_STRING_AUTH),
                 ]
             );
             $this->clientOld->get('customers', [ 'page' => 1, 'filter' => [ 'limit' => 1 ] ]);

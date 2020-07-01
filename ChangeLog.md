@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.46.0
+- Ajout de la variable globale ECOMMERCENG_WOOCOMMERCE_QUERY_STRING_AUTH pour passer les identifiants dans l'url
+
 ## 4.0.45.0
 - Correction lorsque de la synchronisation des tiers si le tiers trouvé par l'adresse email est le tiers par défaut (deplacement du contact avec l'adresse email dans le nouveau tiers ou aillant le même nom si c'est une companie).
 
