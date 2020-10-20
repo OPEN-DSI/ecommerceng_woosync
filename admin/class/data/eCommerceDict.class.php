@@ -161,7 +161,7 @@ class eCommerceDict
                 }
                 $fields[] = $field . ' ' . $key;
             }
-            $sql .= implode(' AND ', $fields);
+            $sql .= implode(', ', $fields);
         }
         if (is_array($keys) && count($keys) > 0) {
             $fields = array();

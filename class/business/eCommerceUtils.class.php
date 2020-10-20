@@ -97,9 +97,9 @@ class eCommerceUtils
 			{
 		    	$result=0;
 				if ($result >= 0) $result=$synchro->synchCategory($toNb);
-				if ($result >= 0) $result=$synchro->synchProduct($toNb);
-				if ($result >= 0) $result=$synchro->synchSociete($toNb);
-				if ($result >= 0) $result=$synchro->synchCommande($toNb);
+				if ($result >= 0) $result=$synchro->synchProduct(array(), $toNb);
+				if ($result >= 0) $result=$synchro->synchSociete(array(), $toNb);
+				if ($result >= 0) $result=$synchro->synchCommande(array(), $toNb);
 				if ($result >= 0) $result=$synchro->synchFacture($toNb);
 
 				if ($result >= 0) $result=$synchro->synchDtoECategory($toNb);

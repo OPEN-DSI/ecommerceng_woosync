@@ -42,6 +42,12 @@ ECommerceWoocommerceConfirmUpdateDictTaxClasses=Confirmer la mise à jour du dic
 ECommerceWoocommerceUpdateDictTaxClasses=Mise à jour du dictionnaire des classes de TVA
 ECommerceWoocommerceErrorDisableDictTaxClass=Erreur de déactivation d'une classe de TVA, code:"%s", erreur:"%s"
 ECommerceWoocommerceErrorAddDictTaxClass=Erreur d'ajout d'une classe de TVA, code:"%s", name:"%s", erreur:"%s"
+ECommerceWoocommerceErrorUpdateDictTaxClass=Erreur de mise a jour d'une classe de TVA, code:"%s", erreur:"%s"
+
+ECommercengWoocommerceDictTaxRate=Liste des taux de TVA sur Woocommerce
+ECommerceWoocommerceErrorDisableDictTaxClass=Erreur de déactivation d'un taux de TVA, ID:"%s", erreur:"%s"
+ECommerceWoocommerceErrorAddDictTaxClass=Erreur d'ajout d'un taux de TVA, ID:"%s", erreur:"%s"
+ECommerceWoocommerceErrorUpdateDictTaxClass=Erreur de mise a jour d'un taux de TVA, ID:"%s", erreur:"%s"
 
 ECommercengWoocommerceStatusDraft=Brouillon
 ECommercengWoocommerceStatusPending=En attente de relecture
@@ -59,6 +65,9 @@ ECommercengWoocommerceOrderStatusCompleted=Terminée
 ECommercengWoocommerceOrderStatusCancelled=Annulée
 ECommercengWoocommerceOrderStatusRefunded=Remboursée
 ECommercengWoocommerceOrderStatusFailed=Échouée
+ECommercengWoocommerceOrderStatusTrash=Poubelle
+
+ECommercengWoocommerceOrderLink=Lien vers la commande du site [%s]
 
 ECommercengWoocommerceExtrafieldsCorrespondence                 = Correspondance des attributs supplémentaires avec les méta-données de Woocommerce
 ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription = Renseigner le nom de la méta-donnée correspondant à cet attribut supplémentaire : %s
@@ -95,3 +104,16 @@ ECommercengWoocommerceCompanyRole_              = Pas de rôle sur ce site
 
 ECommerceWoocommerceCustomerRolesSupported              = Roles utilisateurs supportés
 ECommerceWoocommerceCustomerRolesSupportedDescription   = Listes des roles utilisateurs supportées pour la synchronisation.(vide pour tous les roles; liste de valeurs séparées par des virgules)<br>Seules les valeurs retournées par l'API sont supportées. ex: customer, administrator, author, contributor, editor, subscriber, shop_manager, ...<br>Seul les utilisateurs des roles définits seront traitées<br>Seul les commandes invités ou dont le client est synchronisé seront traitées
+
+ECommerceWooCommerceErrorDiscountCodeServiceNotConfigured   = Le service gérant les codes promos n'a pas été configurer dans le paramétrage du site "%s".
+ECommerceWooCommerceErrorOrderStatusNotConfigured           = La correspondance du statut "%s" de la commande n'est pas paramètré dans la configuration du site (il faut peut etre le rajouter dans le champs complementaire de la commande "Statut sur le site [%s]")
+ECommerceWooCommerceErrorPwGiftCardsServiceNotConfigured    = Le service gérant les cartes cadeaux n'a pas été configurer dans le paramétrage du site "%s".
+
+ECommerceWoocommerceErrorDisableDictTaxClass        = Erreur lors de la desactivation de la ligne de la classe de taxe (Code: %s): %s
+ECommerceWoocommerceErrorUpdateDictTaxClass         = Erreur lors de la mise a jour de la ligne de la classe de taxe (Code: %s): %s
+ECommerceWoocommerceErrorAddDictTaxClass            = Erreur lors de l'ajout de la ligne de la classe de taxe (Code: %s): %s
+ECommerceWoocommerceErrorDisableDictTaxRate         = Erreur lors de la desactivation de la ligne du taux de la taxe (ID: %s): %s
+ECommerceWoocommerceErrorUpdateDictTaxRate          = Erreur lors de la mise a jour de la ligne du taux de la taxe (ID: %s): %s
+ECommerceWoocommerceErrorAddDictTaxRate             = Erreur lors de l'ajout de la ligne du taux de la taxe (ID: %s): %s
+ECommerceWooCommerceErrorTaxNotFound                = Erreur la taxe n'a pas été trouvée dans celles synchronisées (ID: %s)
+ECommerceWooCommerceErrorDontSupportMultiTaxes      = Le module ne supporte pas actuellement le multi-taxe.

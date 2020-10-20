@@ -155,13 +155,15 @@ class eCommerceRemoteAccess
 	/**
      * Put the remote data into societe dolibarr data from instantiated class in the constructor
      *
+	 * @param	int		$from_date		Synchronize from date
+	 * @param	int		$to_date		Synchronize to date
      * @param   array   $remoteObject   Array of remote object
      * @param   int     $toNb           Max nb
      * @return $dolibarrObject array
      */
-    public function convertRemoteObjectIntoDolibarrSociete($remoteObject,$toNb=0)
+    public function convertRemoteObjectIntoDolibarrSociete($from_date = null, $to_date = null, $remoteObject = array(), $toNb = 0)
 	{
-	    $result=$this->class->convertRemoteObjectIntoDolibarrSociete($remoteObject,$toNb);
+	    $result=$this->class->convertRemoteObjectIntoDolibarrSociete($from_date, $to_date, $remoteObject, $toNb);
 		$this->error=$this->class->error;
 		$this->errors=$this->class->errors;
 	    return $result;
@@ -185,13 +187,15 @@ class eCommerceRemoteAccess
     /**
      * Put the remote data into product dolibarr data from instantiated class in the constructor
      *
+	 * @param	int		$from_date		Synchronize from date
+	 * @param	int		$to_date		Synchronize to date
      * @param   array   $remoteObject   Array of remote object
      * @param   int     $toNb           Max nb
      * @return $dolibarrObject array
      */
-    public function convertRemoteObjectIntoDolibarrProduct($remoteObject,$toNb=0)
+    public function convertRemoteObjectIntoDolibarrProduct($from_date = null, $to_date = null, $remoteObject = array(), $toNb = 0)
 	{
-	    $result=$this->class->convertRemoteObjectIntoDolibarrProduct($remoteObject,$toNb);
+	    $result=$this->class->convertRemoteObjectIntoDolibarrProduct($from_date, $to_date, $remoteObject,$toNb);
 		$this->error=$this->class->error;
 		$this->errors=$this->class->errors;
 	    return $result;
@@ -200,13 +204,15 @@ class eCommerceRemoteAccess
     /**
      * Put the remote data into commande dolibarr data from instantiated class in the constructor
      *
+	 * @param	int		$from_date		Synchronize from date
+	 * @param	int		$to_date		Synchronize to date
      * @param   array   $remoteObject   Array of remote object
      * @param   int     $toNb           Max nb
      * @return $dolibarrObject array
      */
-    public function convertRemoteObjectIntoDolibarrCommande($remoteObject,$toNb=0)
+    public function convertRemoteObjectIntoDolibarrCommande($from_date = null, $to_date = null, $remoteObject = array(), $toNb = 0)
 	{
-	    $result=$this->class->convertRemoteObjectIntoDolibarrCommande($remoteObject,$toNb);
+	    $result=$this->class->convertRemoteObjectIntoDolibarrCommande($from_date, $to_date, $remoteObject,$toNb);
 		$this->error=$this->class->error;
 		$this->errors=$this->class->errors;
 	    return $result;
@@ -227,6 +233,20 @@ class eCommerceRemoteAccess
 	    return $result;
 	}
 
+
+	/**
+	 * Put the remote data into commande dolibarr data from instantiated class in the constructor
+	 *
+	 * @param	array		$remote_data 	Remote data
+	 * @return  array                 		Data processed.
+	 */
+	public function convertOrderDataIntoProcessedData($remote_data)
+	{
+		$result=$this->class->convertOrderDataIntoProcessedData($remote_data);
+		$this->error=$this->class->error;
+		$this->errors=$this->class->errors;
+		return $result;
+	}
 
     /**
      * Get a commande from instantiated class in the constructor

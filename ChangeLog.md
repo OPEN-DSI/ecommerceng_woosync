@@ -1,5 +1,13 @@
 # ChangeLog
 
+## 4.0.47.0
+- Reecriture de la synchronisation des produits, tiers, commandes pour le support des webhooks de WooCommerce (Creation et actualisation des commandes)
+- Ajout de la gestion des codes promos sur les commandes (de WooCommerce vers Dolibarr seulement)
+- Ajout du support de l'extension WooCommerce "PW WooCommerce Gift Cards Pro" (de WooCommerce vers Dolibarr seulement)
+- Ajout du support de l'extension WooCommerce "WooCommerce Cost of Goods" (de WooCommerce vers Dolibarr seulement)
+- Nouvelle gestion des TVA
+- Ajout de la variable ECOMMERCE_KEEP_NEGATIVE_PRICE_LINES_WHEN_CREATE_INVOICE pour ne pas creer des reductions clients pour des lignes avec des prix négatifs lors de la création de la facture
+
 ## 4.0.46.0
 - Ajout de la variable globale ECOMMERCENG_WOOCOMMERCE_QUERY_STRING_AUTH pour passer les identifiants dans l'url
 

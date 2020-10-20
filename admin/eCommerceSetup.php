@@ -292,7 +292,11 @@ if ($_POST['site_form_detail_action'] == 'save')
             );
 
             $siteDb->parameters = array(
-                'order_status_etod' => $ecommerceOrderStatusForECommerceToDolibarr,
+				'shipping_service' => $_POST['ecommerce_fk_shipping_service'],
+				'discount_code_service' => $_POST['ecommerce_fk_discount_code_service'],
+				'pw_gift_cards_service' => $_POST['ecommerce_fk_pw_gift_cards_service'],
+                'web_hooks_secret' => $_POST['ecommerce_web_hooks_secret'],
+				'order_status_etod' => $ecommerceOrderStatusForECommerceToDolibarr,
                 'order_status_dtoe' => $ecommerceOrderStatusForDolibarrToECommerce,
                 'ef_crp' => $ecommerceExtrafieldsCorrespondence,
                 'payment_cond' => $_POST['ecommerce_payment_cond'],
@@ -471,12 +475,27 @@ if ($_POST['site_form_detail_action'] == 'save')
                             "3_completed" => $langs->trans('ECommercengWoocommerceOrderStatusCompleted'),
                             "3_cancelled" => $langs->trans('ECommercengWoocommerceOrderStatusCancelled'),
                             "3_refunded" => $langs->trans('ECommercengWoocommerceOrderStatusRefunded'),
-                            "3_failed" => $langs->trans('ECommercengWoocommerceOrderStatusFailed'),
+							"3_failed" => $langs->trans('ECommercengWoocommerceOrderStatusFailed'),
+							"3_trash" => $langs->trans('ECommercengWoocommerceOrderStatusTrash'),
                         )),
                         'alwayseditable' => 0,
                         'perms' => '',
                         'list' => 1,
                     ], [
+						'attrname' => "ecommerceng_wc_link_{$siteDb->id}_{$conf->entity}",
+						'label' => $langs->trans('ECommercengWoocommerceOrderLink', $siteDb->name),
+						'type' => 'url',
+						'pos' => 3,
+						'size' => '',
+						'elementtype' => 'commande',
+						'unique' => 0,
+						'required' => 0,
+						'default_value' => '',
+						'param' => null,
+						'alwayseditable' => 0,
+						'perms' => '',
+						'list' => 1,
+					], [
                         'attrname' => "ecommerceng_wc_role_{$siteDb->id}_{$conf->entity}",
                         'label' => $langs->trans('ECommercengWoocommerceCompanyRole', $siteDb->name),
                         'type' => 'varchar',
@@ -525,9 +544,9 @@ if ($_POST['site_form_detail_action'] == 'save')
             $eCommerceMenu->updateMenu();
             $db->commit();
 
-            if ($siteDb->type == 2) { // Woocommerce
-                ecommerceng_update_woocommerce_dict_tax_class($db, $siteDb);
-            }
+//            if ($siteDb->type == 2) { // Woocommerce
+//                ecommerceng_update_woocommerce_dict_tax_class($db, $siteDb);
+//            }
             if (!empty($conf->global->PRODUIT_MULTIPRICES) && $siteDb->price_level != $last_price_level) {
                 updatePriceLevel($siteDb);
             }
@@ -591,7 +610,7 @@ elseif ($_POST['site_form_detail_action'] == 'delete')
 }
 // Update dictionary for tax class of woocommerce
 elseif ($_POST['site_form_detail_action'] == 'update_woocommerce_tax_class') {
-    if (ecommerceng_update_woocommerce_dict_tax_class($db, $siteDb)) {
+    if (ecommerceng_update_woocommerce_dict_tax($db, $siteDb)) {
         setEventMessage($langs->trans('ECommercengWoocommerceDictTaxClassUpdated'));
     }
 }
@@ -675,10 +694,19 @@ $ecommerceOAuthGenerateToken = false;
 $ecommerceOrderStatus = false;
 if ($ecommerceId > 0) {
     if ($ecommerceType == 2) {
-        $ecommerceOAuth = true;
-        $ecommerceOAuthWordpressOAuthSetupUri = $ecommerceWebserviceAddress . (substr($ecommerceWebserviceAddress, -1, 1) != '/' ? '/' : '') . 'wp-admin/admin.php?page=wo_settings#clients';
-        $ecommerceOrderStatus = $conf->commande->enabled;
-    }
+		$ecommerceOAuth = true;
+		$ecommerceOAuthWordpressOAuthSetupUri = $ecommerceWebserviceAddress . (substr($ecommerceWebserviceAddress, -1, 1) != '/' ? '/' : '') . 'wp-admin/admin.php?page=wo_settings#clients';
+		$ecommerceOrderStatus = $conf->commande->enabled;
+
+		$uriFactory = new \OAuth\Common\Http\Uri\UriFactory();
+		$currentUri = $uriFactory->createFromAbsolute(dol_buildpath('/ecommerceng/webhooks.php', 2) . '?ecommerce_id=' . $siteId);
+		$eCommerceSiteWebHooksUrl = $currentUri->getAbsoluteUri();
+		$eCommerceSiteWebHooksSecret = (!empty($_POST['ecommerce_web_hooks_secret']) ? $_POST['ecommerce_web_hooks_secret'] : (!empty($siteDb->parameters['web_hooks_secret']) ? $siteDb->parameters['web_hooks_secret'] : ''));
+
+		$ecommerceFkShippingService = (!empty($_POST['ecommerce_fk_shipping_service']) ? $_POST['ecommerce_fk_shipping_service'] : (!empty($siteDb->parameters['shipping_service']) ? $siteDb->parameters['shipping_service'] : ''));
+		$ecommerceFkDiscountCodeService = (!empty($_POST['ecommerce_fk_discount_code_service']) ? $_POST['ecommerce_fk_discount_code_service'] : (!empty($siteDb->parameters['discount_code_service']) ? $siteDb->parameters['discount_code_service'] : ''));
+		$ecommerceFkPwGiftCardsService = (!empty($_POST['ecommerce_fk_pw_gift_cards_service']) ? $_POST['ecommerce_fk_pw_gift_cards_service'] : (!empty($siteDb->parameters['pw_gift_cards_service']) ? $siteDb->parameters['pw_gift_cards_service'] : ''));
+	}
 
     if ($ecommerceOAuth) {
         // Create callback URL

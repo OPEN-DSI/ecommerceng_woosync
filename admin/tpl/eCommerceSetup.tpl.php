@@ -265,6 +265,38 @@ $var=!$var;
         <td><?php print $langs->trans('ECommercePriceTypeDescription') ?></td>
     </tr>
 <?php
+if ($ecommerceType == 2) {
+	$var = !$var;
+	?>
+	<tr <?php print $bc[$var] ?>>
+		<td><span><?php print $langs->trans('ECommerceShippingService') ?></span></td>
+		<td>
+			<?php $form->select_produits($ecommerceFkShippingService, 'ecommerce_fk_shipping_service', 1, 0); ?>
+		</td>
+		<td><?php print $langs->trans('ECommerceShippingServiceDescription') ?></td>
+	</tr>
+	<?php
+	$var = !$var;
+	?>
+	<tr <?php print $bc[$var] ?>>
+		<td><span><?php print $langs->trans('ECommerceDiscountCodeService') ?></span></td>
+		<td>
+			<?php $form->select_produits($ecommerceFkDiscountCodeService, 'ecommerce_fk_discount_code_service', 1, 0); ?>
+		</td>
+		<td><?php print $langs->trans('ECommerceDiscountCodeServiceDescription') ?></td>
+	</tr>
+	<?php
+	$var = !$var;
+	?>
+	<tr <?php print $bc[$var] ?>>
+		<td><span><?php print $langs->trans('ECommercePwGiftCardsService') ?></span></td>
+		<td>
+			<?php $form->select_produits($ecommerceFkPwGiftCardsService, 'ecommerce_fk_pw_gift_cards_service', 1, 0); ?>
+		</td>
+		<td><?php print $langs->trans('ECommercePwGiftCardsServiceDescription') ?></td>
+	</tr>
+	<?php
+}
 if (!empty($conf->commande->enabled)) {
     if ($ecommerceType == 2) {
         $var = !$var;
@@ -327,7 +359,61 @@ if (!empty($conf->commande->enabled)) {
     }
 }
 ?>
-			</table>
+</table>
+
+<?php
+if ($ecommerceType == 2)
+{
+	$var=!$var;
+	?>
+	<br>
+	<?php
+	print_titre($langs->trans("ECommerceSiteWebHooksSetup"));
+	?>
+	<table class="noborder" width="100%">
+
+		<tr class="liste_titre">
+			<td width="20%"><?php print $langs->trans('Parameter') ?></td>
+			<td><?php print $langs->trans('Value') ?></td>
+			<td><?php print $langs->trans('Description') ?></td>
+		</tr>
+		<?php
+		$var = !$var;
+		?>
+		<tr <?php print $bc[$var] ?>>
+			<td><?php print $langs->trans("ECommerceSiteWebHooksUrl"); ?></td>
+			<td><input type="text" class="flat" value="<?php print $eCommerceSiteWebHooksUrl ?>" size="50" readonly="readonly"></td>
+			<td><?php print $langs->trans('ECommerceSiteWebHooksUrlDescription') ?></td>
+		</tr>
+		<?php
+		$var = !$var;
+		?>
+		<tr <?php print $bc[$var] ?>>
+			<td><?php print $langs->trans("ECommerceSiteWebHooksSecret"); ?></td>
+			<td><?php
+			print '<input size="30" maxsize="32" type="text" id="ecommerce_web_hooks_secret" name="ecommerce_web_hooks_secret" value="'.$eCommerceSiteWebHooksSecret.'" autocomplete="off">';
+			if (! empty($conf->use_javascript_ajax))
+				print '&nbsp;'.img_picto($langs->trans('Generate'), 'refresh', 'id="generate_api_key" class="linkobject"');
+				print "\n".'<script type="text/javascript">';
+				print '$(document).ready(function () {
+            $("#generate_api_key").click(function() {
+                $.get( "'.DOL_URL_ROOT.'/core/ajax/security.php", {
+                    action: \'getrandompassword\',
+                    generic: true
+                },
+                function(token) {
+                    $("#ecommerce_web_hooks_secret").val(token);
+                });
+            });
+    });';
+				print '</script>';
+			?></td>
+			<td><?php print $langs->trans('ECommerceSiteWebHooksSecretDescription') ?></td>
+		</tr>
+	</table>
+	<?php
+}
+?>
 
 <?php
 if ($ecommerceType == 2)
@@ -1027,7 +1113,7 @@ if ($ecommerceType == 2)
         }
         if (!empty($ecommerceOrderActions['create_invoice']) || !empty($ecommerceOrderActions['create_supplier_invoice']) && $conf->banque->enabled) {
         ?>
-            <td><?php print $form->select_comptes($infos['bank_account_id'], 'bank_account_id_'.$key, 0, '', 1) ?></td>
+            <td><?php $form->select_comptes($infos['bank_account_id'], 'bank_account_id_'.$key, 0, '', 1) ?></td>
             <?php
         }
         if (!empty($ecommerceOrderActions['create_invoice'])) {

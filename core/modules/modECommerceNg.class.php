@@ -61,7 +61,7 @@ class modECommerceNg extends DolibarrModules
 		$this->editor_url = 'http://www.open-dsi.fr';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '4.0.46';
+		$this->version = '4.0.47';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
@@ -118,6 +118,7 @@ class modECommerceNg extends DolibarrModules
 			3=>array('ECOMMERCENG_MAXRECORD_PERSYNC', 'chaine', '2000', 'Max nb of record per synch', 1, 'allentities', 0),
 			4=>array('ECOMMERCENG_ENABLE_LOG_IN_NOTE', 'chaine', '0', 'Store into private note the last full response returned by web service', 1, 'allentities', 0),
             5=>array('ECOMMERCENG_WOOCOMMERCE_ORDER_STATUS_LVL_CHECK', 'chaine', '1', '', 0, 'current', 0),
+			6=>array('ECOMMERCENG_NO_COUNT_UPDATE', 'chaine', '1', '', 0, 'allentities', 0),
 		);
 
 		// Array to add new pages in new tabs
@@ -145,15 +146,42 @@ class modECommerceNg extends DolibarrModules
         // Dictionaries
 		$this->dictionaries=array(
 		    'langs'=>'woocommerce@ecommerceng',
-            'tabname'=>array(MAIN_DB_PREFIX."c_ecommerceng_tax_class"),
-            'tablib'=>array("ECommercengWoocommerceDictTaxClass"),
-            'tabsql'=>array('SELECT f.rowid as rowid, f.site_id, f.code, f.label, f.entity, f.active FROM '.MAIN_DB_PREFIX.'c_ecommerceng_tax_class as f WHERE f.entity='.$conf->entity),
-            'tabsqlsort'=>array("site_id ASC, label ASC"),
-            'tabfield'=>array("code,label,site_id"),
-            'tabfieldvalue'=>array("code,label,site_id"),
-            'tabfieldinsert'=>array("code,label,site_id"),
-            'tabrowid'=>array("rowid"),
-            'tabcond'=>array($conf->ecommerceng->enabled && $eCommerceSite->hasTypeSite(2)),
+            'tabname'=>array(
+            	MAIN_DB_PREFIX."c_ecommerceng_tax_class",
+				MAIN_DB_PREFIX."c_ecommerceng_tax_rate"
+			),
+            'tablib'=>array(
+            	"ECommercengWoocommerceDictTaxClass",
+				"ECommercengWoocommerceDictTaxRate"
+			),
+            'tabsql'=>array(
+            	'SELECT f.rowid as rowid, f.site_id, f.code, f.label, f.entity, f.active FROM '.MAIN_DB_PREFIX.'c_ecommerceng_tax_class as f WHERE f.entity='.$conf->entity,
+				'SELECT f.rowid as rowid, f.site_id, f.tax_id, f.tax_country, f.tax_state, f.tax_postcode, f.tax_city, f.tax_rate, f.tax_name, f.tax_priority, f.tax_compound, f.tax_shipping, f.tax_order, f.tax_class, f.entity, f.active FROM '.MAIN_DB_PREFIX.'c_ecommerceng_tax_rate as f WHERE f.entity='.$conf->entity
+			),
+            'tabsqlsort'=>array(
+				"site_id ASC, label ASC",
+				"site_id ASC, tax_id ASC"
+			),
+            'tabfield'=>array(
+				"code,label,site_id",
+            	"tax_id,tax_country,tax_state,tax_postcode,tax_city,tax_rate,tax_name,tax_priority,tax_compound,tax_shipping,tax_order,tax_class,site_id"
+			),
+            'tabfieldvalue'=>array(
+				"code,label,site_id",
+            	"tax_id,tax_country,tax_state,tax_postcode,tax_city,tax_rate,tax_name,tax_priority,tax_compound,tax_shipping,tax_order,tax_class,site_id"
+			),
+            'tabfieldinsert'=>array(
+				"code,label,site_id",
+            	"tax_id,tax_country,tax_state,tax_postcode,tax_city,tax_rate,tax_name,tax_priority,tax_compound,tax_shipping,tax_order,tax_class,site_id"
+			),
+            'tabrowid'=>array(
+				"rowid",
+            	"rowid"
+			),
+            'tabcond'=>array(
+				$conf->ecommerceng->enabled && $eCommerceSite->hasTypeSite(2),
+				$conf->ecommerceng->enabled && $eCommerceSite->hasTypeSite(2),
+			),
         );
 
         /* Example:
@@ -185,7 +213,8 @@ class modECommerceNg extends DolibarrModules
 		// Cronjobs
 		//------------
 		$this->cronjobs = array(
-			0=>array('label'=>'AutoSyncEcommerceNg', 'jobtype'=>'method', 'class'=>'ecommerceng/class/business/eCommerceUtils.class.php', 'objectname'=>'eCommerceUtils', 'method'=>'synchAll', 'parameters'=>'100', 'comment'=>'Synchronize all data from eCommerce to Dolibarr. Parameter is max nb of record to do per synchronization run.', 'frequency'=>1, 'unitfrequency'=>86400, 'priority'=>90, 'status'=>0, 'test'=>true),
+		//	0=>array('label'=>'AutoSyncEcommerceNg', 'jobtype'=>'method', 'class'=>'ecommerceng/class/business/eCommerceUtils.class.php', 'objectname'=>'eCommerceUtils', 'method'=>'synchAll', 'parameters'=>'100', 'comment'=>'Synchronize all data from eCommerce to Dolibarr. Parameter is max nb of record to do per synchronization run.', 'frequency'=>1, 'unitfrequency'=>86400, 'priority'=>90, 'status'=>0, 'test'=>true),
+			1=>array('label'=>'ECommerceProcessPendingWebHooks', 'jobtype'=>'method', 'class'=>'/ecommerceng/class/business/eCommercePendingWebHook.class.php', 'objectname'=>'eCommercePendingWebHook', 'method'=>'cronProcessPendingWebHooks', 'parameters'=>'', 'comment'=>'Process all pending WebHooks.', 'frequency'=>1, 'unitfrequency'=>86400, 'priority'=>90, 'status'=>0, 'test'=>true),
 		);
 
 		// Permissions
@@ -406,9 +435,9 @@ class modECommerceNg extends DolibarrModules
         $srcFile = dol_buildpath('/ecommerceng/patchs/dolibarr/includes/OAuth/OAuth2/Service/WordPress.php');
         $destFile = DOL_DOCUMENT_ROOT . '/includes/OAuth/OAuth2/Service/WordPress.php';
 
-        if (dol_copy($srcFile, $destFile) < 0) {
-            setEventMessages("Error copy file '$srcFile' to '$destFile'", null, 'errors');
-        }
+        if (!file_exists($destFile) && dol_copy($srcFile, $destFile) < 0) {
+			setEventMessages("Error copy file '$srcFile' to '$destFile'", null, 'errors');
+		}
    	}
 }
 

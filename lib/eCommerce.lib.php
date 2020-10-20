@@ -405,56 +405,128 @@ function ecommerceng_add_extrafields($db, $langs, $extrafields, &$error) {
     return $result;
 }
 
-function ecommerceng_update_woocommerce_dict_tax_class($db, $site)
+function ecommerceng_update_woocommerce_dict_tax($db, $site)
 {
     global $conf, $langs;
     $langs->load('woocommerce@ecommerceng');
+
+	$db->begin();
 
     $eCommerceRemoteAccessWoocommerce = new eCommerceRemoteAccessWoocommerce($db, $site);
 
     if (!$eCommerceRemoteAccessWoocommerce->connect()) {
         setEventMessages('', $eCommerceRemoteAccessWoocommerce->errors, 'errors');
-        return false;
+		$db->rollback();
+		return false;
     }
 
-    $taxClasses = $eCommerceRemoteAccessWoocommerce->getAllWoocommerceTaxClass();
-    if ($taxClasses === false) {
-        setEventMessages('', $eCommerceRemoteAccessWoocommerce->errors, 'errors');
-        return false;
-    }
+	$taxClasses = $eCommerceRemoteAccessWoocommerce->getAllWoocommerceTaxClass();
+	if ($taxClasses === false) {
+		setEventMessages('', $eCommerceRemoteAccessWoocommerce->errors, 'errors');
+		$db->rollback();
+		return false;
+	}
 
-    $eCommerceDict = new eCommerceDict($db, MAIN_DB_PREFIX.'c_ecommerceng_tax_class');
+	$eCommerceDict = new eCommerceDict($db, MAIN_DB_PREFIX.'c_ecommerceng_tax_class');
 
-    // Get all tax class in dictionary for this entity and site
-    $dict_tax_classes = $eCommerceDict->search(['entity'=>['value'=>$conf->entity],'site_id'=>['value'=>$site->id]]);
+	// Get all tax class in dictionary for this entity and site
+	$dict_tax_classes = $eCommerceDict->search(['entity'=>['value'=>$conf->entity],'site_id'=>['value'=>$site->id]]);
 
-    // Desactive code not found in woocommerce
-    foreach ($dict_tax_classes as $line) {
-        if (!isset($taxClasses[$line['code']])) {
-            // Desactive code
-            $result = $eCommerceDict->update(['active' => ['value' => 0]], ['rowid' => ['value' => $line['rowid']]]);
-            if ($result == false) {
-                setEventMessage($langs->trans('ECommerceWoocommerceErrorDisableDictTaxClass', $line['code'], $db->error()), 'errors');
-                return false;
-            }
-        } else {
-            $taxClasses[$line['code']]->founded = true;
-        }
-    }
+	// Desactive code not found in woocommerce
+	foreach ($dict_tax_classes as $line) {
+		if (!isset($taxClasses[$line['code']])) {
+			// Desactive code
+			$result = $eCommerceDict->update(['active' => ['value' => 0]], ['rowid' => ['value' => $line['rowid']]]);
+			if ($result == false) {
+				setEventMessage($langs->trans('ECommerceWoocommerceErrorDisableDictTaxClass', $line['code'], $db->error()), 'errors');
+				$db->rollback();
+				return false;
+			}
+		} else {
+			$result = $eCommerceDict->update(['label' => ['value'=>$taxClasses[$line['code']]->name,'type'=>'string']], ['rowid' => ['value' => $line['rowid']]]);
+			if ($result == false) {
+				setEventMessage($langs->trans('ECommerceWoocommerceErrorUpdateDictTaxClass', $line['code'], $db->error()), 'errors');
+				$db->rollback();
+				return false;
+			}
+			$taxClasses[$line['code']]->founded = true;
+		}
+	}
 
-    // Add new code from woocommerce
-    foreach ($taxClasses as $taxClass) {
-        if (!isset($taxClass->founded)) {
-            // Add new tax class code
-            $result = $eCommerceDict->insert(['site_id','code','label','entity','active'], ['site_id'=>['value'=>$site->id],'code'=>['value'=>$taxClass->slug,'type'=>'string'],'label'=>['value'=>$taxClass->name,'type'=>'string'],'entity'=>['value'=>$conf->entity],'active'=>['value'=>1]]);
-            if ($result == false) {
-                setEventMessage($langs->trans('ECommerceWoocommerceErrorAddDictTaxClass', $taxClass->slug, $taxClass->name, $db->error()), 'errors');
-                return false;
-            }
-        }
-    }
+	// Add new code from woocommerce
+	foreach ($taxClasses as $taxClass) {
+		if (!isset($taxClass->founded)) {
+			// Add new tax class code
+			$result = $eCommerceDict->insert(['site_id','code','label','entity','active'], ['site_id'=>['value'=>$site->id],'code'=>['value'=>$taxClass->slug,'type'=>'string'],'label'=>['value'=>$taxClass->name,'type'=>'string'],'entity'=>['value'=>$conf->entity],'active'=>['value'=>1]]);
+			if ($result == false) {
+				setEventMessage($langs->trans('ECommerceWoocommerceErrorAddDictTaxClass', $taxClass->slug, $taxClass->name, $db->error()), 'errors');
+				$db->rollback();
+				return false;
+			}
+		}
+	}
 
-    return true;
+	$taxRates = $eCommerceRemoteAccessWoocommerce->getAllWoocommerceTaxRate();
+	if ($taxRates === false) {
+		setEventMessages('', $eCommerceRemoteAccessWoocommerce->errors, 'errors');
+		$db->rollback();
+		return false;
+	}
+
+	$eCommerceDict = new eCommerceDict($db, MAIN_DB_PREFIX.'c_ecommerceng_tax_rate');
+
+	// Get all tax class in dictionary for this entity and site
+	$dict_tax_rates = $eCommerceDict->search(['entity'=>['value'=>$conf->entity],'site_id'=>['value'=>$site->id]]);
+
+	// Desactive code not found in woocommerce
+	foreach ($dict_tax_rates as $line) {
+		if (!isset($taxRates[$line['tax_id']])) {
+			// Desactive code
+			$result = $eCommerceDict->update(['active' => ['value' => 0]], ['rowid' => ['value' => $line['rowid']]]);
+			if ($result == false) {
+				setEventMessage($langs->trans('ECommerceWoocommerceErrorDisableDictTaxRate', $line['tax_id'], $db->error()), 'errors');
+				$db->rollback();
+				return false;
+			}
+		} else {
+			$taxRate = $taxRates[$line['tax_id']];
+			$rate = price2num($taxRate->rate);
+			if (strpos((string)$rate, '.') === false) $rate = $rate . '.0';
+			$result = $eCommerceDict->update(['tax_country'=>['value'=>$taxRate->country,'type'=>'string'],'tax_state'=>['value'=>$taxRate->state,'type'=>'string'],
+				'tax_postcode'=>['value'=>$taxRate->postcode,'type'=>'string'],'tax_city'=>['value'=>$taxRate->city,'type'=>'string'],'tax_rate'=>['value'=>$rate,'type'=>'string'],
+				'tax_name'=>['value'=>$taxRate->name,'type'=>'string'],'tax_priority'=>['value'=>$taxRate->priority],'tax_compound'=>['value'=>$taxRate->compound?1:0],
+				'tax_shipping'=>['value'=>$taxRate->shipping?1:0],'tax_order'=>['value'=>$taxRate->order],'tax_class'=>['value'=>$taxRate->class,'type'=>'string']], ['rowid' => ['value' => $line['rowid']]]);
+			if ($result == false) {
+				setEventMessage($langs->trans('ECommerceWoocommerceErrorUpdateDictTaxRate', $line['tax_id'], $db->error()), 'errors');
+				$db->rollback();
+				return false;
+			}
+			$taxRates[$line['tax_id']]->founded = true;
+		}
+	}
+
+	// Add new tax rate from woocommerce
+	foreach ($taxRates as $taxRate) {
+		if (!isset($taxRate->founded)) {
+			$rate = price2num($taxRate->rate);
+			if (strpos((string)$rate, '.') === false) $rate = $rate . '.0';
+			// Add new tax rate
+			$result = $eCommerceDict->insert(['site_id','tax_id','tax_country','tax_state','tax_postcode','tax_city','tax_rate','tax_name','tax_priority','tax_compound','tax_shipping','tax_order','tax_class','entity','active'],
+				['site_id'=>['value'=>$site->id],'tax_id'=>['value'=>$taxRate->id],'tax_country'=>['value'=>$taxRate->country,'type'=>'string'],'tax_state'=>['value'=>$taxRate->state,'type'=>'string'],
+					'tax_postcode'=>['value'=>$taxRate->postcode,'type'=>'string'],'tax_city'=>['value'=>$taxRate->city,'type'=>'string'],'tax_rate'=>['value'=>$rate,'type'=>'string'],
+					'tax_name'=>['value'=>$taxRate->name,'type'=>'string'],'tax_priority'=>['value'=>$taxRate->priority],'tax_compound'=>['value'=>$taxRate->compound?1:0],
+					'tax_shipping'=>['value'=>$taxRate->shipping?1:0],'tax_order'=>['value'=>$taxRate->order],'tax_class'=>['value'=>$taxRate->class,'type'=>'string']
+					,'entity'=>['value'=>$conf->entity],'active'=>['value'=>1]]);
+			if ($result == false) {
+				setEventMessage($langs->trans('ECommerceWoocommerceErrorAddDictTaxRate', $taxRate->slug, $db->error()), 'errors');
+				$db->rollback();
+				return false;
+			}
+		}
+	}
+
+	$db->commit();
+	return true;
 }
 
 function ecommerceng_update_payment_gateways($db, $site)
@@ -509,31 +581,31 @@ function ecommerceng_update_payment_gateways($db, $site)
 
 function get_company_by_email($db, $email, $site=0)
 {
-    $email = $db->escape($email);
+	$email = $db->escape($email);
 
-    $sql = "SELECT s.rowid FROM " . MAIN_DB_PREFIX . "societe AS s";
-    $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "socpeople AS sp ON sp.fk_soc = s.rowid";
-    if ($site > 0) $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_societe AS es ON es.fk_societe = s.rowid";
-    $sql .= " WHERE (s.email = '$email' OR sp.email = '$email')";
-    if ($site > 0) $sql .= " AND es.fk_site = $site";
-    $sql .= " GROUP BY s.rowid";
+	$sql = "SELECT DISTINCT s.rowid FROM " . MAIN_DB_PREFIX . "societe AS s";
+	$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "socpeople AS sp ON sp.fk_soc = s.rowid";
+	if ($site > 0) $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_societe AS es ON es.fk_societe = s.rowid";
+	$sql .= " WHERE (s.email = '$email' OR sp.email = '$email')";
+	if ($site > 0) $sql .= " AND es.fk_site = $site";
+	$sql .= " AND s.status = 1";
 
-    $resql = $db->query($sql);
-    if ($resql) {
-        $num = $db->num_rows($resql);
-        if ($num > 1) {
-            $result = -2;
-        } elseif ($num) {
-            $obj = $db->fetch_object($resql);
-            $result = $obj->rowid;
-        } else {
-            $result = 0;
-        }
+	$resql = $db->query($sql);
+	if ($resql) {
+		$num = $db->num_rows($resql);
+		if ($num > 1) {
+			$result = -2;
+		} elseif ($num) {
+			$obj = $db->fetch_object($resql);
+			$result = $obj->rowid;
+		} else {
+			$result = 0;
+		}
 
-        $db->free($resql);
-    } else {
-        $result = -1;
-    }
+		$db->free($resql);
+	} else {
+		$result = -1;
+	}
 
-    return $result;
+	return $result;
 }

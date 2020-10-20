@@ -127,6 +127,25 @@ class eCommerceRemoteAccessWoocommerce
      */
     public $currentTimeZone;
 
+	/**
+	 * Woocommerce taxes classes cached.
+	 *
+	 * @var array
+	 */
+	private static $taxes_classes_cached;
+	/**
+	 * Woocommerce taxes rates cached.
+	 *
+	 * @var array
+	 */
+	private static $taxes_rates_cached;
+	/**
+	 * Woocommerce first position taxes rates by class cached.
+	 *
+	 * @var array
+	 */
+	private static $taxes_rates_by_class_cached;
+
     /**
      * Constructor
      * @param   DoliDB          $db     Database handler
@@ -184,6 +203,7 @@ class eCommerceRemoteAccessWoocommerce
             $this->site->user_name . " user_password=" . $this->site->user_password . " for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
+		$this->errors = array();
         $response_timeout = (empty($conf->global->MAIN_USE_RESPONSE_TIMEOUT) ? 30 : $conf->global->MAIN_USE_RESPONSE_TIMEOUT);    // Response timeout
 
         try {
@@ -251,7 +271,8 @@ class eCommerceRemoteAccessWoocommerce
             ", lt = " . (!empty($toDate) ? dol_print_date($toDate, 'standard') : 'none') . " for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
-        $this->initECommerceSociete();
+		$this->errors = array();
+		$this->initECommerceSociete();
         $last_update = [];
         $result = [];
         $idxPage = 1;
@@ -334,7 +355,8 @@ class eCommerceRemoteAccessWoocommerce
             ", lt = " . (!empty($toDate) ? dol_print_date($toDate, 'standard') : 'none') . " for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
-        $this->initECommerceProduct();
+		$this->errors = array();
+		$this->initECommerceProduct();
         $last_update = [];
         $product_variation = [];
         $result = [];
@@ -433,10 +455,6 @@ class eCommerceRemoteAccessWoocommerce
             });
         }
 
-        //dol_syslog("Remote id (getProductToUpdate):", LOG_DEBUG);
-        //foreach ($result as $tmp) dol_syslog($tmp . "\t\t\t\t" . $product_variation[$tmp] . "\t\t\t\t" . $last_update[$tmp], LOG_DEBUG);
-        //dol_syslog("End", LOG_DEBUG);
-
         dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
         return $result;
     }
@@ -455,7 +473,8 @@ class eCommerceRemoteAccessWoocommerce
             ", lt = " . (!empty($toDate) ? dol_print_date($toDate, 'standard') : 'none') . " for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
-        $this->initECommerceCommande();
+		$this->errors = array();
+		$this->initECommerceCommande();
         $last_update = [];
         $result = [];
         $idxPage = 1;
@@ -531,120 +550,143 @@ class eCommerceRemoteAccessWoocommerce
     public function getFactureToUpdate($fromDate, $toDate)
     {
         dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
-        return [];
+		$this->errors = array();
+		return [];
     }
 
-    /**
-     * Call Woocommerce API to get company datas and put into dolibarr company class.
-     *
-     * @param   array           $remoteObject List of id of remote companies to convert
-     * @param   int             $toNb         Max nb
-     * @return  array|boolean                 List of companies sorted by update time or false if error.
-     */
-    public function convertRemoteObjectIntoDolibarrSociete($remoteObject, $toNb=0)
-    {
-        dol_syslog(__METHOD__ . ": Get " . count($remoteObject) . " remote companies ID: " . implode(', ', $remoteObject) . " for site ID {$this->site->id}", LOG_DEBUG);
-        global $conf, $langs, $mysoc;
+	/**
+	 * Call Woocommerce API to get company datas and put into dolibarr company class.
+	 *
+	 * @param	int				$from_date			Synchronize from date
+	 * @param	int				$to_date			Synchronize to date
+	 * @param   array           $remoteObject 		List of id of remote companies to convert
+	 * @param   int             $toNb         		Max nb
+	 * @return  array|boolean                 		List of companies sorted by update time or false if error.
+	 */
+	public function convertRemoteObjectIntoDolibarrSociete($from_date = null, $to_date = null, $remoteObject = array(), $toNb=0)
+	{
+		dol_syslog(__METHOD__ . ": Get " . count($remoteObject) . " remote companies ID: " . implode(', ', $remoteObject) . " for site ID {$this->site->id}", LOG_DEBUG);
+		global $conf, $langs;
 
-        $companies = [];
-        $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
-        $requestGroups = $this->getRequestGroups($remoteObject, $nb_max_by_request, $toNb);
+		$this->errors = array();
+		$companies = [];
+		$nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
+		$from_date = isset($from_date) && !empty($from_date) ? dol_print_date($from_date, 'dayhourrfc') : null;
+		$to_date = isset($to_date) && !empty($to_date) ? dol_print_date($to_date, 'dayhourrfc') : null;
 
-        foreach ($requestGroups as $request) {
-            dol_syslog(__METHOD__ . ": Get partial remote companies ID: " . implode(', ', $request), LOG_DEBUG);
-            try {
-                $results = $this->client->get('customers',
-                    [
-                        'per_page' => $nb_max_by_request,
-                        'include' => implode(',', $request),
-                        'orderby' => 'registered_date',
-                        'order' => 'desc',
-                        'role' => empty($this->site->parameters['ecommerce_woocommerce_customer_roles']) ? 'all' : $this->site->parameters['ecommerce_woocommerce_customer_roles'],
-                    ]
-                );
-            } catch (HttpClientException $fault) {
-                $this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSociete', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
-                dol_syslog(__METHOD__ .
-                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSociete', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
-                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
-                return false;
-            }
+		$filters = [
+			'per_page' => $nb_max_by_request,
+			'orderby' => 'registered_date',
+			'order' => 'desc',
+			'role' => empty($this->site->parameters['customer_roles']) ? 'all' : $this->site->parameters['customer_roles'],
+		];
+		if ($toNb > 0) $filters['per_page'] = min($nb_max_by_request, $toNb);
+		if (!empty($remoteObject)) $filters['include'] = implode(',', $remoteObject);
+		else {
+			if (isset($from_date)) $filters['after'] = $from_date;
+			if (isset($to_date)) $filters['before'] = $to_date;
+		}
 
-            if (is_array($results)) {
-                foreach ($results as $company) {
-                    $last_update = $this->getDateTimeFromGMTDateTime(/*!empty($company->date_modified_gmt) ? $company->date_modified_gmt :*/ $company->date_created_gmt);
+		$idxPage = 1;
+		$nbTotalRecords = 0;
+		while (true) {
+			try {
+				$filters['page'] = $idxPage++;
+				$page = $this->client->get('customers', $filters);
+			} catch (HttpClientException $fault) {
+				$this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSociete', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+				dol_syslog(__METHOD__ .
+					': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSociete', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+					' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+				return false;
+			}
 
-                    // Global infos
-                    $item = [
-                            'remote_id' => $company->id,
-                            'last_update' => $last_update->format('Y-m-d H:i:s'),
-                            'name_alias' => null,
-                            'email_key' => $company->email,
-                            'client' => 1,
-                            'vatnumber' => null,
-                            'note_private' => "Site: '{$this->site->name}' - ID: {$company->id}",
-                            'country_id' => getCountry($company->billing->country, 3),
-                            'default_lang' => $mysoc->default_lang,
-                            'remote_datas' => $company,
-                            'extrafields' => [
-                                "ecommerceng_wc_role_{$this->site->id}_{$conf->entity}" => $langs->trans('ECommercengWoocommerceCompanyRole_' . $company->role),
-                            ],
-                        ];
+			if (!isset($page) || count($page) == 0) break;
 
-                    // Default language
-                    if ($item['country_id'] != $mysoc->country_id && !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_DEFAULT_LANG_OTHER_COUNTRY)) {
-                        $item['default_lang'] = $conf->global->ECOMMERCENG_WOOCOMMERCE_DEFAULT_LANG_OTHER_COUNTRY;
-                    }
+			foreach ($page as $company) {
+				$company_data = $this->convertCustomerDataIntoProcessedData($company);
+				if ($company_data === false) return false;
+				$companies[] = $company_data;
+				if ($toNb > 0 && ++$nbTotalRecords >= $toNb) break;
+			}
 
-                    // Meta datas
-                    if (!empty($conf->global->ECOMMERCENG_WOOCOMMERCE_VAT_NUMBER_META_NAME)) {
-                        foreach ($company->meta_data as $data) {
-                            if ($data->key == $conf->global->ECOMMERCENG_WOOCOMMERCE_VAT_NUMBER_META_NAME) {
-                                $item['vatnumber'] = $data->value;
-                                break;
-                            }
-                        }
-                    }
+			if ($toNb > 0 && $nbTotalRecords >= $toNb) break;
+		}
 
-                    // Company
-                    if (!empty($company->billing->company)) {
-                        $item['type'] = 'company';
-                        $item['name'] = $company->billing->company;
-                        $item['email'] = !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_GET_EMAIL_ON_COMPANY) ? $company->email : null;
-                    }
-                    // User
-                    else {
-                        $firstname = !empty($company->first_name) ? $company->first_name : $company->billing->first_name;
-                        $lastname = !empty($company->last_name) ? $company->last_name : $company->billing->last_name;
-                        if (!empty($firstname) && !empty($lastname)) {
-                            $name = dolGetFirstLastname($firstname, $lastname);
-                        } elseif (!empty($firstname)) {
-                            $name = dolGetFirstLastname($firstname, $langs->transnoentitiesnoconv("ECommercengWoocommerceLastnameNotInformed"));
-                        } else {
-                            $name = $langs->transnoentitiesnoconv('ECommercengWoocommerceWithoutFirstnameLastname');
-                        }
-                        $item['type'] = 'user';
-                        $item['name'] = $name;
-                        $item['email'] = $company->email;
-                    }
+		dol_syslog(__METHOD__ . ": end, converted " . count($companies) . " remote companies", LOG_DEBUG);
+		return $companies;
+	}
 
-                    $companies[] = $item;
-                }
-            }
-        }
+	/**
+	 * Call Woocommerce API to get company datas and put into dolibarr company class.
+	 *
+	 * @param	array		$remote_data 	Remote data
+	 * @return  array                 		Data processed.
+	 */
+	public function convertCustomerDataIntoProcessedData($remote_data)
+	{
+		dol_syslog(__METHOD__ . " remote_data=" . json_encode($remote_data), LOG_DEBUG);
+		global $conf, $langs, $mysoc;
 
-        //important - order by last update
-        if (count($companies)) {
-            $last_update = [];
-            foreach ($companies as $key => $row) {
-                $last_update[$key] = $row['last_update'];
-            }
-            array_multisort($last_update, SORT_ASC, $companies);
-        }
+		$this->errors = array();
+		$last_update = $this->getDateTimeFromGMTDateTime(/*!empty($remote_data->date_modified_gmt) ? $remote_data->date_modified_gmt :*/ $remote_data->date_created_gmt);
 
-        dol_syslog(__METHOD__ . ": end, converted " . count($companies) . " remote companies", LOG_DEBUG);
-        return $companies;
-    }
+		// Global infos
+		$item = [
+			'create_date' => strtotime($remote_data->date_created),
+			'remote_id' => $remote_data->id,
+			'last_update' => $last_update->format('Y-m-d H:i:s'),
+			'name_alias' => null,
+			'email_key' => $remote_data->email,
+			'client' => 1,
+			'vatnumber' => null,
+			'note_private' => "Site: '{$this->site->name}' - ID: {$remote_data->id}",
+			'country_id' => getCountry($remote_data->billing->country, 3),
+			'default_lang' => $mysoc->default_lang,
+			'remote_datas' => $remote_data,
+			'extrafields' => [
+				"ecommerceng_wc_role_{$this->site->id}_{$conf->entity}" => $langs->trans('ECommercengWoocommerceCompanyRole_' . $remote_data->role),
+			],
+		];
+
+		// Default language
+		if ($item['country_id'] != $mysoc->country_id && !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_DEFAULT_LANG_OTHER_COUNTRY)) {
+			$item['default_lang'] = $conf->global->ECOMMERCENG_WOOCOMMERCE_DEFAULT_LANG_OTHER_COUNTRY;
+		}
+
+		// Meta datas
+		if (!empty($conf->global->ECOMMERCENG_WOOCOMMERCE_VAT_NUMBER_META_NAME)) {
+			foreach ($remote_data->meta_data as $data) {
+				if ($data->key == $conf->global->ECOMMERCENG_WOOCOMMERCE_VAT_NUMBER_META_NAME) {
+					$item['vatnumber'] = $data->value;
+					break;
+				}
+			}
+		}
+
+		// Company
+		if (!empty($remote_data->billing->company)) {
+			$item['type'] = 'company';
+			$item['name'] = $remote_data->billing->company;
+			$item['email'] = !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_GET_EMAIL_ON_COMPANY) ? $remote_data->email : null;
+		} // User
+		else {
+			$firstname = !empty($remote_data->first_name) ? $remote_data->first_name : $remote_data->billing->first_name;
+			$lastname = !empty($remote_data->last_name) ? $remote_data->last_name : $remote_data->billing->last_name;
+			if (!empty($firstname) && !empty($lastname)) {
+				$name = dolGetFirstLastname($firstname, $lastname);
+			} elseif (!empty($firstname)) {
+				$name = dolGetFirstLastname($firstname, $langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
+			} else {
+				$name = $langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
+			}
+			$item['type'] = 'user';
+			$item['name'] = $name;
+			$item['email'] = $remote_data->email;
+		}
+
+		return $item;
+	}
 
     /**
      * Call Woocommerce API to get contact datas and put into dolibarr contact class.
@@ -657,7 +699,8 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Get remote contacts ID: {$remoteCompany->id} for site ID {$this->site->id}", LOG_DEBUG);
         global $langs;
 
-        $contacts = [];
+		$this->errors = array();
+		$contacts = [];
         $last_update = $this->getDateTimeFromGMTDateTime(/*!empty($remoteCompany->date_modified_gmt) ? $remoteCompany->date_modified_gmt :*/ $remoteCompany->date_created_gmt);
 
         $bContact = $remoteCompany->billing;
@@ -668,9 +711,9 @@ class eCommerceRemoteAccessWoocommerce
             $firstname = !empty($bContact->first_name) ? $bContact->first_name : $remoteCompany->first_name;
             $lastname = !empty($bContact->last_name) ? $bContact->last_name : $remoteCompany->last_name;
             if (!empty($firstname) && empty($lastname)) {
-                $lastname = $langs->transnoentitiesnoconv("ECommercengWoocommerceLastnameNotInformed");
+                $lastname = $langs->transnoentitiesnoconv("ECommerceLastNameNotInformed");
             } elseif (empty($firstname) && empty($lastname)) {
-                $lastname = $langs->transnoentitiesnoconv('ECommercengWoocommerceWithoutFirstnameLastname');
+                $lastname = $langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
             }
             $contacts[] = [
                 'remote_id' => null,
@@ -700,9 +743,9 @@ class eCommerceRemoteAccessWoocommerce
                 $firstname = !empty($sContact->first_name) ? $sContact->first_name : $remoteCompany->first_name;
                 $lastname = !empty($sContact->last_name) ? $sContact->last_name : $remoteCompany->last_name;
                 if (!empty($firstname) && empty($lastname)) {
-                    $lastname = $langs->transnoentitiesnoconv("ECommercengWoocommerceLastnameNotInformed");
+                    $lastname = $langs->transnoentitiesnoconv("ECommerceLastNameNotInformed");
                 } elseif (empty($firstname) && empty($lastname)) {
-                    $lastname = $langs->transnoentitiesnoconv('ECommercengWoocommerceWithoutFirstnameLastname');
+                    $lastname = $langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
                 }
                 $contacts[] = [
                     'remote_id' => null,
@@ -727,597 +770,779 @@ class eCommerceRemoteAccessWoocommerce
     /**
      * Call Woocommerce API to get product datas and put into dolibarr product class.
      *
+	 * @param	int				$from_date			Synchronize from date
+	 * @param	int				$to_date			Synchronize to date
      * @param   array           $remoteObject List of id of remote products to convert
      * @param   int             $toNb         Max nb
      * @return  array|boolean                 List of products sorted by update time or false if error.
      */
-    public function convertRemoteObjectIntoDolibarrProduct($remoteObject, $toNb=0)
+    public function convertRemoteObjectIntoDolibarrProduct($from_date = null, $to_date = null, $remoteObject = array(), $toNb=0)
     {
         dol_syslog(__METHOD__ . ": Get " . count($remoteObject) . " remote products ID: " . implode(', ', $remoteObject) . " for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
-        $canvas = '';
-        $products = [];
-        $remoteVariationObject = [];
-        $products_last_update = [];
-        $products_variation = [];
+		$this->errors = array();
+		$products = [];
         $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
+		$from_date = isset($from_date) ? dol_print_date($from_date, 'dayhourrfc') : null;
+		$to_date = isset($to_date) ? dol_print_date($to_date, 'dayhourrfc') : null;
 
-        $productSynchPrice = isset($this->site->parameters['product_synch_price']) ? $this->site->parameters['product_synch_price'] : 'regular';
-        $productImageSynchDirection = isset($this->site->parameters['product_synch_direction']['image']) ? $this->site->parameters['product_synch_direction']['image'] : '';
-        $productRefSynchDirection = isset($this->site->parameters['product_synch_direction']['ref']) ? $this->site->parameters['product_synch_direction']['ref'] : '';
-        $productDescriptionSynchDirection = isset($this->site->parameters['product_synch_direction']['description']) ? $this->site->parameters['product_synch_direction']['description'] : '';
-        $productShortDescriptionSynchDirection = isset($this->site->parameters['product_synch_direction']['short_description']) ? $this->site->parameters['product_synch_direction']['short_description'] : '';
-        $productWeightSynchDirection = isset($this->site->parameters['product_synch_direction']['weight']) ? $this->site->parameters['product_synch_direction']['weight'] : '';
-        $productTaxSynchDirection = isset($this->site->parameters['product_synch_direction']['tax']) ? $this->site->parameters['product_synch_direction']['tax'] : '';
-        $productStatusSynchDirection = isset($this->site->parameters['product_synch_direction']['status']) ? $this->site->parameters['product_synch_direction']['status'] : '';
+		$include_ids = [];
+		$include_variation_ids = [];
+		foreach ($remoteObject as $id) {
+			$ids = explode('|', $id);
+			$remote_id = $ids[0];
+			$include_ids[$remote_id] = $remote_id;
+			if (isset($ids[1])) {
+				if (!isset($include_variation_ids[$remote_id])) $include_variation_ids[$remote_id] = array();
+				$remote_variation_id = $ids[1];
+				$include_variation_ids[$remote_id][$remote_variation_id] = $remote_variation_id;
+			}
+		}
 
-        // Products
-        $newRemoteObject = [];
-        $remoteObject = array_slice($remoteObject, 0, $toNb, true);
-        foreach ($remoteObject as $id) {
-            if (($pos = strpos($id, '|')) !== false) {
-                $variation_id = substr($id,$pos+1);
-                $id = substr($id,0,$pos);
-                if (!isset($remoteVariationObject[$id])) $remoteVariationObject[$id] = [];
-                $remoteVariationObject[$id][] = $variation_id;
-            }
-            $newRemoteObject[$id] = $id;
-        }
-        $requestGroups = $this->getRequestGroups($newRemoteObject, $nb_max_by_request);
-        foreach ($requestGroups as $request) {
-            dol_syslog(__METHOD__ . ": Get ".count($request)." partial remote products ID: " . implode(', ', $request), LOG_DEBUG);
-            try {
-                $results = $this->client->get('products',
-                    [
-                        'per_page' => $nb_max_by_request,
-                        'include' => implode(',', $request),
-                    ]
-                );
-            } catch (HttpClientException $fault) {
-                $this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
-                dol_syslog(__METHOD__ .
-                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
-                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
-                return false;
-            }
+		$filters = [
+			'per_page' => $nb_max_by_request,
+			'orderby' => 'date',
+			'order' => 'asc',
+		];
+		if ($toNb > 0) $filters['per_page'] = min($nb_max_by_request, $toNb);
+		if (!empty($include_ids)) $filters['include'] = implode(',', $include_ids);
+		else {
+			if (isset($from_date)) $filters['after'] = $from_date;
+			if (isset($to_date)) $filters['before'] = $to_date;
+		}
 
-            if (is_array($results)) {
-                foreach ($results as $product) {
-                    // Categories
-                    $categories = [];
-                    foreach ($product->categories as $category) {
-                        $categories[] = $category->id;
-                    }
+		$idxPage = 1;
+		$nbTotalRecords = 0;
+		while (true) {
+			try {
+				$filters['page'] = $idxPage++;
+				$page = $this->client->get('products', $filters);
+			} catch (HttpClientException $fault) {
+				$this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+				dol_syslog(__METHOD__ .
+					': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+					' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+				return false;
+			}
 
-                    // Images
-                    $images = [];
-                    if ($productImageSynchDirection == 'etod' || $productImageSynchDirection == 'all') {
-                        foreach ($product->images as $image) {
-                            $last_update = $this->getDateTimeFromGMTDateTime(!empty($image->date_modified_gmt) ? $image->date_modified_gmt : $image->date_created_gmt);
-                            $images[] = [
-                                'url' => $image->src,
-                                'date_modified' => $last_update->format('Y-m-d H:i:s'),
-                            ];
-                        }
-                        array_reverse($images);
-                    }
+			if (!isset($page) || count($page) == 0) break;
 
-                    $last_update_product = $this->getDateTimeFromGMTDateTime(!empty($product->date_modified_gmt) ? $product->date_modified_gmt : $product->date_created_gmt);
+			foreach ($page as $product) {
+				// Don't synchronize the variation parent
+				if (empty($product->variations) || !empty($product->parent_id)) {
+					$data = $this->convertProductDataIntoProcessedData($product);
+					if (!is_array($data)) {
+						return false;
+					}
+					$products[] = $data;
+				}
 
-                    $remote_id = $product->id;  // id product
-                    $last_update = $last_update_product->format('Y-m-d H:i:s');
+				// Synchronize all the variations of the product if only the parent is provided
+				if (!empty($product->variations) && empty($include_variation_ids[$product->id])) {
+					$include_variation_ids[$product->id] = $product->variations;
+				}
 
-                    $price = $productSynchPrice == 'selling' ? $product->price : $product->regular_price;
-                    $date_on_sale_from = $this->getDateTimeFromGMTDateTime($product->date_on_sale_from_gmt);
-                    $date_on_sale_from = isset($date_on_sale_from) ? $date_on_sale_from->getTimestamp() : '';
-                    $date_on_sale_to = $this->getDateTimeFromGMTDateTime($product->date_on_sale_to_gmt);
-                    $date_on_sale_to = isset($date_on_sale_to) ? $date_on_sale_to->getTimestamp() : '';
+				// Variations
+				if (!empty($include_variation_ids[$product->id])) {
+					$requestGroupsVariations = $this->getRequestGroups($include_variation_ids[$product->id], $nb_max_by_request);
+					foreach ($requestGroupsVariations as $requestVariations) {
+						dol_syslog(__METHOD__ . ": Get " . count($requestVariations) . " products variations of remote product (ID:{$product->id}): " . implode(', ', $requestVariations), LOG_DEBUG);
+						try {
+							$results = $this->client->get('products/' . $product->id . '/variations',
+								[
+									'per_page' => $nb_max_by_request,
+									'include' => implode(',', $requestVariations),
+								]
+							);
+						} catch (HttpClientException $fault) {
+							$this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProductVariations', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+							dol_syslog(__METHOD__ .
+								': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProductVariations', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+								' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+							return false;
+						}
 
-                    // Produit de base
-                    if (in_array($remote_id, $remoteObject, true)) {
-                        $products_last_update[$remote_id] = $last_update;
-                        $products_variation[$remote_id] = 0;
-                        $products[$remote_id] = [
-                            'remote_id' => $remote_id,
-                            'last_update' => $last_update,
-                            'fk_product_type' => ($product->virtual ? 1 : 0), // 0 (product) or 1 (service)
-                            'label' => $product->name,
-                            'price' => $price,
-                            'envente' => empty($product->variations) ? 1 : 0,
-                            'enachat' => null,
-                            'finished' => 1,    // 1 = manufactured, 0 = raw material
-                            'canvas' => $canvas,
-                            'categories' => $categories,
-                            'tax_rate' => $this->getTaxRate($product->tax_class, $product->tax_status),
-                            'price_min' => '',
-                            'fk_country' => '',
-                            'url' => $product->permalink,
-                            // Stock
-                            'stock_qty' => $product->stock_quantity,
-                            'is_in_stock' => $product->in_stock,   // not used
-                            'extrafields' => [
-                                "ecommerceng_wc_regular_price_{$this->site->id}_{$conf->entity}" => $product->regular_price,
-                                "ecommerceng_wc_sale_price_{$this->site->id}_{$conf->entity}" => $product->sale_price,
-                                "ecommerceng_wc_date_on_sale_from_{$this->site->id}_{$conf->entity}" => $date_on_sale_from,
-                                "ecommerceng_wc_date_on_sale_to_{$this->site->id}_{$conf->entity}" => $date_on_sale_to,
-                            ],
-                        ];
+						if (is_array($results)) {
+							foreach ($results as $variation) {
+								$data = $this->convertProductDataIntoProcessedData($variation, $product);
+								if (!is_array($data)) {
+									return false;
+								}
+								$products[] = $data;
+							}
+						}
+					}
+				}
 
-                        if ($productImageSynchDirection == 'etod' || $productImageSynchDirection == 'all') {
-                            $products[$remote_id]['images'] = $images;
-                        }
-                        if ($productRefSynchDirection == 'etod' || $productRefSynchDirection == 'all') {
-                            $products[$remote_id]['ref'] = $product->sku;
-                        }
-                        if ($productDescriptionSynchDirection == 'etod' || $productDescriptionSynchDirection == 'all') {
-                            $products[$remote_id]['extrafields']["ecommerceng_description_{$conf->entity}"] = $product->description;
-                        }
-                        if ($productShortDescriptionSynchDirection == 'etod' || $productShortDescriptionSynchDirection == 'all') {
-                            $products[$remote_id]['extrafields']["ecommerceng_short_description_{$conf->entity}"] = $product->short_description;
-                        }
-                        if ($productWeightSynchDirection == 'etod' || $productWeightSynchDirection == 'all') {
-                            $products[$remote_id]['weight'] = $product->weight;
-                        }
-                        if ($productTaxSynchDirection == 'etod' || $productTaxSynchDirection == 'all') {
-                            $products[$remote_id]['extrafields']["ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"] = $this->getTaxClass($product->tax_class, $product->tax_status);
-                        }
-                        if ($productStatusSynchDirection == 'etod' || $productStatusSynchDirection == 'all') {
-                            $products[$remote_id]['extrafields']["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"] = $product->status;
-                        }
+				if ($toNb > 0 && ++$nbTotalRecords >= $toNb) break;
+			}
 
-                        // Synch extrafields <=> metadatas
-                        if (!empty($product->meta_data) && !empty($this->site->parameters['ef_crp']['product'])) {
-                           $correspondences = array();
-                           foreach ($this->site->parameters['ef_crp']['product'] as $key => $options_saved) {
-                               if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
-                                   $correspondences[$options_saved['correspondences']] = $key;
-                               }
-                           }
-                           foreach ($product->meta_data as $meta) {
-                               if (isset($correspondences[$meta->key])) {
-                                   $products[$remote_id]['extrafields'][$correspondences[$meta->key]] = $meta->value;
-                               }
-                           }
-                        }
-                    }
-
-                    // Variations
-                    $requestGroupsVariations = $this->getRequestGroups($remoteVariationObject[$product->id], $nb_max_by_request);
-                    foreach ($requestGroupsVariations as $requestVariations) {
-                        dol_syslog(__METHOD__ . ": Get ".count($requestVariations)." products variations of remote product (ID:{$product->id}): " . implode(', ', $requestVariations), LOG_DEBUG);
-                        try {
-                            $results = $this->client->get('products/' . $product->id . '/variations',
-                                [
-                                    'per_page' => $nb_max_by_request,
-                                    'include' => implode(',', $requestVariations),
-                                ]
-                            );
-                        } catch (HttpClientException $fault) {
-                            $this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProductVariations', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
-                            dol_syslog(__METHOD__ .
-                                ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProductVariations', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
-                                ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
-                            return false;
-                        }
-
-                        if (is_array($results)) {
-                            foreach ($results as $variation) {
-                                $attributesLabel = '';
-                                foreach ($variation->attributes as $attribute) {
-                                    $attributesLabel .= ', ' . $attribute->name . ':' . $attribute->option;
-                                }
-
-                                // Images
-                                $images = [];
-                                $productImageSynchDirection = isset($this->site->parameters['product_synch_direction']['image']) ? $this->site->parameters['product_synch_direction']['image'] : '';
-                                if ($productImageSynchDirection == 'etod' || $productImageSynchDirection == 'all') {
-                                    if (!empty($variation->image)) {
-                                        $last_update = $this->getDateTimeFromGMTDateTime(!empty($variation->image->date_modified_gmt) ? $variation->image->date_modified_gmt : $variation->image->date_created_gmt);
-                                        $images[] = [
-                                            'url' => $variation->image->src,
-                                            'date_modified' => $last_update->format('Y-m-d H:i:s'),
-                                        ];
-                                    }
-                                }
-
-                                $last_update_product_variation = $this->getDateTimeFromGMTDateTime(!empty($variation->date_modified_gmt) ? $variation->date_modified_gmt : $variation->date_created_gmt);
-                                $last_update_product_variation = $last_update_product > $last_update_product_variation ? $last_update_product : $last_update_product_variation;
-
-                                $remote_id = $product->id . '|' . $variation->id;  // id product | id variation
-                                $last_update = $last_update_product->format('Y-m-d H:i:s'); //$last_update_product_variation->format('Y-m-d H:i:s');
-
-                                $price = $productSynchPrice == 'selling' ? $variation->price : $variation->regular_price;
-                                $date_on_sale_from = $this->getDateTimeFromGMTDateTime($variation->date_on_sale_from_gmt);
-                                $date_on_sale_from = isset($date_on_sale_from) ? $date_on_sale_from->getTimestamp() : '';
-                                $date_on_sale_to = $this->getDateTimeFromGMTDateTime($variation->date_on_sale_to_gmt);
-                                $date_on_sale_to = isset($date_on_sale_to) ? $date_on_sale_to->getTimestamp() : '';
-
-                                // Variation
-                                $products_last_update[$remote_id] = $last_update;
-                                $products_variation[$remote_id] = 1;
-                                $products[$remote_id] = [
-                                    'remote_id' => $remote_id,
-                                    'last_update' => $last_update,
-                                    'fk_product_type' => ($variation->virtual ? 1 : 0), // 0 (product) or 1 (service)
-                                    'label' => $product->name . $attributesLabel,
-                                    'price' => $price,
-                                    'envente' => 1,
-                                    'enachat' => null,
-                                    'finished' => 1,    // 1 = manufactured, 0 = raw material
-                                    'canvas' => $canvas,
-                                    'categories' => $categories,
-                                    'price_min' => '',
-                                    'fk_country' => '',
-                                    'url' => $variation->permalink,
-                                    // Stock
-                                    'stock_qty' => $variation->stock_quantity,
-                                    'is_in_stock' => $variation->in_stock,   // not used
-                                    'extrafields' => [
-                                        "ecommerceng_wc_regular_price_{$this->site->id}_{$conf->entity}" => $variation->regular_price,
-                                        "ecommerceng_wc_sale_price_{$this->site->id}_{$conf->entity}" => $variation->sale_price,
-                                        "ecommerceng_wc_date_on_sale_from_{$this->site->id}_{$conf->entity}" => $date_on_sale_from,
-                                        "ecommerceng_wc_date_on_sale_to_{$this->site->id}_{$conf->entity}" => $date_on_sale_to,
-                                    ],
-                                ];
-
-                                if ($productImageSynchDirection == 'etod' || $productImageSynchDirection == 'all') {
-                                    $products[$remote_id]['images'] = $images;
-                                }
-                                if ($productRefSynchDirection == 'etod' || $productRefSynchDirection == 'all') {
-                                    $products[$remote_id]['ref'] = $variation->sku;
-                                }
-                                if ($productDescriptionSynchDirection == 'etod' || $productDescriptionSynchDirection == 'all') {
-                                    $products[$remote_id]['extrafields']["ecommerceng_description_{$conf->entity}"] = $variation->description;
-                                }
-                                if ($productWeightSynchDirection == 'etod' || $productWeightSynchDirection == 'all') {
-                                    $products[$remote_id]['weight'] = (!empty($totalWeight) ? $totalWeight : '');
-                                }
-                                if ($productTaxSynchDirection == 'etod' || $productTaxSynchDirection == 'all') {
-                                    $products[$remote_id]['tax_rate'] = $this->getTaxRate($variation->tax_class, $variation->tax_status);
-                                    $products[$remote_id]['extrafields']["ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"] = $this->getTaxClass($variation->tax_class, $variation->tax_status);
-                                }
-
-                                // Synch extrafields <=> metadatas
-                                if (!empty($variation->meta_data) && !empty($this->site->parameters['ef_crp']['product'])) {
-                                   $correspondences = array();
-                                   foreach ($this->site->parameters['ef_crp']['product'] as $key => $options_saved) {
-                                       if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
-                                           $correspondences[$options_saved['correspondences']] = $key;
-                                       }
-                                   }
-                                   foreach ($variation->meta_data as $meta) {
-                                       if (isset($correspondences[$meta->key])) {
-                                           $products[$remote_id]['extrafields'][$correspondences[$meta->key]] = $meta->value;
-                                       }
-                                   }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        //important - order by last update
-        if (count($products)) {
-            uasort($products, function($a, $b) use ($products_variation, $products_last_update) {
-                if($products_last_update[$a['remote_id']] == $products_last_update[$b['remote_id']]) {
-                    if($products_variation[$a['remote_id']] == $products_variation[$b['remote_id']])
-                        return strcmp($a['remote_id'], $b['remote_id']);
-
-                    return $products_variation[$a['remote_id']] > $products_variation[$b['remote_id']] ? 1 : -1;
-                }
-                return $products_last_update[$a['remote_id']] > $products_last_update[$b['remote_id']] ? 1 : -1;
-            });
-        }
-
-        //dol_syslog("Remote id (convertRemoteObjectIntoDolibarrProduct):", LOG_DEBUG);
-        //foreach ($products as $tmp) dol_syslog($tmp['remote_id'] . "\t\t\t\t" . $products_variation[$tmp['remote_id']] . "\t\t\t\t" . $products_last_update[$tmp['remote_id']], LOG_DEBUG);
-        //dol_syslog("End", LOG_DEBUG);
+			if ($toNb > 0 && $nbTotalRecords >= $toNb) break;
+		}
 
         dol_syslog(__METHOD__ . ": end, converted " . count($products) . " remote products", LOG_DEBUG);
         return $products;
     }
 
+	/**
+	 * Call Woocommerce API to get product datas and put into dolibarr product class.
+	 *
+	 * @param	array		$remote_data 			Remote data
+	 * @param	array		$parent_remote_data 	Parent remote data if the product is a variation
+	 * @return  array|bool             				FALSE if KO otherwise data processed.
+	 */
+	public function convertProductDataIntoProcessedData($remote_data, $parent_remote_data = null)
+	{
+		dol_syslog(__METHOD__ . " remote_data=" . json_encode($remote_data), LOG_DEBUG);
+		global $conf, $langs;
+
+		$this->errors = array();
+		$isVariation = isset($parent_remote_data) || $remote_data->parent_id > 0;
+		$parent_id = isset($parent_remote_data) ? $parent_remote_data->id : ($remote_data->parent_id > 0 ? $remote_data->parent_id : 0);
+		if ($isVariation && empty($parent_remote_data) && (!is_array($remote_data->categories) || !isset($remote_data->name))) {
+			try {
+				$parent_remote_data = $this->client->get('products/' . $parent_id);
+			} catch (HttpClientException $fault) {
+				$this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+				dol_syslog(__METHOD__ .
+					': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+					' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+				return false;
+			}
+		}
+
+		$canvas = '';
+		$productSynchPrice = isset($this->site->parameters['product_synch_price']) ? $this->site->parameters['product_synch_price'] : 'regular';
+		$productImageSynchDirection = isset($this->site->parameters['product_synch_direction']['image']) ? $this->site->parameters['product_synch_direction']['image'] : '';
+		$productRefSynchDirection = isset($this->site->parameters['product_synch_direction']['ref']) ? $this->site->parameters['product_synch_direction']['ref'] : '';
+		$productDescriptionSynchDirection = isset($this->site->parameters['product_synch_direction']['description']) ? $this->site->parameters['product_synch_direction']['description'] : '';
+		$productShortDescriptionSynchDirection = isset($this->site->parameters['product_synch_direction']['short_description']) ? $this->site->parameters['product_synch_direction']['short_description'] : '';
+		$productWeightSynchDirection = isset($this->site->parameters['product_synch_direction']['weight']) ? $this->site->parameters['product_synch_direction']['weight'] : '';
+		$productTaxSynchDirection = isset($this->site->parameters['product_synch_direction']['tax']) ? $this->site->parameters['product_synch_direction']['tax'] : '';
+		$productStatusSynchDirection = isset($this->site->parameters['product_synch_direction']['status']) ? $this->site->parameters['product_synch_direction']['status'] : '';
+
+		// Categories
+		$categories = [];
+		if (is_array($remote_data->categories)) {
+			foreach ($remote_data->categories as $category) {
+				$categories[] = $category->id;
+			}
+		} elseif (is_array($parent_remote_data->categories)) {
+			foreach ($parent_remote_data->categories as $category) {
+				$categories[] = $category->id;
+			}
+		}
+
+		// Label
+		$label = $remote_data->name;
+		if ($isVariation && empty($label)) {
+			$label = $parent_remote_data->name;
+			// Attributes of the variation
+			if (is_array($remote_data->attributes)) {
+				foreach ($remote_data->attributes as $attribute) {
+					$label .= ' - ' . $attribute->option;
+				}
+			}
+		}
+
+		$last_update_product = $this->getDateTimeFromGMTDateTime(!empty($remote_data->date_modified_gmt) ? $remote_data->date_modified_gmt : $remote_data->date_created_gmt);
+		$last_update = $last_update_product->format('Y-m-d H:i:s');
+
+		$price = $productSynchPrice == 'selling' ? $remote_data->price : $remote_data->regular_price;
+		$date_on_sale_from = $this->getDateTimeFromGMTDateTime($remote_data->date_on_sale_from_gmt);
+		$date_on_sale_from = isset($date_on_sale_from) ? $date_on_sale_from->getTimestamp() : '';
+		$date_on_sale_to = $this->getDateTimeFromGMTDateTime($remote_data->date_on_sale_to_gmt);
+		$date_on_sale_to = isset($date_on_sale_to) ? $date_on_sale_to->getTimestamp() : '';
+
+		$product = [
+			'create_date' => strtotime($remote_data->date_created),
+			'remote_id' => ($isVariation ? $parent_id . '|' : '') . $remote_data->id,
+			'remote_parent_id' => ($isVariation ? $parent_id : 0),
+			'last_update' => $last_update,
+			'fk_product_type' => ($remote_data->virtual ? 1 : 0), // 0 (product) or 1 (service)
+			'label' => $label,
+			'price' => $price,
+			'envente' => ($isVariation || empty($remote_data->variations) ? 1 : 0),
+			'enachat' => null,
+			'finished' => 1,    // 1 = manufactured, 0 = raw material
+			'canvas' => $canvas,
+			'remote_datas' => ($isVariation && isset($parent_remote_data) ? [ 'variation' => $remote_data, 'parent' => $parent_remote_data ] : $remote_data),
+			'categories' => $categories,
+			'price_min' => '',
+			'fk_country' => '',
+			'url' => $remote_data->permalink,
+			// Stock
+			'stock_qty' => $remote_data->stock_quantity,
+			'is_in_stock' => $remote_data->in_stock,   // not used
+			'extrafields' => [
+				"ecommerceng_wc_regular_price_{$this->site->id}_{$conf->entity}" => $remote_data->regular_price,
+				"ecommerceng_wc_sale_price_{$this->site->id}_{$conf->entity}" => $remote_data->sale_price,
+				"ecommerceng_wc_date_on_sale_from_{$this->site->id}_{$conf->entity}" => $date_on_sale_from,
+				"ecommerceng_wc_date_on_sale_to_{$this->site->id}_{$conf->entity}" => $date_on_sale_to,
+			],
+		];
+
+		// Synchronize ref
+		if ($productRefSynchDirection == 'etod' || $productRefSynchDirection == 'all') {
+			$product['ref'] = $remote_data->sku;
+		}
+		// Synchronize short and long description
+		if ($productDescriptionSynchDirection == 'etod' || $productDescriptionSynchDirection == 'all') {
+			$product['extrafields']["ecommerceng_description_{$conf->entity}"] = $remote_data->description;
+		}
+		if (!$isVariation && ($productShortDescriptionSynchDirection == 'etod' || $productShortDescriptionSynchDirection == 'all')) {
+			$product['extrafields']["ecommerceng_short_description_{$conf->entity}"] = $remote_data->short_description;
+		}
+		// Synchronize weight
+		if ($productWeightSynchDirection == 'etod' || $productWeightSynchDirection == 'all') {
+			$product['weight'] = $remote_data->weight;
+		}
+		// Synchronize tax
+		$tax_info = $this->getTaxInfoFromTaxClass($remote_data->tax_class, $remote_data->tax_status);
+		if (!$isVariation) $product['tax_rate'] = $tax_info['tax_rate'];
+		if ($productTaxSynchDirection == 'etod' || $productTaxSynchDirection == 'all') {
+			if ($isVariation) $product['tax_rate'] = $tax_info['tax_rate'];
+			$product['extrafields']["ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"] = $tax_info['tax_class'];
+		}
+		// Synchronize status
+		if (!$isVariation && ($productStatusSynchDirection == 'etod' || $productStatusSynchDirection == 'all')) {
+			$product['extrafields']["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"] = $remote_data->status;
+		}
+		// Synchronize images
+		if ((!empty($remote_data->image) || !empty($remote_data->images)) && ($productImageSynchDirection == 'etod' || $productImageSynchDirection == 'all')) {
+			$images = [];
+			if (!empty($remote_data->image)) {
+				$last_update = $this->getDateTimeFromGMTDateTime(!empty($remote_data->image->date_modified_gmt) ? $remote_data->image->date_modified_gmt : $remote_data->image->date_created_gmt);
+				$images[] = [
+					'url' => $remote_data->image->src,
+					'date_modified' => $last_update->format('Y-m-d H:i:s'),
+				];
+			} else {
+				foreach ($remote_data->images as $image) {
+					$last_update = $this->getDateTimeFromGMTDateTime(!empty($image->date_modified_gmt) ? $image->date_modified_gmt : $image->date_created_gmt);
+					$images[] = [
+						'url' => $image->src,
+						'date_modified' => $last_update->format('Y-m-d H:i:s'),
+					];
+				}
+				array_reverse($images);
+			}
+			$product['images'] = $images;
+		}
+
+		// Synchronize metadata to extra fields
+		if (!empty($remote_data->meta_data) && !empty($this->site->parameters['ef_crp']['product'])) {
+			$correspondences = array();
+			foreach ($this->site->parameters['ef_crp']['product'] as $key => $options_saved) {
+				if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
+					$correspondences[$options_saved['correspondences']] = $key;
+				}
+			}
+			foreach ($remote_data->meta_data as $meta) {
+				if (isset($correspondences[$meta->key])) {
+					$product['extrafields'][$correspondences[$meta->key]] = $meta->value;
+				}
+			}
+		}
+
+		return $product;
+	}
+
     /**
      * Call Woocommerce API to get order datas and put into dolibarr order class.
      *
-     * @param   array           $remoteObject List of id of remote orders to convert
-     * @param   int             $toNb         Max nb
-     * @return  array|boolean                 List of orders sorted by update time or false if error.
+	 * @param	int				$from_date			Synchronize from date
+	 * @param	int				$to_date			Synchronize to date
+     * @param   array           $remoteObject 		List of id of remote orders to convert
+     * @param   int             $toNb        		Max nb
+     * @return  array|boolean                 		List of orders sorted by update time or false if error.
      */
-    public function convertRemoteObjectIntoDolibarrCommande($remoteObject, $toNb=0)
+    public function convertRemoteObjectIntoDolibarrCommande($from_date = null, $to_date = null, $remoteObject = array(), $toNb=0)
     {
         dol_syslog(__METHOD__ . ": Get " . count($remoteObject) . " remote orders ID: " . implode(', ', $remoteObject) . " for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
-        $orders = [];
-        $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
-        $requestGroups = $this->getRequestGroups($remoteObject, $nb_max_by_request, $toNb);
+		$this->errors = array();
+		$orders = [];
+		$nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
+		$from_date = isset($from_date) ? dol_print_date($from_date, 'dayhourrfc') : null;
+		$to_date = isset($to_date) ? dol_print_date($to_date, 'dayhourrfc') : null;
 
-        foreach ($requestGroups as $request) {
-            dol_syslog(__METHOD__ . ": Get partial remote orders ID: " . implode(', ', $request), LOG_DEBUG);
-            try {
-                $results = $this->client->get('orders',
-                    [
-                        'per_page' => $nb_max_by_request,
-                        'include' => implode(',', $request),
-                    ]
-                );
-            } catch (HttpClientException $fault) {
-                $this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
-                dol_syslog(__METHOD__ .
-                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
-                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
-                return false;
-            }
+		$filters = [
+			'per_page' => $nb_max_by_request,
+			'orderby' => 'date',
+			'order' => 'asc',
+		];
+		if ($toNb > 0) $filters['per_page'] = min($nb_max_by_request, $toNb);
+		if (!empty($remoteObject)) $filters['include'] = implode(',', $remoteObject);
+		else {
+			if (isset($from_date)) $filters['after'] = $from_date;
+			if (isset($to_date)) $filters['before'] = $to_date;
+		}
 
-            if (is_array($results)) {
-                foreach ($results as $order) {
-                    // Set items
-                    $items = [];
-                    foreach ($order->line_items as $item) {
-                        $items[$item->id] = [
-                            'item_id' => $item->id,
-                            'id_remote_product' => !empty($item->variation_id) ? $item->product_id . '|' . $item->variation_id : $item->product_id,
-                            'description' => $item->name,
-                            'product_type' => 'simple',
-                            'price' => $item->price,
-                            'qty' => $item->quantity,
-                            'tva_tx' => $this->getClosestDolibarrTaxRate($item->total, $item->total_tax),
-                        ];
+		$idxPage = 1;
+		$nbTotalRecords = 0;
+		while (true) {
+			try {
+				$filters['page'] = $idxPage++;
+				$page = $this->client->get('orders', $filters);
+			} catch (HttpClientException $fault) {
+				$this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+				dol_syslog(__METHOD__ .
+					': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+					' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+				return false;
+			}
 
-                        // Synch extrafields <=> metadatas
-                        if (!empty($item->meta_data) && !empty($this->site->parameters['ef_crp']['commandedet'])) {
-                            $correspondences = array();
-                            foreach ($this->site->parameters['ef_crp']['commandedet'] as $key => $options_saved) {
-                                if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
-                                    $correspondences[$options_saved['correspondences']] = $key;
-                                }
-                            }
-                            foreach ($item->meta_data as $meta) {
-                                if (isset($correspondences[$meta->key])) {
-                                    $items[$item->id]['extrafields'][$correspondences[$meta->key]] = $meta->value;
-                                }
-                            }
-                        }
-                    }
+			if (!isset($page) || count($page) == 0) break;
 
-                    // Set remote id company : 0 for anonymous
-                    $eCommerceTempSoc = new eCommerceSociete($this->db);
-                    if (empty($order->customer_id)) {
-                        $remoteCompanyID = 0;   // If is a guest order
-                    } elseif ($eCommerceTempSoc->fetchByRemoteId($order->customer_id, $this->site->id) < 0) {
-                        dol_syslog(__METHOD__ . " The customer (" . $order->customer_id . ") of the remote order ID " . $order->id . " was not found into companies table link", LOG_WARNING);
-                        $remoteCompanyID = -1;   // If company was not found into companies table link so is a user role not supported
-                    } else {
-                        $remoteCompanyID = $order->customer_id;
-                    }
+			foreach ($page as $order) {
+				$order_data = $this->convertOrderDataIntoProcessedData($order);
+				if ($order_data === false) return false;
+				$orders[] = $order_data;
+				if ($toNb > 0 && ++$nbTotalRecords >= $toNb) break;
+			}
 
-                    $last_update = $this->getDateTimeFromGMTDateTime(!empty($order->date_modified_gmt) ? $order->date_modified_gmt : $order->date_created_gmt);
-
-                    // Set billing's address
-                    $bContact = $order->billing;
-                    $firstname = $bContact->first_name;
-                    $lastname = $bContact->last_name;
-                    if (!empty($firstname) && empty($lastname)) {
-                        $lastname = $langs->transnoentitiesnoconv("ECommercengWoocommerceLastnameNotInformed");
-                    } elseif (empty($firstname) && empty($lastname)) {
-                        $lastname = $langs->transnoentitiesnoconv('ECommercengWoocommerceWithoutFirstnameLastname');
-                    }
-                    $contactBilling = [
-                        'remote_id' => "",
-                        'type' => 1, //eCommerceSocpeople::CONTACT_TYPE_ORDER,
-                        'last_update' => $last_update->format('Y-m-d H:i:s'),
-                        'company' => $bContact->company,
-                        'firstname' => $firstname,
-                        'lastname' => $lastname,
-                        'address' => $bContact->address_1 . (!empty($bContact->address_1) && !empty($bContact->address_2) ? "\n" : "") . $bContact->address_2,
-                        'zip' => $bContact->postcode,
-                        'town' => $bContact->city,
-                        'country_id' => getCountry($bContact->country, 3),
-                        'email' => $bContact->email,
-                        'phone' => $bContact->phone,
-                        'fax' => null,
-                    ];
-
-                    // Set invoice's address
-                    $contactInvoice = $contactBilling;
-                    $contactInvoice['type'] = 1; //eCommerceSocpeople::CONTACT_TYPE_INVOICE;
-
-                    // Set shipping's address
-                    $sContact = $order->shipping;
-                    if (!empty($sContact->address_1) || !empty($sContact->address_2) ||
-                        !empty($sContact->postcode) || !empty($sContact->city) ||
-                        !empty($sContact->country)
-                    ) {
-                        if ($bContact->first_name != $sContact->first_name || $bContact->last_name != $sContact->last_name ||
-                            $bContact->address_1 != $sContact->address_1 || $bContact->address_2 != $sContact->address_2 ||
-                            $bContact->postcode != $sContact->postcode || $bContact->city != $sContact->city ||
-                            $bContact->country != $sContact->country
-                        ) {
-                            $firstname = $sContact->first_name;
-                            $lastname = $sContact->last_name;
-                            if (!empty($firstname) && empty($lastname)) {
-                                $lastname = $langs->transnoentitiesnoconv("ECommercengWoocommerceLastnameNotInformed");
-                            } elseif (empty($firstname) && empty($lastname)) {
-                                $lastname = $langs->transnoentitiesnoconv('ECommercengWoocommerceWithoutFirstnameLastname');
-                            }
-                            $contactShipping = [
-                                'remote_id' => "",
-                                'type' => 1, //eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
-                                'last_update' => $last_update->format('Y-m-d H:i:s'),
-                                'company' => $sContact->company,
-                                'firstname' => $firstname,
-                                'lastname' => $lastname,
-                                'address' => $sContact->address_1 . (!empty($sContact->address_1) && !empty($sContact->address_2) ? "\n" : "") . $sContact->address_2,
-                                'zip' => $sContact->postcode,
-                                'town' => $sContact->city,
-                                'country_id' => getCountry($sContact->country, 3),
-                                'email' => null,
-                                'phone' => null,
-                                'fax' => null,
-                            ];
-
-                            if (empty($sContact->company)) {
-                                if (!empty($firstname) && !empty($lastname)) {
-                                    $name = dolGetFirstLastname($firstname, $lastname);
-                                } elseif (!empty($firstname)) {
-                                    $name = dolGetFirstLastname($firstname, $langs->transnoentitiesnoconv("ECommercengWoocommerceLastnameNotInformed"));
-                                } else {
-                                    $name = $langs->transnoentitiesnoconv('ECommercengWoocommerceWithoutFirstnameLastname');
-                                }
-                                $contactShipping['company_name'] = $name;
-                            } else {
-                                $contactShipping['company_name'] = $sContact->company;
-                            }
-                        } else {
-                            $contactShipping = $contactBilling;
-                            $contactShipping['type'] = 1; //eCommerceSocpeople::CONTACT_TYPE_DELIVERY;
-                        }
-                    } else {
-                        $contactShipping = $contactBilling;
-                        $contactShipping['type'] = 1; //eCommerceSocpeople::CONTACT_TYPE_DELIVERY;
-                    }
-
-                    // Set delivery as service
-                    $delivery = [
-                        'description' => $langs->trans('ECommerceShipping') . (isset($order->shipping_lines[0]) ? ' - ' .
-                                $order->shipping_lines[0]->method_title : ''), // $order->customer_note
-                        'price' => $order->shipping_total,
-                        'qty' => isset($order->shipping_lines[0]) ? 1 : 0, //0 to not show
-                        'tva_tx' => $this->getClosestDolibarrTaxRate($order->shipping_total, $order->shipping_tax)
-                    ];
-
-                    // Set status of order
-                    // $order->status is: 'pending', 'processing', 'on-hold', 'completed', 'cancelled', 'refunded', 'failed'
-                    $status = '';
-                    if (isset($this->site->parameters['order_status_etod'][$order->status]))
-                        $status = substr($this->site->parameters['order_status_etod'][$order->status]['selected'], 1);
-                    if ($status == '') {
-                        dol_syslog(__METHOD__ . ": Status \"{$order->status}\" was not found for remote order ID {$order->id} and set in draft", LOG_WARNING);
-                        $status = Commande::STATUS_DRAFT;   // draft by default
-                    }
-
-                    // Set dolibarr billed status (payed or not)
-                    $billed = -1;   // unknown
-                    if (isset($this->site->parameters['order_status_etod'][$order->status]))
-                        $billed = $this->site->parameters['order_status_etod'][$order->status]['billed'];
-                    // Note: with processing, billed can be 0 or 1, so we keep -1
-
-                    $orderStatus = '';
-                    require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
-                    $efields = new ExtraFields($this->db);
-                    $efields->fetch_name_optionals_label('commande', true);
-                    if (isset($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options']) &&
-                       is_array($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options'])) {
-                        foreach ($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options'] as $key => $value) {
-                            $key_test = ($pos = strpos($key , '_')) > 0 ? substr($key, $pos + 1) : $key;
-                            if ($key_test == $order->status) {
-                                $orderStatus = $key;
-                                break;
-                            }
-                        }
-                    }
-
-                    $fee_lines = [];
-                    if (is_array($order->fee_lines)) {
-                        foreach ($order->fee_lines as $fee_line) {
-                            $tax = $this->getClosestDolibarrTaxRate($fee_line->total, $fee_line->total_tax);
-                            $fee_lines[] = [
-                                'label' => $fee_line->name,
-                                'amount' => $fee_line->total * (100 - $tax) / 100,
-                                'tax' => $tax,
-                            ];
-                        }
-                    }
-
-                    $meta_data = [];
-                    if (!empty($order->meta_data)) {
-                        foreach ($order->meta_data as $meta) {
-                            $meta_data[$meta->key] = [ 'id' => $meta->id, 'value' => $meta->value ];
-                        }
-                    }
-
-                    // Manage stripe payment
-                    if (isset($meta_data['_stripe_fee']) && $meta_data['_stripe_fee']['value'] > 0) {
-                        $fee_lines[] = [
-                            'label' => 'Stripe',
-                            'amount' => $meta_data['_stripe_fee']['value'],
-                            'tax' => 0,
-                        ];
-                    }
-
-                    // Add order content to array or orders
-                    $orders[$order->id] = [
-                        'last_update' => $last_update->format('Y-m-d H:i:s'),
-                        'remote_id' => $order->id,
-                        'remote_increment_id' => $order->id,
-                        'remote_id_societe' => $remoteCompanyID,
-                        'ref_client' => $order->id,
-                        'date_commande' => $order->date_created,
-                        'date_livraison' => $order->date_completed,
-                        'items' => $items,
-                        'delivery' => $delivery,
-                        'note' => $order->customer_note,
-                        'socpeopleCommande' => $contactBilling,
-                        'socpeopleFacture' => $contactInvoice,
-                        'socpeopleLivraison' => $contactShipping,
-                        'status' => $status,                         // dolibarr status
-                        'billed' => $billed,
-                        'remote_state' => $order->status,        // remote state, for information only (less accurate than status)
-                        'remote_status' => $order->status,      // remote status, for information only (more accurate than state)
-                        'remote_order' => $order,
-                        'payment_method' => $order->payment_method_title,
-                        'payment_method_id' => $order->payment_method,
-                        'fee_lines' => $fee_lines,
-                        'extrafields' => [
-                            "ecommerceng_online_payment_{$conf->entity}" => empty($order->date_paid) ? 0 : 1,
-                            "ecommerceng_wc_status_{$this->site->id}_{$conf->entity}" => $orderStatus,
-                        ],
-                    ];
-
-                    // Synch extrafields <=> metadatas
-                    if (!empty($order->meta_data) && !empty($this->site->parameters['ef_crp']['commande'])) {
-                        $correspondences = array();
-                        foreach ($this->site->parameters['ef_crp']['commande'] as $key => $options_saved) {
-                            if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
-                                $correspondences[$options_saved['correspondences']] = $key;
-                            }
-                        }
-                        foreach ($order->meta_data as $meta) {
-                            if (isset($correspondences[$meta->key])) {
-                                $extrafield_value = $meta->value;
-                                $extrafield_key = $correspondences[$meta->key];
-                                // Specific Altairis - Begin
-                                if (!empty($extrafield_value) && ($extrafield_key == 'rental_start' || $extrafield_key == 'rental_end')) {
-                                    $extrafield_value = strtotime($extrafield_value);
-                                }
-                                // Specific Altairis - End
-                                $orders[$order->id]['extrafields'][$extrafield_key] = $extrafield_value;
-                            }
-                        }
-                    }
-                    // Specific Altairis - Begin
-                    $orders[$order->id]['extrafields']['rental_doc'] = 1;
-                    // Specific Altairis - End
-                }
-            }
-        }
-
-        //important - order by last update
-        if (count($orders)) {
-            $last_update = [];
-            foreach ($orders as $key => $row) {
-                $last_update[$key] = $row['last_update'];
-            }
-            array_multisort($last_update, SORT_ASC, $orders);
-        }
+			if ($toNb > 0 && $nbTotalRecords >= $toNb) break;
+		}
 
         dol_syslog(__METHOD__ . ": end, converted " . count($orders) . " remote orders", LOG_DEBUG);
         return $orders;
     }
+
+	/**
+	 * Call Woocommerce API to get order datas and put into dolibarr order class.
+	 *
+	 * @param	array			$remote_data	Remote data
+	 * @return  array|bool						FALSE if KO otherwise data processed.
+	 */
+	public function convertOrderDataIntoProcessedData($remote_data)
+	{
+		dol_syslog(__METHOD__ . " remote_data=" . json_encode($remote_data), LOG_DEBUG);
+		global $conf, $langs;
+
+		$this->errors = array();
+
+		// Set product lines
+		$items = [];
+		foreach ($remote_data->line_items as $item) {
+			$item_data = [
+				'item_id' => $item->id,
+				'label' => $item->name,
+				'id_remote_product' => !empty($item->variation_id) ? $item->product_id . '|' . $item->variation_id : $item->product_id,
+				'product_type' => 'simple',
+				'price' => $item->subtotal != $item->total ? ($item->subtotal / $item->quantity) : $item->price,
+				'total_ht' => $item->subtotal,
+				'total_tva' => $item->subtotal_tax,
+				'total_ttc' => $item->subtotal + $item->subtotal_tax,
+				'qty' => $item->quantity,
+				'discount' => 0,
+				'buy_price' => 0,
+			];
+
+			// Taxes
+			$taxes = $this->getTaxesInfoFromRemoteData($item->taxes);
+			if ($taxes === false) return false;
+			$item_data['tva_tx'] = $taxes['tva_tx'];
+			$item_data['local_tax1_tx'] = $taxes['local_tax1_tx'];
+			$item_data['local_tax2_tx'] = $taxes['local_tax2_tx'];
+			$item_data['total_local_tax1'] = $taxes['total_local_tax1'];
+			$item_data['total_local_tax2'] = $taxes['total_local_tax2'];
+
+			if (isset($item->cog_item_cost)) $item_data['buy_price'] = $this->site->ecommerce_price_type == 'TTC' ? 100 * $item->cog_item_cost / (100 + $item_data['tva_tx']) : $item->cog_item_cost;
+			if ($this->site->ecommerce_price_type == 'TTC') $item_data['price'] = (100 * ($item->subtotal + $item->subtotal_tax) / (100 + $item_data['tva_tx'])) / $item->quantity;
+
+			// Synch extrafields <=> metadatas
+			if (!empty($item->meta_data) && !empty($this->site->parameters['ef_crp']['commandedet'])) {
+				$correspondences = array();
+				foreach ($this->site->parameters['ef_crp']['commandedet'] as $key => $options_saved) {
+					if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
+						$correspondences[$options_saved['correspondences']] = $key;
+					}
+				}
+				foreach ($item->meta_data as $meta) {
+					if (isset($correspondences[$meta->key])) {
+						$item_data['extrafields'][$correspondences[$meta->key]] = $meta->value;
+					}
+				}
+			}
+
+			$items[] = $item_data;
+		}
+
+		// Set shipping lines
+		if (!empty($remote_data->shipping_lines)) {
+			$shipment_service_id = $this->site->parameters['shipping_service'] > 0 ? $this->site->parameters['shipping_service'] : 0;
+			foreach ($remote_data->shipping_lines as $item) {
+				$item_data = [
+					'item_id' => $item->id,
+					'id_product' => $shipment_service_id,
+					'label' => $langs->trans('ECommerceShipping') . (!empty($item->method_title) ? ' - ' . $item->method_title : ''),
+					'description' => $langs->trans('ECommerceShipping') . (!empty($item->method_title) ? ' - ' . $item->method_title : ''),
+					'product_type' => 'shipment',
+					'price' => $item->total,
+					'total_ht' => $item->total,
+					'total_tva' => $item->total_tax,
+					'total_ttc' => ($item->total + $item->total_tax),
+					'qty' => 1,
+					'discount' => 0,
+					'buy_price' => 0,
+				];
+
+				// Taxes
+				$taxes = $this->getTaxesInfoFromRemoteData($item->taxes);
+				if ($taxes === false) return false;
+				$item_data['tva_tx'] = $taxes['tva_tx'];
+				$item_data['local_tax1_tx'] = $taxes['local_tax1_tx'];
+				$item_data['local_tax2_tx'] = $taxes['local_tax2_tx'];
+				$item_data['total_local_tax1'] = $taxes['total_local_tax1'];
+				$item_data['total_local_tax2'] = $taxes['total_local_tax2'];
+
+				if ($this->site->ecommerce_price_type == 'TTC') $item_data['price'] = 100 * ($item->total + $item->total_tax) / (100 + $item_data['tva_tx']);
+
+				// Synch extrafields <=> metadatas
+				if (!empty($item->meta_data) && !empty($this->site->parameters['ef_crp']['commandedet'])) {
+					$correspondences = array();
+					foreach ($this->site->parameters['ef_crp']['commandedet'] as $key => $options_saved) {
+						if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
+							$correspondences[$options_saved['correspondences']] = $key;
+						}
+					}
+					foreach ($item->meta_data as $meta) {
+						if (isset($correspondences[$meta->key])) {
+							$item_data['extrafields'][$correspondences[$meta->key]] = $meta->value;
+						}
+					}
+				}
+
+				$items[] = $item_data;
+			}
+		}
+
+		// Set discount code lines
+		if (!empty($remote_data->coupon_lines) && $this->site->parameters['discount_code_service'] > 0) {
+			$discount_code_service_id = $this->site->parameters['discount_code_service'];
+			if (!($discount_code_service_id > 0)) {
+				$this->errors[] = $langs->trans('ECommerceWooCommerceErrorDiscountCodeServiceNotConfigured', $this->site->name);
+				return false;
+			}
+			foreach ($remote_data->coupon_lines as $item) {
+				$item_data = [
+					'item_id' => $item->id,
+					'id_product' => $discount_code_service_id,
+					'label' => $item->code,
+					'description' => $item->code,
+					'product_type' => 'discount_code',
+					'qty' => 1,
+					'discount' => 0,
+					'buy_price' => 0,
+					'local_tax1_tx' => 0,
+					'local_tax2_tx' => 0,
+					'total_local_tax1' => 0,
+					'total_local_tax2' => 0,
+				];
+
+				// Taxes
+				$tax_rate = 0;
+				foreach ($remote_data->tax_lines as $data) {
+					if (empty($data->tax_total)) continue;
+					if ($data->rate_percent > $tax_rate) $tax_rate = $data->rate_percent;
+				}
+
+				$ttc = $item->discount + $item->discount_tax;
+				$tva = $tax_rate * $ttc / ($tax_rate + 100);
+				$ht = 100 * $ttc / ($tax_rate + 100);
+
+				$item_data['tva_tx'] = $tax_rate;
+				$item_data['price'] = -$ht;
+				$item_data['total_ht'] = -$ht;
+				$item_data['total_tva'] = -$tva;
+				$item_data['total_ttc'] = -$ttc;
+
+				// Synch extrafields <=> metadatas
+				if (!empty($item->meta_data) && !empty($this->site->parameters['ef_crp']['commandedet'])) {
+					$correspondences = array();
+					foreach ($this->site->parameters['ef_crp']['commandedet'] as $key => $options_saved) {
+						if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
+							$correspondences[$options_saved['correspondences']] = $key;
+						}
+					}
+					foreach ($item->meta_data as $meta) {
+						if (isset($correspondences[$meta->key])) {
+							$item_data['extrafields'][$correspondences[$meta->key]] = $meta->value;
+						}
+					}
+				}
+
+				$items[] = $item_data;
+			}
+		}
+
+		// Set gift card lines
+		if (!empty($remote_data->pw_gift_cards_redeemed)) {
+			$gift_cards_service_id = $this->site->parameters['pw_gift_cards_service'];
+			if (!($gift_cards_service_id > 0)) {
+				$this->errors[] = $langs->trans('ECommerceWooCommerceErrorPwGiftCardsServiceNotConfigured', $this->site->name);
+				return false;
+			}
+
+			foreach ($remote_data->pw_gift_cards_redeemed as $gift_cards) {
+				$items[] = [
+					'product_type' => 'pw_gift_cards',
+					'id_product' => $gift_cards_service_id,
+					'description' => $gift_cards->number,
+					'label' => $gift_cards->number,
+					'price' => - $gift_cards->amount,
+					'total_ht' => - $gift_cards->amount,
+					'total_tva' => 0,
+					'total_ttc' => - $gift_cards->amount,
+					'qty' => 1,
+					'discount' => 0,
+					'buy_price' => 0,
+					'tva_tx' => 0,
+					'local_tax1_tx' => 0,
+					'local_tax2_tx' => 0,
+					'total_local_tax1' => 0,
+					'total_local_tax2' => 0,
+				];
+			}
+		}
+
+		// Set fee lines
+		$fee_lines = [];
+		if (is_array($remote_data->fee_lines)) {
+			foreach ($remote_data->fee_lines as $fee_line) {
+				$line = [
+					'label' => $fee_line->name,
+					'total_ht' => $fee_line->total,
+					'total_tva' => $fee_line->total_tax,
+					'total_ttc' => ($fee_line->total + $fee_line->total_tax),
+				];
+
+				// Taxes
+				$taxes = $this->getTaxesInfoFromRemoteData($fee_line->taxes);
+				if ($taxes === false) return false;
+				$line['tva_tx'] = $taxes['tva_tx'];
+				$line['local_tax1_tx'] = $taxes['local_tax1_tx'];
+				$line['local_tax2_tx'] = $taxes['local_tax2_tx'];
+				$line['total_local_tax1'] = $taxes['total_local_tax1'];
+				$line['total_local_tax2'] = $taxes['total_local_tax2'];
+
+				$fee_lines[] = $line;
+			}
+		}
+		// Manage fees in meta data (stripe payment, ...)
+		if (!empty($remote_data->meta_data)) {
+			foreach ($remote_data->meta_data as $meta) {
+				if ($meta->key == '_stripe_fee') {
+					$fee_lines[] = [
+						'label' => 'Stripe',
+						'total_ht' => $meta->value,
+						'total_tva' => 0,
+						'total_ttc' => $meta->value,
+						'tva_tx' => 0,
+						'local_tax1_tx' => 0,
+						'local_tax2_tx' => 0,
+						'total_local_tax1' => 0,
+						'total_local_tax2' => 0,
+					];
+					break;
+				}
+			}
+		}
+
+		$last_update = $this->getDateTimeFromGMTDateTime(!empty($remote_data->date_modified_gmt) ? $remote_data->date_modified_gmt : $remote_data->date_created_gmt);
+
+		// Set billing's address
+		$bContact = $remote_data->billing;
+		$firstname = $bContact->first_name;
+		$lastname = $bContact->last_name;
+		if (!empty($firstname) && empty($lastname)) {
+			$lastname = $langs->transnoentitiesnoconv("ECommerceLastNameNotInformed");
+		} elseif (empty($firstname) && empty($lastname)) {
+			$lastname = $langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
+		}
+		$contactBilling = [
+			'remote_id' => "",
+			'type' => 1, //eCommerceSocpeople::CONTACT_TYPE_ORDER,
+			'last_update' => $last_update->format('Y-m-d H:i:s'),
+			'company' => $bContact->company,
+			'firstname' => $firstname,
+			'lastname' => $lastname,
+			'address' => $bContact->address_1 . (!empty($bContact->address_1) && !empty($bContact->address_2) ? "\n" : "") . $bContact->address_2,
+			'zip' => $bContact->postcode,
+			'town' => $bContact->city,
+			'country_id' => getCountry($bContact->country, 3),
+			'email' => $bContact->email,
+			'phone' => $bContact->phone,
+			'fax' => null,
+		];
+
+		// Set invoice's address
+		$contactInvoice = $contactBilling;
+		$contactInvoice['type'] = 1; //eCommerceSocpeople::CONTACT_TYPE_INVOICE;
+
+		// Set shipping's address
+		$sContact = $remote_data->shipping;
+		if (!empty($sContact->address_1) || !empty($sContact->address_2) ||
+			!empty($sContact->postcode) || !empty($sContact->city) ||
+			!empty($sContact->country)
+		) {
+			if ($bContact->first_name != $sContact->first_name || $bContact->last_name != $sContact->last_name ||
+				$bContact->address_1 != $sContact->address_1 || $bContact->address_2 != $sContact->address_2 ||
+				$bContact->postcode != $sContact->postcode || $bContact->city != $sContact->city ||
+				$bContact->country != $sContact->country
+			) {
+				$firstname = $sContact->first_name;
+				$lastname = $sContact->last_name;
+				if (!empty($firstname) && empty($lastname)) {
+					$lastname = $langs->transnoentitiesnoconv("ECommerceLastNameNotInformed");
+				} elseif (empty($firstname) && empty($lastname)) {
+					$lastname = $langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
+				}
+				$contactShipping = [
+					'remote_id' => "",
+					'type' => 1, //eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
+					'last_update' => $last_update->format('Y-m-d H:i:s'),
+					'company' => $sContact->company,
+					'firstname' => $firstname,
+					'lastname' => $lastname,
+					'address' => $sContact->address_1 . (!empty($sContact->address_1) && !empty($sContact->address_2) ? "\n" : "") . $sContact->address_2,
+					'zip' => $sContact->postcode,
+					'town' => $sContact->city,
+					'country_id' => getCountry($sContact->country, 3),
+					'email' => null,
+					'phone' => null,
+					'fax' => null,
+				];
+
+				if (empty($sContact->company)) {
+					if (!empty($firstname) && !empty($lastname)) {
+						$name = dolGetFirstLastname($firstname, $lastname);
+					} elseif (!empty($firstname)) {
+						$name = dolGetFirstLastname($firstname, $langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
+					} else {
+						$name = $langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
+					}
+					$contactShipping['company_name'] = $name;
+				} else {
+					$contactShipping['company_name'] = $sContact->company;
+				}
+			} else {
+				$contactShipping = $contactBilling;
+				$contactShipping['type'] = 1; //eCommerceSocpeople::CONTACT_TYPE_DELIVERY;
+			}
+		} else {
+			$contactShipping = $contactBilling;
+			$contactShipping['type'] = 1; //eCommerceSocpeople::CONTACT_TYPE_DELIVERY;
+		}
+
+		// Set status of order
+		// $remote_data->status is: 'pending', 'processing', 'on-hold', 'completed', 'cancelled', 'refunded', 'failed', 'trash'
+		$status = '';
+		if (isset($this->site->parameters['order_status_etod'][$remote_data->status]))
+			$status = substr($this->site->parameters['order_status_etod'][$remote_data->status]['selected'], 1);
+		if ($status == '') {
+			dol_syslog(__METHOD__ . ": Status \"{$remote_data->status}\" was not found for remote order ID {$remote_data->id} and set in draft", LOG_ERR);
+//			$status = Commande::STATUS_DRAFT;   // draft by default
+			$this->errors[] = $langs->trans('ECommerceWooCommerceErrorOrderStatusNotConfigured', $remote_data->status, $this->site->name);
+			return false;
+		}
+
+		// Set dolibarr billed status (payed or not)
+		$billed = -1;   // unknown
+		if (isset($this->site->parameters['order_status_etod'][$remote_data->status]))
+			$billed = $this->site->parameters['order_status_etod'][$remote_data->status]['billed'];
+		// Note: with processing, billed can be 0 or 1, so we keep -1
+
+		$orderStatus = '';
+		require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
+		$efields = new ExtraFields($this->db);
+		$efields->fetch_name_optionals_label('commande', true);
+		if (isset($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options']) &&
+			is_array($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options'])) {
+			foreach ($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options'] as $key => $value) {
+				$key_test = ($pos = strpos($key, '_')) > 0 ? substr($key, $pos + 1) : $key;
+				if ($key_test == $remote_data->status) {
+					$orderStatus = $key;
+					break;
+				}
+			}
+		}
+
+		// Add order content to array or orders
+		$order = [
+			'create_date' => strtotime($remote_data->date_created),
+			'last_update' => $last_update->format('Y-m-d H:i:s'),
+			'remote_id' => $remote_data->id,
+			'remote_increment_id' => $remote_data->id,
+			'remote_id_societe' => $remote_data->customer_id,
+			'ref_client' => $remote_data->id,
+			'date_commande' => $remote_data->date_created,
+			'date_livraison' => $remote_data->date_completed,
+			'total_ht' => $remote_data->total - $remote_data->total_tax,
+			'total_tva' => $remote_data->total_tax,
+			'total_ttc' => $remote_data->total,
+			'items' => $items,
+			'note' => $this->replace4byte($remote_data->customer_note),
+			'socpeopleCommande' => $contactBilling,
+			'socpeopleFacture' => $contactInvoice,
+			'socpeopleLivraison' => $contactShipping,
+			'status' => $status,                         // dolibarr status
+			'billed' => $billed,
+			'remote_state' => $remote_data->status,        // remote state, for information only (less accurate than status)
+			'remote_status' => $remote_data->status,      // remote status, for information only (more accurate than state)
+			'remote_order' => $remote_data,
+			'payment_method' => $remote_data->payment_method_title,
+			'payment_method_id' => $remote_data->payment_method,
+			'payment_amount_ttc' => $remote_data->total,
+			'fee_lines' => $fee_lines,
+			'extrafields' => [
+				"ecommerceng_online_payment_{$conf->entity}" => empty($remote_data->date_paid) ? 0 : 1,
+				"ecommerceng_wc_status_{$this->site->id}_{$conf->entity}" => $orderStatus,
+				"ecommerceng_wc_link_{$this->site->id}_{$conf->entity}" => rtrim($this->site->webservice_address, '/') . '/wp-admin/post.php?action=edit&post=' . $remote_data->id,
+			],
+		];
+
+		// Synch extrafields <=> metadatas
+		if (!empty($remote_data->meta_data) && !empty($this->site->parameters['ef_crp']['commande'])) {
+			$correspondences = array();
+			foreach ($this->site->parameters['ef_crp']['commande'] as $key => $options_saved) {
+				if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
+					$correspondences[$options_saved['correspondences']] = $key;
+				}
+			}
+			foreach ($remote_data->meta_data as $meta) {
+				if (isset($correspondences[$meta->key])) {
+					$extrafield_value = $meta->value;
+					$extrafield_key = $correspondences[$meta->key];
+					// Specific Altairis - Begin
+					if (!empty($extrafield_value) && ($extrafield_key == 'rental_start' || $extrafield_key == 'rental_end')) {
+						$extrafield_value = strtotime($extrafield_value);
+					}
+					// Specific Altairis - End
+					$order['extrafields'][$extrafield_key] = $extrafield_value;
+				}
+			}
+		}
+
+		// Manage payment (stripe payment, ...)
+		if (!empty($remote_data->meta_data)) {
+			foreach ($remote_data->meta_data as $meta) {
+				if ($meta->key == '_payplug_metadata') {
+					$order['payment_amount_ttc'] = $meta->value->amount / 100;
+					break;
+				}
+			}
+		}
+
+		// Specific Altairis - Begin
+		$order['extrafields']['rental_doc'] = 1;
+		// Specific Altairis - End
+
+		return $order;
+	}
 
     /**
      * Desactivated because is not supported by woocommerce.
@@ -1329,7 +1554,8 @@ class eCommerceRemoteAccessWoocommerce
     public function convertRemoteObjectIntoDolibarrFacture($remoteObject, $toNb=0)
     {
         dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
-        return [];
+		$this->errors = array();
+		return [];
     }
 
     /**
@@ -1342,7 +1568,8 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Get remote category tree for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
-        $categories = [];
+		$this->errors = array();
+		$categories = [];
         $idxPage = 1;
         $per_page = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
 
@@ -1411,7 +1638,8 @@ class eCommerceRemoteAccessWoocommerce
     public function getRemoteAddressIdForSociete($remote_company_id)
     {
         dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
-        return [$remote_company_id];
+		$this->errors = array();
+		return [$remote_company_id];
     }
 
     /**
@@ -1426,7 +1654,8 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Get remote category for site ID {$this->site->id}", LOG_DEBUG);
         global $langs;
 
-        $category = [];
+		$this->errors = array();
+		$category = [];
 
         try {
             $result = $this->client->get('products/categories/' . $category_id);
@@ -1463,7 +1692,8 @@ class eCommerceRemoteAccessWoocommerce
     public function getRemoteCommande($remoteOrderId)
     {
         dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
-        return [];
+		$this->errors = array();
+		return [];
     }
 
     /**
@@ -1479,7 +1709,8 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Update the remote product ID $remote_id for Dolibarr product ID {$object->id} for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs, $user;
 
-        $isProductVariation = false;
+		$this->errors = array();
+		$isProductVariation = false;
         $remote_product_id = $remote_id;
         $remote_product_variation_id = 0;
         if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsProduct) == 1) { // Variations
@@ -1965,7 +2196,8 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Update stock of the remote product ID $remote_id for MouvementStock ID {$object->id}, new qty: {$object->qty_after} for site ID {$this->site->id}", LOG_DEBUG);
         global $langs, $user;
 
-        $new_stocks = floor($object->qty_after);
+		$this->errors = array();
+		$new_stocks = floor($object->qty_after);
         $stocks_label = $object->qty_after . ' -> ' . $new_stocks;
 
         if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsProduct) == 1) {
@@ -2022,13 +2254,14 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Update the remote company ID $remote_id for Dolibarr company ID {$object->id} for site ID {$this->site->id}", LOG_DEBUG);
         global $langs, $user;
 
-        /*
-        // Customer - Meta data properties
-        $meta_data = [
-            'key' => '',        // string   Meta key.
-            'value' => '',      // string   Meta value.
-        ];
-        */
+		$this->errors = array();
+		/*
+		   // Customer - Meta data properties
+		   $meta_data = [
+			   'key' => '',        // string   Meta key.
+			   'value' => '',      // string   Meta value.
+		   ];
+		   */
         $companyData = [
             //'email' => $object->email,              // string   The email address for the customer. MANDATORY
             //'first_name'    => '',                  // string   Customer first name.
@@ -2065,7 +2298,8 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Update the remote contact ID $remote_id for Dolibarr contact ID {$object->id} for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs, $user;
 
-        // Get societe
+		$this->errors = array();
+		// Get societe
         //require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
         //$societe = new Societe($this->db);
         //$societe->fetch($object->socid);
@@ -2140,7 +2374,8 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Update the remote order ID $remote_id for Dolibarr order ID {$object->id} for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs, $user;
 
-        $status = '';
+		$this->errors = array();
+		$status = '';
         if (isset($this->site->parameters['order_status_dtoe'][$object->statut]))
             $status = $this->site->parameters['order_status_dtoe'][$object->statut];
 
@@ -2221,7 +2456,8 @@ class eCommerceRemoteAccessWoocommerce
     public function updateRemoteFacture($remote_id, $object)
     {
         dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
-        return true;
+		$this->errors = array();
+		return true;
     }
 
     /**
@@ -2235,7 +2471,8 @@ class eCommerceRemoteAccessWoocommerce
     public function createRemoteLivraison($livraison, $remote_order_id)
     {
         dol_syslog(__METHOD__ . ": Desactivated for site ID {$this->site->id}", LOG_DEBUG);
-        return true;
+		$this->errors = array();
+		return true;
     }
 
     /**
@@ -2250,7 +2487,8 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Create product from Dolibarr product ID {$object->id} for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs, $user;
 
-        try {
+		$this->errors = array();
+		try {
             $results = $this->clientOld->get('products', ['filter' => ['sku' => $object->ref], 'fields' => 'id']);
         } catch (HttpClientException $fault) {
             $this->errors[] = $langs->trans('ECommerceWoocommerceCheckRemoteProductExist', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
@@ -2677,7 +2915,8 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Create batch products from Dolibarr products IDs: '{$ids}' for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
-        $productSynchPrice = isset($this->site->parameters['product_synch_price']) ? $this->site->parameters['product_synch_price'] : 'regular';
+		$this->errors = array();
+		$productSynchPrice = isset($this->site->parameters['product_synch_price']) ? $this->site->parameters['product_synch_price'] : 'regular';
         $productImageSynchDirection = isset($this->site->parameters['product_synch_direction']['image']) ? $this->site->parameters['product_synch_direction']['image'] : '';
         $productRefSynchDirection = isset($this->site->parameters['product_synch_direction']['ref']) ? $this->site->parameters['product_synch_direction']['ref'] : '';
         $productDescriptionSynchDirection = isset($this->site->parameters['product_synch_direction']['description']) ? $this->site->parameters['product_synch_direction']['description'] : '';
@@ -2688,8 +2927,6 @@ class eCommerceRemoteAccessWoocommerce
 
         require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
         $product_static = new Product($this->db);
-
-        $this->errors = array();
 
         // Set datas to create
         $prod_sku_id = array();
@@ -3170,7 +3407,8 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Send file '$file' for remote order ID $order_remote_id for site ID {$this->site->id}", LOG_DEBUG);
         global $langs;
 
-        // Send file to WordPress
+		$this->errors = array();
+		// Send file to WordPress
         $result = $this->worpressclient->postmedia("media", $file, [
             'slug' => $order_remote_id . '_' . $object->element,
             'author' => $company_remote_id,
@@ -3216,316 +3454,196 @@ class eCommerceRemoteAccessWoocommerce
         return true;
     }
 
-    /**
-     * Get tax rate from tax class name
-     *
-     * @param  string   $tax_class      Tax class name
-     * @param  string   $tax_status     Tax status
-     *
-     * @return float                    Tax rate
-     */
-    private function getTaxRate($tax_class, $tax_status = 'taxable')
-    {
-        //dol_syslog(__METHOD__ . ": Get tax rate, tax_classe: $tax_class, tax_status: $tax_status", LOG_DEBUG);
-        global $conf, $mysoc;
+	/**
+	 * Retrieve Dolibarr taxes info from remote data
+	 *
+	 * @param 	array		$taxes_data		Info of the taxes
+	 * @return  array|bool					Dolibarr taxes info
+	 */
+	private function getTaxesInfoFromRemoteData($taxes_data)
+	{
+		global $langs;
+		$tva_tx = 0;
+		$count = 0;
 
-        $tax_rate = 0;
+		$this->loadTaxes();
 
-        // $tax_status => Tax status. Options: taxable, shipping and none. Default is taxable
-        if ($tax_status != 'none') {
-            $tax_class = !empty($tax_class) ? $tax_class : 'standard';
-            $tax_rate = '';
+		foreach ($taxes_data as $data) {
+			if (empty($data->total)) continue;
+			$count++;
+			if ($count > 1) break;
 
-            // Retrieve all woocommerce tax classes
-            if (!isset($this->woocommerceTaxes) || !isset($this->woocommerceTaxes['classes'][$tax_class])) {
-                $this->setWoocommerceTaxes();
-            }
+			$taxes_data = array_values($taxes_data);
+			$tax_id = $taxes_data[0]->id;
+			if (isset(self::$taxes_rates_cached[$tax_id])) {
+				$tva_tx = self::$taxes_rates_cached[$tax_id]['rate'];
+			} else {
+				$this->errors[] = $langs->trans('ECommerceWooCommerceErrorTaxNotFound', $tax_id);
+				return false;
+			}
+		}
 
-            // Get woocommerce tax if one only
-            if (isset($this->woocommerceTaxes['classes'][$tax_class]) && count($this->woocommerceTaxes['classes'][$tax_class]) == 1) {
-                $tax_rate = $this->woocommerceTaxes['classes'][$tax_class];
-                $tax_rate = array_values($tax_rate);
-                $tax_rate = doubleval($tax_rate[0]->rate);
+		if ($count > 1) {
+			$this->errors[] = $langs->trans('ECommerceWooCommerceErrorDontSupportMultiTaxes');
+			return false;
+		}
 
-                // Get near dolibarr tax for woocommerce tax rate
-                $tax = $this->_getClosestDolibarrTaxRate($tax_rate);
-                if (isset($tax)) {
-                    $tax_rate = $tax;
-                }
-            }
+		return array(
+			'tva_tx' => $tva_tx,
+			'local_tax1_tx' => 0,
+			'local_tax2_tx' => 0,
+			'total_local_tax1' => 0,
+			'total_local_tax2' => 0,
+		);
+	}
 
-            if ($tax_rate == '') {
-                $tax_rate = $conf->global->ECOMMERCE_WOOCOMMERCE_DEFAULT_TVA;
-            }
-        }
+	/**
+	 * Get tax info from tax class name
+	 *
+	 * @param  string   $tax_class      Tax class name
+	 * @param  string   $tax_status     Tax status
+	 *
+	 * @return array                    Tax info
+	 */
+	private function getTaxInfoFromTaxClass($tax_class, $tax_status = 'taxable')
+	{
+		global $conf;
 
-        //dol_syslog(__METHOD__ . ": end, return $tax_rate", LOG_DEBUG);
-        return $tax_rate;
-    }
+		$tax_rate = 0;
+		$tax_class = '';
 
-    /**
-     * Get tax class for show in extrafields
-     *
-     * @param  string   $tax_class      Tax class name
-     * @param  string   $tax_status     Tax status
-     *
-     * @return string                   Tax class name
-     */
-    private function getTaxClass($tax_class, $tax_status = 'taxable')
-    {
-        //dol_syslog(__METHOD__ . ": Get tax class name, tax_class: $tax_class, tax_status: $tax_status", LOG_DEBUG);
+		// $tax_status => Tax status. Options: taxable, shipping and none. Default is taxable
+		if ($tax_status != 'none') {
+			$this->loadTaxes();
+			$tax_class = !empty($tax_class) ? $tax_class : 'standard';
+			$tax_rate = '';
 
-        // $tax_status => Tax status. Options: taxable, shipping and none. Default is taxable
-        if ($tax_status != 'none') {
-            $tax_class = !empty($tax_class) ? $tax_class : 'standard';
-        } else {
-            $tax_class = '';
-        }
+			if (isset(self::$taxes_rates_by_class_cached[$tax_class])) {
+				$tax_rate = self::$taxes_rates_by_class_cached[$tax_class]['tax_rate'];
+			}
 
-        //dol_syslog(__METHOD__ . ": end, return $tax_class", LOG_DEBUG);
-        return $tax_class;
-    }
+			if ($tax_rate == '') {
+				$tax_rate = !empty($conf->global->ECOMMERCE_WOOCOMMERCE_DEFAULT_TVA) ? $conf->global->ECOMMERCE_WOOCOMMERCE_DEFAULT_TVA : 0;
+			}
+		}
 
-    /**
-     * Calcul tax rate and return the closest dolibarr tax rate.
-     *
-     * @param   float   $priceHT        Price HT
-     * @param   float   $taxAmount      Tax amount
-     *
-     * @return  float                   Tax rate
-     */
-    private function getClosestDolibarrTaxRate($priceHT, $taxAmount)
-    {
-        //dol_syslog(__METHOD__ . ": Get closest dolibarr tax rate, priceHT: $priceHT, priceHT: $taxAmount", LOG_DEBUG);
-        $tax_rate = 0;
-        if ($taxAmount != 0) {
-            //calcul tax rate from remote site
-            $shipping_tax_rate = ($taxAmount / $priceHT) * 100;
+		return array(
+			'tax_rate' => $tax_rate,
+			'tax_class' => $tax_class,
+		);
+	}
 
-            // Get near dolibarr tax for woocommerce tax rate
-            $tax = $this->_getClosestDolibarrTaxRate($shipping_tax_rate);
-            if (isset($tax)) {
-                $tax_rate = $tax;
-            }
-        }
+	/**
+	 * load taxes rates in cache
+	 */
+	public function loadTaxes()
+	{
+		global $conf;
 
-        //dol_syslog(__METHOD__ . ": end, return $tax_rate", LOG_DEBUG);
-        return $tax_rate;
-    }
+		if (!isset(self::$taxes_classes_cached)) {
+			dol_include_once('/ecommerceng/admin/class/data/eCommerceDict.class.php');
+			self::$taxes_classes_cached = array();
+			$eCommerceDict = new eCommerceDict($this->db, MAIN_DB_PREFIX . 'c_ecommerceng_tax_class');
+			$taxes_classes = $eCommerceDict->search(['entity' => ['value' => $conf->entity], 'site_id' => ['value' => $this->site->id]]);
+			foreach ($taxes_classes as $class) {
+				self::$taxes_classes_cached[$class['code']] = array('code' => $class['code'], 'label' => $class['label']);
+			}
+		}
 
-    /**
-     * Retrieve all Dolibarr tax rates
-     *
-     * @return  void
-     */
-    private function setDolibarrTaxes()
-    {
-        //dol_syslog(__METHOD__ . ": Retrieve all Dolibarr tax rates", LOG_DEBUG);
+		if (!isset(self::$taxes_rates_cached)) {
+			dol_include_once('/ecommerceng/admin/class/data/eCommerceDict.class.php');
+			self::$taxes_rates_cached = array();
+			$eCommerceDict = new eCommerceDict($this->db, MAIN_DB_PREFIX . 'c_ecommerceng_tax_rate');
+			$taxes_rates = $eCommerceDict->search(['entity' => ['value' => $conf->entity], 'site_id' => ['value' => $this->site->id]]);
+			foreach ($taxes_rates as $rate) {
+				self::$taxes_rates_cached[$rate['tax_id']] = array(
+					'id' => $rate['tax_id'], 'country' => $rate['tax_country'], 'state' => $rate['tax_state'],
+					'postcode' => $rate['tax_postcode'], 'city' => $rate['tax_city'], 'rate' => $rate['tax_rate'], 'name' => $rate['tax_name'],
+					'priority' => $rate['tax_priority'], 'compound' => $rate['tax_compound'], 'shipping' => $rate['tax_shipping'],
+					'order' => $rate['tax_order'], 'class' => $rate['tax_class']
+				);
+				if (!isset(self::$taxes_rates_by_class_cached[$rate['tax_class']]) || self::$taxes_rates_by_class_cached[$rate['tax_class']]['priority'] > $rate['tax_priority']) {
+					self::$taxes_rates_by_class_cached[$rate['tax_class']] = array(
+						'id' => $rate['tax_id'], 'country' => $rate['tax_country'], 'state' => $rate['tax_state'],
+						'postcode' => $rate['tax_postcode'], 'city' => $rate['tax_city'], 'rate' => $rate['tax_rate'], 'name' => $rate['tax_name'],
+						'priority' => $rate['tax_priority'], 'compound' => $rate['tax_compound'], 'shipping' => $rate['tax_shipping'],
+						'order' => $rate['tax_order'], 'class' => $rate['tax_class']
+					);
+				}
+			}
+		}
+	}
 
-   		$resql = $this->db->query("SELECT DISTINCT taux FROM ".MAIN_DB_PREFIX."c_tva ORDER BY taux DESC");
-   		if ($resql) {
-            $taxesTable = [];
+	/**
+	 * Update all Woocommerce tax classes in dict
+	 *
+	 * @return array|false    List of woocommerce tax class or false if error
+	 */
+	public function getAllWoocommerceTaxClass()
+	{
+		dol_syslog(__METHOD__ . ": Retrieve all Woocommerce tax classes", LOG_DEBUG);
+		global $langs;
 
-            while ($tax = $this->db->fetch_object($resql)) {
-                $taxesTable[] = $tax->taux;
-            }
+		try {
+			$tax_classes = $this->client->get('taxes/classes');
+		} catch (HttpClientException $fault) {
+			$this->errors[] = $langs->trans('ECommerceWoocommerceGetAllWoocommerceTaxClass', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+			dol_syslog(__METHOD__ .
+				': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetAllWoocommerceTaxClass', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+				' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+			return false;
+		}
 
-            $this->dolibarrTaxes = $taxesTable;
-        }
+		$taxClassesTable = [];
+		foreach ($tax_classes as $tax_class) {
+			unset($tax_class->_links);
+			$taxClassesTable[$tax_class->slug] = $tax_class;
+		}
 
-        //dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
-    }
+		dol_syslog(__METHOD__ . ": end, return: ".json_encode($taxClassesTable), LOG_DEBUG);
+		return $taxClassesTable;
+	}
 
-    /**
-     * Retrieve all Dolibarr tax rates
-     *
-     * @return  void
-     */
-    /*    private function setDolibarrTaxes()
-    {
-        dol_syslog(__METHOD__ . ": Retrieve all Dolibarr tax rates", LOG_DEBUG);
+	/**
+	 * Update all Woocommerce tax classes in dict
+	 *
+	 * @return array|false    List of woocommerce tax class or false if error
+	 */
+	public function getAllWoocommerceTaxRate()
+	{
+		dol_syslog(__METHOD__ . ": Retrieve all Woocommerce tax classes", LOG_DEBUG);
+		global $conf, $langs;
 
-   		$resql = $this->db->query("SELECT t.*, c.code AS country FROM ".MAIN_DB_PREFIX."c_tva AS t LEFT JOIN ".MAIN_DB_PREFIX."c_country AS c ON t.fk_pays = c.rowid");
-   		if ($resql) {
-            $taxesTable = [ 'taxes' => [], 'countries' => [] ];
+		$nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
 
-            while ($tax = $this->db->fetch_array($resql)) {
-                $taxesTable['taxes'][] = $tax;
-                if (!empty($tax['country'])) {
-                    $taxesTable['countries'][$tax['country']][] = $tax;
-                }
-            }
+		$taxClassesTable = [];
+		$idxPage = 0;
+		do {
+			$idxPage++;
+			try {
+				$taxes = $this->client->get('taxes',
+					[
+						'page' => $idxPage,
+						'per_page' => $nb_max_by_request,
+					]
+				);
+			} catch (HttpClientException $fault) {
+				$this->errors[] = $langs->trans('ECommerceWoocommerceGetWoocommerceTaxes', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+				dol_syslog(__METHOD__ .
+					': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetWoocommerceTaxes', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+					' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+				return false;
+			}
 
-            $this->dolibarrTaxes = $taxesTable;
-        }
+			foreach ($taxes as $tax) {
+				unset($tax->_links);
+				$taxClassesTable[$tax->id] = $tax;
+			}
+		} while (!empty($taxes));
 
-        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
-    }*/
-
-    /**
-     * Update all Woocommerce tax classes in dict
-     *
-     * @return array|false    List of woocommerce tax class or false if error
-     */
-    public function getAllWoocommerceTaxClass()
-    {
-        dol_syslog(__METHOD__ . ": Retrieve all Woocommerce tax classes", LOG_DEBUG);
-        global $langs;
-
-        try {
-            $tax_classes = $this->client->get('taxes/classes');
-        } catch (HttpClientException $fault) {
-            $this->errors[] = $langs->trans('ECommerceWoocommerceGetAllWoocommerceTaxClass', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
-            dol_syslog(__METHOD__ .
-                ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetAllWoocommerceTaxClass', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
-                ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
-            return false;
-        }
-
-        $taxClassesTable = [];
-        foreach ($tax_classes as $tax_class) {
-            unset($tax_class->_links);
-            $taxClassesTable[$tax_class->slug] = $tax_class;
-        }
-
-        dol_syslog(__METHOD__ . ": end, return: ".json_encode($taxClassesTable), LOG_DEBUG);
-        return $taxClassesTable;
-    }
-
-    /**
-     * Retrieve all Woocommerce tax rates
-     *
-     * @return boolean
-     */
-    private function setWoocommerceTaxes()
-    {
-        dol_syslog(__METHOD__ . ": Retrieve all Woocommerce tax rates", LOG_DEBUG);
-        global $conf, $langs;
-
-        $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
-
-        $taxesTable = [ 'taxes' => [], 'classes' => [], 'countries' => [], 'states' => [], 'postcodes' => [], 'cities' => []];
-        $idxPage = 0;
-        do {
-            $idxPage++;
-            try {
-                $taxes = $this->client->get('taxes',
-                    [
-                        'page' => $idxPage,
-                        'per_page' => $nb_max_by_request,
-                    ]
-                );
-            } catch (HttpClientException $fault) {
-                $this->errors[] = $langs->trans('ECommerceWoocommerceGetWoocommerceTaxes', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
-                dol_syslog(__METHOD__ .
-                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetWoocommerceTaxes', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
-                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
-                return false;
-            }
-
-            foreach ($taxes as $tax) {
-                $id = $tax->id;
-                unset($tax->_links);
-
-                $taxesTable['taxes'][$id] = $tax;
-                if (!empty($tax->class)) {
-                    $taxesTable['classes'][$tax->class][$id] = $tax;
-                }
-                if (!empty($tax->country)) {
-                    $taxesTable['countries'][$tax->country][$id] = $tax;
-                }
-                if (!empty($tax->state)) {
-                    $taxesTable['states'][$tax->state][$id] = $tax;
-                }
-                if (!empty($tax->postcode)) {
-                    $taxesTable['postcodes'][$tax->postcode][$id] = $tax;
-                }
-                if (!empty($tax->city)) {
-                    $taxesTable['cities'][$tax->city][$id] = $tax;
-                }
-            }
-        } while (!empty($taxes));
-
-        $this->woocommerceTaxes = $taxesTable;
-
-        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
-        return true;
-    }
-
-    /**
-     * Get closest dolibarr tax rate
-     *
-     * @param  string   $tax_rate       Tax rate
-     *
-     * @return float                    Closest dolibarr tax rate
-     */
-    private function _getClosestDolibarrTaxRate($tax_rate)
-    {
-        //dol_syslog(__METHOD__ . ": Get closest dolibarr tax rate, tax_rate: $tax_rate", LOG_DEBUG);
-
-        $tax = null;
-
-        // Retrieve all dolibarr tax
-        if (!isset($this->dolibarrTaxes)) {
-            $this->setDolibarrTaxes();
-        }
-
-        // Get closest dolibarr tax for woocommerce tax
-        if (is_array($this->dolibarrTaxes) && count($this->dolibarrTaxes) > 0) {
-            $closestTax = 0;
-            foreach ($this->dolibarrTaxes as $tax) {
-                if (abs($tax - $tax_rate) < abs($tax_rate - $closestTax)) {
-                    $closestTax = $tax;
-                }
-            }
-            $tax = $closestTax;
-        }
-
-        //dol_syslog(__METHOD__ . ": end, return ".(isset($tax)?json_encode($tax):'null'), LOG_DEBUG);
-        return $tax;
-    }
-
-    /**
-     * Get closest dolibarr tax
-     *
-     * @param  string   $country_code   Country code
-     * @param  string   $tax_rate       Tax rate
-     *
-     * @return float                    Near dolibarr tax
-     */
-    /*private function getClosestDolibarCountryTax($country_code, $tax_rate)
-    {
-        dol_syslog(__METHOD__ . ": Get closest dolibarr tax rate, country_code: $country_code, tax_rate: $tax_rate", LOG_DEBUG);
-        global $langs;
-
-        $tax = null;
-
-        // Get country code from default language if empty
-        if (empty($country_code)) $country_code = substr($langs->defaultlang, -2);
-
-        // Retrieve all dolibarr tax
-        if (!isset($this->dolibarrTaxes) || !isset($this->dolibarrTaxes['countries'][$country_code])) {
-            $this->setDolibarrTaxes();
-        }
-
-        // Get closest dolibarr tax for woocommerce tax
-        $dolibarrTaxes = $this->dolibarrTaxes['countries'][$country_code];
-        if (is_array($dolibarrTaxes)) {
-            $closestTaxes = [];
-            foreach ($dolibarrTaxes as $tax) {
-                $near = $tax['taux'] - $tax_rate;
-                if (!isset($closestTaxes[$near]) || $closestTaxes[$near]['taux'] < $tax['taux']) {
-                    $nearTaxes[$near] = $tax;
-                }
-            }
-            ksort($closestTaxes);
-            reset($closestTaxes);
-            $tax = $closestTaxes[0];
-        }
-
-        dol_syslog(__METHOD__ . ": end, return ".(isset($tax)?json_encode($tax):'null'), LOG_DEBUG);
-        return $tax;
-    }*/
+		dol_syslog(__METHOD__ . ": end, return: ".json_encode($taxClassesTable), LOG_DEBUG);
+		return $taxClassesTable;
+	}
 
     /**
      * Get all payment gateways
@@ -3557,6 +3675,23 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": end, return: ".json_encode($paymentGatewaysTable), LOG_DEBUG);
         return $paymentGatewaysTable;
     }
+
+	/**
+	 * Replace 4bytes characters
+	 * @see https://stackoverflow.com/questions/16496554/can-php-detect-4-byte-encoded-utf8-chars by cmbuckley
+	 *
+	 * @param 	string		$string			Text
+	 * @param 	string		$replacement	Replacement text
+	 * @return 	string    					Replaced text
+	 */
+	function replace4byte($string, $replacement = '')
+	{
+		return preg_replace('%(?:
+			  \xF0[\x90-\xBF][\x80-\xBF]{2}      # planes 1-3
+			| [\xF1-\xF3][\x80-\xBF]{3}          # planes 4-15
+			| \xF4[\x80-\x8F][\x80-\xBF]{2}      # plane 16
+		)%xs', $replacement, $string);
+	}
 
     /**
      * Get request groups of ID for get datas of remotes objects.
