@@ -1187,7 +1187,6 @@ class eCommerceRemoteAccessWoocommerce
 					'total_ttc' => ($item->total + $item->total_tax),
 					'qty' => 1,
 					'discount' => 0,
-					'buy_price' => null,
 				];
 
 				// Taxes
@@ -1200,6 +1199,7 @@ class eCommerceRemoteAccessWoocommerce
 				$item_data['total_local_tax2'] = $taxes['total_local_tax2'];
 
 				if ($this->site->ecommerce_price_type == 'TTC') $item_data['price'] = 100 * ($item->total + $item->total_tax) / (100 + $item_data['tva_tx']);
+				$item_data['buy_price'] = $item_data['price'];
 
 				// Synch extrafields <=> metadatas
 				if (!empty($item->meta_data) && !empty($this->site->parameters['ef_crp']['commandedet'])) {
@@ -1236,7 +1236,7 @@ class eCommerceRemoteAccessWoocommerce
 					'product_type' => 'discount_code',
 					'qty' => 1,
 					'discount' => 0,
-					'buy_price' => null,
+					'buy_price' => 0,
 					'local_tax1_tx' => 0,
 					'local_tax2_tx' => 0,
 					'total_local_tax1' => 0,
@@ -1299,7 +1299,7 @@ class eCommerceRemoteAccessWoocommerce
 					'total_ttc' => - $gift_cards->amount,
 					'qty' => 1,
 					'discount' => 0,
-					'buy_price' => null,
+					'buy_price' => 0,
 					'tva_tx' => 0,
 					'local_tax1_tx' => 0,
 					'local_tax2_tx' => 0,

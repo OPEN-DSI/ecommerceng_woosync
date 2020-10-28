@@ -3895,18 +3895,22 @@ class eCommerceSynchro
 												}
 
 												if (!$error) {
-													$buy_price = isset($item['buy_price']) ? $item['buy_price'] : $item['price'];
 													// Define the buy price for margin calculation
-													if ($fk_product > 0) {
-														$result = $order->defineBuyPrice($buy_price, 0, $fk_product);
-														if ($result < 0) {
-															$this->errors[] = $this->langs->trans('ECommerceErrorOrderDefineBuyPrice', $fk_product, $buy_price);
-															if (!empty($order->error)) $this->errors[] = $order->error;
-															$this->errors = array_merge($this->errors, $order->errors);
-															$error++;
-															break;    // break on items
-														} else {
-															$buy_price = $result;
+													if (isset($item['buy_price'])) {
+														$buy_price = $item['buy_price'];
+													} else {
+														$buy_price = $item['price'];
+														if ($fk_product > 0) {
+															$result = $order->defineBuyPrice($buy_price, 0, $fk_product);
+															if ($result < 0) {
+																$this->errors[] = $this->langs->trans('ECommerceErrorOrderDefineBuyPrice', $fk_product, $buy_price);
+																if (!empty($order->error)) $this->errors[] = $order->error;
+																$this->errors = array_merge($this->errors, $order->errors);
+																$error++;
+																break;    // break on items
+															} else {
+																$buy_price = $result;
+															}
 														}
 													}
 
@@ -4648,18 +4652,22 @@ class eCommerceSynchro
 																	break;
 																}
 															} else {
-																$buy_price = isset($item['buy_price']) ? $item['buy_price'] : $price;
 																// Define the buy price for margin calculation
-																if ($fk_product > 0) {
-																	$result = $order->defineBuyPrice($buy_price, 0, $fk_product);
-																	if ($result < 0) {
-																		$this->errors[] = $this->langs->trans('ECommerceErrorOrderDefineBuyPrice', $fk_product, $buy_price);
-																		if (!empty($order->error)) $this->errors[] = $order->error;
-																		$this->errors = array_merge($this->errors, $order->errors);
-																		$error++;
-																		break;    // break on items
-																	} else {
-																		$buy_price = $result;
+																if (isset($item['buy_price'])) {
+																	$buy_price = $item['buy_price'];
+																} else {
+																	$buy_price = $item['price'];
+																	if ($fk_product > 0) {
+																		$result = $order->defineBuyPrice($buy_price, 0, $fk_product);
+																		if ($result < 0) {
+																			$this->errors[] = $this->langs->trans('ECommerceErrorOrderDefineBuyPrice', $fk_product, $buy_price);
+																			if (!empty($order->error)) $this->errors[] = $order->error;
+																			$this->errors = array_merge($this->errors, $order->errors);
+																			$error++;
+																			break;    // break on items
+																		} else {
+																			$buy_price = $result;
+																		}
 																	}
 																}
 
