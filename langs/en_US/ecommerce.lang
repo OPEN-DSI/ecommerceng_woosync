@@ -407,6 +407,7 @@ ECommerceErrorPaymentGatewaysBankAccountNotConfigured = Le mode de paiement (%s,
 ECommerceErrorInvoiceValidate                       = Erreur lors de la validation de la facture
 ECommerceErrorInvoiceCreatePayment                  = Erreur lors de la creation du paiement sur la facture
 ECommerceErrorInvoiceAddPaymentToBank               = Erreur lors de l'ajout du paiement sur la banque pour la facture
+ECommerceErrorInvoiceSetPaid                        = Erreur lors du classement de la facture en payée
 ECommerceErrorInvoiceGenerateDocument               = Erreur lors de la génération du document de la facture
 ECommerceErrorPaymentGatewaysSupplierNotConfigured  = Le mode de paiement (%s, %s) synchronisé n'a pas été configuré pour le tiers fournisseur Dolibarr
 ECommerceErrorSupplierInvoiceCreate                 = Erreur lors de la creation de la facture fournisseur dans Dolibarr

@@ -503,6 +503,13 @@ class eCommercePendingWebHook
 			dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
 			$synchro = new eCommerceSynchro($this->db, $site);
 
+			$result = $synchro->connect();
+			if ($result < 0) {
+				$this->error = $synchro->error;
+				$this->errors = $synchro->errors;
+				return -1;
+			}
+
 			self::$synchro_cached[$site_id] = $synchro;
 		}
 

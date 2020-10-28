@@ -1138,7 +1138,7 @@ class eCommerceRemoteAccessWoocommerce
 				'total_ttc' => $item->subtotal + $item->subtotal_tax,
 				'qty' => $item->quantity,
 				'discount' => 0,
-				'buy_price' => 0,
+				'buy_price' => null,
 			];
 
 			// Taxes
@@ -1187,7 +1187,7 @@ class eCommerceRemoteAccessWoocommerce
 					'total_ttc' => ($item->total + $item->total_tax),
 					'qty' => 1,
 					'discount' => 0,
-					'buy_price' => 0,
+					'buy_price' => null,
 				];
 
 				// Taxes
@@ -1236,7 +1236,7 @@ class eCommerceRemoteAccessWoocommerce
 					'product_type' => 'discount_code',
 					'qty' => 1,
 					'discount' => 0,
-					'buy_price' => 0,
+					'buy_price' => null,
 					'local_tax1_tx' => 0,
 					'local_tax2_tx' => 0,
 					'total_local_tax1' => 0,
@@ -1299,7 +1299,7 @@ class eCommerceRemoteAccessWoocommerce
 					'total_ttc' => - $gift_cards->amount,
 					'qty' => 1,
 					'discount' => 0,
-					'buy_price' => 0,
+					'buy_price' => null,
 					'tva_tx' => 0,
 					'local_tax1_tx' => 0,
 					'local_tax2_tx' => 0,

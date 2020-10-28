@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 4.0.48.0
+- Correction du cron de synchronisation de la file d'attente
+- Correction du prix d'achat des produits lors de la synchronisation des commandes
+- Correction du classement des factures en payées si les factures ont un montant égale à 0
+
 ## 4.0.47.0
 - Reecriture de la synchronisation des produits, tiers, commandes pour le support des webhooks de WooCommerce (Creation et actualisation des commandes)
 - Ajout de la gestion des codes promos sur les commandes (de WooCommerce vers Dolibarr seulement)

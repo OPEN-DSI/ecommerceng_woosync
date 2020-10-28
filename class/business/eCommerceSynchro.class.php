@@ -4911,27 +4911,39 @@ class eCommerceSynchro
 									}
 
 									// Creation of payment line
-									if (!$error && $conf->banque->enabled && !empty($selected_payment_gateways['create_invoice_payment'])) {
-										$payment = new Paiement($this->db);
-										$payment->datepaye = $invoice->date;
-										$payment->amounts = array($invoice->id => $invoice->total_ttc);   // Array with all payments dispatching with invoice id
-										$payment->multicurrency_amounts = array();   // Array with all payments dispatching
-										$payment->paiementid = $invoice->mode_reglement_id;
-										$payment->num_paiement = '';
-										$payment->note = 'Created by WooSync';
+									if (!$error) {
+										if ($invoice->total_ttc != 0) {
+											if ($conf->banque->enabled && !empty($selected_payment_gateways['create_invoice_payment'])) {
+												$payment = new Paiement($this->db);
+												$payment->datepaye = $invoice->date;
+												$payment->amounts = array($invoice->id => $invoice->total_ttc);   // Array with all payments dispatching with invoice id
+												$payment->multicurrency_amounts = array();   // Array with all payments dispatching
+												$payment->paiementid = $invoice->mode_reglement_id;
+												$payment->num_paiement = '';
+												$payment->note = 'Created by WooSync';
 
-										$payment_id = $payment->create($this->user, 1);
-										if ($payment_id < 0) {
-											$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceCreatePayment');
-											if (!empty($payment->error)) $this->errors[] = $payment->error;
-											$this->errors = array_merge($this->errors, $payment->errors);
-											$error++;
+												$payment_id = $payment->create($this->user, 1);
+												if ($payment_id < 0) {
+													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceCreatePayment');
+													if (!empty($payment->error)) $this->errors[] = $payment->error;
+													$this->errors = array_merge($this->errors, $payment->errors);
+													$error++;
+												} else {
+													$result = $payment->addPaymentToBank($this->user, 'payment', '(CustomerInvoicePayment)', $bank_account_id, '', '');
+													if ($result < 0) {
+														$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddPaymentToBank');
+														if (!empty($payment->error)) $this->errors[] = $payment->error;
+														$this->errors = array_merge($this->errors, $payment->errors);
+														$error++;
+													}
+												}
+											}
 										} else {
-											$result = $payment->addPaymentToBank($this->user, 'payment', '(CustomerInvoicePayment)', $bank_account_id, '', '');
+											$result = $invoice->set_paid($this->user);
 											if ($result < 0) {
-												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddPaymentToBank');
-												if (!empty($payment->error)) $this->errors[] = $payment->error;
-												$this->errors = array_merge($this->errors, $payment->errors);
+												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceSetPaid');
+												if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+												$this->errors = array_merge($this->errors, $invoice->errors);
 												$error++;
 											}
 										}
