@@ -439,6 +439,7 @@ ECommerceErrorSetLastSyncDateCustome                = Erreur lors de la mise à 
 ECommerceErrorSetLastSyncDateProduct                = Erreur lors de la mise à jour de la date de la plus récente date de synchronisation des produits pour le site (ID: %s)
 ECommerceErrorSetLastSyncDateOrder                  = Erreur lors de la mise à jour de la date de la plus récente date de synchronisation des commandes pour le site (ID: %s)
 ECommerceErrorUpdatePrivateNote                     = Erreur lors de la mise a jour de la note privée
+ECommerceErrorGetEMailTemplate                      = Erreur lors de la récupération du modèle de mail
 
 ECommerceWarningWrongAmountTTCWithPaid              = Attention!! Le client a payé un montant différent : %s TTC
 ECommerceWarningOrderThirdPartyNotSupported         = Attention!! La commande (ID: %s) est ignoré car elle a été créée par un client (ID: %s) dont le type n'est pas authorisé dans la configuration

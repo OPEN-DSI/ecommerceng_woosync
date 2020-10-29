@@ -5160,131 +5160,139 @@ class eCommerceSynchro
 											// Get email template
 											$type_template = 'facture_send';
 											$arraydefaultmessage = $formmail->getEMailTemplate($this->db, $type_template, $this->user, $outputlangs, $selected_payment_gateways['mail_model_for_send_invoice']);
-
-											// Complete substitution array
-											if (empty($substitutionarray['__REF__'])) {
-												$paymenturl = '';
-											} else {
-												// Set the online payment url link into __ONLINE_PAYMENT_URL__ key
-												require_once DOL_DOCUMENT_ROOT . '/core/lib/payments.lib.php';
-												$outputlangs->load('paypal');
-												$paymenturl = getOnlinePaymentUrl(0, 'invoice', $substitutionarray['__REF__']);
-											}
-											$substitutionarray['__ONLINE_PAYMENT_URL__'] = $paymenturl;
-
-											// Define subject / message
-											$message = str_replace('\n', "\n", is_array($arraydefaultmessage) ? $arraydefaultmessage['content'] : $arraydefaultmessage->content);
-											// Deal with format differences between message and signature (text / HTML)
-											if (dol_textishtml($message) && !dol_textishtml($substitutionarray['__USER_SIGNATURE__'])) {
-												$substitutionarray['__USER_SIGNATURE__'] = dol_nl2br($substitutionarray['__USER_SIGNATURE__']);
-											} else if (!dol_textishtml($message) && dol_textishtml($substitutionarray['__USER_SIGNATURE__'])) {
-												$message = dol_nl2br($message);
-											}
-
-											$subject = make_substitutions(is_array($arraydefaultmessage) ? $arraydefaultmessage['topic'] : $arraydefaultmessage->topic, $substitutionarray);
-											$message = make_substitutions($message, $substitutionarray);
-											if (method_exists($invoice, 'makeSubstitution')) {
-												$subject = $invoice->makeSubstitution($subject);
-												$message = $invoice->makeSubstitution($message);
-											}
-
-											// Clean first \n and br (to avoid empty line when CONTACTCIVNAME is empty)
-											$message = preg_replace("/^(<br>)+/", "", $message);
-											$message = preg_replace("/^\n+/", "", $message);
-
-											// Define $urlwithroot
-											global $dolibarr_main_url_root;
-											$urlwithouturlroot = preg_replace('/' . preg_quote(DOL_URL_ROOT, '/') . '$/i', '', trim($dolibarr_main_url_root));
-											$urlwithroot = $urlwithouturlroot . DOL_URL_ROOT;        // This is to use external domain name found into config file
-											//$urlwithroot=DOL_MAIN_URL_ROOT;					// This is to use same domain name than current
-											// Make a change into HTML code to allow to include images from medias directory with an external reabable URL.
-											// <img alt="" src="/dolibarr_dev/htdocs/viewimage.php?modulepart=medias&amp;entity=1&amp;file=image/ldestailleur_166x166.jpg" style="height:166px; width:166px" />
-											// become
-											// <img alt="" src="'.$urlwithroot.'viewimage.php?modulepart=medias&amp;entity=1&amp;file=image/ldestailleur_166x166.jpg" style="height:166px; width:166px" />
-											$message = preg_replace('/(<img.*src=")[^\"]*viewimage\.php([^\"]*)modulepart=medias([^\"]*)file=([^\"]*)("[^\/]*\/>)/', '\1' . $urlwithroot . '/viewimage.php\2modulepart=medias\3file=\4\5', $message);
-
-											// Attach invoice file
-											$formmail->trackid = $trackid;      // $trackid must be defined
-											$formmail->clear_attached_files();
-											if (!empty(is_array($arraydefaultmessage) ? $arraydefaultmessage['joinfiles'] : $arraydefaultmessage->joinfiles)) {
-												$ref = dol_sanitizeFileName($invoice->ref);
-												$fileparams = dol_most_recent_file($conf->facture->dir_output . '/' . $ref, preg_quote($ref, '/') . '[^\-]+');
-												$file = $fileparams['fullname'];
-												$formmail->add_attached_files($file, basename($file), dol_mimetype($file));
-											}
-											$attachedfiles = $formmail->get_attached_files();
-											$filepath = $attachedfiles['paths'];
-											$filename = $attachedfiles['names'];
-											$mimetype = $attachedfiles['mimes'];
-
-											// Send mail (substitutionarray must be done just before this)
-											require_once DOL_DOCUMENT_ROOT . '/core/class/CMailFile.class.php';
-											$sendcontext = 'standard';
-											$mailfile = new CMailFile($subject, $send_to, $from, $message, $filepath, $mimetype, $filename, $sendtocc, $sendtobcc, $deliveryreceipt, -1, '', '', $trackid, '', $sendcontext);
-											if ($mailfile->error) {
-												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceCreateMail');
-												if (!empty($mailfile->error)) $this->errors[] = $mailfile->error;
-												$this->errors = array_merge($this->errors, $mailfile->errors);
+											if (is_numeric($arraydefaultmessage) && $arraydefaultmessage < 0) {
+												$this->errors[] = $this->langs->trans('ECommerceErrorGetEMailTemplate');
+												if (!empty($formmail->error)) $this->errors[] = $formmail->error;
+												else $this->errors[] = $this->db->lasterror();
 												$error++;
-											} else {
-												$result = $mailfile->sendfile();
-												if ($result) {
-													// Get order contacts
-													$contact_list = $invoice->liste_contact(-1, 'external');
-													if (!is_array($contact_list)) {
-														$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceGetExternalContacts', $invoice->id);
-														if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-														$this->errors = array_merge($this->errors, $invoice->errors);
-														$error++;
-													} else {
-														// Event send email
-														$sendtoid = array();
-														foreach ($contact_list as $contact_infos) {
-															$sendtoid[$contact_infos['id']] = $contact_infos['id'];
-														}
-														$sendtoid = array_values($sendtoid);
+											}
 
-														$actionmsg = '';
-														$actionmsg2 = $this->langs->transnoentities('MailSentBy') . ' ' . CMailFile::getValidAddress($from, 4, 0, 1) . ' ' . $this->langs->transnoentities('To') . ' ' . CMailFile::getValidAddress($send_to, 4, 0, 1);
-														if ($message) {
-															$actionmsg = $this->langs->transnoentities('MailFrom') . ': ' . dol_escape_htmltag($from);
-															$actionmsg = dol_concatdesc($actionmsg, $this->langs->transnoentities('MailTo') . ': ' . dol_escape_htmltag($send_to));
-															$actionmsg = dol_concatdesc($actionmsg, $this->langs->transnoentities('MailTopic') . ": " . $subject);
-															$actionmsg = dol_concatdesc($actionmsg, $this->langs->transnoentities('TextUsedInTheMessageBody') . ":");
-															$actionmsg = dol_concatdesc($actionmsg, $message);
-														}
-
-														$invoice->sendtoid = $sendtoid;       // To link to contacts/addresses. This is an array.
-														$invoice->actiontypecode = 'AC_OTH_AUTO'; // Type of event ('AC_OTH', 'AC_OTH_AUTO', 'AC_XXX'...)
-														$invoice->actionmsg = $actionmsg;      // Long text
-														$invoice->actionmsg2 = $actionmsg2;     // Short text
-														$invoice->trackid = $trackid;
-														$invoice->fk_element = $invoice->id;
-														$invoice->elementtype = $invoice->element;
-														if (is_array($attachedfiles) && count($attachedfiles) > 0) {
-															$invoice->attachedfiles = $attachedfiles;
-														}
-
-														include_once DOL_DOCUMENT_ROOT . '/core/class/interfaces.class.php';
-														$interface = new Interfaces($this->db);
-														$result = $interface->run_triggers('BILL_SENTBYMAIL', $invoice, $this->user, $this->langs, $conf);
-														if ($result < 0) {
-															$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceCreateSendMailEvent');
-															if (!empty($interface->error)) $this->errors[] = $interface->error;
-															$this->errors = array_merge($this->errors, $interface->errors);
-															$error++;
-														}
-													}
+											if (!$error) {
+												// Complete substitution array
+												if (empty($substitutionarray['__REF__'])) {
+													$paymenturl = '';
 												} else {
-													$this->langs->load("other");
-													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceSendByMail');
-													if ($mailfile->error) {
-														$this->errors[] = $this->langs->trans('ErrorFailedToSendMail', $from, $send_to);
-														$this->errors[] = $mailfile->error;
-													} else {
-														$this->errors[] = ' No mail sent. Feature is disabled by option MAIN_DISABLE_ALL_MAILS';
-													}
+													// Set the online payment url link into __ONLINE_PAYMENT_URL__ key
+													require_once DOL_DOCUMENT_ROOT . '/core/lib/payments.lib.php';
+													$outputlangs->load('paypal');
+													$paymenturl = getOnlinePaymentUrl(0, 'invoice', $substitutionarray['__REF__']);
+												}
+												$substitutionarray['__ONLINE_PAYMENT_URL__'] = $paymenturl;
+
+												// Define subject / message
+												$message = str_replace('\n', "\n", is_array($arraydefaultmessage) ? $arraydefaultmessage['content'] : $arraydefaultmessage->content);
+												// Deal with format differences between message and signature (text / HTML)
+												if (dol_textishtml($message) && !dol_textishtml($substitutionarray['__USER_SIGNATURE__'])) {
+													$substitutionarray['__USER_SIGNATURE__'] = dol_nl2br($substitutionarray['__USER_SIGNATURE__']);
+												} else if (!dol_textishtml($message) && dol_textishtml($substitutionarray['__USER_SIGNATURE__'])) {
+													$message = dol_nl2br($message);
+												}
+
+												$subject = make_substitutions(is_array($arraydefaultmessage) ? $arraydefaultmessage['topic'] : $arraydefaultmessage->topic, $substitutionarray);
+												$message = make_substitutions($message, $substitutionarray);
+												if (method_exists($invoice, 'makeSubstitution')) {
+													$subject = $invoice->makeSubstitution($subject);
+													$message = $invoice->makeSubstitution($message);
+												}
+
+												// Clean first \n and br (to avoid empty line when CONTACTCIVNAME is empty)
+												$message = preg_replace("/^(<br>)+/", "", $message);
+												$message = preg_replace("/^\n+/", "", $message);
+
+												// Define $urlwithroot
+												global $dolibarr_main_url_root;
+												$urlwithouturlroot = preg_replace('/' . preg_quote(DOL_URL_ROOT, '/') . '$/i', '', trim($dolibarr_main_url_root));
+												$urlwithroot = $urlwithouturlroot . DOL_URL_ROOT;        // This is to use external domain name found into config file
+												//$urlwithroot=DOL_MAIN_URL_ROOT;					// This is to use same domain name than current
+												// Make a change into HTML code to allow to include images from medias directory with an external reabable URL.
+												// <img alt="" src="/dolibarr_dev/htdocs/viewimage.php?modulepart=medias&amp;entity=1&amp;file=image/ldestailleur_166x166.jpg" style="height:166px; width:166px" />
+												// become
+												// <img alt="" src="'.$urlwithroot.'viewimage.php?modulepart=medias&amp;entity=1&amp;file=image/ldestailleur_166x166.jpg" style="height:166px; width:166px" />
+												$message = preg_replace('/(<img.*src=")[^\"]*viewimage\.php([^\"]*)modulepart=medias([^\"]*)file=([^\"]*)("[^\/]*\/>)/', '\1' . $urlwithroot . '/viewimage.php\2modulepart=medias\3file=\4\5', $message);
+
+												// Attach invoice file
+												$formmail->trackid = $trackid;      // $trackid must be defined
+												$formmail->clear_attached_files();
+												if (!empty(is_array($arraydefaultmessage) ? $arraydefaultmessage['joinfiles'] : $arraydefaultmessage->joinfiles)) {
+													$ref = dol_sanitizeFileName($invoice->ref);
+													$fileparams = dol_most_recent_file($conf->facture->dir_output . '/' . $ref, preg_quote($ref, '/') . '[^\-]+');
+													$file = $fileparams['fullname'];
+													$formmail->add_attached_files($file, basename($file), dol_mimetype($file));
+												}
+												$attachedfiles = $formmail->get_attached_files();
+												$filepath = $attachedfiles['paths'];
+												$filename = $attachedfiles['names'];
+												$mimetype = $attachedfiles['mimes'];
+
+												// Send mail (substitutionarray must be done just before this)
+												require_once DOL_DOCUMENT_ROOT . '/core/class/CMailFile.class.php';
+												$sendcontext = 'standard';
+												$mailfile = new CMailFile($subject, $send_to, $from, $message, $filepath, $mimetype, $filename, $sendtocc, $sendtobcc, $deliveryreceipt, -1, '', '', $trackid, '', $sendcontext);
+												if ($mailfile->error) {
+													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceCreateMail');
+													if (!empty($mailfile->error)) $this->errors[] = $mailfile->error;
+													$this->errors = array_merge($this->errors, $mailfile->errors);
 													$error++;
+												} else {
+													$result = $mailfile->sendfile();
+													if ($result) {
+														// Get order contacts
+														$contact_list = $invoice->liste_contact(-1, 'external');
+														if (!is_array($contact_list)) {
+															$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceGetExternalContacts', $invoice->id);
+															if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+															$this->errors = array_merge($this->errors, $invoice->errors);
+															$error++;
+														} else {
+															// Event send email
+															$sendtoid = array();
+															foreach ($contact_list as $contact_infos) {
+																$sendtoid[$contact_infos['id']] = $contact_infos['id'];
+															}
+															$sendtoid = array_values($sendtoid);
+
+															$actionmsg = '';
+															$actionmsg2 = $this->langs->transnoentities('MailSentBy') . ' ' . CMailFile::getValidAddress($from, 4, 0, 1) . ' ' . $this->langs->transnoentities('To') . ' ' . CMailFile::getValidAddress($send_to, 4, 0, 1);
+															if ($message) {
+																$actionmsg = $this->langs->transnoentities('MailFrom') . ': ' . dol_escape_htmltag($from);
+																$actionmsg = dol_concatdesc($actionmsg, $this->langs->transnoentities('MailTo') . ': ' . dol_escape_htmltag($send_to));
+																$actionmsg = dol_concatdesc($actionmsg, $this->langs->transnoentities('MailTopic') . ": " . $subject);
+																$actionmsg = dol_concatdesc($actionmsg, $this->langs->transnoentities('TextUsedInTheMessageBody') . ":");
+																$actionmsg = dol_concatdesc($actionmsg, $message);
+															}
+
+															$invoice->sendtoid = $sendtoid;       // To link to contacts/addresses. This is an array.
+															$invoice->actiontypecode = 'AC_OTH_AUTO'; // Type of event ('AC_OTH', 'AC_OTH_AUTO', 'AC_XXX'...)
+															$invoice->actionmsg = $actionmsg;      // Long text
+															$invoice->actionmsg2 = $actionmsg2;     // Short text
+															$invoice->trackid = $trackid;
+															$invoice->fk_element = $invoice->id;
+															$invoice->elementtype = $invoice->element;
+															if (is_array($attachedfiles) && count($attachedfiles) > 0) {
+																$invoice->attachedfiles = $attachedfiles;
+															}
+
+															include_once DOL_DOCUMENT_ROOT . '/core/class/interfaces.class.php';
+															$interface = new Interfaces($this->db);
+															$result = $interface->run_triggers('BILL_SENTBYMAIL', $invoice, $this->user, $this->langs, $conf);
+															if ($result < 0) {
+																$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceCreateSendMailEvent');
+																if (!empty($interface->error)) $this->errors[] = $interface->error;
+																$this->errors = array_merge($this->errors, $interface->errors);
+																$error++;
+															}
+														}
+													} else {
+														$this->langs->load("other");
+														$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceSendByMail');
+														if ($mailfile->error) {
+															$this->errors[] = $this->langs->trans('ErrorFailedToSendMail', $from, $send_to);
+															$this->errors[] = $mailfile->error;
+														} else {
+															$this->errors[] = ' No mail sent. Feature is disabled by option MAIN_DISABLE_ALL_MAILS';
+														}
+														$error++;
+													}
 												}
 											}
 										}
