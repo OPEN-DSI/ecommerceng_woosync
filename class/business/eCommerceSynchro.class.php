@@ -5173,7 +5173,7 @@ class eCommerceSynchro
 											$substitutionarray['__ONLINE_PAYMENT_URL__'] = $paymenturl;
 
 											// Define subject / message
-											$message = str_replace('\n', "\n", $arraydefaultmessage['content']);
+											$message = str_replace('\n', "\n", is_array($arraydefaultmessage) ? $arraydefaultmessage['content'] : $arraydefaultmessage->content);
 											// Deal with format differences between message and signature (text / HTML)
 											if (dol_textishtml($message) && !dol_textishtml($substitutionarray['__USER_SIGNATURE__'])) {
 												$substitutionarray['__USER_SIGNATURE__'] = dol_nl2br($substitutionarray['__USER_SIGNATURE__']);
@@ -5181,7 +5181,7 @@ class eCommerceSynchro
 												$message = dol_nl2br($message);
 											}
 
-											$subject = make_substitutions($arraydefaultmessage['topic'], $substitutionarray);
+											$subject = make_substitutions(is_array($arraydefaultmessage) ? $arraydefaultmessage['topic'] : $arraydefaultmessage->topic, $substitutionarray);
 											$message = make_substitutions($message, $substitutionarray);
 											if (method_exists($invoice, 'makeSubstitution')) {
 												$subject = $invoice->makeSubstitution($subject);
@@ -5206,7 +5206,7 @@ class eCommerceSynchro
 											// Attach invoice file
 											$formmail->trackid = $trackid;      // $trackid must be defined
 											$formmail->clear_attached_files();
-											if (!empty($arraydefaultmessage['joinfiles'])) {
+											if (!empty(is_array($arraydefaultmessage) ? $arraydefaultmessage['joinfiles'] : $arraydefaultmessage->joinfiles)) {
 												$ref = dol_sanitizeFileName($invoice->ref);
 												$fileparams = dol_most_recent_file($conf->facture->dir_output . '/' . $ref, preg_quote($ref, '/') . '[^\-]+');
 												$file = $fileparams['fullname'];
