@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 4.0.49.0
+- Correction de l'ajout des lignes de la facture lorsque l'on ne créer pas de commande
+- Correction de la creation des factures fournisseurs
+- Correction lors du lancement de la tache planifier de syncho des webhooks
+
 ## 4.0.48.0
 - Correction du cron de synchronisation de la file d'attente
 - Correction du prix d'achat des produits lors de la synchronisation des commandes

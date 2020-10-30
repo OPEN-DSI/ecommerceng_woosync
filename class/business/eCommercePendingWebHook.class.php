@@ -399,6 +399,7 @@ class eCommercePendingWebHook
 			return -1;
 		}
 
+		require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 		$langs->load('ecommerceng@ecommerceng');
 		$error = 0;
 		$output = '';

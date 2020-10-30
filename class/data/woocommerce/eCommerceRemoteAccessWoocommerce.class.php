@@ -1338,6 +1338,8 @@ class eCommerceRemoteAccessWoocommerce
 				if ($meta->key == '_stripe_fee') {
 					$fee_lines[] = [
 						'label' => 'Stripe',
+						'qty' => 1,
+						'price' => $meta->value,
 						'total_ht' => $meta->value,
 						'total_tva' => 0,
 						'total_ttc' => $meta->value,

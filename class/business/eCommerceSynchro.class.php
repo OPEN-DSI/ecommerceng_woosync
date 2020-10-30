@@ -4614,10 +4614,6 @@ class eCommerceSynchro
 
 														if (!$error) {
 															$price = $item['price'];
-															$total_ht = $item['total_ht'];
-															$total_tva = $item['total_tva'];
-															$total_ttc = $item['total_ttc'];
-															$discount = $item['discount'];
 															$description = $item['description'];
 															if (empty($description) && $fk_product > 0) {
 																$product = new Product($this->db);
@@ -4629,9 +4625,9 @@ class eCommerceSynchro
 																// Negative line, we create a discount line
 																$discount = new DiscountAbsolute($this->db);
 																$discount->fk_soc = $invoice->socid;
-																$discount->amount_ht = abs($total_ht);
-																$discount->amount_tva = abs($total_tva);
-																$discount->amount_ttc = abs($total_ttc);
+																$discount->amount_ht = abs($item['total_ht']);
+																$discount->amount_tva = abs($item['total_tva']);
+																$discount->amount_ttc = abs($item['total_ttc']);
 																$discount->tva_tx = $item['tva_tx'];
 																$discount->fk_user = $this->user->id;
 																$discount->description = $description;
@@ -4672,6 +4668,7 @@ class eCommerceSynchro
 																}
 
 																$label = !empty($item['label']) ? $item['label'] : '';
+																$discount = $item['discount'];
 																$product_type = $item['product_type'] != "simple" ? 1 : 0;
 
 																$array_options = array();
@@ -4684,7 +4681,7 @@ class eCommerceSynchro
 																$result = $invoice->addline($description, $price, $item['qty'], $item['tva_tx'], $item['local_tax1_tx'], $item['local_tax2_tx'],
 																	$fk_product, $discount, '', '', 0, 0, 0, 'HT',
 																	0, $product_type, -1, 0, '', 0, 0, 0, $buy_price,
-																	$label, $array_options, 0, 100, 0, 0);
+																	$label, $array_options, 100, 0, 0, 0);
 																if ($result <= 0) {
 																	$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
 																	if (!empty($order->error)) $this->errors[] = $order->error;
@@ -5028,11 +5025,11 @@ class eCommerceSynchro
 													if (floatval(DOL_VERSION) < 8) $this->db->begin(); // Not exist in addline function but commit and rollback exist
 													$result = $supplier_invoice->addline(
 														$fee_line['label'],
-														$fee_line['amount'],
+														$fee_line['price'],
 														$fee_line['tax'],
-														0,
-														0,
-														1,
+														$fee_line['local_tax1_tx'],
+														$fee_line['local_tax2_tx'],
+														$fee_line['qty'],
 														$product_id);
 													if ($result < 0) {
 														$this->errors[] = $this->langs->trans('ECommerceErrorSupplierInvoiceAddLine');
