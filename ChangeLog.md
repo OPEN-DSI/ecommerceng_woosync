@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.50.0
+- Correction lors de l'ajout d'un produit depuis WooCommerce (nettoie les charactères en utf8mb4 dans la description et la description courte)
+
 ## 4.0.49.0
 - Correction de l'ajout des lignes de la facture lorsque l'on ne créer pas de commande
 - Correction de la creation des factures fournisseurs

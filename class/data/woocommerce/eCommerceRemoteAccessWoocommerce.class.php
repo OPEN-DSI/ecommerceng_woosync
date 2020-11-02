@@ -989,10 +989,10 @@ class eCommerceRemoteAccessWoocommerce
 		}
 		// Synchronize short and long description
 		if ($productDescriptionSynchDirection == 'etod' || $productDescriptionSynchDirection == 'all') {
-			$product['extrafields']["ecommerceng_description_{$conf->entity}"] = $remote_data->description;
+			$product['extrafields']["ecommerceng_description_{$conf->entity}"] = $this->replace4byte($remote_data->description);
 		}
 		if (!$isVariation && ($productShortDescriptionSynchDirection == 'etod' || $productShortDescriptionSynchDirection == 'all')) {
-			$product['extrafields']["ecommerceng_short_description_{$conf->entity}"] = $remote_data->short_description;
+			$product['extrafields']["ecommerceng_short_description_{$conf->entity}"] = $this->replace4byte($remote_data->short_description);
 		}
 		// Synchronize weight
 		if ($productWeightSynchDirection == 'etod' || $productWeightSynchDirection == 'all') {
