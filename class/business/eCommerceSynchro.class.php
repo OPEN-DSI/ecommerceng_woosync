@@ -5053,8 +5053,8 @@ class eCommerceSynchro
 											}
 
 											// Creation of payment line
-											if (!$error && $conf->banque->enabled && !empty($selected_payment_gateways['create_invoice_payment'])) {
-												$payment = new Paiement($this->db);
+											if (!$error && $conf->banque->enabled && !empty($selected_payment_gateways['create_supplier_invoice_payment'])) {
+												$payment = new PaiementFourn($this->db);
 												$payment->datepaye = $supplier_invoice->date;
 												$payment->amounts = array($supplier_invoice->id => $supplier_invoice->total_ttc);   // Array of amounts
 												$payment->multicurrency_amounts = array();
