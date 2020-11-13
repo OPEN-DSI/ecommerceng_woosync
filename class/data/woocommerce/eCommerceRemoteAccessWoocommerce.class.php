@@ -365,7 +365,7 @@ class eCommerceRemoteAccessWoocommerce
         $from_date = isset($fromDate) && !empty($fromDate) ? new DateTime(dol_print_date($fromDate, 'standard')) : null;
         $to_date = isset($toDate) && !empty($toDate) ? new DateTime(dol_print_date($toDate, 'standard')) : null;
 
-        $filter = ['limit' => $per_page];
+        $filter = ['limit' => $per_page, 'post_status' => 'publish'];
         if (isset($fromDate) && !empty($fromDate)) $filter['updated_at_min'] = dol_print_date($fromDate - (24 * 60 * 60), 'dayrfc');
         if (isset($toDate) && !empty($toDate)) $filter['updated_at_max'] = dol_print_date($toDate + (24 * 60 * 60), 'dayrfc');
 
@@ -804,6 +804,7 @@ class eCommerceRemoteAccessWoocommerce
 			'per_page' => $nb_max_by_request,
 			'orderby' => 'date',
 			'order' => 'asc',
+			'status' => 'publish'
 		];
 		if ($toNb > 0) $filters['per_page'] = min($nb_max_by_request, $toNb);
 		if (!empty($include_ids)) $filters['include'] = implode(',', $include_ids);
