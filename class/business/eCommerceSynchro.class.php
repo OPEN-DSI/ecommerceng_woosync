@@ -307,6 +307,12 @@ class eCommerceSynchro
 //                $this->commandeLastUpdateDate = $this->eCommerceCommande->getLastUpdate($this->eCommerceSite->id);
 				$last_sync_date = 'ECOMMERCE_LAST_SYNC_DATE_ORDER_' . $this->eCommerceSite->id;
 				$this->commandeLastUpdateDate = isset($conf->global->$last_sync_date) ? $conf->global->$last_sync_date : null;
+				if (empty($this->commandeLastUpdateDate)) {
+				    if ( !isset($this->eCommerceCommande)) {
+					$this->initECommerceCommande();
+				    }
+				    $conf->global->$last_sync_date  = $this->commandeLastUpdateDate = $this->eCommerceCommande->getLastUpdate($this->eCommerceSite->id);
+				}
 			}
             return $this->commandeLastUpdateDate;
         } catch (Exception $e) {
