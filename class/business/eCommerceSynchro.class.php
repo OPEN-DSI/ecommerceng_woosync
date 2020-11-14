@@ -4236,8 +4236,13 @@ class eCommerceSynchro
 					}
 
 					$last_sync_date = 'ECOMMERCE_LAST_SYNC_DATE_ORDER_' . $this->eCommerceSite->id;
-					if (!$error && !$bypass && $conf->global->$last_sync_date < $order_data['create_date']) {
-						$result = dolibarr_set_const($this->db, $last_sync_date, $order_data['create_date'], 'chaine', 0, '', $conf->entity);
+					$sync_date = $order_data['create_date'];
+                                        if (!empty($order_data['remote_order']->date_modified)) {
+                                            $sync_date = strtotime($order_data['remote_order']->date_modified);
+                                        }
+					
+					if (!$error && !$bypass && ( (int) $conf->global->$last_sync_date < (int) $sync_date) ) {
+						$result = dolibarr_set_const($this->db, $last_sync_date, $sync_date, 'chaine', 0, '', $conf->entity);
 						if ($result < 0) {
 							$this->errors[] = $this->langs->trans('ECommerceErrorSetLastSyncDateOrder');
 							$this->errors[] = $this->db->lasterror();
