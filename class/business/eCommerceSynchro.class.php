@@ -4614,6 +4614,9 @@ class eCommerceSynchro
 
 														if (!$error) {
 															$price = $item['price'];
+															$total_ht = $item['total_ht'];
+															$total_tva = $item['total_tva'];
+															$total_ttc = $item['total_ttc'];
 															$description = $item['description'];
 															if (empty($description) && $fk_product > 0) {
 																$product = new Product($this->db);
@@ -4625,9 +4628,9 @@ class eCommerceSynchro
 																// Negative line, we create a discount line
 																$discount = new DiscountAbsolute($this->db);
 																$discount->fk_soc = $invoice->socid;
-																$discount->amount_ht = abs($item['total_ht']);
-																$discount->amount_tva = abs($item['total_tva']);
-																$discount->amount_ttc = abs($item['total_ttc']);
+																$discount->amount_ht = abs($total_ht);
+																$discount->amount_tva = abs($total_tva);
+																$discount->amount_ttc = abs($total_ttc);
 																$discount->tva_tx = $item['tva_tx'];
 																$discount->fk_user = $this->user->id;
 																$discount->description = $description;

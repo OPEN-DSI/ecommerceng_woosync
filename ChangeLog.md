@@ -1,5 +1,11 @@
 # ChangeLog
 
+## 4.0.52.0
+- Correction de la tache planifié de syncho des webhooks.
+
+## 4.0.51.0
+- Correction lors de la synchronisation d'image de produits comportant des caractères spéciaux dans leur nom.
+
 ## 4.0.50.0
 - Correction lors de l'ajout d'un produit depuis WooCommerce (nettoie les charactères en utf8mb4 dans la description et la description courte)
 - Ajout de la variable globale ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION_WITHOUT_ERRORS pour desactivé la reprise des lignes de synchro des webhooks qui ont eu une erreur préalablement lors de la prochaine synchro des webhooks

@@ -433,8 +433,9 @@ class eCommercePendingWebHook
 			}
 			$this->db->free($resql);
 
+			dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION', 0);
+
 			if ($error) {
-				dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION', 0);
 				$this->error = $output;
 				$this->errors = array();
 				return -1;
@@ -444,8 +445,6 @@ class eCommercePendingWebHook
 		} else {
 			$output .= $langs->trans('ECommerceAlreadyProcessingWebHooksSynchronization') . ' (' . $langs->trans('ECommerceSince') . ' : ' . $const->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION . ')';
 		}
-
-		dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION', 0);
 
 		$this->error = "";
 		$this->errors = array();

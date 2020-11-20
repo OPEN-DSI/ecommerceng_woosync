@@ -206,6 +206,8 @@ function ecommerceng_download_image($image, $product, &$error_message)
         $destpath .= '.noexe';
     }
 
+	$destpath = dol_sanitizePathName($destpath);
+
     // Check if image is modified
     if (file_exists($destpath)) {
         $local_image_date = new DateTime();
