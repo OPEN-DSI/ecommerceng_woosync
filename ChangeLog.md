@@ -1,5 +1,12 @@
 # ChangeLog
 
+## 4.0.54.0
+- Correction de la synchronisation des stocks sur les produits de WooCommerce vers Dolibarr.
+
+## 4.0.53.0
+- Le tiers aura l'addresse de facturation lors de sa creation.
+- Ajout de la variable globale ECOMMERCENG_UPPERCASE_LASTNAME pour forcer le nom en majuscule.
+
 ## 4.0.52.0
 - Correction de la tache planifié de syncho des webhooks.
 

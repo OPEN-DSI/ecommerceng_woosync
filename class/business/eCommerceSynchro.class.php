@@ -2977,6 +2977,13 @@ class eCommerceSynchro
 								$third_party->array_options['options_' . $key] = $value;
 							}
 						}
+						if (!($third_party->id > 0)) {
+							// Only when create third party
+							if (isset($customer_data['address'])) $third_party->address = $customer_data['address'];
+							if (isset($customer_data['zip'])) $third_party->zip = $customer_data['zip'];
+							if (isset($customer_data['town'])) $third_party->town = $customer_data['town'];
+							if (isset($customer_data['phone'])) $third_party->phone = $customer_data['phone'];
+						}
 						$third_party->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
 
 						if ($customer_data['type'] == 'user') {
@@ -3441,9 +3448,9 @@ class eCommerceSynchro
 									}
 									$lot = $product->status_batch ? '000000' : null;
 									if ($new_stock < 0) {
-										$result = $movement->reception($this->user, $product->id, $this->eCommerceSite->fk_warehouse, $new_stock, 0, $langs->trans($new_product ? 'ECommerceStockInitFromWooSync' : 'ECommerceStockUpdateFromWooSync'), '', '', $lot);
+										$result = $movement->livraison($this->user, $product->id, $this->eCommerceSite->fk_warehouse, abs($new_stock), 0, $langs->trans($new_product ? 'ECommerceStockInitFromWooSync' : 'ECommerceStockUpdateFromWooSync'), '', '', $lot);
 									} else {
-										$result = $movement->livraison($this->user, $product->id, $this->eCommerceSite->fk_warehouse, $new_stock, 0, $langs->trans($new_product ? 'ECommerceStockInitFromWooSync' : 'ECommerceStockUpdateFromWooSync'), '', '', $lot);
+										$result = $movement->reception($this->user, $product->id, $this->eCommerceSite->fk_warehouse, $new_stock, 0, $langs->trans($new_product ? 'ECommerceStockInitFromWooSync' : 'ECommerceStockUpdateFromWooSync'), '', '', $lot);
 									}
 									if ($result <= 0) {
 										$this->errors[] = $this->langs->trans('ECommerceErrorUpdateProductStock');

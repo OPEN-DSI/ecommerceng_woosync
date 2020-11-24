@@ -641,7 +641,11 @@ class eCommerceRemoteAccessWoocommerce
 			'client' => 1,
 			'vatnumber' => null,
 			'note_private' => "Site: '{$this->site->name}' - ID: {$remote_data->id}",
+			'address' => $remote_data->billing->address_1 . (!empty($remote_data->billing->address_1) && !empty($remote_data->billing->address_2) ? "\n" : "") . $remote_data->billing->address_2,
+			'zip' => $remote_data->billing->postcode,
+			'town' => $remote_data->billing->city,
 			'country_id' => getCountry($remote_data->billing->country, 3),
+			'phone' => $remote_data->billing->phone,
 			'default_lang' => $mysoc->default_lang,
 			'remote_datas' => $remote_data,
 			'extrafields' => [
@@ -673,6 +677,10 @@ class eCommerceRemoteAccessWoocommerce
 		else {
 			$firstname = !empty($remote_data->first_name) ? $remote_data->first_name : $remote_data->billing->first_name;
 			$lastname = !empty($remote_data->last_name) ? $remote_data->last_name : $remote_data->billing->last_name;
+			if (!empty($conf->global->ECOMMERCENG_UPPERCASE_LASTNAME)) {
+				$firstname = dol_ucwords(dol_strtolower($firstname));
+				$lastname = dol_strtoupper($lastname);
+			}
 			if (!empty($firstname) && !empty($lastname)) {
 				$name = dolGetFirstLastname($firstname, $lastname);
 			} elseif (!empty($firstname)) {
@@ -697,7 +705,7 @@ class eCommerceRemoteAccessWoocommerce
     public function convertRemoteObjectIntoDolibarrSocpeople($remoteCompany)
     {
         dol_syslog(__METHOD__ . ": Get remote contacts ID: {$remoteCompany->id} for site ID {$this->site->id}", LOG_DEBUG);
-        global $langs;
+        global $conf, $langs;
 
 		$this->errors = array();
 		$contacts = [];
@@ -710,6 +718,10 @@ class eCommerceRemoteAccessWoocommerce
         ) {
             $firstname = !empty($bContact->first_name) ? $bContact->first_name : $remoteCompany->first_name;
             $lastname = !empty($bContact->last_name) ? $bContact->last_name : $remoteCompany->last_name;
+			if (!empty($conf->global->ECOMMERCENG_UPPERCASE_LASTNAME)) {
+				$firstname = dol_ucwords(dol_strtolower($firstname));
+				$lastname = dol_strtoupper($lastname);
+			}
             if (!empty($firstname) && empty($lastname)) {
                 $lastname = $langs->transnoentitiesnoconv("ECommerceLastNameNotInformed");
             } elseif (empty($firstname) && empty($lastname)) {
@@ -742,6 +754,10 @@ class eCommerceRemoteAccessWoocommerce
             ) {
                 $firstname = !empty($sContact->first_name) ? $sContact->first_name : $remoteCompany->first_name;
                 $lastname = !empty($sContact->last_name) ? $sContact->last_name : $remoteCompany->last_name;
+				if (!empty($conf->global->ECOMMERCENG_UPPERCASE_LASTNAME)) {
+					$firstname = dol_ucwords(dol_strtolower($firstname));
+					$lastname = dol_strtoupper($lastname);
+				}
                 if (!empty($firstname) && empty($lastname)) {
                     $lastname = $langs->transnoentitiesnoconv("ECommerceLastNameNotInformed");
                 } elseif (empty($firstname) && empty($lastname)) {
