@@ -1376,6 +1376,10 @@ class eCommerceRemoteAccessWoocommerce
 		$bContact = $remote_data->billing;
 		$firstname = $bContact->first_name;
 		$lastname = $bContact->last_name;
+		if (!empty($conf->global->ECOMMERCENG_UPPERCASE_LASTNAME)) {
+			$firstname = dol_ucwords(dol_strtolower($firstname));
+			$lastname = dol_strtoupper($lastname);
+		}
 		if (!empty($firstname) && empty($lastname)) {
 			$lastname = $langs->transnoentitiesnoconv("ECommerceLastNameNotInformed");
 		} elseif (empty($firstname) && empty($lastname)) {
@@ -1414,6 +1418,10 @@ class eCommerceRemoteAccessWoocommerce
 			) {
 				$firstname = $sContact->first_name;
 				$lastname = $sContact->last_name;
+				if (!empty($conf->global->ECOMMERCENG_UPPERCASE_LASTNAME)) {
+					$firstname = dol_ucwords(dol_strtolower($firstname));
+					$lastname = dol_strtoupper($lastname);
+				}
 				if (!empty($firstname) && empty($lastname)) {
 					$lastname = $langs->transnoentitiesnoconv("ECommerceLastNameNotInformed");
 				} elseif (empty($firstname) && empty($lastname)) {

@@ -2371,6 +2371,10 @@ class eCommerceSynchro
 		// Clean parameters
 		$lastname = $contact->lastname ? trim($contact->lastname) : trim($contact->name);
 		$firstname = trim($contact->firstname);
+		if (!empty($conf->global->ECOMMERCENG_UPPERCASE_LASTNAME)) {
+			$firstname = dol_ucwords(dol_strtolower($firstname));
+			$lastname = dol_strtoupper($lastname);
+		}
 		if (!empty($conf->global->MAIN_FIRST_TO_UPPER)) $lastname = ucwords($lastname);
 		if (!empty($conf->global->MAIN_FIRST_TO_UPPER)) $firstname = ucwords($firstname);
 		$socid = $contact->socid;
@@ -2761,6 +2765,37 @@ class eCommerceSynchro
 			}
 		} catch (Exception $e) {
 			$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeOrders')), $this->errors);
+			$this->errors[] = $e->getMessage();
+		}
+
+		return -1;
+	}
+
+	/**
+	 * Check if order exist in dolibarr from the remote order data
+	 *
+	 * @param   array   $raw_data 		Raw data to synchronize
+	 * @return	int						<0 if KO, =0 if not found, Id of the order in Dolibarr if OK
+	 */
+	public function isOrderExistFromData($raw_data)
+	{
+		dol_syslog(__METHOD__ . ' raw_data=' . json_encode($raw_data), LOG_DEBUG);
+
+		$this->error = '';
+		$this->errors = array();
+
+		try {
+			$order_data = $this->eCommerceRemoteAccess->convertOrderDataIntoProcessedData($raw_data);
+			if ($order_data === false) {
+				$this->errors[] = $this->langs->trans('ECommerceErrorWhenSynchronizeOrders');
+				$this->errors = array_merge($this->errors, $this->eCommerceRemoteAccess->errors);
+			} else {
+				$result = $this->isOrderExist(0, $order_data);
+
+				return $result;
+			}
+		} catch (Exception $e) {
+			$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenCheckOrderExistFromData')), $this->errors);
 			$this->errors[] = $e->getMessage();
 		}
 
@@ -3678,6 +3713,79 @@ class eCommerceSynchro
 		} else {
 			if ($success_log) $this->success[] = $this->langs->trans('ECommerceSynchronizeOrdersSuccess', $nb_synchronized);
 			return $nb_synchronized;
+		}
+	}
+
+	/**
+	 * Check if order exist in dolibarr from the remote order data or id
+	 *
+	 * @param	int		$order_remote_id	Order Id
+	 * @param	array	$order_data			Order data
+	 * @return	int							<0 if KO, =0 if not found, Id of the order in Dolibarr if OK
+	 */
+	public function isOrderExist($order_remote_id = 0, $order_data = array())
+	{
+		dol_syslog(__METHOD__ . ' order_remote_id=' . $order_remote_id . ' order_data=' . json_encode($order_data), LOG_DEBUG);
+
+		$this->error = '';
+		$this->errors = array();
+		$error = 0;
+		$order_id = 0;
+
+		if (!($order_remote_id > 0) && (empty($order_data) || !is_array($order_data))) {
+			$this->langs->load('errors');
+			$this->errors[] = $this->langs->trans('ErrorBadParameters') . '; order_remote_id=' . $order_remote_id . '; order_data=' . json_encode($order_data);
+			$error++;
+		}
+
+		if (!$error) {
+			try {
+				$order_remote_id = $order_remote_id > 0 ? $order_remote_id : $order_data['remote_id']; // todo attention peu arriver =>>> remote_id != $order_data['ref_client'];
+
+				$this->initECommerceCommande();
+
+				// Check if order already synchronized
+				$result = $this->eCommerceCommande->fetchByRemoteId($order_remote_id, $this->eCommerceSite->id);
+				if ($result < 0 && !empty($this->eCommerceCommande->error)) {
+					$this->errors[] = $this->langs->trans('ECommerceErrorFetchOrderLinkByRemoteId', $order_remote_id, $this->eCommerceSite->id);
+					$this->errors[] = $this->eCommerceCommande->error;
+					$error++;
+				} else {
+					$order_id = $this->eCommerceCommande->fk_commande;
+				}
+
+				// Fetch order
+				if (!$error && !($order_id > 0)) {
+					require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
+					$order = new Commande($this->db);
+
+					$order_ref_ext = $this->eCommerceSite->name . '-' . $order_remote_id;
+
+					// Fetch order by ref_ext if already created but the link is deleted
+					$result = $order->fetch(0, '', $order_ref_ext);
+					if ($result < 0) {
+						$this->errors[] = $this->langs->trans('ECommerceErrorFetchOrderByRefExt', $order_ref_ext);
+						if (!empty($order->error)) $this->errors[] = $order->error;
+						$this->errors = array_merge($this->errors, $order->errors);
+						$error++;
+					} else {
+						$order_id = $order->id;
+					}
+
+					unset($order);
+				}
+			} catch (Exception $e) {
+				$this->errors[] = $e->getMessage();
+				$error++;
+			}
+		}
+
+		if ($error) {
+			$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenCheckOrderExist', $order_remote_id)), $this->errors);
+			dol_syslog(__METHOD__ . ' Error=' . $this->errorsToString(), LOG_ERR);
+			return -1;
+		} else {
+			return $order_id > 0 ? $order_id : 0;
 		}
 	}
 

@@ -342,6 +342,7 @@ class eCommercePendingWebHook
 	 */
 	public function synchronize($site_id = 0, $webhook_topic = '', $webhook_resource = '', $webhook_event = '', $data = array())
 	{
+		global $langs;
 		dol_syslog(__METHOD__ . " site_id=$site_id, webhook_topic=$webhook_topic, webhook_resource=$webhook_resource, webhook_event=$webhook_event, data=" . json_encode($data), LOG_DEBUG);
 
 		if (empty($site_id) && $this->site_id > 0) $site_id = $this->site_id;
@@ -364,12 +365,20 @@ class eCommercePendingWebHook
 			$webhook_event = $tmp[1];
 		}
 
-		$result = 0;
+		$result = 1;
 
 		// Order
 		if ($webhook_resource == 'order') {
 			if ($webhook_event == 'created' || $webhook_event == 'updated') {
-				$result = $synchro->synchronizeOrderFromData($data);
+				if ($webhook_event == 'updated') {
+					$result = $synchro->isOrderExistFromData($data);
+					if ($result == 0) {
+						$langs->load('errors');
+						$this->errors[] = $langs->trans('ErrorRecordNotFound');
+						return -1;
+					}
+				}
+				if ($result > 0) $result = $synchro->synchronizeOrderFromData($data);
 			}
 		}
 

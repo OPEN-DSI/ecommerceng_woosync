@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.0.55.0
+- Regarde si la commande existe lors d'un update depuis la synchro par webhook et genere une erreur si elle n'est pas trouvé.
+- Ajout d'un variable global ECOMMERCENG_UPPERCASE_LASTNAME pour forcer les majuscule sur le nom et la premiere lettre du prenom en majuscule.
+
 ## 4.0.54.0
 - Correction de la synchronisation des stocks sur les produits de WooCommerce vers Dolibarr.
 
