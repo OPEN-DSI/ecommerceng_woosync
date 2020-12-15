@@ -41,6 +41,10 @@ class eCommercePendingWebHook
      * @var array Errors
      */
     public $errors = array();
+	/**
+	 * @var array Warnings
+	 */
+	public $warnings = array();
 
 	/**
 	 * @var int		ID
@@ -113,6 +117,7 @@ class eCommercePendingWebHook
 	const STATUS_NOT_PROCESSED = 0;
 	const STATUS_PROCESSED = 1;
 	const STATUS_ERROR = 2;
+	const STATUS_WARNING = 3;
 
 	/**
      * Constructor
@@ -293,7 +298,7 @@ class eCommercePendingWebHook
 	}
 
 	/**
-	 * Set status of the webhook to processed
+	 * Set status of the webhook to error
 	 *
 	 * @param 	int		$row_id		WebHook line ID
 	 * @param 	string	$error_msg	Error message
@@ -314,6 +319,48 @@ class eCommercePendingWebHook
 			", error_msg = '" . $this->db->escape($error_msg) . "'" .
 			" WHERE rowid = " . $row_id .
 			" AND status IN (" . self::STATUS_NOT_PROCESSED . "," . self::STATUS_ERROR . ")";
+
+		$this->db->begin();
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			$this->errors[] = 'Error ' . $this->db->lasterror();
+			dol_syslog(__METHOD__ . " SQL: " . $sql . "; Error: " . $this->db->lasterror(), LOG_ERR);
+			$error++;
+		}
+
+		// Commit or rollback
+		if ($error) {
+			$this->db->rollback();
+			return -1 * $error;
+		} else {
+			$this->db->commit();
+			return 1;
+		}
+	}
+
+	/**
+	 * Set status of the webhook to warning
+	 *
+	 * @param 	int		$row_id			WebHook line ID
+	 * @param 	string	$warning_msg	Warning message
+	 * @return	int 					<0 if KO, >0 if OK
+	 */
+	public function setStatusWarning($row_id, $warning_msg)
+	{
+		dol_syslog(__METHOD__ . " row_id=$row_id", LOG_DEBUG);
+
+		if (!($row_id > 0)) $row_id = $this->id;
+		$now = dol_now();
+		$error = 0;
+
+		// Set status error
+		$sql = "UPDATE " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks SET" .
+			"  status = " . self::STATUS_WARNING .
+			", datee = '" . $this->db->idate($now) . "'" .
+			", error_msg = '" . $this->db->escape($warning_msg) . "'" .
+			" WHERE rowid = " . $row_id .
+			" AND status IN (" . self::STATUS_NOT_PROCESSED . "," . self::STATUS_WARNING . ")";
 
 		$this->db->begin();
 
@@ -374,8 +421,8 @@ class eCommercePendingWebHook
 					$result = $synchro->isOrderExistFromData($data);
 					if ($result == 0) {
 						$langs->load('errors');
-						$this->errors[] = $langs->trans('ErrorRecordNotFound');
-						return -1;
+						$this->warnings[] = $langs->trans('ErrorRecordNotFound');
+						return -2;
 					}
 				}
 				if ($result > 0) $result = $synchro->synchronizeOrderFromData($data);
@@ -400,67 +447,89 @@ class eCommercePendingWebHook
 	{
 		global $const, $user, $langs;
 
-		if (!$user->rights->ecommerceng->write) {
-			$langs->load('errors');
-			$this->error = $langs->trans('ErrorForbidden');
-			$this->errors = array();
-			dol_syslog(__METHOD__ . " Error: " . $this->error, LOG_ERR);
-			return -1;
-		}
-
 		require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 		$langs->load('ecommerceng@ecommerceng');
-		$error = 0;
 		$output = '';
 
-		if (empty($const->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION)) {
-			dolibarr_set_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION', dol_print_date(dol_now(), 'dayhour'), 'chaine', 1, 'Token the processing of the synchronization of the site by webhooks', 0);
-
-			$sql = "SELECT rowid, site_id, webhook_topic, webhook_resource, webhook_event, webhook_data";
-			$sql .= " FROM " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks";
-			$sql .= " WHERE status IN (" . self::STATUS_NOT_PROCESSED . (empty($const->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION_WITHOUT_ERRORS) ? "," . self::STATUS_ERROR : '') . ")";
-			$sql .= " ORDER BY rowid ASC";
-
-			$resql = $this->db->query($sql);
-			if (!$resql) {
-				dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZEATION', 0);
-				$this->error = 'Error ' . $this->db->lasterror();
+		try {
+			if (!$user->rights->ecommerceng->write) {
+				$langs->load('errors');
+				$this->error = $langs->trans('ErrorForbidden');
 				$this->errors = array();
-				dol_syslog(__METHOD__ . " SQL: " . $sql . "; Error: " . $this->db->lasterror(), LOG_ERR);
+				dol_syslog(__METHOD__ . " Error: " . $this->error, LOG_ERR);
 				return -1;
 			}
 
-			while ($obj = $this->db->fetch_object($resql)) {
-				$result = $this->synchronize($obj->site_id, $obj->webhook_topic, $obj->webhook_resource, $obj->webhook_event, json_decode($obj->webhook_data));
-				if ($result > 0) $result = $this->setStatusProcessed($obj->rowid);
-				else $this->setStatusError($obj->rowid, $this->errorsToString());
+			$error = 0;
+
+			if (empty($const->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION)) {
+				dolibarr_set_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION', dol_print_date(dol_now(), 'dayhour'), 'chaine', 1, 'Token the processing of the synchronization of the site by webhooks', 0);
+
+				// Archive successful pending lines before x days into a file
+				$result = $this->archive();
 				if ($result < 0) {
-					$output .= $langs->trans('ECommerceErrorSynchronizeWebHook', $obj->rowid, $obj->webhook_topic) . ":<br>";
-					$output .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $this->errorsToString() . '</span>' . "<br>";
-					$error++;
+					dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZEATION', 0);
+					return -1;
 				}
-			}
-			$this->db->free($resql);
 
-			dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION', 0);
+				$sql = "SELECT rowid, site_id, webhook_topic, webhook_resource, webhook_event, webhook_data";
+				$sql .= " FROM " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks";
+				$sql .= " WHERE status IN (" . self::STATUS_NOT_PROCESSED . ")";
+				$sql .= " ORDER BY rowid ASC";
 
-			if ($error) {
-				$this->error = $output;
-				$this->errors = array();
-				return -1;
+				$resql = $this->db->query($sql);
+				if (!$resql) {
+					dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZEATION', 0);
+					$this->error = 'Error ' . $this->db->lasterror();
+					$this->errors = array();
+					dol_syslog(__METHOD__ . " SQL: " . $sql . "; Error: " . $this->db->lasterror(), LOG_ERR);
+					return -1;
+				}
+
+				while ($obj = $this->db->fetch_object($resql)) {
+					$result = $this->synchronize($obj->site_id, $obj->webhook_topic, $obj->webhook_resource, $obj->webhook_event, json_decode($obj->webhook_data));
+					if ($result > 0) $result = $this->setStatusProcessed($obj->rowid);
+					elseif ($result == -2) $this->setStatusWarning($obj->rowid, $this->warningsToString());
+					else $this->setStatusError($obj->rowid, $this->errorsToString());
+					if ($result == -2) {
+						$output .= $langs->trans('ECommerceWarningSynchronizeWebHook', $obj->rowid, $obj->webhook_topic) . ":<br>";
+						$output .= '<span style="color: orangered;">' . $langs->trans('Warning') . ': ' . $this->warningsToString() . '</span>' . "<br>";
+						$error++;
+					} elseif ($result < 0) {
+						$output .= $langs->trans('ECommerceErrorSynchronizeWebHook', $obj->rowid, $obj->webhook_topic) . ":<br>";
+						$output .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $this->errorsToString() . '</span>' . "<br>";
+						$error++;
+					}
+				}
+				$this->db->free($resql);
+
+				dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION', 0);
+
+				if ($error) {
+					$this->error = $output;
+					$this->errors = array();
+					return -1;
+				} else {
+					$output .= $langs->trans('ECommerceSynchronizeWebHooksSuccess');
+				}
 			} else {
-				$output .= $langs->trans('ECommerceSynchronizeWebHooksSuccess');
+				$output .= $langs->trans('ECommerceAlreadyProcessingWebHooksSynchronization') . ' (' . $langs->trans('ECommerceSince') . ' : ' . $const->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION . ')';
 			}
-		} else {
-			$output .= $langs->trans('ECommerceAlreadyProcessingWebHooksSynchronization') . ' (' . $langs->trans('ECommerceSince') . ' : ' . $const->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION . ')';
+
+			$this->error = "";
+			$this->errors = array();
+			$this->output = $output;
+			$this->result = array("commandbackuplastdone" => "", "commandbackuptorun" => "");
+
+			return 0;
+		} catch (Exception $e) {
+			dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION', 0);
+			$output .= $langs->trans('ECommerceErrorWhenProcessPendingWebHooks') . ":<br>";
+			$output .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $e->getMessage() . '</span>' . "<br>";
+			$this->error = $output;
+			$this->errors = array();
+			return -1;
 		}
-
-		$this->error = "";
-		$this->errors = array();
-		$this->output = $output;
-		$this->result = array("commandbackuplastdone" => "", "commandbackuptorun" => "");
-
-		return 0;
 	}
 
 	/**
@@ -526,6 +595,88 @@ class eCommercePendingWebHook
 	}
 
 	/**
+	 * Archive last success synchronization into a log file
+	 *
+	 * @return	int					<0 if KO, >0 if OK
+	 */
+	public function archive()
+	{
+		global $conf;
+
+		require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
+		$error = 0;
+		$period = !empty($conf->global->ECOMMERCE_PROCESSING_WEBHOOK_LOGS_BEFORE_X_DAYS) ? abs($conf->global->ECOMMERCE_PROCESSING_WEBHOOK_LOGS_BEFORE_X_DAYS) : 7;
+		$log_before_date = dol_time_plus_duree(dol_now(), -$period, 'd');
+
+		$sql = "SELECT rowid, datec, site_id, delivery_id, webhook_id, webhook_topic, webhook_resource" .
+			", webhook_event, webhook_data, webhook_signature, webhook_source, status, datep, datee, error_msg" .
+			" FROM " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks" .
+			" WHERE status IN (" . self::STATUS_PROCESSED . ")" .
+			" AND datec < '" . $this->db->idate($log_before_date) . "'" .
+			" ORDER BY rowid ASC";
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			$error++;
+			$this->error = 'Error ' . $this->db->lasterror();
+			$this->errors = array();
+			dol_syslog(__METHOD__ . " SQL: " . $sql . "; Error: " . $this->db->lasterror(), LOG_ERR);
+		} elseif ($this->db->num_rows($resql) > 0) {
+			if (empty($conf->global->SYSLOG_FILE)) $logfile = DOL_DATA_ROOT . '/woosync_webhooks.log';
+			else $logfile = dirname(str_replace('DOL_DATA_ROOT', DOL_DATA_ROOT, $conf->global->SYSLOG_FILE)) . "/woosync_webhooks.log";
+
+			// Open/create log file
+			$filefd = @fopen($logfile, 'a+');
+			if (!$filefd) {
+				$error++;
+				$this->error = 'Failed to open woosync webhooks log file ' . $logfile;
+				$this->errors = array();
+				dol_syslog(__METHOD__ . " Error: " . $this->error, LOG_ERR);
+			} else {
+				while ($obj = $this->db->fetch_object($resql)) {
+					$data = array(
+						0 => dol_print_date($obj->datec, 'standard'),
+						1 => dol_print_date($obj->datep, 'standard'),
+						2 => $obj->site_id,
+						3 => $obj->delivery_id,
+						4 => $obj->webhook_id,
+						5 => $obj->webhook_topic,
+						6 => $obj->webhook_resource,
+						7 => $obj->webhook_event,
+						8 => $obj->webhook_source,
+						9 => $obj->webhook_data,
+					);
+
+					$result = @fputcsv($filefd, $data);
+					if ($result === false) {
+						$error++;
+						$this->error = 'Failed to write into woosync webhooks log file ' . $logfile;
+						$this->errors = array();
+						dol_syslog(__METHOD__ . " Error: " . $this->error, LOG_ERR);
+						break;
+					}
+
+					$sql2 = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks WHERE rowid = " . $obj->rowid;
+					$resql2 = $this->db->query($sql2);
+					if (!$resql2) {
+						$error++;
+						$this->error = 'Error ' . $this->db->lasterror();
+						$this->errors = array();
+						dol_syslog(__METHOD__ . " SQL: " . $sql2 . "; Error: " . $this->db->lasterror(), LOG_ERR);
+						break;
+					}
+				}
+			}
+			fclose($filefd);
+			@chmod($logfile, octdec(empty($conf->global->MAIN_UMASK) ? '0664' : $conf->global->MAIN_UMASK));
+
+			$this->db->free($resql);
+		}
+
+		return $error ? -1 : 1;
+	}
+
+	/**
 	 * Method to output saved errors
 	 *
 	 * @param   string      $separator      Separator between each error
@@ -534,5 +685,16 @@ class eCommercePendingWebHook
 	public function errorsToString($separator = ', ')
 	{
 		return $this->error . (is_array($this->errors) ? (!empty($this->error) ? $separator : '') . join($separator, $this->errors) : '');
+	}
+
+	/**
+	 * Method to output saved warnings
+	 *
+	 * @param   string      $separator      Separator between each error
+	 * @return	string		                String with warnings
+	 */
+	public function warningsToString($separator = ', ')
+	{
+		return join($separator, $this->warnings);
 	}
 }

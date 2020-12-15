@@ -275,7 +275,6 @@ EcommerceUpdateCompanyFromECommerceSuccess    = Ce tiers à bien été mis à jo
 EcommerceSiteNotFound                         = Le site avec l'ID %s n'a pas pu être chargé
 
 ECommerceSynchProductError=Erreur lors de la synchronisation du produit distant:
-ECommerceErrorProductAlreadyLinkedWithRemoteProduct=Le produit avec cette réf. est déjà lié au produit distant ID: %s.
 
 ECommerceOnlyNew = Seulement les nouveaux
 
@@ -325,7 +324,7 @@ ECommerceSince                                      = Depuis
 ECommerceSynchronizeCustomersSuccess                = %s clients (tiers/contacts) s'est synchronisés avec succès
 ECommerceUpdateThirdPartyFromSiteNote               = Thiers mise a jour depuis WooSync le %s (Site: %s; ID distant: %s)
 ECommerceCreateThirdPartyFromSiteNote               = Thiers créé depuis WooSync (Site: %s)
-ECommerceSynchronizeProductsSuccess                 = %s produits se sont synchronisés avec succès
+ECommerceSynchronizeProductsSuccess                 = %s produits se sont synchronisés avec succès (%s ont été mise à jour)
 ECommerceUpdateProductFromSiteNote                  = Produit mise a jour depuis WooSync le %s (Site: %s; ID distant: %s)
 ECommerceCreateProductFromSiteNote                  = Produit créé depuis WooSync (Site: %s)
 ECommerceStockInitFromWooSync                       = Stock initialisé par WooSync
@@ -442,6 +441,8 @@ ECommerceErrorUpdatePrivateNote                     = Erreur lors de la mise a j
 ECommerceErrorGetEMailTemplate                      = Erreur lors de la récupération du modèle de mail
 ECommerceErrorWhenCheckOrderExist                   = Erreur lors du test si la commande existe dans dolibarr
 ECommerceErrorWhenCheckOrderExistFromData           = Erreur lors du test si la commande existe dans dolibarr grace aux données distants
+ECommerceErrorWhenProcessPendingWebHooks            = Erreur lors de la synchronisation de la file d'attente des WebHooks
 
 ECommerceWarningWrongAmountTTCWithPaid              = Attention!! Le client a payé un montant différent : %s TTC
 ECommerceWarningOrderThirdPartyNotSupported         = Attention!! La commande (ID: %s) est ignoré car elle a été créée par un client (ID: %s) dont le type n'est pas authorisé dans la configuration
+ECommerceWarningSynchronizeWebHook                  = Attention!! Lors de la synchronisation de la ligne de la file d'attente (ID: %s, Topic: %s)

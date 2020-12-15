@@ -3209,6 +3209,7 @@ class eCommerceSynchro
 		$this->errors = array();
 		$error = 0;
 		$nb_synchronized = 0;
+		$nb_updated = 0;
 
 		if (!is_array($remote_ids)) {
 			$this->langs->load('errors');
@@ -3234,6 +3235,7 @@ class eCommerceSynchro
 							break;
 						} else {
 							$nb_synchronized++;
+							if($result > 0) $nb_updated++;
 						}
 					}
 				}
@@ -3245,10 +3247,10 @@ class eCommerceSynchro
 
 		if ($error) {
 			$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeProducts')), $this->errors);
-			if ($success_log && $nb_synchronized) $this->success[] = $this->langs->trans('ECommerceSynchronizeProductsSuccess', $nb_synchronized);
+			if ($success_log && $nb_synchronized) $this->success[] = $this->langs->trans('ECommerceSynchronizeProductsSuccess', $nb_synchronized, $nb_updated);
 			return -1;
 		} else {
-			if ($success_log) $this->success[] = $this->langs->trans('ECommerceSynchronizeProductsSuccess', $nb_synchronized);
+			if ($success_log) $this->success[] = $this->langs->trans('ECommerceSynchronizeProductsSuccess', $nb_synchronized, $nb_updated);
 			return $nb_synchronized;
 		}
 	}
@@ -3285,7 +3287,7 @@ class eCommerceSynchro
 				$product_ref = dol_string_nospecial(trim($product_data['ref']));
 				$new_product = false;
 
-				if (empty($product_ref)) {
+				if (empty($product_ref) && (empty($conf->global->PRODUCT_CODEPRODUCT_ADDON) || $conf->global->PRODUCT_CODEPRODUCT_ADDON == 'mod_codeproduct_leopard')) {
 					$this->errors[] = $this->langs->trans('ECommerceErrorProductRefMandatory');
 					$error++;
 				} else {
@@ -3310,7 +3312,7 @@ class eCommerceSynchro
 					}
 
 					// Fetch product by ref
-					if (!$error && empty($product->id)) {
+					if (!$error && empty($product->id) && !empty($product_ref)) {
 						$result = $product->fetch('', $product_ref);
 						if ($result < 0) {
 							$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductByRef', $product_ref);
@@ -3338,7 +3340,7 @@ class eCommerceSynchro
 					// Update if not found or the last update date more recent
 					if (!$error && (empty($product->id) || empty($this->eCommerceProduct->id) || !$bypass)) {
 						// Set the product
-						$product->ref = !empty($product_data['ref']) ? dol_string_nospecial(trim($product_data['ref'])) : $product->ref;
+						$product->ref = !empty($product_ref) ? $product_ref : $product->ref;
 						$product->ref_ext = $this->eCommerceSite->name . '-' . $product_data['remote_id'];
 						$product->label = $product_data['label'];
 						$product->description = isset($product_data['description']) ? $product_data['description'] : $product->description;
@@ -3549,6 +3551,9 @@ class eCommerceSynchro
 											}
 										}
 
+										// add root category
+										if (!in_array($this->eCommerceSite->fk_cat_product, $category_ids)) $category_ids[] = $this->eCommerceSite->fk_cat_product;
+
 										// add categories
 										foreach ($category_ids as $category_id) {
 											$cat = new Categorie($this->db); // Instanciate a new cat without id (to avoid fetch)
@@ -3649,7 +3654,7 @@ class eCommerceSynchro
 			dol_syslog(__METHOD__ . ' Error=' . $this->errorsToString(), LOG_ERR);
 			return -1;
 		} else {
-			return $product->id > 0 ? $product->id : 0;
+			return $product->id > 0 && empty($bypass) ? $product->id : 0;
 		}
 	}
 

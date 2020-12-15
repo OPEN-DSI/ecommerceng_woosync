@@ -1,5 +1,19 @@
 # ChangeLog
 
+## 4.0.57.0
+- Ajout d'un try/catch si une erreur 500 se produit lors de la tache planifié de syncho des webhooks.
+- La variable globale ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION_WITHOUT_ERRORS à été retiré.
+- Seul les webhooks au statut non traités seront traités.
+- Les lignes de webhooks dont ont a recu un update mais que l'ont ne trouve pas la commande est mise au statut warning.
+- La synchronisation depuis le site des produits lorsque la référence n'est pas renseignée ne produit une erreur que si le module de generation automatique des références produits n'est pas activé.
+- Archive les lignes de webhooks traités dont la date de création est inférieur à 7 (ou ECOMMERCE_PROCESSING_WEBHOOK_LOGS_BEFORE_X_DAYS) jours dans un fichier de log situé au même endroits que celui de dolibarr.
+
+## 4.0.56.0
+- Ajout du support avec WPML avec la variable globale ECOMMERCENG_WOOCOMMERCE_WPML_SUPPORT (met aussi à jour les information sur les traductions des produits).
+- Correction ajout du tag racine boutique sur le produit.
+- Correction images synchronisés (quand x images portent les mêmes noms mais situées dans des répertoires differents dans WooCommerce)
+- Correction warnings
+
 ## 4.0.55.0
 - Regarde si la commande existe lors d'un update depuis la synchro par webhook et genere une erreur si elle n'est pas trouvé.
 - Ajout d'un variable global ECOMMERCENG_UPPERCASE_LASTNAME pour forcer les majuscule sur le nom et la premiere lettre du prenom en majuscule.

@@ -188,7 +188,7 @@ function ecommerceng_download_image($image, $product, &$error_message)
     }
 
     // Define $destpath (path to file including filename) and $destfile (only filename)
-    $file_name = basename(parse_url($image['url'], PHP_URL_PATH));
+    $file_name = dol_sanitizeFileName($image['filename']); //basename(parse_url($image['url'], PHP_URL_PATH));
     $destpath = $upload_dir . "/" . $file_name;
     $destfile = $file_name;
 
@@ -349,7 +349,7 @@ function ecommerceng_remove_obsolete_image($product, $images, &$error_message)
     $images_name = [];
     foreach ($images as $image) {
         // Define $destpath (path to file including filename) and $destfile (only filename)
-        $file_name = basename(parse_url($image['url'], PHP_URL_PATH));
+        $file_name = dol_sanitizeFileName($image['filename']); //basename(parse_url($image['url'], PHP_URL_PATH));
         $destfile = $file_name;
 
         // lowercase extension
