@@ -198,14 +198,14 @@ $form = new Form($db);
 
 $help_url='';
 
-$sql = 'SELECT epw.rowid, epw.status';
-$sql.= ", epw.site_id, es.name AS site_name";
-$sql.= ", epw.delivery_id, epw.webhook_id, epw.webhook_topic, epw.webhook_resource, epw.webhook_event, epw.webhook_signature";
-$sql.= ", epw.webhook_source, epw.webhook_data, epw.error_msg, epw.datep, epw.datec";
+$sqlselect = 'SELECT epw.rowid, epw.status';
+$sqlselect.= ", epw.site_id, es.name AS site_name";
+$sqlselect.= ", epw.delivery_id, epw.webhook_id, epw.webhook_topic, epw.webhook_resource, epw.webhook_event, epw.webhook_signature";
+$sqlselect.= ", epw.webhook_source, epw.webhook_data, epw.error_msg, epw.datep, epw.datec";
 $parameters=array();
 $reshook=$hookmanager->executeHooks('printFieldListSelect', $parameters);    // Note that $action and $object may have been modified by hook
-$sql.=$hookmanager->resPrint;
-$sql.= ' FROM '.MAIN_DB_PREFIX.'ecommerce_pending_webhooks AS epw';
+$sqlselect.=$hookmanager->resPrint;
+$sql= ' FROM '.MAIN_DB_PREFIX.'ecommerce_pending_webhooks AS epw';
 $sql.= " LEFT JOIN ".MAIN_DB_PREFIX."ecommerce_site AS es on es.rowid = epw.site_id";
 $sql.= ' WHERE 1 = 1';
 if ($search_technical_id)           $sql .= " AND epw.rowid IN (".$db->escape($search_technical_id).')';
@@ -236,8 +236,9 @@ $sql.= $db->order($sortfield, $sortorder);
 // Count total nb of records
 $nbtotalofrecords = '';
 if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST)) {
-	$result = $db->query($sql);
-	$nbtotalofrecords = $db->num_rows($result);
+	$result = $db->query("SELECT COUNT(*) AS nb " . $sql);
+	$nbtotalofrecords = 0;
+	if ($result && $obj = $db->fetch_object($result)) $nbtotalofrecords = $obj->nb;
 
 	if (($page * $limit) > $nbtotalofrecords) {    // if total resultset is smaller then paging size (filtering), goto and load page 0
 		$page = 0;
@@ -247,7 +248,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST)) {
 
 $sql.= $db->plimit($limit+1, $offset);
 
-$resql=$db->query($sql);
+$resql=$db->query($sqlselect . $sql);
 
 if ($resql) {
 	$objectstatic = new eCommercePendingWebHook($db);
