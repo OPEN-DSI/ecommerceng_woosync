@@ -29,7 +29,12 @@
  */
 class eCommercePendingWebHook
 {
-    /**
+	/**
+	 * @var string ID to identify managed object
+	 */
+	public $element = 'ecommercependingwebhook';
+
+	/**
      * @var DoliDB Database handler.
      */
     public $db;
@@ -97,13 +102,18 @@ class eCommercePendingWebHook
 	 */
 	public $datep;
 	/**
-	 * @var int		Date error
-	 */
-	public $datee;
-	/**
 	 * @var int		Error message when processing
 	 */
 	public $error_msg;
+
+	/**
+	 * @var array   List of long language codes for bank record status
+	 */
+	public $labelStatus;
+	/**
+	 * @var array   List of short language codes for bank record status
+	 */
+	public $labelStatusShort;
 
 	/**
 	 * @var eCommerceSite[]		eCommerceSite handler cached
@@ -127,6 +137,22 @@ class eCommercePendingWebHook
     public function __construct($db)
     {
         $this->db = $db;
+
+		// List of long language codes for bank record status
+		$this->labelStatus = array(
+			self::STATUS_NOT_PROCESSED => 'ECommerceWebHooksStatusNotProcessed',
+			self::STATUS_PROCESSED => 'ECommerceWebHooksStatusProcessed',
+			self::STATUS_ERROR => 'ECommerceWebHooksStatusError',
+			self::STATUS_WARNING => 'ECommerceWebHooksStatusWarning',
+		);
+
+		// List of short language codes for bank record status
+		$this->labelStatusShort = array(
+			self::STATUS_NOT_PROCESSED => 'ECommerceWebHooksStatusShortNotProcessed',
+			self::STATUS_PROCESSED => 'ECommerceWebHooksStatusShortProcessed',
+			self::STATUS_ERROR => 'ECommerceWebHooksStatusShortError',
+			self::STATUS_WARNING => 'ECommerceWebHooksStatusShortWarning',
+		);
     }
 
 	/**
@@ -256,6 +282,47 @@ class eCommercePendingWebHook
 	}
 
 	/**
+	 * Set status of the webhook to process
+	 *
+	 * @param 	int		$row_id		WebHook line ID
+	 * @return	int 				<0 if KO, >0 if OK
+	 */
+	public function setStatusToProcess($row_id)
+	{
+		dol_syslog(__METHOD__ . " row_id=$row_id", LOG_DEBUG);
+
+		if (!($row_id > 0)) $row_id = $this->id;
+		$now = dol_now();
+		$error = 0;
+
+		// Set status processed
+		$sql = "UPDATE " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks SET" .
+			"  status = " . self::STATUS_NOT_PROCESSED .
+			", datep = NULL" .
+			", error_msg = NULL" .
+			" WHERE rowid = " . $row_id .
+			" AND status IN (" . self::STATUS_ERROR . "," . self::STATUS_WARNING . ")";
+
+		$this->db->begin();
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			$this->errors[] = 'Error ' . $this->db->lasterror();
+			dol_syslog(__METHOD__ . " SQL: " . $sql . "; Error: " . $this->db->lasterror(), LOG_ERR);
+			$error++;
+		}
+
+		// Commit or rollback
+		if ($error) {
+			$this->db->rollback();
+			return -1 * $error;
+		} else {
+			$this->db->commit();
+			return 1;
+		}
+	}
+
+	/**
 	 * Set status of the webhook to processed
 	 *
 	 * @param 	int		$row_id		WebHook line ID
@@ -273,10 +340,8 @@ class eCommercePendingWebHook
 		$sql = "UPDATE " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks SET" .
 			"  status = " . self::STATUS_PROCESSED .
 			", datep = '" . $this->db->idate($now) . "'" .
-			", datee = NULL" .
-			", error_msg = NULL" .
 			" WHERE rowid = " . $row_id .
-			" AND status IN (" . self::STATUS_NOT_PROCESSED . "," . self::STATUS_ERROR . ")";
+			" AND status IN (" . self::STATUS_NOT_PROCESSED . "," . self::STATUS_WARNING . ")";
 
 		$this->db->begin();
 
@@ -315,10 +380,10 @@ class eCommercePendingWebHook
 		// Set status error
 		$sql = "UPDATE " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks SET" .
 			"  status = " . self::STATUS_ERROR .
-			", datee = '" . $this->db->idate($now) . "'" .
+			", datep = '" . $this->db->idate($now) . "'" .
 			", error_msg = '" . $this->db->escape($error_msg) . "'" .
 			" WHERE rowid = " . $row_id .
-			" AND status IN (" . self::STATUS_NOT_PROCESSED . "," . self::STATUS_ERROR . ")";
+			" AND status IN (" . self::STATUS_NOT_PROCESSED . ")";
 
 		$this->db->begin();
 
@@ -357,10 +422,10 @@ class eCommercePendingWebHook
 		// Set status error
 		$sql = "UPDATE " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks SET" .
 			"  status = " . self::STATUS_WARNING .
-			", datee = '" . $this->db->idate($now) . "'" .
+			", datep = '" . $this->db->idate($now) . "'" .
 			", error_msg = '" . $this->db->escape($warning_msg) . "'" .
 			" WHERE rowid = " . $row_id .
-			" AND status IN (" . self::STATUS_NOT_PROCESSED . "," . self::STATUS_WARNING . ")";
+			" AND status IN (" . self::STATUS_NOT_PROCESSED . ")";
 
 		$this->db->begin();
 
@@ -420,8 +485,7 @@ class eCommercePendingWebHook
 				if ($webhook_event == 'updated') {
 					$result = $synchro->isOrderExistFromData($data);
 					if ($result == 0) {
-						$langs->load('errors');
-						$this->warnings[] = $langs->trans('ErrorRecordNotFound');
+						$this->warnings[] = $langs->trans('ECommerceWarningUpdateOrderNotSynchronized');
 						return -2;
 					}
 				}
@@ -609,11 +673,11 @@ class eCommercePendingWebHook
 		$log_before_date = dol_time_plus_duree(dol_now(), -$period, 'd');
 
 		$sql = "SELECT rowid, datec, site_id, delivery_id, webhook_id, webhook_topic, webhook_resource" .
-			", webhook_event, webhook_data, webhook_signature, webhook_source, status, datep, datee, error_msg" .
+			", webhook_event, webhook_data, webhook_signature, webhook_source, status, datep, error_msg" .
 			" FROM " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks" .
 			" WHERE status IN (" . self::STATUS_PROCESSED . ")" .
-			" AND datec < '" . $this->db->idate($log_before_date) . "'" .
-			" ORDER BY rowid ASC";
+			" AND datep < '" . $this->db->idate($log_before_date) . "'" .
+			" ORDER BY datep ASC";
 
 		$resql = $this->db->query($sql);
 		if (!$resql) {
@@ -622,8 +686,8 @@ class eCommercePendingWebHook
 			$this->errors = array();
 			dol_syslog(__METHOD__ . " SQL: " . $sql . "; Error: " . $this->db->lasterror(), LOG_ERR);
 		} elseif ($this->db->num_rows($resql) > 0) {
-			if (empty($conf->global->SYSLOG_FILE)) $logfile = DOL_DATA_ROOT . '/woosync_webhooks.log';
-			else $logfile = dirname(str_replace('DOL_DATA_ROOT', DOL_DATA_ROOT, $conf->global->SYSLOG_FILE)) . "/woosync_webhooks.log";
+			if (empty($conf->global->SYSLOG_FILE)) $logfile = DOL_DATA_ROOT . '/woosync_webhooks.v2.log';
+			else $logfile = dirname(str_replace('DOL_DATA_ROOT', DOL_DATA_ROOT, $conf->global->SYSLOG_FILE)) . "/woosync_webhooks.v2.log";
 
 			// Open/create log file
 			$filefd = @fopen($logfile, 'a+');
@@ -635,8 +699,8 @@ class eCommercePendingWebHook
 			} else {
 				while ($obj = $this->db->fetch_object($resql)) {
 					$data = array(
-						0 => dol_print_date($obj->datec, 'standard'),
-						1 => dol_print_date($obj->datep, 'standard'),
+						0 => dol_print_date($obj->datep, 'standard'),
+						1 => dol_print_date($obj->datec, 'standard'),
 						2 => $obj->site_id,
 						3 => $obj->delivery_id,
 						4 => $obj->webhook_id,
@@ -674,6 +738,83 @@ class eCommercePendingWebHook
 		}
 
 		return $error ? -1 : 1;
+	}
+
+	/**
+	 *  Return label of bank record status
+	 *
+	 * @param   int		$mode       0=Long label, 1=Short label, 2=Picto + Short label, 3=Picto, 4=Picto + Long label, 5=Short label + Picto
+	 * @return  string              Libelle du statut
+	 */
+	function getLibStatut($mode=0)
+	{
+		return $this->LibStatut($this->statut,$mode);
+	}
+
+	/**
+	 *  Return label of bank record status provides
+	 *
+	 * @param   int     $statut     Id statut
+	 * @param   int		$mode       0=Long label, 1=Short label, 2=Picto + Short label, 3=Picto, 4=Picto + Long label, 5=Short label + Picto, 6=Long label + Picto
+	 * @return  string              Libelle du statut
+	 */
+	public function LibStatut($statut, $mode=0)
+	{
+		global $langs;
+
+		$langs->load("ecommerceng@ecommerceng");
+
+		$isV10 = version_compare(DOL_VERSION, "10.0.0") >= 0;
+
+		switch ($statut) {
+			case self::STATUS_NOT_PROCESSED:
+				$icon = $isV10 ? 'status0' : 'statut0';
+				$labelStatus = $langs->trans($this->labelStatus[$statut]);
+				$labelStatusShort = $langs->trans($this->labelStatusShort[$statut]);
+				break;
+			case self::STATUS_PROCESSED:
+				$icon = $isV10 ? 'status4' : 'statut4';
+				$labelStatus = $langs->trans($this->labelStatus[$statut]);
+				$labelStatusShort = $langs->trans($this->labelStatusShort[$statut]);
+				break;
+			case self::STATUS_ERROR:
+				$icon = $isV10 ? 'status6' : 'statut6';
+				$labelStatus = $langs->trans($this->labelStatus[$statut]);
+				$labelStatusShort = $langs->trans($this->labelStatusShort[$statut]);
+				break;
+			case self::STATUS_WARNING:
+				$icon = $isV10 ? 'status1' : 'statut1';
+				$labelStatus = $langs->trans($this->labelStatus[$statut]);
+				$labelStatusShort = $langs->trans($this->labelStatusShort[$statut]);
+				break;
+			default:
+				$icon = '';
+				$labelStatus = $langs->trans('Unknown');
+				$labelStatusShort = '';
+				$mode = 0;
+				break;
+		}
+
+		if ($isV10) {
+			return dolGetStatus($labelStatus, $labelStatusShort, '', $icon, $mode);
+		} else {
+			switch ($mode) {
+				case 1:
+					return $labelStatusShort;
+				case 2:
+					return img_picto($labelStatus, $icon) . ' ' . $labelStatusShort;
+				case 3:
+					return img_picto($labelStatus, $icon);
+				case 4:
+					return img_picto($labelStatus, $icon) . ' ' . $labelStatus;
+				case 5:
+					return $labelStatusShort . ' ' . img_picto($labelStatus, $icon);
+				case 6:
+					return $labelStatus . ' ' . img_picto($labelStatus, $icon);
+				default: // 0
+					return $labelStatus;
+			}
+		}
 	}
 
 	/**

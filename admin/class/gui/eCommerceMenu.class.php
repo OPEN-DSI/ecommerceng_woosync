@@ -104,6 +104,19 @@ class eCommerceMenu
     					'target'=>'',
     					'user'=>2);
 
+		// Add links for webhooks
+		$menu[3] = array( 'fk_menu' => 'fk_mainmenu=tools,fk_leftmenu=ecommerceng',
+						  'type' => 'left',
+						  'titre' => 'ECommerceMenuWebHooks',
+						  'leftmenu' => 'ecommerceng_webhooks',
+						  'url' => '/ecommerceng/webhookslist.php',
+						  'langs' => 'ecommerce@ecommerceng',
+						  'position' => 130,
+						  'enabled' => '$conf->ecommerceng->enabled',
+						  'perms' => '$user->rights->ecommerceng->read',
+						  'target' => '',
+						  'user' => 2);
+
     	//add submenu foreach site
     	/* We can't return content of menu that depends on tables, because we must know menus entries when we activate menu, and this must not change.
     	$sites = $this->siteDb->listSites();

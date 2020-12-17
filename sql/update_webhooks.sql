@@ -16,20 +16,5 @@
 --
 -- ===================================================================
 
-create table llx_ecommerce_pending_webhooks
-(
-	rowid 				integer AUTO_INCREMENT PRIMARY KEY,
-	site_id				integer			NOT NULL,
-	delivery_id			varchar(255)	NOT NULL,
-	webhook_id 			varchar(255)	NOT NULL,
-	webhook_topic    	varchar(255)	NOT NULL,
-	webhook_resource 	varchar(255)	NOT NULL,
-	webhook_event	   	varchar(255)	NOT NULL,
-	webhook_data		text			NOT NULL,
-	webhook_signature	varchar(255)	NOT NULL,
-	webhook_source     	varchar(255)	NOT NULL,
-	error_msg			text			NULL,
-	status				integer(4)		NOT NULL DEFAULT 0,
-	datep				datetime		NULL,
-	datec				datetime		NOT NULL
-) ENGINE=InnoDB;
+UPDATE llx_ecommerce_pending_webhooks SET datep = datee WHERE datee IS NOT NULL;
+ALTER TABLE llx_ecommerce_pending_webhooks DROP COLUMN datee;

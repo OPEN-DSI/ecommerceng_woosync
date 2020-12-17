@@ -61,7 +61,7 @@ class modECommerceNg extends DolibarrModules
 		$this->editor_url = 'http://www.open-dsi.fr';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '4.0.57';
+		$this->version = '4.0.58';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
@@ -200,7 +200,9 @@ class modECommerceNg extends DolibarrModules
         */
 
 		// Boxes
-		$this->boxes = array();			// List of boxes
+		$this->boxes = array(
+			0 => array('file' => 'box_ecommerce_webhooks@ecommerceng', 'note' => $langs->trans('ECommerceBoxWebHooks')),
+		);			// List of boxes
 		$r=0;
 
 		// Add here list of php file(s) stored in includes/boxes that contains class to show a box.
@@ -262,7 +264,6 @@ class modECommerceNg extends DolibarrModules
     		$eCommerceMenu = new eCommerceMenu($this->db,null,$this);
 	        $this->menu = $eCommerceMenu->getMenu();
 		//}
-
 
         // Exports
         //--------

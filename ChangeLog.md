@@ -1,5 +1,12 @@
 # ChangeLog
 
+## 4.0.58.0
+- Ajout d'un widget pour voir l'etat des webhooks.
+- Ajout d'une page pour voir la liste des webhooks en cours (et pouvoir remettre en traitement les erreurs ou warnings et pouvoir mettre en traité les warnings)
+- Suppression de la colonne datee dans la table llx_ecommerce_pending_webhooks.
+- Archive maintenant les lignes de webhooks traités dont la date de traitement est inférieur à 7 (ou ECOMMERCE_PROCESSING_WEBHOOK_LOGS_BEFORE_X_DAYS) jours dans un fichier de log situé au même endroits que celui de dolibarr.
+  Les colonnes de l'archive sont maintenant "Date de traitement", "Date de création", "Id du site", "Id de livraison", "Id du webhook", "Sujet du webhook", "Resource du webhook", "Événement du webhook", "Source", "Données"
+
 ## 4.0.57.0
 - Ajout d'un try/catch si une erreur 500 se produit lors de la tache planifié de syncho des webhooks.
 - La variable globale ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION_WITHOUT_ERRORS à été retiré.
