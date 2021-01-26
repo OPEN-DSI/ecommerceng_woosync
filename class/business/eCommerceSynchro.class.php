@@ -3044,7 +3044,7 @@ class eCommerceSynchro
 								$third_party->errors = array();
 								$result = $third_party->update($third_party->id, $this->user);
 								if ($result < 0) {
-									$this->errors[] = $this->langs->trans('ECommerceErrorUpdateThirdParty');
+									$this->errors[] = $this->langs->trans('ECommerceErrorUpdateThirdParty', $third_party->id);
 								}
 							} // Create third party
 							else {
@@ -3376,7 +3376,7 @@ class eCommerceSynchro
 							$product->errors = array();
 							$result = $product->update($product->id, $this->user);
 							if ($result < 0) {
-								$this->errors[] = $this->langs->trans('ECommerceErrorUpdateProduct');
+								$this->errors[] = $this->langs->trans('ECommerceErrorUpdateProduct', $product->id);
 							}
 						} // Create product
 						else {
@@ -3943,7 +3943,7 @@ class eCommerceSynchro
 										$order->errors = array();
 										$result = $order->update($this->user);
 										if ($result < 0) {
-											$this->errors[] = $this->langs->trans('ECommerceErrorUpdateOrder');
+											$this->errors[] = $this->langs->trans('ECommerceErrorUpdateOrder', $order->id);
 										}
 									} // Create order
 									else {

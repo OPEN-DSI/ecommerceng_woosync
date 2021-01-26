@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.59.0
+- Correction messages d'erreurs.
+
 ## 4.0.58.0
 - Ajout d'un widget pour voir l'etat des webhooks.
 - Ajout d'une page pour voir la liste des webhooks en cours (et pouvoir remettre en traitement les erreurs ou warnings et pouvoir mettre en traité les warnings)
