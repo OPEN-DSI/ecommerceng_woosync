@@ -966,10 +966,18 @@ class eCommerceRemoteAccessWoocommerce
 		$last_update = $last_update_product->format('Y-m-d H:i:s');
 
 		$price = $productSynchPrice == 'selling' ? $remote_data->price : $remote_data->regular_price;
-		$date_on_sale_from = $this->getDateTimeFromGMTDateTime($remote_data->date_on_sale_from_gmt);
-		$date_on_sale_from = isset($date_on_sale_from) ? $date_on_sale_from->getTimestamp() : '';
-		$date_on_sale_to = $this->getDateTimeFromGMTDateTime($remote_data->date_on_sale_to_gmt);
-		$date_on_sale_to = isset($date_on_sale_to) ? $date_on_sale_to->getTimestamp() : '';
+		if (!empty($remote_data->date_on_sale_from_gmt)) {
+			$date_on_sale_from = $this->getDateTimeFromGMTDateTime($remote_data->date_on_sale_from_gmt);
+			$date_on_sale_from = isset($date_on_sale_from) ? $date_on_sale_from->getTimestamp() : '';
+		} else {
+			$date_on_sale_from = '';
+		}
+		if (!empty($remote_data->date_on_sale_to_gmt)) {
+			$date_on_sale_to = $this->getDateTimeFromGMTDateTime($remote_data->date_on_sale_to_gmt);
+			$date_on_sale_to = isset($date_on_sale_to) ? $date_on_sale_to->getTimestamp() : '';
+		} else {
+			$date_on_sale_to = '';
+		}
 
 		$product = [
 			'create_date' => strtotime($remote_data->date_created),
@@ -1807,6 +1815,28 @@ class eCommerceRemoteAccessWoocommerce
         }
         $regular_price = $object->array_options["options_ecommerceng_wc_regular_price_{$this->site->id}_{$conf->entity}"];
 
+        $sale_price = price2num($object->array_options["options_ecommerceng_wc_sale_price_{$this->site->id}_{$conf->entity}"]);
+        if (!empty($sale_price)) {
+			$date_on_sale_from = $object->array_options["options_ecommerceng_wc_date_on_sale_from_{$this->site->id}_{$conf->entity}"];
+			if (!empty($date_on_sale_from)) {
+				$date_on_sale_from = $this->getDateTimeToGMTDateTime(is_numeric($date_on_sale_from) ? dol_print_date($date_on_sale_from, 'dayhourrfc') : $date_on_sale_from);
+				$date_on_sale_from = isset($date_on_sale_from) ? dol_print_date($date_on_sale_from->getTimestamp(), 'dayhourrfc') : '';
+			} else {
+				$date_on_sale_from = '';
+			}
+			$date_on_sale_to = $object->array_options["options_ecommerceng_wc_date_on_sale_to_{$this->site->id}_{$conf->entity}"];
+			if (!empty($date_on_sale_to)) {
+				$date_on_sale_to = $this->getDateTimeToGMTDateTime(is_numeric($date_on_sale_to) ? dol_print_date($date_on_sale_to, 'dayhourrfc') : $date_on_sale_to);
+				$date_on_sale_to = isset($date_on_sale_to) ? dol_print_date($date_on_sale_to->getTimestamp(), 'dayhourrfc') : '';
+			} else {
+				$date_on_sale_to = '';
+			}
+		} else {
+			$sale_price = '';
+			$date_on_sale_from = '';
+			$date_on_sale_to = '';
+		}
+
         // images
         $images = [];
         if ($productImageSynchDirection == 'dtoe' || $productImageSynchDirection == 'all') {
@@ -1945,11 +1975,11 @@ class eCommerceRemoteAccessWoocommerce
                 //'description' => nl2br($object->array_options["options_ecommerceng_description_{$conf->entity}"]),                    // string       Variation description.
                 //'sku' => $object->ref,                                  // string       Unique identifier.
                 'regular_price' => $productSynchPrice == 'regular' ? $price : $regular_price,                              // string       Variation regular price.
-                //'sale_price' => '',                                     // string       Variation sale price.
+                'sale_price' => $sale_price,                                     // string       Variation sale price.
                 //'date_on_sale_from' => '',                              // date-time    Start date of sale price, in the site’s timezone.
-                //'date_on_sale_from_gmt' => '',                          // date-time    Start date of sale price, as GMT.
+                'date_on_sale_from_gmt' => $date_on_sale_from,                          // date-time    Start date of sale price, as GMT.
                 //'date_on_sale_to' => '',                                // date-time    End date of sale price, in the site’s timezone.
-                //'date_on_sale_to_gmt' => '',                            // date-time    End date of sale price, in the site’s timezone.
+                'date_on_sale_to_gmt' => $date_on_sale_to,                            // date-time    End date of sale price, in the site’s timezone.
                 //'visible' => '',                                        // boolean      Define if the attribute is visible on the “Additional information” tab in the product’s page. Default is true.
                 //'virtual' => $object->type == Product::TYPE_SERVICE,    // boolean      If the variation is virtual. Default is false.
                 //'downloadable' => '',                                   // boolean      If the variation is downloadable. Default is false.
@@ -2117,11 +2147,11 @@ class eCommerceRemoteAccessWoocommerce
                 //'short_description' => nl2br($object->array_options["options_ecommerceng_short_description_{$conf->entity}"]),                                      // string		Product short description.
                 //'sku' => $object->ref,                            // string		Unique identifier.
                 'regular_price' => $productSynchPrice == 'regular' ? $price : $regular_price,                          // string		Product regular price.
-                //'sale_price'            => '',                                      // string		Product sale price.
+                'sale_price'            => $sale_price,                                      // string		Product sale price.
                 //'date_on_sale_from'     => '',                                      // date-time	Start date of sale price, in the site’s timezone.
-                //'date_on_sale_from_gmt' => '',                                      // date-time	Start date of sale price, as GMT.
+                'date_on_sale_from_gmt' => $date_on_sale_from,                                      // date-time	Start date of sale price, as GMT.
                 //'date_on_sale_to'       => '',                                      // date-time	End date of sale price, in the site’s timezone.
-                //'date_on_sale_to_gmt'   => '',                                      // date-time	End date of sale price, in the site’s timezone.
+                'date_on_sale_to_gmt'   => $date_on_sale_to,                                      // date-time	End date of sale price, in the site’s timezone.
                 'virtual'               => $object->type == Product::TYPE_SERVICE,  // boolean		If the product is virtual. Default is false.
                 //'downloadable'          => false,                                   // boolean		If the product is downloadable. Default is false.
                 //'downloads'             => $downloads,                              // array		List of downloadable files. See Product - Downloads properties
@@ -3659,7 +3689,7 @@ class eCommerceRemoteAccessWoocommerce
 			$tax_rate = '';
 
 			if (isset(self::$taxes_rates_by_class_cached[$tax_class])) {
-				$tax_rate = self::$taxes_rates_by_class_cached[$tax_class]['tax_rate'];
+				$tax_rate = self::$taxes_rates_by_class_cached[$tax_class]['rate'];
 			}
 
 			if ($tax_rate == '') {
@@ -3867,23 +3897,41 @@ class eCommerceRemoteAccessWoocommerce
         return $request_groups;
     }
 
-    /**
-     * Get DateTime object in current timezone from gmt date time.
-     *
-     * @param   string   $datetime          GMT date time
-     *
-     * @return  DateTime                    DateTime in current Time Zone
-     */
-    private function getDateTimeFromGMTDateTime($datetime)
-    {
-        //dol_syslog(__METHOD__ . ": Get DateTime object in current timezone from gmt date time: $datetime", LOG_DEBUG);
+	/**
+	 * Get DateTime object in current timezone from gmt date time.
+	 *
+	 * @param   string   $datetime          GMT date time
+	 *
+	 * @return  DateTime                    DateTime in current Time Zone
+	 */
+	private function getDateTimeFromGMTDateTime($datetime)
+	{
+		//dol_syslog(__METHOD__ . ": Get DateTime object in current timezone from gmt date time: $datetime", LOG_DEBUG);
 
-        $dt = new DateTime($datetime, $this->gmtTimeZone);
-        $dt->setTimezone($this->currentTimeZone);
+		$dt = new DateTime($datetime, $this->gmtTimeZone);
+		$dt->setTimezone($this->currentTimeZone);
 
-        //dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
-        return $dt;
-    }
+		//dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+		return $dt;
+	}
+
+	/**
+	 * Get DateTime object in current timezone from gmt date time.
+	 *
+	 * @param   string   $datetime          GMT date time
+	 *
+	 * @return  DateTime                    DateTime in current Time Zone
+	 */
+	private function getDateTimeToGMTDateTime($datetime)
+	{
+		//dol_syslog(__METHOD__ . ": Get DateTime object in current timezone from gmt date time: $datetime", LOG_DEBUG);
+
+		$dt = new DateTime($datetime, $this->currentTimeZone);
+		$dt->setTimezone($this->gmtTimeZone);
+
+		//dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+		return $dt;
+	}
 
     public function __destruct()
     {

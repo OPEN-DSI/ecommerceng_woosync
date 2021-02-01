@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 4.0.60.0
+- Ajout de la mise à jour du prix promo (avec les dates) de Dolibarr vers Woocommerce avec le prix regulier.
+- Correction de la mise à jour des dates promos de Woocommerce vers Dolibarr.
+- Correction de la récupération de la TVA du produit lors de la synchro WooCommerce vers Dolibarr.
+
 ## 4.0.59.0
 - Correction messages d'erreurs.
 
