@@ -2756,7 +2756,7 @@ class eCommerceSynchro
 		try {
 			$order_data = $this->eCommerceRemoteAccess->convertOrderDataIntoProcessedData($raw_data);
 			if ($order_data === false) {
-				$this->errors[] = $this->langs->trans('ECommerceErrorWhenSynchronizeOrders');
+				$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenConvertOrderData', $raw_data->id)), $this->errors);
 				$this->errors = array_merge($this->errors, $this->eCommerceRemoteAccess->errors);
 			} else {
 				$result = $this->synchronizeOrder($order_data);
@@ -2787,7 +2787,7 @@ class eCommerceSynchro
 		try {
 			$order_data = $this->eCommerceRemoteAccess->convertOrderDataIntoProcessedData($raw_data);
 			if ($order_data === false) {
-				$this->errors[] = $this->langs->trans('ECommerceErrorWhenSynchronizeOrders');
+				$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenConvertOrderData', $raw_data->id)), $this->errors);
 				$this->errors = array_merge($this->errors, $this->eCommerceRemoteAccess->errors);
 			} else {
 				$result = $this->isOrderExist(0, $order_data);
@@ -3160,7 +3160,7 @@ class eCommerceSynchro
 				}
 
 				$last_sync_date = 'ECOMMERCE_LAST_SYNC_DATE_CUSTOMER_' . $this->eCommerceSite->id;
-				if (!$error && !$bypass && $conf->global->$last_sync_date < $customer_data['create_date']) {
+				if (!$error && (!is_numeric($conf->global->$last_sync_date) || $conf->global->$last_sync_date < $customer_data['create_date'])) {
 					$result = dolibarr_set_const($this->db, $last_sync_date, $customer_data['create_date'], 'chaine', 0, '', $conf->entity);
 					if ($result < 0) {
 						$this->errors[] = $this->langs->trans('ECommerceErrorSetLastSyncDateCustomer');
@@ -3626,7 +3626,7 @@ class eCommerceSynchro
 						}
 
 						$last_sync_date = 'ECOMMERCE_LAST_SYNC_DATE_PRODUCT_' . $this->eCommerceSite->id;
-						if (!$error && !$bypass && $conf->global->$last_sync_date < $product_data['create_date']) {
+						if (!$error && (!is_numeric($conf->global->$last_sync_date) || $conf->global->$last_sync_date < $product_data['create_date'])) {
 							$result = dolibarr_set_const($this->db, $last_sync_date, $product_data['create_date'], 'chaine', 0, '', $conf->entity);
 							if ($result < 0) {
 								$this->errors[] = $this->langs->trans('ECommerceErrorSetLastSyncDateProduct');
@@ -4356,7 +4356,7 @@ class eCommerceSynchro
 					}
 
 					$last_sync_date = 'ECOMMERCE_LAST_SYNC_DATE_ORDER_' . $this->eCommerceSite->id;
-					if (!$error && !$bypass && $conf->global->$last_sync_date < $order_data['create_date']) {
+					if (!$error && (!is_numeric($conf->global->$last_sync_date) || $conf->global->$last_sync_date < $order_data['create_date'])) {
 						$result = dolibarr_set_const($this->db, $last_sync_date, $order_data['create_date'], 'chaine', 0, '', $conf->entity);
 						if ($result < 0) {
 							$this->errors[] = $this->langs->trans('ECommerceErrorSetLastSyncDateOrder');
@@ -5450,7 +5450,7 @@ class eCommerceSynchro
 							}
 
 							$last_sync_date = 'ECOMMERCE_LAST_SYNC_DATE_ORDER_' . $this->eCommerceSite->id;
-							if (!$error && $conf->global->$last_sync_date < $order_data['create_date']) {
+							if (!$error && (!is_numeric($conf->global->$last_sync_date) || $conf->global->$last_sync_date < $order_data['create_date'])) {
 								$result = dolibarr_set_const($this->db, $last_sync_date, $order_data['create_date'], 'chaine', 0, '', $conf->entity);
 								if ($result < 0) {
 									$this->errors[] = $this->langs->trans('ECommerceErrorSetLastSyncDateOrder');

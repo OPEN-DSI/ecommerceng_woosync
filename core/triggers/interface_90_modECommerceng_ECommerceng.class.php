@@ -123,6 +123,12 @@ class InterfaceECommerceng
 
         if ($action == 'COMPANY_MODIFY')
         {
+			if (get_class($object) != 'Societe') {
+				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Societe for the action " . $action;
+				dol_syslog($error_msg, LOG_ERR);
+				$this->errors[] = $error_msg;
+				return -1;
+			}
             $this->db->begin();
 
             if ($object->context['merge'] == 1) {
@@ -230,6 +236,12 @@ class InterfaceECommerceng
 
         if ($action == 'CONTACT_MODIFY')
         {
+			if (get_class($object) != 'Contact') {
+				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Contact for the action " . $action;
+				dol_syslog($error_msg, LOG_ERR);
+				$this->errors[] = $error_msg;
+				return -1;
+			}
             $this->db->begin();
 
             $eCommerceSite = new eCommerceSite($this->db);
@@ -323,6 +335,12 @@ class InterfaceECommerceng
 
         if ($action == 'PRODUCT_MODIFY')
         {
+			if (get_class($object) != 'Product') {
+				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Product for the action " . $action;
+				dol_syslog($error_msg, LOG_ERR);
+				$this->errors[] = $error_msg;
+				return -1;
+			}
             $this->db->begin();
 
             // Get current categories and subcategories
@@ -478,6 +496,13 @@ class InterfaceECommerceng
             $action == 'ORDER_VALIDATE' || $action == 'ORDER_UNVALIDATE' || $action == 'ORDER_REOPEN' ||
             $action == 'ORDER_CANCEL' || $action == 'ORDER_CLASSIFY_UNBILLED')
         {
+        	if (get_class($object) != 'Commande') {
+				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Commande for the action " . $action;
+				dol_syslog($error_msg, LOG_ERR);
+				$this->errors[] = $error_msg;
+				return -1;
+			}
+
             $this->db->begin();
 
             switch ($action) {
@@ -567,6 +592,12 @@ class InterfaceECommerceng
 
     	if ($action == 'BILL_MODIFY')
     	{
+			if (get_class($object) != 'Facture') {
+				$error_msg = "Trigger : WooSync: Object (" . get_class($object) . ") is not a Facture for the action " . $action;
+				dol_syslog($error_msg, LOG_ERR);
+				$this->errors[] = $error_msg;
+				return -1;
+			}
     	    $this->db->begin();
 
     	    $eCommerceSite = new eCommerceSite($this->db);
@@ -649,6 +680,12 @@ class InterfaceECommerceng
 
     	if ($action == 'CATEGORY_DELETE' && ((int) $object->type == 0))     // Product category
         {
+			if (get_class($object) != 'Categorie') {
+				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Categorie for the action " . $action;
+				dol_syslog($error_msg, LOG_ERR);
+				$this->errors[] = $error_msg;
+				return -1;
+			}
             $this->db->begin();
 
             // TODO If product category and oldest parent is category for magento then delete category into magento.
@@ -697,6 +734,12 @@ class InterfaceECommerceng
 
         if ($action == 'COMPANY_DELETE')
         {
+			if (get_class($object) != 'Societe') {
+				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Societe for the action " . $action;
+				dol_syslog($error_msg, LOG_ERR);
+				$this->errors[] = $error_msg;
+				return -1;
+			}
             $this->db->begin();
 
             $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_socpeople WHERE fk_socpeople IN (SELECT rowid FROM ".MAIN_DB_PREFIX."socpeople WHERE fk_soc = '".$this->db->escape($object->id)."')";
@@ -729,6 +772,12 @@ class InterfaceECommerceng
 
         if ($action == 'CONTACT_DELETE')
         {
+			if (get_class($object) != 'Contact') {
+				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Contact for the action " . $action;
+				dol_syslog($error_msg, LOG_ERR);
+				$this->errors[] = $error_msg;
+				return -1;
+			}
             $this->db->begin();
 
             $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_socpeople WHERE fk_socpeople = '".$this->db->escape($object->id)."'";
@@ -753,6 +802,12 @@ class InterfaceECommerceng
 
         if ($action == 'ORDER_DELETE')
         {
+			if (get_class($object) != 'Commande') {
+				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Commande for the action " . $action;
+				dol_syslog($error_msg, LOG_ERR);
+				$this->errors[] = $error_msg;
+				return -1;
+			}
             $this->db->begin();
 
             $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_commande WHERE fk_commande = '".$this->db->escape($object->id)."'";
@@ -777,6 +832,12 @@ class InterfaceECommerceng
 
         if ($action == 'BILL_DELETE')
         {
+			if (get_class($object) != 'Facture') {
+				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Facture for the action " . $action;
+				dol_syslog($error_msg, LOG_ERR);
+				$this->errors[] = $error_msg;
+				return -1;
+			}
             $this->db->begin();
 
             $sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_facture WHERE fk_facture = '".$this->db->escape($object->id)."'";
@@ -805,6 +866,12 @@ class InterfaceECommerceng
         // A shipment is validated, it means order has status "In process"
         if ($action == 'SHIPPING_VALIDATE')
         {
+			if (get_class($object) != 'Expedition') {
+				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Expedition for the action " . $action;
+				dol_syslog($error_msg, LOG_ERR);
+				$this->errors[] = $error_msg;
+				return -1;
+			}
 	        dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 
             $this->db->begin();
@@ -918,6 +985,12 @@ class InterfaceECommerceng
         // Stock Movement
         if ($action == 'STOCK_MOVEMENT')
         {
+			if (get_class($object) != 'MouvementStock') {
+				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a MouvementStock for the action " . $action;
+				dol_syslog($error_msg, LOG_ERR);
+				$this->errors[] = $error_msg;
+				return -1;
+			}
             dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 
             $this->db->begin();

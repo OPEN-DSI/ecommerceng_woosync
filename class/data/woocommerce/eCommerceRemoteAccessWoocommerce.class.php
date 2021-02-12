@@ -849,6 +849,7 @@ class eCommerceRemoteAccessWoocommerce
 				if (empty($product->variations) || !empty($product->parent_id)) {
 					$data = $this->convertProductDataIntoProcessedData($product);
 					if (!is_array($data)) {
+						$this->errors = array_merge(array($langs->trans('ECommerceErrorWhenConvertProductData', $product->id)), $this->errors);
 						return false;
 					}
 					$products[] = $data;
@@ -883,6 +884,7 @@ class eCommerceRemoteAccessWoocommerce
 							foreach ($results as $variation) {
 								$data = $this->convertProductDataIntoProcessedData($variation, $product);
 								if (!is_array($data)) {
+									$this->errors = array_merge(array($langs->trans('ECommerceErrorWhenConvertProductData', $product->id . '|' . $variation->id)), $this->errors);
 									return false;
 								}
 								$products[] = $data;
@@ -1126,7 +1128,10 @@ class eCommerceRemoteAccessWoocommerce
 
 			foreach ($page as $order) {
 				$order_data = $this->convertOrderDataIntoProcessedData($order);
-				if ($order_data === false) return false;
+				if ($order_data === false) {
+					$this->errors = array_merge(array($langs->trans('ECommerceErrorWhenConvertOrderData', $order->id)), $this->errors);
+					return false;
+				}
 				$orders[] = $order_data;
 				if ($toNb > 0 && ++$nbTotalRecords >= $toNb) break;
 			}

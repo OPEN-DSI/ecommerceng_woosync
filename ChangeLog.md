@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 4.0.61.0
+- Ajout message d'erreur lors de la convertion des données des produits et commandes vers Dolibarr.
+- Correction de l'enregistrement de la derniere date servant de date de début pour la prochaine syncho des clients, produits et commandes.
+- Ajout d'un test pour ne pas traité les triggers dont l'object passé n'est pas celui attendu.
+
 ## 4.0.60.0
 - Ajout de la mise à jour du prix promo (avec les dates) de Dolibarr vers Woocommerce avec le prix regulier.
 - Correction de la mise à jour des dates promos de Woocommerce vers Dolibarr.
