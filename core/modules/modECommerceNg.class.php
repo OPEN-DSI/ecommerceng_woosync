@@ -61,7 +61,7 @@ class modECommerceNg extends DolibarrModules
 		$this->editor_url = 'http://www.open-dsi.fr';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '4.0.61';
+		$this->version = '4.0.62';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
@@ -216,7 +216,8 @@ class modECommerceNg extends DolibarrModules
 		//------------
 		$this->cronjobs = array(
 		//	0=>array('label'=>'AutoSyncEcommerceNg', 'jobtype'=>'method', 'class'=>'ecommerceng/class/business/eCommerceUtils.class.php', 'objectname'=>'eCommerceUtils', 'method'=>'synchAll', 'parameters'=>'100', 'comment'=>'Synchronize all data from eCommerce to Dolibarr. Parameter is max nb of record to do per synchronization run.', 'frequency'=>1, 'unitfrequency'=>86400, 'priority'=>90, 'status'=>0, 'test'=>true),
-			1=>array('label'=>'ECommerceProcessPendingWebHooks', 'jobtype'=>'method', 'class'=>'/ecommerceng/class/business/eCommercePendingWebHook.class.php', 'objectname'=>'eCommercePendingWebHook', 'method'=>'cronProcessPendingWebHooks', 'parameters'=>'', 'comment'=>'Process all pending WebHooks.', 'frequency'=>1, 'unitfrequency'=>86400, 'priority'=>90, 'status'=>0, 'test'=>true),
+			1=>array('label'=>'ECommerceProcessPendingWebHooks', 'jobtype'=>'method', 'class'=>'/ecommerceng/class/business/eCommercePendingWebHook.class.php', 'objectname'=>'eCommercePendingWebHook', 'method'=>'cronProcessPendingWebHooks', 'parameters'=>'', 'comment'=>'Process all pending WebHooks.', 'frequency'=>15, 'unitfrequency'=>60, 'priority'=>90, 'status'=>0, 'test'=>true),
+			2=>array('label'=>'ECommerceCheckWebHooksStatus', 'jobtype'=>'method', 'class'=>'/ecommerceng/class/business/eCommercePendingWebHook.class.php', 'objectname'=>'eCommercePendingWebHook', 'method'=>'cronCheckWebHooksStatus', 'parameters'=>'', 'comment'=>'Check WebHooks status.', 'frequency'=>15, 'unitfrequency'=>60, 'priority'=>90, 'status'=>0, 'test'=>true),
 		);
 
 		// Permissions
@@ -311,7 +312,13 @@ class modECommerceNg extends DolibarrModules
 	function init($options = '')
 	{
 		$sql = array();
-        $result=$this->load_tables($options);
+
+		// Delete semaphore token for cron jobs
+		require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
+		dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION', 0);
+		dolibarr_del_const($this->db, 'ECOMMERCE_CHECK_WEBHOOKS_STATUS', 0);
+
+		$result=$this->load_tables($options);
 		$this->addSettlementTerms();
 		$this->addAnonymousCompany();
         $this->addFiles();

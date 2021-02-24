@@ -1,5 +1,12 @@
 # ChangeLog
 
+## 4.0.62.0
+- Ajout d'un filtre sur les ids des clients a synchroniser spécifiquements lors de la synchro manuel des clients.
+- Rattache les contacts au tiers possedant l'email du contact lors de la synchro des contact du client.
+- Correction d'une erreur de creation de liens lorsque la commande/facture est ignoré car créer à partir d'un client dont le type n'est pas authorisé.
+- Peut remettre un webhook aillant le statut 'traité' dans statut 'en attente de traitement'
+- Ajout d'une tache planifiée pour vérifié que les webhooks sont actifs sur WooCommerce et previent par email si il y a des erreurs si la variable global ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_STATUS contenant les adresses emails séparées par des virgules est définie.
+
 ## 4.0.61.0
 - Ajout message d'erreur lors de la convertion des données des produits et commandes vers Dolibarr.
 - Correction de l'enregistrement de la derniere date servant de date de début pour la prochaine syncho des clients, produits et commandes.

@@ -3852,6 +3852,62 @@ class eCommerceRemoteAccessWoocommerce
     }
 
 	/**
+	 * Get all webhooks
+	 *
+	 * @return array|false    List of payment gateways or false if error
+	 */
+	public function getAllWebHooks()
+	{
+		dol_syslog(__METHOD__ . ": Retrieve all Woocommerce payment gateways", LOG_DEBUG);
+		global $langs, $conf;
+
+		$nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
+
+		require_once DOL_DOCUMENT_ROOT . '/includes/OAuth/bootstrap.php';
+		$uriFactory = new \OAuth\Common\Http\Uri\UriFactory();
+		$currentUri = $uriFactory->createFromAbsolute(dol_buildpath('/ecommerceng/webhooks.php', 2) . '?ecommerce_id=' . $this->site->id);
+		$eCommerceSiteWebHooksUrl = $currentUri->getAbsoluteUri();
+
+		$webhooks_list = [];
+		$idxPage = 0;
+		do {
+			$idxPage++;
+			try {
+				$webhooks = $this->client->get('webhooks',
+					[
+						'page' => $idxPage,
+						'per_page' => $nb_max_by_request,
+					]
+				);
+			} catch (HttpClientException $fault) {
+				$this->errors[] = $langs->trans('ECommerceWoocommerceErrorGetWoocommerceWebHooks', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+				dol_syslog(__METHOD__ .
+					': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceErrorGetWoocommerceWebHooks', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+					' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+				return false;
+			}
+
+			foreach ($webhooks as $webhook) {
+				if ($webhook->delivery_url == $eCommerceSiteWebHooksUrl) {
+					$webhooks_list[$webhook->id] = array(
+						'remote_id' => $webhook->id,
+						'name' => $webhook->name,
+						'status' => $webhook->status == 'active',
+						'infos' => json_encode(array(
+							'topic' => $webhook->topic,
+							'resource' => $webhook->resource,
+							'event' => $webhook->event,
+						)),
+					);
+				}
+			}
+		} while (!empty($webhooks));
+
+		dol_syslog(__METHOD__ . ": end, return: ".json_encode($webhooks_list), LOG_DEBUG);
+		return $webhooks_list;
+	}
+
+	/**
 	 * Replace 4bytes characters
 	 * @see https://stackoverflow.com/questions/16496554/can-php-detect-4-byte-encoded-utf8-chars by cmbuckley
 	 *

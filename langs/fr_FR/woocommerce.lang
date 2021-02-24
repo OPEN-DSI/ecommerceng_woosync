@@ -122,3 +122,4 @@ ECommerceWoocommerceErrorUpdateDictTaxRate          = Erreur lors de la mise a j
 ECommerceWoocommerceErrorAddDictTaxRate             = Erreur lors de l'ajout de la ligne du taux de la taxe (ID: %s): %s
 ECommerceWooCommerceErrorTaxNotFound                = Erreur la taxe n'a pas été trouvée dans celles synchronisées (ID: %s)
 ECommerceWooCommerceErrorDontSupportMultiTaxes      = Le module ne supporte pas actuellement le multi-taxe.
+ECommerceWoocommerceErrorGetWoocommerceWebHooks     = Erreur de récupération des webhooks sur le site '%s': %s

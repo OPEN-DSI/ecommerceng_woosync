@@ -49,6 +49,7 @@ if ($user->societe_id > 0 || !$user->rights->ecommerceng->read) {
 $id = GETPOST('id','int');
 $to_date = GETPOST('to_date','aZ09');
 $from_date = GETPOST('from_date','aZ09');
+$company_remote_ids = GETPOST('company_remote_ids','alpha');
 $product_remote_ids = GETPOST('product_remote_ids','alpha');
 $order_remote_ids = GETPOST('order_remote_ids','alpha');
 $to_nb = GETPOST('to_nb','int');
@@ -130,7 +131,7 @@ if ($id) {
 		}*/
 
 		//synch only with write rights
-		if (!$error && $user->rights->ecommerceng->write && empty($const->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION)) {
+		if (!$error && $user->rights->ecommerceng->write && empty($conf->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION)) {
 			if (in_array(GETPOST('reset_data'), array('categories_links', 'products_links', 'thirdparties_links', 'orders_links', 'invoices_links'))) {
 				$synchro->dropImportedAndSyncData(0, GETPOST('reset_data'));
 			}
@@ -153,7 +154,7 @@ if ($id) {
 				if ($result < 0) $error++;
 			}
 			if (GETPOST('submit_synchro_societe') || GETPOST('submit_synchro_societe_ajax') || GETPOST('submit_synchro_all')) {
-				$result = $synchro->synchSociete(array(), $toNb);
+				$result = $synchro->synchSociete(array_filter(array_map('trim', explode(',', $company_remote_ids)), 'strlen'), $toNb);
 				if ($result < 0) $error++;
 			}
 			if (GETPOST('submit_synchro_commande') || GETPOST('submit_synchro_commande_ajax') || GETPOST('submit_synchro_all')) {

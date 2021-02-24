@@ -301,7 +301,7 @@ class eCommercePendingWebHook
 			", datep = NULL" .
 			", error_msg = NULL" .
 			" WHERE rowid = " . $row_id .
-			" AND status IN (" . self::STATUS_ERROR . "," . self::STATUS_WARNING . ")";
+			" AND status IN (" . self::STATUS_ERROR . "," . self::STATUS_WARNING . "," . self::STATUS_PROCESSED . ")";
 
 		$this->db->begin();
 
@@ -490,6 +490,10 @@ class eCommercePendingWebHook
 					}
 				}
 				if ($result > 0) $result = $synchro->synchronizeOrderFromData($data);
+				if ($result == 0 && !empty($synchro->warnings)) {
+					$this->warnings = array_merge($synchro->warnings, $this->warnings);
+					return -2;
+				}
 			}
 		}
 
@@ -509,7 +513,7 @@ class eCommercePendingWebHook
 	 */
 	public function cronProcessPendingWebHooks()
 	{
-		global $const, $user, $langs;
+		global $conf, $user, $langs;
 
 		require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 		$langs->load('ecommerceng@ecommerceng');
@@ -526,7 +530,7 @@ class eCommercePendingWebHook
 
 			$error = 0;
 
-			if (empty($const->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION)) {
+			if (empty($conf->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION)) {
 				dolibarr_set_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION', dol_print_date(dol_now(), 'dayhour'), 'chaine', 1, 'Token the processing of the synchronization of the site by webhooks', 0);
 
 				// Archive successful pending lines before x days into a file
@@ -577,7 +581,7 @@ class eCommercePendingWebHook
 					$output .= $langs->trans('ECommerceSynchronizeWebHooksSuccess');
 				}
 			} else {
-				$output .= $langs->trans('ECommerceAlreadyProcessingWebHooksSynchronization') . ' (' . $langs->trans('ECommerceSince') . ' : ' . $const->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION . ')';
+				$output .= $langs->trans('ECommerceAlreadyProcessingWebHooksSynchronization') . ' (' . $langs->trans('ECommerceSince') . ' : ' . $conf->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION . ')';
 			}
 
 			$this->error = "";
@@ -594,6 +598,200 @@ class eCommercePendingWebHook
 			$this->errors = array();
 			return -1;
 		}
+	}
+
+	/**
+	 *  Check webhooks status (cron)
+	 *
+	 *  @return	int				0 if OK, < 0 if KO (this function is used also by cron so only 0 is OK)
+	 */
+	public function cronCheckWebHooksStatus()
+	{
+		global $conf, $user, $langs;
+
+		require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
+		$langs->load('ecommerceng@ecommerceng');
+		$output = '';
+
+		try {
+			$error = 0;
+
+			if (empty($conf->global->ECOMMERCE_CHECK_WEBHOOKS_STATUS)) {
+				dolibarr_set_const($this->db, 'ECOMMERCE_CHECK_WEBHOOKS_STATUS', dol_print_date(dol_now(), 'dayhour'), 'chaine', 1, 'Token the processing of the check the webhooks status of the site', 0);
+
+				dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
+				$eCommerceSite = new eCommerceSite($this->db);
+				$sites = $eCommerceSite->listSites();
+
+				foreach ($sites as $site) {
+					$error_site = 0;
+					$error_msg_site = '';
+
+					$synchro = $this->getSynchro($site['id']);
+					if (!is_object($synchro)) {
+						$error_msg_site .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $this->errorsToString('<br>') . '</span>' . "<br>";
+						$error_site++;
+					}
+
+					$webhooks = $synchro->getAllWebHooks();
+					if ($webhooks === false) {
+						$error_msg_site .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $synchro->errorsToString('<br>') . '</span>' . "<br>";
+						$error_site++;
+					}
+
+					foreach ($webhooks as $webhook) {
+						if (!$webhook['status']) {
+							$error_msg_site .= '<span style="color: red;">' . $langs->trans('ECommerceErrorWebHooksStatusNotActivated', $webhook['name'], $webhook['remote_id'], $webhook['infos']) . '</span>' . "<br>";
+							$error_site++;
+						}
+					}
+
+					if ($error_site) {
+						$output .= $langs->trans('ECommerceErrorCheckWebHooksStatus', $site['name'], $site['id']) . ":<br>" . $error_msg_site . "<br>";
+						$error++;
+					} else {
+						$output .= $langs->trans('ECommerceSuccessCheckWebHooksStatus', count($webhooks), $site['name'], $site['id']) . "<br><br>";
+					}
+				}
+
+				if ($error) {
+					if (!empty($conf->global->ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_STATUS)) {
+						$output2 = $langs->trans('ECommerceSendEmailErrorCheckWebHooksStatus') . ":<br>";
+						$subject = $langs->transnoentitiesnoconv('ECommerceNotifyEmailCheckWebHooksStatusErrorSubject');
+						$send_to = $conf->global->ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_STATUS;
+						$from = $conf->global->MAIN_MAIL_EMAIL_FROM;
+						$body = $output;
+						$result = $this->_sendEmail($subject, $send_to, $from, $body);
+						if (is_numeric($result) && $result < 0) {
+							$output2 .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $this->errorsToString('<br>') . '</span>' . "<br>";
+						} else {
+							$output2 .= '<pre>' . $result . '</pre>';
+						}
+						$output .= $output2;
+					} else {
+						$output .= '<span style="color: orange;">' . $langs->trans('ECommerceWarningNotifyEmailErrorCheckWebHooksStatusNotDefined') . '</span>' . "<br>";
+					}
+				}
+
+				dolibarr_del_const($this->db, 'ECOMMERCE_CHECK_WEBHOOKS_STATUS', 0);
+
+				if ($error) {
+					$this->error = $output;
+					$this->errors = array();
+					return -1;
+				} else {
+					$output .= $langs->trans('ECommerceCheckWebHooksStatusSuccess');
+				}
+			} else {
+				$output .= $langs->trans('ECommerceAlreadyCheckingWebHooksStatus') . ' (' . $langs->trans('ECommerceSince') . ' : ' . $conf->global->ECOMMERCE_CHECK_WEBHOOKS_STATUS . ')';
+			}
+
+			$this->error = "";
+			$this->errors = array();
+			$this->output = $output;
+			$this->result = array("commandbackuplastdone" => "", "commandbackuptorun" => "");
+
+			return 0;
+		} catch (Exception $e) {
+			dolibarr_del_const($this->db, 'ECOMMERCE_CHECK_WEBHOOKS_STATUS', 0);
+			$output .= $langs->trans('ECommerceErrorWhenCheckingWebHooksStatus') . ":<br>";
+			$output .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $e->getMessage() . '</span>' . "<br>";
+			$this->error = $output;
+			$this->errors = array();
+			return -1;
+		}
+	}
+
+	/**
+	 *  Get emails list of all the assigned to the request
+	 *
+	 * @param   string      $name       Name of the user
+	 * @param   string      $name       Address email
+	 * @return  string                  Formatted email (RFC 2822: "Name firstname <email>" or "email" or "<email>")
+	 */
+	private function _formatEmail($name, $email)
+	{
+		if (!preg_match('/<|>/i', $email) && !empty($name)) {
+			$email = str_replace(array('<', '>'), '', $name) . ' <' . $email . '>';
+		}
+
+		return $email;
+	}
+
+	/**
+	 *  Send notification to the assigned, requesters, watchers for a type of notification
+	 *
+	 * @param   string	        $subject             Topic/Subject of mail
+	 * @param   array|string	$sendto              List of recipients emails  (RFC 2822: "Name firstname <email>" or "email" or "<email>")
+	 * @param   string	        $from                Sender email               (RFC 2822: "Name firstname <email>" or "email" or "<email>")
+	 * @param   string	        $body                Body message
+	 * @param   array	        $filename_list       List of files to attach (full path of filename on file system)
+	 * @param   array	        $mimetype_list       List of MIME type of attached files
+	 * @param   array	        $mimefilename_list   List of attached file name in message
+	 * @param   array|string	$sendtocc            Email cc
+	 * @param   array|string	$sendtobcc           Email bcc (Note: This is autocompleted with MAIN_MAIL_AUTOCOPY_TO if defined)
+	 * @param   int		        $deliveryreceipt     Ask a delivery receipt
+	 * @param   int		        $msgishtml           1=String IS already html, 0=String IS NOT html, -1=Unknown make autodetection (with fast mode, not reliable)
+	 * @param   string	        $errors_to      	 Email for errors-to
+	 * @param   string	        $css                 Css option
+	 * @param   string          $moreinheader        More in header. $moreinheader must contains the "\r\n" (TODO not supported for other MAIL_SEND_MODE different than 'phpmail' and 'smtps' for the moment)
+	 * @param   string          $sendcontext      	 'standard', 'emailing', ...
+	 * @return  int|string                           <0 if KO, result message if OK
+	 */
+	public function _sendEmail($subject, $sendto, $from, $body, $filename_list=array(), $mimetype_list=array(), $mimefilename_list=array(), $sendtocc="", $sendtobcc="", $deliveryreceipt=0, $msgishtml=1, $errors_to='', $css='', $moreinheader='', $sendcontext='standard')
+	{
+		global $langs, $dolibarr_main_url_root;
+		dol_syslog(__METHOD__ . " subject=$subject, sendto=$sendto, from=$from, body=$body, filename_list=".json_encode($filename_list).", mimetype_list=".json_encode($mimetype_list).", mimefilename_list=".json_encode($mimefilename_list).", sendtocc=$sendtocc, sendtobcc=$sendtobcc, deliveryreceipt=$deliveryreceipt, msgishtml=$msgishtml, errors_to=$errors_to, css=$css, moreinheader=$moreinheader, sendcontext=$sendcontext", LOG_DEBUG);
+		$this->errors = array();
+
+		$langs->load('mails');
+
+		// Check parameters
+		$sendto = is_array($sendto) ? implode(',', $sendto) : $sendto;
+		$sendtocc = is_array($sendtocc) ? implode(',', $sendtocc) : $sendtocc;
+		$sendtobcc = is_array($sendtobcc) ? implode(',', $sendtobcc) : $sendtobcc;
+
+		if (!empty($sendto)) {
+			// Define $urlwithroot
+			$urlwithouturlroot = preg_replace('/' . preg_quote(DOL_URL_ROOT, '/') . '$/i', '', trim($dolibarr_main_url_root));
+			$urlwithroot = $urlwithouturlroot . DOL_URL_ROOT;   // This is to use external domain name found into config file
+			//$urlwithroot=DOL_MAIN_URL_ROOT;                     // This is to use same domain name than current
+
+			// Make a change into HTML code to allow to include images from medias directory with an external reabable URL.
+			// <img alt="" src="/dolibarr_dev/htdocs/viewimage.php?modulepart=medias&amp;entity=1&amp;file=image/ldestailleur_166x166.jpg" style="height:166px; width:166px" />
+			// become
+			// <img alt="" src="'.$urlwithroot.'viewimage.php?modulepart=medias&amp;entity=1&amp;file=image/ldestailleur_166x166.jpg" style="height:166px; width:166px" />
+			$body = preg_replace('/(<img.*src=")[^\"]*viewimage\.php([^\"]*)modulepart=medias([^\"]*)file=([^\"]*)("[^\/]*\/>)/', '\1' . $urlwithroot . '/viewimage.php\2modulepart=medias\3file=\4\5', $body);
+
+			// Send mail
+			require_once DOL_DOCUMENT_ROOT . '/core/class/CMailFile.class.php';
+			$mailfile = new CMailFile($subject, $sendto, $from, $body, $filename_list, $mimetype_list, $mimefilename_list, $sendtocc, $sendtobcc, $deliveryreceipt, $msgishtml, $errors_to, $css, '', $moreinheader, $sendcontext);
+			if (!empty($mailfile->error)) {
+				$this->errors[] = $mailfile->error;
+			} else {
+				$result = $mailfile->sendfile();
+				if ($result) {
+					return $langs->trans('MailSuccessfulySent', $mailfile->getValidAddress($from, 2), $mailfile->getValidAddress($sendto, 2));
+				} else {
+					$langs->load("other");
+					$mesg = '<div class="error">';
+					if ($mailfile->error) {
+						$mesg .= $langs->trans('ErrorFailedToSendMail', $from, $sendto);
+						$mesg .= '<br>' . $mailfile->error;
+					} else {
+						$mesg .= 'No mail sent. Feature is disabled by option MAIN_DISABLE_ALL_MAILS';
+					}
+					$mesg .= '</div>';
+					$this->errors[] = $mesg;
+				}
+			}
+		} else {
+			$langs->load("errors");
+			$this->errors[] = $langs->trans('ErrorFieldRequired', $langs->transnoentitiesnoconv("MailTo"));
+		}
+
+		dol_syslog(__METHOD__ . " Error: {$this->errorsToString()}", LOG_ERR);
+		return -1;
 	}
 
 	/**
@@ -730,9 +928,10 @@ class eCommercePendingWebHook
 						break;
 					}
 				}
+
+				fclose($filefd);
+				@chmod($logfile, octdec(empty($conf->global->MAIN_UMASK) ? '0664' : $conf->global->MAIN_UMASK));
 			}
-			fclose($filefd);
-			@chmod($logfile, octdec(empty($conf->global->MAIN_UMASK) ? '0664' : $conf->global->MAIN_UMASK));
 
 			$this->db->free($resql);
 		}

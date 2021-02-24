@@ -494,4 +494,17 @@ class eCommerceRemoteAccess
         $this->errors=$this->class->errors;
         return $result;
     }
+
+	/**
+	 * Get all webhooks
+	 *
+	 * @return array|false    List of webhooks or false if error
+	 */
+	public function getAllWebHooks()
+	{
+		$result=$this->class->getAllWebHooks();
+		$this->error=$this->class->error;
+		$this->errors=$this->class->errors;
+		return $result;
+	}
 }

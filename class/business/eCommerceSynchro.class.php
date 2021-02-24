@@ -2419,15 +2419,25 @@ class eCommerceSynchro
 		}
 	}
 
-    /**
-     * Get all payment gateways
-     *
-     * @return array|false    List of payment gateways or false if error
-     */
-    public function getAllPaymentGateways()
-    {
-        return $this->eCommerceRemoteAccess->getAllPaymentGateways();
-    }
+	/**
+	 * Get all payment gateways
+	 *
+	 * @return array|false    List of payment gateways or false if error
+	 */
+	public function getAllPaymentGateways()
+	{
+		return $this->eCommerceRemoteAccess->getAllPaymentGateways();
+	}
+
+	/**
+	 * Get all webhooks
+	 *
+	 * @return array|false    List of webhooks or false if error
+	 */
+	public function getAllWebHooks()
+	{
+		return $this->eCommerceRemoteAccess->getAllWebHooks();
+	}
 
 
     /**
@@ -3102,7 +3112,19 @@ class eCommerceSynchro
 								$error++;
 							} else {
 								foreach ($contacts_data as $contact_data) {
-									$contact_data['fk_soc'] = $third_party->id > 0 ? $third_party->id : $this->eCommerceSite->fk_anonymous_thirdparty;
+									if ($customer_data['type'] == 'company') {
+										$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $customer_data['name']);
+									} else {
+										$result = $this->getThirdPartyByEmail($contact_data['email']);
+									}
+									if ($result < 0) {
+										$error++;
+										break;
+									} elseif ($result > 0) {
+										$contact_data['fk_soc'] = $result;
+									} else {
+										$contact_data['fk_soc'] = $third_party->id > 0 ? $third_party->id : $this->eCommerceSite->fk_anonymous_thirdparty;
+									}
 									$contact_data['type'] = 1;    // address of company
 									// Synchronize the contact
 									$contact_id = $this->synchSocpeople($contact_data);
@@ -4325,6 +4347,7 @@ class eCommerceSynchro
 							}
 						} else {
 							$this->warnings[] = $this->langs->trans('ECommerceWarningOrderThirdPartyNotSupported', $order_data['remote_id'], $order_data['remote_id_societe']);
+							$bypass = true;
 						}
 					}
 
@@ -4520,6 +4543,7 @@ class eCommerceSynchro
 							}
 
 							// Create the invoice only if the third party ID is found (otherwise it's bypassed)
+							$bypass = false;
 							if (!$error) {
 								if ($third_party_id > 0) {
 									// Set the invoice
@@ -5419,12 +5443,13 @@ class eCommerceSynchro
 									}
 								} elseif (empty($this->eCommerceSite->parameters['order_actions']['create_order'])) {
 									$this->warnings[] = $this->langs->trans('ECommerceWarningOrderThirdPartyNotSupported', $order_data['remote_id'], $order_data['remote_id_societe']);
+									$bypass = true;
 								}
 							}
 
 							// Update the link of the synchronization
 							//--------------------------------------------
-							if (!$error) {
+							if (!$error && !$bypass) {
 								$this->eCommerceCommande->last_update = $order_data['last_update'];
 								$this->eCommerceCommande->fk_commande = $order->id > 0 ? $order->id : ($invoice->id > 0 ? -$invoice->id : 0);
 

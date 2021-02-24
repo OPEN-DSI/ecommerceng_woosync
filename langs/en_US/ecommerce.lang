@@ -302,6 +302,7 @@ ECommerceCreateOrderSalesRepresentativeFollowByDefault              = Responsabl
 ECommerceCreateOrderSalesRepresentativeFollowByDefaultDescription   = Utilisateur de type "Responsable suivi commande/facture/... client" par défaut affecté lors de la synchro d'une commande depuis le site
 
 RestrictSyncForRecordBetween    = Limite la synchronisation des données (se base sur la date d'enregistrement pour les clients, la date de publication pour les produits et la date de creation pour les commandes) du
+RestrictSyncToCompanyRemoteID   = Limite la synchronisation des clients aux ID distants suivants (customer_id, customer_id, ...)
 RestrictSyncToProductRemoteID   = Limite la synchronisation des produits aux ID distants suivants (product_id, product_id|variation_id, ...)
 RestrictSyncToOrderRemoteID     = Limite la synchronisation des commandes aux ID distants suivants (order_id, order_id, ...)
 
@@ -374,6 +375,13 @@ ECommerceConfirmMassSetProcessedQuestion    = Êtes-vous sur de vouloir mettre e
 
 ECommerceBoxWebHooks        = WooSync - Crochet web (WebHooks)
 ECommerceNoRecordedWebHooks = Aucun crochet web (WebHooks) enregistrée
+
+ECommerceCheckWebHooksStatus                        = Vérification du status des crochet Web (WebHooks)
+ECommerceSuccessCheckWebHooksStatus                 = Les %s crochet WEB (WebHook) du site "%s" (ID: %s) sont activés
+ECommerceSendEmailErrorCheckWebHooksStatus          = Envoie du mails de notification des erreurs
+ECommerceNotifyEmailCheckWebHooksStatusErrorSubject = [WooSync] Erreur lors de la vérification du status des crochet Web (WebHooks)
+ECommerceCheckWebHooksStatusSuccess                 = La vérification du status des crochet Web (WebHooks) s'est terminé avec succes
+ECommerceAlreadyCheckingWebHooksStatus              = La vérification du status des crochet Web (WebHooks) est déjà en cours de traitement
 
 ############################################################################################
 # Errors
@@ -485,6 +493,9 @@ ECommerceErrorGetEMailTemplate                      = Erreur lors de la récupé
 ECommerceErrorWhenCheckOrderExist                   = Erreur lors du test si la commande existe dans dolibarr
 ECommerceErrorWhenCheckOrderExistFromData           = Erreur lors du test si la commande existe dans dolibarr grace aux données distants
 ECommerceErrorWhenProcessPendingWebHooks            = Erreur lors de la synchronisation de la file d'attente des WebHooks
+ECommerceErrorWebHooksStatusNotActivated            = Le crochet WEB (WebHook) "%s" (ID distant: %s) n'est pas activé (Infos complémentaires: %s)
+ECommerceErrorCheckWebHooksStatus                   = Erreur lors de la vérification des crochet WEB (WebHook) du site "%s" (ID: %s)
+ECommerceErrorWhenCheckingWebHooksStatus            = Erreur lors de la vérification des crochet WEB (WebHook)
 
 ############################################################################################
 # Warnings
@@ -493,3 +504,4 @@ ECommerceWarningWrongAmountTTCWithPaid              = Attention!! Le client a pa
 ECommerceWarningOrderThirdPartyNotSupported         = Attention!! La commande (ID: %s) est ignoré car elle a été créée par un client (ID: %s) dont le type n'est pas authorisé dans la configuration
 ECommerceWarningSynchronizeWebHook                  = Attention!! Lors de la synchronisation de la ligne de la file d'attente (ID: %s, Topic: %s)
 ECommerceWarningUpdateOrderNotSynchronized          = Attention!! Tentative de mise à jour d'une commande non synchronisée
+ECommerceWarningNotifyEmailErrorCheckWebHooksStatusNotDefined   = Attention!! La variable global ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_STATUS contenant les adresses emails séparées par des virgules n'a pas été définie

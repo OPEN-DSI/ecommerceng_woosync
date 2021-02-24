@@ -16,7 +16,7 @@ if (is_object($site)) {
 
 	dol_fiche_head($head, 'ecommerce2dolibarr', '');
 
-	$disabled = $synchRights != true && empty($const->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION);
+	$disabled = $synchRights != true && empty($conf->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION);
 
 	print '<form name="form_count" id="form_count" action="' . $_SERVER['PHP_SELF'] . '?id=' . $site->id . '" method="post">';
 	//print '<input type="hidden" name="id" value="'.$site->id.'">';
@@ -31,8 +31,8 @@ if (is_object($site)) {
 
 	print '<tr>';
 	print '<td>';
-	if (!empty($const->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION)) {
-		print $langs->trans("ECommerceProcessingWebHooksSynchronisationSince") . ' : <strong>' . $const->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION . '</strong><br>';
+	if (!empty($conf->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION)) {
+		print $langs->trans("ECommerceProcessingWebHooksSynchronisationSince") . ' : <strong>' . $conf->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION . '</strong><br>';
 	}
 	print $langs->trans("ECommerceLastCompleteSync", $site->name) . ' : ';
 	if ($site->last_update) print '<strong>' . dol_print_date($site->last_update, 'dayhoursec') . '</strong>';
@@ -49,6 +49,12 @@ if (is_object($site)) {
 	print '<input type="text" name="from_date" value="' . dol_escape_htmltag($from_date) . '" placeholder="YYYYMMDDHHMMSS">';
 	print ' ' . $langs->trans("to") . ' ';
 	print '<input type="text" name="to_date" value="' . dol_escape_htmltag($to_date) . '" placeholder="YYYYMMDDHHMMSS">';
+	print '</td>';
+	print '</tr>';
+
+	print '<tr>';
+	print '<td>';
+	print $langs->trans("RestrictSyncToCompanyRemoteID") . '<br><textarea row="3" name="company_remote_ids" style="width: 100%">' . $company_remote_ids . '</textarea>';
 	print '</td>';
 	print '</tr>';
 
@@ -297,8 +303,8 @@ if (is_object($site)) {
 	print '<table class="centpercent nobordernopadding">';
 
 	print '<tr><td>';
-	if (!empty($const->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION)) {
-		print $langs->trans("ECommerceProcessingWebHooksSynchronisationSince") . ' : <strong>' . $const->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION . '</strong><br>';
+	if (!empty($conf->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION)) {
+		print $langs->trans("ECommerceProcessingWebHooksSynchronisationSince") . ' : <strong>' . $conf->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION . '</strong><br>';
 	}
 	print $langs->trans("RestrictNbInSync") . ' ';
 	print '<input type="text" name="dtoe_to_nb" placeholder="0" value="' . dol_escape_htmltag($dtoe_to_nb) . '">';
