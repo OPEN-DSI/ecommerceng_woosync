@@ -1273,11 +1273,12 @@ class eCommerceSynchro
      * Synchronize commande to update
      * Inclut synchProduct et synchSociete
      *
-	 * @param   array   $remote_ids 	Force to synchronize the specified remote_ids
-     * @param   int     $toNb      		Max nb to synch
-	 * @return  int                 	>0 if OK, <0 if KO
+	 * @param   array   $remote_ids 					Force to synchronize the specified remote_ids
+     * @param   int     $toNb      						Max nb to synch
+	 * @param	bool	$dont_synchronize_products		Bypass the synchronization of the product of the order
+	 * @return  int                 					>0 if OK, <0 if KO
      */
-    public function synchCommande($remote_ids=array(), $toNb=0)
+    public function synchCommande($remote_ids=array(), $toNb=0, $dont_synchronize_products = false)
     {
 		dol_syslog(__METHOD__ . ' remote_ids=' . json_encode($remote_ids) . ', toNb=' . $toNb, LOG_DEBUG);
 
@@ -1288,7 +1289,7 @@ class eCommerceSynchro
 			$from_date = isset($this->fromDate) ? $this->fromDate : $this->getCommandeLastUpdateDate();
 			$to_date = $this->toDate;
 
-			$result = $this->synchronizeOrders($from_date, $to_date, $remote_ids, $toNb);
+			$result = $this->synchronizeOrders($from_date, $to_date, $remote_ids, $toNb, true, $dont_synchronize_products);
 
 			return $result;
 		} catch (Exception $e) {
@@ -2782,12 +2783,12 @@ class eCommerceSynchro
 	}
 
 	/**
-	 * Check if order exist in dolibarr from the remote order data
+	 * Check if order is too old (create date) in dolibarr from the remote order data
 	 *
 	 * @param   array   $raw_data 		Raw data to synchronize
 	 * @return	int						<0 if KO, =0 if not found, Id of the order in Dolibarr if OK
 	 */
-	public function isOrderExistFromData($raw_data)
+	public function isOrderTooOldFromData($raw_data)
 	{
 		dol_syslog(__METHOD__ . ' raw_data=' . json_encode($raw_data), LOG_DEBUG);
 
@@ -3683,14 +3684,15 @@ class eCommerceSynchro
 	/**
 	 * Synchronize a list of order remote id
 	 *
-	 * @param	int		$from_date					Synchronize from date
-	 * @param	int		$to_date					Synchronize to date
-	 * @param	array	$remote_ids					List of order remote id to synchronize
-	 * @param	int		$toNb						Max nb
-	 * @param	bool	$success_log				Keep success log
-	 * @return	int									<0 if KO, >0 if OK
+	 * @param	int		$from_date						Synchronize from date
+	 * @param	int		$to_date						Synchronize to date
+	 * @param	array	$remote_ids						List of order remote id to synchronize
+	 * @param	int		$toNb							Max nb
+	 * @param	bool	$success_log					Keep success log
+	 * @param	bool	$dont_synchronize_products		Bypass the synchronization of the product of the order
+	 * @return	int										<0 if KO, >0 if OK
 	 */
-	public function synchronizeOrders($from_date = null, $to_date = null, $remote_ids = array(), $toNb = 0, $success_log = true)
+	public function synchronizeOrders($from_date = null, $to_date = null, $remote_ids = array(), $toNb = 0, $success_log = true, $dont_synchronize_products = false)
 	{
 		dol_syslog(__METHOD__ . ' remote_ids=' . json_encode($remote_ids) . ', toNb=' . $toNb, LOG_DEBUG);
 
@@ -3718,7 +3720,7 @@ class eCommerceSynchro
 				if (!$error && !empty($orders_data)) {
 					foreach ($orders_data as $order_data) {
 						// Synchronize the order
-						$result = $this->synchronizeOrder($order_data);
+						$result = $this->synchronizeOrder($order_data, $dont_synchronize_products);
 						if ($result < 0) {
 							$error++;
 							break;
@@ -3819,10 +3821,11 @@ class eCommerceSynchro
 	/**
 	 * Synchronize a order data in the order in Dolibarr database
 	 *
-	 * @param	array	$order_data		Order data to synchronize
-	 * @return	int						<0 if KO, =0 if bypassed, Id of the order in Dolibarr if OK
+	 * @param	array	$order_data						Order data to synchronize
+	 * @param	bool	$dont_synchronize_products		Bypass the synchronization of the product of the order
+	 * @return	int										<0 if KO, =0 if bypassed, Id of the order in Dolibarr if OK
 	 */
-	public function synchronizeOrder($order_data)
+	public function synchronizeOrder($order_data, $dont_synchronize_products = false)
 	{
 		dol_syslog(__METHOD__ . ' order_data=' . json_encode($order_data), LOG_DEBUG);
 		global $conf;
@@ -3907,7 +3910,8 @@ class eCommerceSynchro
 							}
 
 							// Need to synchronize ?
-							$bypass = !empty($this->eCommerceCommande->last_update) && strtotime($order_data['last_update']) <= strtotime($this->eCommerceCommande->last_update);
+							$bypass = (!empty($this->eCommerceCommande->last_update) && strtotime($order_data['last_update']) <= strtotime($this->eCommerceCommande->last_update)) ||
+								$order_data['create_date'] < $this->eCommerceSite->parameters['order_first_date_etod'];
 
 							// Bypass the synchronization ?
 							if (!$bypass) {
@@ -4004,12 +4008,13 @@ class eCommerceSynchro
 //												$this->errors = array_merge($this->errors, $this->eCommerceProduct->errors);
 //												$error++;
 //											} elseif ($result <= 0) {
-												$remote_id_to_synchronize[] = $item['id_remote_product'];
+												if (isset($item['id_remote_product']) && $item['id_remote_product'] > 0)
+													$remote_id_to_synchronize[] = $item['id_remote_product'];
 //											}
 										}
 
 										// Synchronize the product to synchronize
-										if (!empty($remote_id_to_synchronize)) {
+										if (!empty($remote_id_to_synchronize) && !$dont_synchronize_products) {
 											// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
 											$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, 0, false, $order);
 											if ($result < 0) {
@@ -4401,7 +4406,7 @@ class eCommerceSynchro
 			}
 
 			if (!$error) {
-				$result = $this->synchronizeInvoiceFromOrder($order_data);
+				$result = $this->synchronizeInvoiceFromOrder($order_data, $dont_synchronize_products);
 				if ($result < 0) {
 					$error++;
 				}
@@ -4420,10 +4425,11 @@ class eCommerceSynchro
 	/**
 	 * Synchronize a order data in the invoice in Dolibarr database
 	 *
-	 * @param	array	$order_data		Order data to synchronize
-	 * @return	int						<0 if KO, =0 if bypassed, Id of the invoice in Dolibarr if OK
+	 * @param	array	$order_data						Order data to synchronize
+	 * @param	bool	$dont_synchronize_products		Bypass the synchronization of the product of the order
+	 * @return	int										<0 if KO, =0 if bypassed, Id of the invoice in Dolibarr if OK
 	 */
-	public function synchronizeInvoiceFromOrder($order_data)
+	public function synchronizeInvoiceFromOrder($order_data, $dont_synchronize_products = false)
 	{
 		dol_syslog(__METHOD__ . ' order_data=' . json_encode($order_data), LOG_DEBUG);
 		global $conf;
@@ -4542,9 +4548,11 @@ class eCommerceSynchro
 								}
 							}
 
+							// Need to synchronize ?
+							$bypass = $order_data['create_date'] < $this->eCommerceSite->parameters['order_first_date_etod'];
+
 							// Create the invoice only if the third party ID is found (otherwise it's bypassed)
-							$bypass = false;
-							if (!$error) {
+							if (!$error && !$bypass) {
 								if ($third_party_id > 0) {
 									// Set the invoice
 									$invoice->socid = $third_party_id;
@@ -4729,7 +4737,7 @@ class eCommerceSynchro
 												}
 
 												// Synchronize the product to synchronize
-												if (!empty($remote_id_to_synchronize)) {
+												if (!empty($remote_id_to_synchronize) && !$dont_synchronize_products) {
 													// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
 													$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, 0, false, $invoice);
 													if ($result < 0) {

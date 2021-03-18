@@ -1,5 +1,11 @@
 # ChangeLog
 
+## 4.0.64.0
+- Ajout de l'option "Ne pas synchroniser les produits lors de la synchronisation des commandes" lors de la synchronisation manuelle des commandes
+
+## 4.0.63.0
+- Ajout d'une date de relance pour la synchronisation des commandes de ECommerce vers dolibarr (Les commandes dont la date de creation est entérieur seront ignorées).
+
 ## 4.0.62.0
 - Ajout d'un filtre sur les ids des clients a synchroniser spécifiquements lors de la synchro manuel des clients.
 - Rattache les contacts au tiers possedant l'email du contact lors de la synchro des contact du client.

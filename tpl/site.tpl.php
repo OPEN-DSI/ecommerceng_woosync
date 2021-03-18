@@ -72,6 +72,12 @@ if (is_object($site)) {
 
 	print '<tr>';
 	print '<td>';
+	print $langs->trans("DontSyncProductWhenSyncOrders") . ' : <input type="checkbox" name="dont_synchronize_products" value="1"' . (empty($dont_synchronize_products) ? '' : ' checked') . ' />';
+	print '</td>';
+	print '</tr>';
+
+	print '<tr>';
+	print '<td>';
 	print $langs->trans("RestrictNbInSync") . ' ';
 	print '<input type="text" name="to_nb" placeholder="0" value="' . dol_escape_htmltag($to_nb) . '">';
 	print '</td>';

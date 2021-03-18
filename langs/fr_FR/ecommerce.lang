@@ -295,6 +295,7 @@ RestrictSyncForRecordBetween    = Limite la synchronisation des données (se bas
 RestrictSyncToCompanyRemoteID   = Limite la synchronisation des clients aux ID distants suivants (customer_id, customer_id, ...)
 RestrictSyncToProductRemoteID   = Limite la synchronisation des produits aux ID distants suivants (product_id, product_id|variation_id, ...)
 RestrictSyncToOrderRemoteID     = Limite la synchronisation des commandes aux ID distants suivants (order_id, order_id, ...)
+DontSyncProductWhenSyncOrders   = Ne pas synchroniser les produits lors de la synchronisation des commandes
 
 ECommerceSiteWebHooksSetup                          = Configuration des Crochets Web (WebHooks)
 ECommerceSiteWebHooksUrl                            = URL de livraison
@@ -327,6 +328,10 @@ ECommerceCreateInvoiceFromSiteNote                  = Facture créé depuis WooS
 ECommerceCreateSupplierInvoiceFromSiteNote          = Facture fournisseur créé depuis WooSync (Site: %s)
 ECommerceFirstNameLastNameNotInformed               = Pas de nom/prénom renseigné
 ECommerceLastNameNotInformed                        = [Nom non renseigné]
+
+ECommerceOrdersSyncSetup                                            = Synchronisation des commandes
+ECommerceWoocommerceOrderFirstDateForECommerceToDolibarr            = Date de reprise
+ECommerceWoocommerceOrderFirstDateForECommerceToDolibarrDescription = Les commandes dont la date de creation est entérieur seront ignorées
 
 ############################################################################################
 # Web Hooks

@@ -743,7 +743,28 @@ if ($conf->stock->enabled)
 <?php
 if ($ecommerceOrderStatus)
 {
-   $var = true;
+	if ((!isset($ecommerceOrderActions['create_order']) || !empty($ecommerceOrderActions['create_order']))) {
+		print_titre($langs->trans("ECommerceOrdersSyncSetup"));
+		?>
+		<table class="noborder" width="100%">
+			<tr class="liste_titre">
+				<td width="20%"><?php print $langs->trans('Parameter') ?></td>
+				<td><?php print $langs->trans('Value') ?></td>
+				<td><?php print $langs->trans('Description') ?></td>
+			</tr>
+			<tr <?php print $bc[$var] ?>>
+				<td><span><?php print $langs->trans('ECommerceWoocommerceOrderFirstDateForECommerceToDolibarr') ?></span></td>
+				<td>
+					<?php
+					$form->select_date($ecommerceOrderFirstDateForECommerceToDolibarr !== '' ? $ecommerceOrderFirstDateForECommerceToDolibarr : -1, 'ecommerce_order_first_date_etod');
+					?>
+				</td>
+				<td><?php print $langs->trans('ECommerceWoocommerceOrderFirstDateForECommerceToDolibarrDescription') ?></td>
+			</tr>
+		</table>
+<?php
+	}
+    $var = true;
 ?>
           <br>
 <?php

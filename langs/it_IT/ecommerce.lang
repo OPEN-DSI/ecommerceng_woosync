@@ -316,6 +316,10 @@ ECommerceCreateSupplierInvoiceFromSiteNote          = Facture fournisseur créé
 ECommerceFirstNameLastNameNotInformed               = Pas de nom/prénom renseigné
 ECommerceLastNameNotInformed                        = [Nom non renseigné]
 
+ECommerceOrdersSyncSetup                                            = Synchronisation des commandes
+ECommerceWoocommerceOrderFirstDateForECommerceToDolibarr            = Date de reprise
+ECommerceWoocommerceOrderFirstDateForECommerceToDolibarrDescription = Les commandes dont la date de creation est entérieur seront ignorées
+
 ############################################################################################
 # Web Hooks
 ############################################################################################
@@ -354,6 +358,13 @@ ECommerceConfirmMassSetProcessedQuestion    = Êtes-vous sur de vouloir mettre e
 ECommerceBoxWebHooks        = WooSync - Crochet web (WebHooks)
 ECommerceNoRecordedWebHooks = Aucun crochet web (WebHooks) enregistrée
 
+ECommerceCheckWebHooksStatus                        = Vérification du status des crochet Web (WebHooks)
+ECommerceSuccessCheckWebHooksStatus                 = Les %s crochet WEB (WebHook) du site "%s" (ID: %s) sont activés
+ECommerceSendEmailErrorCheckWebHooksStatus          = Envoie du mails de notification des erreurs
+ECommerceNotifyEmailCheckWebHooksStatusErrorSubject = [WooSync] Erreur lors de la vérification du status des crochet Web (WebHooks)
+ECommerceCheckWebHooksStatusSuccess                 = La vérification du status des crochet Web (WebHooks) s'est terminé avec succes
+ECommerceAlreadyCheckingWebHooksStatus              = La vérification du status des crochet Web (WebHooks) est déjà en cours de traitement
+
 ############################################################################################
 # Errors
 ############################################################################################
@@ -388,6 +399,7 @@ ECommerceErrorRemoveObsoleteProductImage            = Erreur lors de la suppress
 ECommerceErrorUpdateProductLink                     = Erreur lors de la mise a jour du lien de synchronisation du produit
 ECommerceErrorCreateProductLink                     = Erreur lors de la creation du lien de synchronisation du produit
 ECommerceErrorWhenSynchronizeProduct                = Erreur lors de la synchronisation du produit (ID distant: %s)
+ECommerceErrorWhenConvertProductData                = Erreur lors de la convertion des données du produit (ID distant: %s)
 ECommerceErrorFetchOrderLinkByRemoteId              = Erreur du chargement de lien de synchronisation de la commande (ID distant: %s, Site ID: %s)
 ECommerceErrorFetchOrder                            = Erreur du chargement de la commande (ID: %s)
 ECommerceErrorFetchOrderByRefExt                    = Erreur du chargement de la commande (Ref ext: %s)
@@ -410,6 +422,7 @@ ECommerceErrorOrderSetPaymentMethods                = Erreur lors de la mise a j
 ECommerceErrorUpdateOrderLink                       = Erreur lors de la mise a jour du lien de synchronisation de la commande
 ECommerceErrorCreateOrderLink                       = Erreur lors de la creation du lien de synchronisation de la commande
 ECommerceErrorWhenSynchronizeOrder                  = Erreur lors de la synchronisation de la commande (ID distant: %s)
+ECommerceErrorWhenConvertOrderData                  = Erreur lors de la convertion des données de la commande (ID distant: %s)
 ECommerceErrorInvoiceCreate                         = Erreur lors de la creation de la facture dans Dolibarr
 ECommerceErrorUpdateTotalInvoice                    = Erreur lors de la mise a jour des prix correct de la facture dans Dolibarr
 ECommerceErrorInvoiceInsertDiscount                 = Erreur lors de l'insertion de la réduction sur la facture dans Dolibarr
@@ -461,6 +474,9 @@ ECommerceErrorGetEMailTemplate                      = Erreur lors de la récupé
 ECommerceErrorWhenCheckOrderExist                   = Erreur lors du test si la commande existe dans dolibarr
 ECommerceErrorWhenCheckOrderExistFromData           = Erreur lors du test si la commande existe dans dolibarr grace aux données distants
 ECommerceErrorWhenProcessPendingWebHooks            = Erreur lors de la synchronisation de la file d'attente des WebHooks
+ECommerceErrorWebHooksStatusNotActivated            = Le crochet WEB (WebHook) "%s" (ID distant: %s) n'est pas activé (Infos complémentaires: %s)
+ECommerceErrorCheckWebHooksStatus                   = Erreur lors de la vérification des crochet WEB (WebHook) du site "%s" (ID: %s)
+ECommerceErrorWhenCheckingWebHooksStatus            = Erreur lors de la vérification des crochet WEB (WebHook)
 
 ############################################################################################
 # Warnings
@@ -469,3 +485,4 @@ ECommerceWarningWrongAmountTTCWithPaid              = Attention!! Le client a pa
 ECommerceWarningOrderThirdPartyNotSupported         = Attention!! La commande (ID: %s) est ignoré car elle a été créée par un client (ID: %s) dont le type n'est pas authorisé dans la configuration
 ECommerceWarningSynchronizeWebHook                  = Attention!! Lors de la synchronisation de la ligne de la file d'attente (ID: %s, Topic: %s)
 ECommerceWarningUpdateOrderNotSynchronized          = Attention!! Tentative de mise à jour d'une commande non synchronisée
+ECommerceWarningNotifyEmailErrorCheckWebHooksStatusNotDefined   = Attention!! La variable global ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_STATUS contenant les adresses emails séparées par des virgules n'a pas été définie

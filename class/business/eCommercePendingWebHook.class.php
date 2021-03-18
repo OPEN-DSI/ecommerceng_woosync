@@ -482,14 +482,7 @@ class eCommercePendingWebHook
 		// Order
 		if ($webhook_resource == 'order') {
 			if ($webhook_event == 'created' || $webhook_event == 'updated') {
-				if ($webhook_event == 'updated') {
-					$result = $synchro->isOrderExistFromData($data);
-					if ($result == 0) {
-						$this->warnings[] = $langs->trans('ECommerceWarningUpdateOrderNotSynchronized');
-						return -2;
-					}
-				}
-				if ($result > 0) $result = $synchro->synchronizeOrderFromData($data);
+				$result = $synchro->synchronizeOrderFromData($data);
 				if ($result == 0 && !empty($synchro->warnings)) {
 					$this->warnings = array_merge($synchro->warnings, $this->warnings);
 					return -2;

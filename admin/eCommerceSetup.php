@@ -280,8 +280,9 @@ if ($_POST['site_form_detail_action'] == 'save')
 
             $ecommerceProductSynchPrice = GETPOST('ecommerce_product_synch_price', 'alpha');
             $ecommerceWoocommerceCustomerRoles = GETPOST('ecommerce_woocommerce_customer_roles', 'alpha');
+			$ecommerceOrderFirstDateForECommerceToDolibarr = dol_mktime(0, 0, 0, GETPOST('ecommerce_order_first_date_etodmonth', 'int'), GETPOST('ecommerce_order_first_date_etodday', 'int'), GETPOST('ecommerce_order_first_date_etodyear', 'int'));
 
-            $ecommerceProductSynchDirection = array(
+			$ecommerceProductSynchDirection = array(
                 'image' => isset($_POST['ecommerce_product_image_synch_direction']) ? GETPOST('ecommerce_product_image_synch_direction', 'alpha') : 'etod',
                 'ref' => isset($_POST['ecommerce_product_ref_synch_direction']) ? GETPOST('ecommerce_product_ref_synch_direction', 'alpha') : 'etod',
                 'description' => isset($_POST['ecommerce_product_description_synch_direction']) ? GETPOST('ecommerce_product_description_synch_direction', 'alpha') : 'etod',
@@ -297,7 +298,8 @@ if ($_POST['site_form_detail_action'] == 'save')
 				'pw_gift_cards_service' => $_POST['ecommerce_fk_pw_gift_cards_service'],
                 'web_hooks_secret' => $_POST['ecommerce_web_hooks_secret'],
 				'order_status_etod' => $ecommerceOrderStatusForECommerceToDolibarr,
-                'order_status_dtoe' => $ecommerceOrderStatusForDolibarrToECommerce,
+				'order_status_dtoe' => $ecommerceOrderStatusForDolibarrToECommerce,
+				'order_first_date_etod' => $ecommerceOrderFirstDateForECommerceToDolibarr,
                 'ef_crp' => $ecommerceExtrafieldsCorrespondence,
                 'payment_cond' => $_POST['ecommerce_payment_cond'],
                 'realtime_dtoe' => $ecommerceRealtimeDolibarrToECommerce,
@@ -875,6 +877,7 @@ if ($ecommerceId > 0) {
                     'activated' => (isset($options_saved['activated']) ? $options_saved['activated'] : $key),
                 );
             }
+			$ecommerceOrderFirstDateForECommerceToDolibarr = isset($siteDb->parameters['order_first_date_etod']) ? $siteDb->parameters['order_first_date_etod'] : '';
         }
 
         $ecommerceProductSynchPrice = isset($siteDb->parameters['product_synch_price']) ? $siteDb->parameters['product_synch_price'] : 'regular';

@@ -1388,6 +1388,7 @@ class eCommerceRemoteAccessWoocommerce
 			}
 		}
 
+		$create_date = $this->getDateTimeFromGMTDateTime($remote_data->date_created_gmt);
 		$last_update = $this->getDateTimeFromGMTDateTime(!empty($remote_data->date_modified_gmt) ? $remote_data->date_modified_gmt : $remote_data->date_created_gmt);
 
 		// Set billing's address
@@ -1517,7 +1518,7 @@ class eCommerceRemoteAccessWoocommerce
 
 		// Add order content to array or orders
 		$order = [
-			'create_date' => strtotime($remote_data->date_created),
+			'create_date' => $create_date->getTimestamp(),
 			'last_update' => $last_update->format('Y-m-d H:i:s'),
 			'remote_id' => $remote_data->id,
 			'remote_increment_id' => $remote_data->id,

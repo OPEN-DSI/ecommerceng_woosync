@@ -52,6 +52,7 @@ $from_date = GETPOST('from_date','aZ09');
 $company_remote_ids = GETPOST('company_remote_ids','alpha');
 $product_remote_ids = GETPOST('product_remote_ids','alpha');
 $order_remote_ids = GETPOST('order_remote_ids','alpha');
+$dont_synchronize_products = GETPOST('dont_synchronize_products','aZ09');
 $to_nb = GETPOST('to_nb','int');
 $dtoe_to_date = GETPOST('dtoe_to_date','aZ09');
 $dtoe_to_nb = GETPOST('dtoe_to_nb','int');
@@ -158,7 +159,7 @@ if ($id) {
 				if ($result < 0) $error++;
 			}
 			if (GETPOST('submit_synchro_commande') || GETPOST('submit_synchro_commande_ajax') || GETPOST('submit_synchro_all')) {
-				$result = $synchro->synchCommande(array_filter(array_map('trim', explode(',', $order_remote_ids)), 'strlen'), $toNb);
+				$result = $synchro->synchCommande(array_filter(array_map('trim', explode(',', $order_remote_ids)), 'strlen'), $toNb, !empty($dont_synchronize_products));
 				if ($result < 0) $error++;
 			}
 //			if (GETPOST('submit_synchro_facture') || GETPOST('submit_synchro_facture_ajax') || GETPOST('submit_synchro_all')) {

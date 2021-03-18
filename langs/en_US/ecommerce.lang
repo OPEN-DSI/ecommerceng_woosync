@@ -305,6 +305,7 @@ RestrictSyncForRecordBetween    = Limite la synchronisation des données (se bas
 RestrictSyncToCompanyRemoteID   = Limite la synchronisation des clients aux ID distants suivants (customer_id, customer_id, ...)
 RestrictSyncToProductRemoteID   = Limite la synchronisation des produits aux ID distants suivants (product_id, product_id|variation_id, ...)
 RestrictSyncToOrderRemoteID     = Limite la synchronisation des commandes aux ID distants suivants (order_id, order_id, ...)
+DontSyncProductWhenSyncOrders   = Ne pas synchroniser les produits lors de la synchronisation des commandes
 
 ECommerceSiteWebHooksSetup                          = Configuration des Crochets Web (WebHooks)
 ECommerceSiteWebHooksUrl                            = URL de livraison
@@ -338,15 +339,19 @@ ECommerceCreateSupplierInvoiceFromSiteNote          = Facture fournisseur créé
 ECommerceFirstNameLastNameNotInformed               = Pas de nom/prénom renseigné
 ECommerceLastNameNotInformed                        = [Nom non renseigné]
 
+ECommerceOrdersSyncSetup                                            = Synchronisation des commandes
+ECommerceWoocommerceOrderFirstDateForECommerceToDolibarr            = Date de reprise
+ECommerceWoocommerceOrderFirstDateForECommerceToDolibarrDescription = Les commandes dont la date de creation est entérieur seront ignorées
+
 ############################################################################################
 # Web Hooks
 ############################################################################################
 ECommerceMenuWebHooks   = Crochet web (WebHooks)
 
-ECommerceWebHooksStatusNotProcessed = En attente de traitement
-ECommerceWebHooksStatusProcessed    = Traité
-ECommerceWebHooksStatusError        = Erreur
-ECommerceWebHooksStatusWarning      = Attention
+ECommerceWebHooksStatusNotProcessed         = En attente de traitement
+ECommerceWebHooksStatusProcessed            = Traité
+ECommerceWebHooksStatusError                = Erreur
+ECommerceWebHooksStatusWarning              = Attention
 ECommerceWebHooksStatusShortNotProcessed    = En attente de traitement
 ECommerceWebHooksStatusShortProcessed       = Traité
 ECommerceWebHooksStatusShortError           = Erreur
@@ -484,7 +489,6 @@ ECommerceErrorGetPaymentGateways                    = Erreur lors du chargement 
 ECommerceErrorGetProductCategories                  = Erreur lors du chargement des catégories de produit Dolibarr
 ECommerceErrorPrivateThirdPartyTypeNotFound         = Le type de tiers "Particulier" avec le code "TE_PRIVATE" n'est pas activé ou a été supprimé du dictionnaires des type de tiers
 ECommerceErrorSynchronizeWebHook                    = Erreur lors de la synchronisation de la ligne de la file d'attente (ID: %s, Topic: %s)
-
 ECommerceErrorSetLastSyncDateCustome                = Erreur lors de la mise à jour de la date de la plus récente date de synchronisation des clients pour le site (ID: %s)
 ECommerceErrorSetLastSyncDateProduct                = Erreur lors de la mise à jour de la date de la plus récente date de synchronisation des produits pour le site (ID: %s)
 ECommerceErrorSetLastSyncDateOrder                  = Erreur lors de la mise à jour de la date de la plus récente date de synchronisation des commandes pour le site (ID: %s)
@@ -500,8 +504,8 @@ ECommerceErrorWhenCheckingWebHooksStatus            = Erreur lors de la vérific
 ############################################################################################
 # Warnings
 ############################################################################################
-ECommerceWarningWrongAmountTTCWithPaid              = Attention!! Le client a payé un montant différent : %s TTC
-ECommerceWarningOrderThirdPartyNotSupported         = Attention!! La commande (ID: %s) est ignoré car elle a été créée par un client (ID: %s) dont le type n'est pas authorisé dans la configuration
-ECommerceWarningSynchronizeWebHook                  = Attention!! Lors de la synchronisation de la ligne de la file d'attente (ID: %s, Topic: %s)
-ECommerceWarningUpdateOrderNotSynchronized          = Attention!! Tentative de mise à jour d'une commande non synchronisée
+ECommerceWarningWrongAmountTTCWithPaid                          = Attention!! Le client a payé un montant différent : %s TTC
+ECommerceWarningOrderThirdPartyNotSupported                     = Attention!! La commande (ID: %s) est ignoré car elle a été créée par un client (ID: %s) dont le type n'est pas authorisé dans la configuration
+ECommerceWarningSynchronizeWebHook                              = Attention!! Lors de la synchronisation de la ligne de la file d'attente (ID: %s, Topic: %s)
+ECommerceWarningUpdateOrderNotSynchronized                      = Attention!! Tentative de mise à jour d'une commande non synchronisée
 ECommerceWarningNotifyEmailErrorCheckWebHooksStatusNotDefined   = Attention!! La variable global ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_STATUS contenant les adresses emails séparées par des virgules n'a pas été définie
