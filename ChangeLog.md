@@ -2,6 +2,7 @@
 
 ## 4.0.64.0
 - Ajout de l'option "Ne pas synchroniser les produits lors de la synchronisation des commandes" lors de la synchronisation manuelle des commandes
+- Correction $this dans la page de configuration a la suppression d'un site
 
 ## 4.0.63.0
 - Ajout d'une date de relance pour la synchronisation des commandes de ECommerce vers dolibarr (Les commandes dont la date de creation est entérieur seront ignorées).

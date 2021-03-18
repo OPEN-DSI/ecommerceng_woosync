@@ -320,6 +320,8 @@ function ecommerceng_download_image($image, $product, &$error_message)
 
 function ecommerceng_remove_obsolete_image($product, $images, &$error_message)
 {
+	$images = is_array($images) ? $images : array();
+
     dol_syslog(__METHOD__.': product_id=' . $product->id . ' images=' . implode(',', $images), LOG_DEBUG);
     global $db, $conf;
 

@@ -597,7 +597,7 @@ elseif ($_POST['site_form_detail_action'] == 'delete')
         $efields->delete("ecommerceng_wc_role_{$siteDb->id}_{$conf->entity}");
 
         // Delete all VAT for the site
-        $resql = $this->db->query('DELETE FROM ' . MAIN_DB_PREFIX . 'c_ecommerceng_tax_class WHERE site_id = ' . $siteDb->id . ' AND entity = ' . $conf->entity);
+        $resql = $db->query('DELETE FROM ' . MAIN_DB_PREFIX . 'c_ecommerceng_tax_class WHERE site_id = ' . $siteDb->id . ' AND entity = ' . $conf->entity);
 
         $pay_gateways->delete_all($siteDb->id);
 
