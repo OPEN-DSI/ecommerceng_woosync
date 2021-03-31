@@ -86,6 +86,9 @@ ECommerceSynchronizeSociete = Synchroniser les tiers clients et contacts de tier
 ECommerceSynchronizeProduct = Synchroniser les produits
 ECommerceSynchronizeCommande = Synchroniser les commandes
 ECommerceSynchronizeFacture = Synchroniser les factures
+ECommerceSynchronizeSociete = Synchroniser les nouveaux tiers clients et ses contacts
+ECommerceSynchronizeProduct = Synchroniser les nouveaux produits
+ECommerceSynchronizeCommande = Synchroniser les nouvelles commandes
 ECommerceSynchSocieteErrorCreateUpdateSociete=Erreur dans le synchronisation du client
 ECommerceErrorGetSocieteToUpdate=Un problème de connection est survenue lors de la récupération des clients. Merci de réessayer.
 ECommerceErrorGetProduitsToUpdate=Un problème de connection est survenue lors de la récupération des produits. Merci de réessayer.
@@ -251,6 +254,9 @@ ECommerceProductTaxSyncDirection=Synchronisation de la classes de TVA sur la bou
 ECommerceProductTaxSyncDirectionDescription=Ce paramètre détermine le sens de mise à jour de la classes de TVA sur la boutique
 ECommerceProductStatusSyncDirection=Synchronisation du status sur la boutique
 ECommerceProductStatusSyncDirectionDescription=Ce paramètre détermine le sens de mise à jour du status sur la boutique
+
+ECommerceProductWeightUnits=Unité de poids sur la boutique
+ECommerceProductWeightUnitsDescription=Ce paramètre détermine l'unité de poids sur la boutique
 
 ECommerceExportProductsPrices=Export des prix des produits (WooSync)
 ECommerceImportProductsPrices=Import des prix des produits (WooSync) (Ne support pas l'ajout de nouveaux produits, la mis à jour n'est supporté que par le CSV)

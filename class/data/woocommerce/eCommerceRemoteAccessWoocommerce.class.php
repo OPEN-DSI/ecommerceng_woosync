@@ -939,6 +939,7 @@ class eCommerceRemoteAccessWoocommerce
 		$productWeightSynchDirection = isset($this->site->parameters['product_synch_direction']['weight']) ? $this->site->parameters['product_synch_direction']['weight'] : '';
 		$productTaxSynchDirection = isset($this->site->parameters['product_synch_direction']['tax']) ? $this->site->parameters['product_synch_direction']['tax'] : '';
 		$productStatusSynchDirection = isset($this->site->parameters['product_synch_direction']['status']) ? $this->site->parameters['product_synch_direction']['status'] : '';
+		$productWeightUnits = isset($this->site->parameters['product_weight_units']) ? $this->site->parameters['product_weight_units'] : (empty($conf->global->MAIN_WEIGHT_DEFAULT_UNIT)?0:$conf->global->MAIN_WEIGHT_DEFAULT_UNIT);
 
 		// Categories
 		$categories = [];
@@ -1006,6 +1007,7 @@ class eCommerceRemoteAccessWoocommerce
 				"ecommerceng_wc_sale_price_{$this->site->id}_{$conf->entity}" => $remote_data->sale_price,
 				"ecommerceng_wc_date_on_sale_from_{$this->site->id}_{$conf->entity}" => $date_on_sale_from,
 				"ecommerceng_wc_date_on_sale_to_{$this->site->id}_{$conf->entity}" => $date_on_sale_to,
+				"ecommerceng_wc_update_stock_{$this->site->id}_{$conf->entity}" => !empty($remote_data->manage_stock) ? 1 : 0,
 			],
 		];
 
@@ -1023,6 +1025,7 @@ class eCommerceRemoteAccessWoocommerce
 		// Synchronize weight
 		if ($productWeightSynchDirection == 'etod' || $productWeightSynchDirection == 'all') {
 			$product['weight'] = $remote_data->weight;
+			$product['weight_units'] = $productWeightUnits;
 		}
 		// Synchronize tax
 		$tax_info = $this->getTaxInfoFromTaxClass($remote_data->tax_class, $remote_data->tax_status);
@@ -1773,13 +1776,10 @@ class eCommerceRemoteAccessWoocommerce
         $productTaxSynchDirection = isset($this->site->parameters['product_synch_direction']['tax']) ? $this->site->parameters['product_synch_direction']['tax'] : '';
         $productStatusSynchDirection = isset($this->site->parameters['product_synch_direction']['status']) ? $this->site->parameters['product_synch_direction']['status'] : '';
 
-        // Set Weight
-        $totalWeight = $object->weight;
-        if ($object->weight_units < 50)   // >50 means a standard unit (power of 10 of official unit), > 50 means an exotic unit (like inch)
-        {
-            $trueWeightUnit = pow(10, $object->weight_units);
-            $totalWeight = sprintf("%f", $object->weight * $trueWeightUnit);
-        }
+        // Convert Weight
+		$from_unit = $object->weight_units;
+		$to_unit = isset($this->site->parameters['product_weight_units']) ? $this->site->parameters['product_weight_units'] : (empty($conf->global->MAIN_WEIGHT_DEFAULT_UNIT)?0:$conf->global->MAIN_WEIGHT_DEFAULT_UNIT);
+		$totalWeight = weight_convert($object->weight, $from_unit, $to_unit);
 
         // Price
         $error_price = 0;
@@ -1994,7 +1994,7 @@ class eCommerceRemoteAccessWoocommerce
                 //'download_expiry' => '',                                // integer      Number of days until access to downloadable files expires. Default is -1.
                 //'tax_status' => 'none',                                 // string       Tax status. Options: taxable, shipping and none. Default is taxable.
                 //'tax_class' => '',                                      // string       Tax class.
-                //'manage_stock' => '',                                   // boolean      Stock management at variation level. Default is false.
+                'manage_stock' => !empty($object->array_options["options_ecommerceng_wc_update_stock_{$this->site->id}_{$conf->entity}"]),                                   // boolean      Stock management at variation level. Default is false.
                 //'stock_quantity' => '',                                 // integer      Stock quantity.
                 //'in_stock' => '',                                       // boolean      Controls whether or not the variation is listed as “in stock” or “out of stock” on the frontend. Default is true.
                 //'backorders' => '',                                     // string       If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
@@ -2030,6 +2030,10 @@ class eCommerceRemoteAccessWoocommerce
                     $variationData['tax_class'] = $object->array_options["options_ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"];
                 }
             }
+			if ($variationData['manage_stock']) {
+				$variationData['stock_quantity'] = $object->stock_reel;
+				$variationData['in_stock'] = $object->stock_reel > 0;
+			}
 
             // Synch extrafields <=> metadatas
             if (!empty($object->array_options)) {
@@ -2167,7 +2171,7 @@ class eCommerceRemoteAccessWoocommerce
                 //'button_text'           => '',                                      // string		Product external button text. Only for external products.
                 //'tax_status' => 'none',                                  // string		Tax status. Options: taxable, shipping and none. Default is taxable.
                 //'tax_class'             => '',                                      // string		Tax class.
-                //'manage_stock'          => false,                                   // boolean		Stock management at product level. Default is false.
+                'manage_stock'          => !empty($object->array_options["options_ecommerceng_wc_update_stock_{$this->site->id}_{$conf->entity}"]),                                   // boolean		Stock management at product level. Default is false.
                 //'stock_quantity'        => $object->stock_reel,                     // integer		Stock quantity.
                 //'in_stock'              => $object->stock_reel > 0,                 // boolean		Controls whether or not the product is listed as “in stock” or “out of stock” on the frontend. Default is true.
                 //'backorders'            => '',                                      // string		If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
@@ -2216,6 +2220,10 @@ class eCommerceRemoteAccessWoocommerce
             if ($productStatusSynchDirection == 'dtoe' || $productStatusSynchDirection == 'all') {
                 $productData['status'] = (!empty($status) ? $status : 'publish');
             }
+            if ($productData['manage_stock']) {
+				$productData['stock_quantity'] = $object->stock_reel;
+				$productData['in_stock'] = $object->stock_reel > 0;
+			}
 
             // Synch extrafields <=> metadatas
             if (!empty($object->array_options)) {
@@ -2319,6 +2327,9 @@ class eCommerceRemoteAccessWoocommerce
     {
         dol_syslog(__METHOD__ . ": Update stock of the remote product ID $remote_id for MouvementStock ID {$object->id}, new qty: {$object->qty_after} for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs, $user;
+
+		if (empty($object->array_options["options_ecommerceng_wc_update_stock_{$this->site->id}_{$conf->entity}"]))
+			return true;
 
 		$this->errors = array();
 		$new_stocks = floor($object->qty_after);
@@ -2680,13 +2691,10 @@ class eCommerceRemoteAccessWoocommerce
             if (!$this->updateRemoteProduct($remoteId, $object))
                 return false;
         } else {
-            // Set weight
-            $totalWeight = $object->weight;
-            if ($object->weight_units < 50)   // >50 means a standard unit (power of 10 of official unit), > 50 means an exotic unit (like inch)
-            {
-                $trueWeightUnit = pow(10, $object->weight_units);
-                $totalWeight = sprintf("%f", $object->weight * $trueWeightUnit);
-            }
+			// Convert Weight
+			$from_unit = $object->weight_units;
+			$to_unit = isset($this->site->parameters['product_weight_units']) ? $this->site->parameters['product_weight_units'] : (empty($conf->global->MAIN_WEIGHT_DEFAULT_UNIT)?0:$conf->global->MAIN_WEIGHT_DEFAULT_UNIT);
+			$totalWeight = weight_convert($object->weight, $from_unit, $to_unit);
 
             // Product - Meta data properties
             $object->fetch_optionals();
@@ -3123,13 +3131,10 @@ class eCommerceRemoteAccessWoocommerce
                     }
                 }
 
-                // Set weight
-                $totalWeight = $product_static->weight;
-                if ($product_static->weight_units < 50)   // >50 means a standard unit (power of 10 of official unit), > 50 means an exotic unit (like inch)
-                {
-                    $trueWeightUnit = pow(10, $product_static->weight_units);
-                    $totalWeight = sprintf("%f", $product_static->weight * $trueWeightUnit);
-                }
+				// Convert Weight
+				$from_unit = $product_static->weight_units;
+				$to_unit = isset($this->site->parameters['product_weight_units']) ? $this->site->parameters['product_weight_units'] : (empty($conf->global->MAIN_WEIGHT_DEFAULT_UNIT)?0:$conf->global->MAIN_WEIGHT_DEFAULT_UNIT);
+				$totalWeight = weight_convert($product_static->weight, $from_unit, $to_unit);
 
                 // Price
                 $error_price = 0;

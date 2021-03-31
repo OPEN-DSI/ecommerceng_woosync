@@ -305,6 +305,7 @@ if ($_POST['site_form_detail_action'] == 'save')
                 'realtime_dtoe' => $ecommerceRealtimeDolibarrToECommerce,
                 'product_synch_direction' => $ecommerceProductSynchDirection,
                 'product_synch_price' => $ecommerceProductSynchPrice,
+				'product_weight_units' => $_POST['ecommerce_product_weight_units'],
                 'customer_roles' => $ecommerceWoocommerceCustomerRoles,
             );
             if ($conf->commande->enabled || $conf->facture->enabled || $conf->supplier_invoice->enabled) {
@@ -432,20 +433,34 @@ if ($_POST['site_form_detail_action'] == 'save')
                         'alwayseditable' => 1,
                         'perms' => '',
                         'list' => 1,
-                    ], [
-                        'attrname' => "ecommerceng_wc_date_on_sale_to_{$siteDb->id}_{$conf->entity}",
-                        'label' => $langs->trans('ECommercengWoocommerceDateOnSaleTo', $siteDb->name),
-                        'type' => 'date',
-                        'pos' => 8,
-                        'size' => '',
-                        'elementtype' => 'product',
-                        'unique' => 0,
-                        'required' => 0,
-                        'default_value' => '',
-                        'param' => '',
-                        'alwayseditable' => 1,
-                        'perms' => '',
-                        'list' => 1,
+					], [
+						'attrname' => "ecommerceng_wc_date_on_sale_to_{$siteDb->id}_{$conf->entity}",
+						'label' => $langs->trans('ECommercengWoocommerceDateOnSaleTo', $siteDb->name),
+						'type' => 'date',
+						'pos' => 8,
+						'size' => '',
+						'elementtype' => 'product',
+						'unique' => 0,
+						'required' => 0,
+						'default_value' => '',
+						'param' => '',
+						'alwayseditable' => 1,
+						'perms' => '',
+						'list' => 1,
+					], [
+						'attrname' => "ecommerceng_wc_update_stock_{$siteDb->id}_{$conf->entity}",
+						'label' => $langs->trans('ECommercengWoocommerceUpdateStock', $siteDb->name),
+						'type' => 'boolean',
+						'pos' => 9,
+						'size' => '',
+						'elementtype' => 'product',
+						'unique' => 0,
+						'required' => 0,
+						'default_value' => '',
+						'param' => '',
+						'alwayseditable' => 1,
+						'perms' => '',
+						'list' => 1,
                     ], [
                         'attrname' => "ecommerceng_online_payment_{$conf->entity}",
                         'label' => 'ECommercengWoocommerceOnlinePayment',
@@ -879,6 +894,8 @@ if ($ecommerceId > 0) {
             }
 			$ecommerceOrderFirstDateForECommerceToDolibarr = isset($siteDb->parameters['order_first_date_etod']) ? $siteDb->parameters['order_first_date_etod'] : '';
         }
+
+		$ecommerceProductWeightUnits = (isset($siteDb->parameters['product_weight_units']) ? $siteDb->parameters['product_weight_units'] : (empty($conf->global->MAIN_WEIGHT_DEFAULT_UNIT)?0:$conf->global->MAIN_WEIGHT_DEFAULT_UNIT));
 
         $ecommerceProductSynchPrice = isset($siteDb->parameters['product_synch_price']) ? $siteDb->parameters['product_synch_price'] : 'regular';
         $ecommerceProductImageSynchDirection = isset($siteDb->parameters['product_synch_direction']['image']) ? $siteDb->parameters['product_synch_direction']['image'] : 'etod';

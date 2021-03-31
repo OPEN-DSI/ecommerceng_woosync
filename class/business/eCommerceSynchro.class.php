@@ -2783,6 +2783,37 @@ class eCommerceSynchro
 	}
 
 	/**
+	 * Synchronize product to update from raw data
+	 *
+	 * @param   array   $raw_data 		Raw data to synchronize
+	 * @return  int                 	>0 if OK, <0 if KO
+	 */
+	public function synchronizeProductFromData($raw_data)
+	{
+		dol_syslog(__METHOD__ . ' raw_data=' . json_encode($raw_data), LOG_DEBUG);
+
+		$this->error = '';
+		$this->errors = array();
+
+		try {
+			$order_data = $this->eCommerceRemoteAccess->convertProductDataIntoProcessedData($raw_data);
+			if ($order_data === false) {
+				$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenConvertProductData', $raw_data->id)), $this->errors);
+				$this->errors = array_merge($this->errors, $this->eCommerceRemoteAccess->errors);
+			} else {
+				$result = $this->synchronizeProduct($order_data);
+
+				return $result;
+			}
+		} catch (Exception $e) {
+			$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeProducts')), $this->errors);
+			$this->errors[] = $e->getMessage();
+		}
+
+		return -1;
+	}
+
+	/**
 	 * Check if order is too old (create date) in dolibarr from the remote order data
 	 *
 	 * @param   array   $raw_data 		Raw data to synchronize
@@ -3488,7 +3519,9 @@ class eCommerceSynchro
 						}
 
 						// Set stock
-						if (!$error && ($product->type != Product::TYPE_SERVICE || !empty($conf->global->STOCK_SUPPORTS_SERVICES)) && $this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') {
+						if (!$error && ($product->type != Product::TYPE_SERVICE || !empty($conf->global->STOCK_SUPPORTS_SERVICES)) &&
+							$this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr' && !empty($product->array_options["options_ecommerceng_wc_update_stock_{$this->eCommerceSite->id}_{$conf->entity}"])
+						) {
 							if (empty($this->eCommerceSite->fk_warehouse)) {
 								$error++;
 								$this->errors[] = 'SetupOfWarehouseNotDefinedForThisSite';

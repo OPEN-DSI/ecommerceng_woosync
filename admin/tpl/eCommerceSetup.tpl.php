@@ -487,6 +487,15 @@ if ($ecommerceType == 2)
           </td>
           <td><?php print $langs->trans('ECommerceProductWeightSyncDirectionDescription') ?></td>
         </tr>
+		  <tr <?php print $bc[$var] ?>>
+			  <td><span><?php print $langs->trans('ECommerceProductWeightUnits') ?></span></td>
+			  <td>
+				  <?php
+				  print $formproduct->selectMeasuringUnits("ecommerce_product_weight_units", "weight", $ecommerceProductWeightUnits, 0, 2);
+				  ?>
+			  </td>
+			  <td><?php print $langs->trans('ECommerceProductWeightUnitsDescription') ?></td>
+		  </tr>
         <tr <?php print $bc[$var] ?>>
           <td><span><?php print $langs->trans('ECommerceProductTaxSyncDirection') ?></span></td>
           <td>

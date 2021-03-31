@@ -248,6 +248,20 @@ class eCommerceRemoteAccess
 		return $result;
 	}
 
+	/**
+	 * Put the remote data into product dolibarr data from instantiated class in the constructor
+	 *
+	 * @param	array		$remote_data 	Remote data
+	 * @return  array                 		Data processed.
+	 */
+	public function convertProductDataIntoProcessedData($remote_data)
+	{
+		$result=$this->class->convertProductDataIntoProcessedData($remote_data);
+		$this->error=$this->class->error;
+		$this->errors=$this->class->errors;
+		return $result;
+	}
+
     /**
      * Get a commande from instantiated class in the constructor
      *

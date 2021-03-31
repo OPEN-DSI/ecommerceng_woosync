@@ -479,8 +479,19 @@ class eCommercePendingWebHook
 
 		$result = 1;
 
+		// Product
+		if ($webhook_resource == 'product') {
+			if ($webhook_event == 'created' || $webhook_event == 'updated') {
+				$result = $synchro->synchronizeProductFromData($data);
+				if ($result == 0 && !empty($synchro->warnings)) {
+					$this->warnings = array_merge($synchro->warnings, $this->warnings);
+					return -2;
+				}
+			}
+		}
+
 		// Order
-		if ($webhook_resource == 'order') {
+		elseif ($webhook_resource == 'order') {
 			if ($webhook_event == 'created' || $webhook_event == 'updated') {
 				$result = $synchro->synchronizeOrderFromData($data);
 				if ($result == 0 && !empty($synchro->warnings)) {
@@ -536,7 +547,7 @@ class eCommercePendingWebHook
 				$sql = "SELECT rowid, site_id, webhook_topic, webhook_resource, webhook_event, webhook_data";
 				$sql .= " FROM " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks";
 				$sql .= " WHERE status IN (" . self::STATUS_NOT_PROCESSED . ")";
-				$sql .= " ORDER BY rowid ASC";
+				$sql .= " ORDER BY webhook_topic ASC, rowid ASC";
 
 				$resql = $this->db->query($sql);
 				if (!$resql) {

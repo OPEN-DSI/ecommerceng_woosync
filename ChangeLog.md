@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 4.0.65.0
+- Ajout d'une nouveau champ supplémentaire sur le produit pour gérer le stock (synchronisé avec l'option 'Gérer le stock' sur WooCommerce)
+- Ajout du support des webhooks pour les produits (Creation et actualisation des produits)
+- Ajout d'une nouvelle option pour determiner l'unité de poids d'un site
+
 ## 4.0.64.0
 - Ajout de l'option "Ne pas synchroniser les produits lors de la synchronisation des commandes" lors de la synchronisation manuelle des commandes
 - Correction $this dans la page de configuration a la suppression d'un site

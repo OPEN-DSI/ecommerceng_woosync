@@ -161,7 +161,7 @@ if (is_object($site)) {
 							<?php
 						} elseif ($nbProductToUpdate > 0 || !empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) {*/ ?>
 							<input type="submit" name="submit_synchro_product" id="submit_synchro_product"
-								   class="button" value="<?php print $langs->trans('ECommerceSynchronizeProduct') ?>">
+								   class="button" value="<?php print $langs->trans('ECommerceSynchronizeNewProduct') ?>">
 						<?php //} ?>
 					</td>
 				<?php endif; ?>
@@ -188,7 +188,7 @@ if (is_object($site)) {
 					<td>
 						<?php //if ($nbSocieteToUpdate > 0 || !empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)): ?>
 							<input type="submit" name="submit_synchro_societe" id="submit_synchro_societe"
-								   class="button" value="<?php print $langs->trans('ECommerceSynchronizeSociete') ?>">
+								   class="button" value="<?php print $langs->trans('ECommerceSynchronizeNewSociete') ?>">
 						<?php //endif; ?>
 					</td>
 				<?php endif; ?>
@@ -226,7 +226,7 @@ if (is_object($site)) {
 							<?php } elseif ($nbCommandeToUpdate > 0 || !empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) {*/ ?>
 								<input type="submit" name="submit_synchro_commande" id="submit_synchro_commande"
 									   class="button"
-									   value="<?php print $langs->trans('ECommerceSynchronizeCommande') ?>">
+									   value="<?php print $langs->trans('ECommerceSynchronizeNewCommande') ?>">
 							<?php //} ?>
 						</td>
 					<?php endif;
