@@ -3399,6 +3399,7 @@ class eCommerceSynchro
 						$product->label = $product_data['label'];
 						$product->description = isset($product_data['description']) ? $product_data['description'] : $product->description;
 						$product->weight = isset($product_data['weight']) ? $product_data['weight'] : $product->weight;
+						$product->weight_units = isset($product_data['weight_units']) ? $product_data['weight_units'] : $product->weight_units;
 						$product->type = $product_data['fk_product_type'];
 						$product->finished = $product_data['finished'];
 						$product->status = $product_data['envente'];

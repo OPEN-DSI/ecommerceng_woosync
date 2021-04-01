@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.66.0
+- Correction mineure
+
 ## 4.0.65.0
 - Ajout d'une nouveau champ supplémentaire sur le produit pour gérer le stock (synchronisé avec l'option 'Gérer le stock' sur WooCommerce)
 - Ajout du support des webhooks pour les produits (Creation et actualisation des produits)
