@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.67.0
+- Correction mineure et compatibilité dolibarr v7
+
 ## 4.0.66.0
 - Correction mineure
 

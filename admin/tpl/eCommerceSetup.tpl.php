@@ -19,6 +19,7 @@
  */
 
 include_once DOL_DOCUMENT_ROOT.'/product/class/html.formproduct.class.php';
+include_once DOL_DOCUMENT_ROOT.'/core/lib/product.lib.php';
 
 $formproduct = new FormProduct($db);
 
@@ -491,7 +492,11 @@ if ($ecommerceType == 2)
 			  <td><span><?php print $langs->trans('ECommerceProductWeightUnits') ?></span></td>
 			  <td>
 				  <?php
-				  print $formproduct->selectMeasuringUnits("ecommerce_product_weight_units", "weight", $ecommerceProductWeightUnits, 0, 2);
+				  if (version_compare(DOL_VERSION, "10.0.0") < 0) {
+					  print $formproduct->select_measuring_units("ecommerce_product_weight_units", "weight", $ecommerceProductWeightUnits);
+				  } else {
+					  print $formproduct->selectMeasuringUnits("ecommerce_product_weight_units", "weight", $ecommerceProductWeightUnits, 0, 2);
+				  }
 				  ?>
 			  </td>
 			  <td><?php print $langs->trans('ECommerceProductWeightUnitsDescription') ?></td>
