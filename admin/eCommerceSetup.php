@@ -456,7 +456,7 @@ if ($_POST['site_form_detail_action'] == 'save')
 						'elementtype' => 'product',
 						'unique' => 0,
 						'required' => 0,
-						'default_value' => '',
+						'default_value' => '1',
 						'param' => '',
 						'alwayseditable' => 1,
 						'perms' => '',

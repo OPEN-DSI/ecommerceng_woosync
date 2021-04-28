@@ -103,7 +103,7 @@ $arrayfields = array(
 	'epw.status' => array('label' => "Status", 'checked' => 1, 'position' => 1000),
 );
 
-	
+
 /*
  * Actions
  */
@@ -540,7 +540,7 @@ if ($resql) {
 		// WebHook data
 		if (!empty($arrayfields['epw.webhook_data']['checked'])) {
 			print '<td class="nowrap tdoverflowmax200">';
-			print $form->textwithtooltip(dol_trunc($obj->webhook_data, 25), $obj->webhook_data, 3, 1, '', '', 2, '', '', 'ttdata' . $obj->rowid);
+			print $form->textwithtooltip(dol_escape_htmltag(dol_trunc($obj->webhook_data, 25)), dol_escape_htmltag($obj->webhook_data), 3, 1, '', '', 2, '', '', 'ttdata' . $obj->rowid);
 			print '</td>';
 			if (!$i) $totalarray['nbfield']++;
 		}
