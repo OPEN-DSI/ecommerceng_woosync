@@ -2320,16 +2320,19 @@ class eCommerceRemoteAccessWoocommerce
      *
      * @param   int             $remote_id      Id of product on remote ecommerce
      * @param   MouvementStock  $object         MouvementStock object, enhanced with property qty_after be the trigger STOCK_MOVEMENT.
-     *
+	 * @param   Product			$product        Product object
+	 *
      * @return  boolean                         True or false
      */
-    public function updateRemoteStockProduct($remote_id, $object)
+    public function updateRemoteStockProduct($remote_id, $object, $product)
     {
         dol_syslog(__METHOD__ . ": Update stock of the remote product ID $remote_id for MouvementStock ID {$object->id}, new qty: {$object->qty_after} for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs, $user;
 
-		if (empty($object->array_options["options_ecommerceng_wc_update_stock_{$this->site->id}_{$conf->entity}"]))
+		if (empty($product->array_options["options_ecommerceng_wc_update_stock_{$this->site->id}_{$conf->entity}"])) {
+			dol_syslog(__METHOD__ . ": Ignore update stock of the remote product ID $remote_id for MouvementStock ID {$object->id}, new qty: {$object->qty_after} for site ID {$this->site->id}", LOG_INFO);
 			return true;
+		}
 
 		$this->errors = array();
 		$new_stocks = floor($object->qty_after);

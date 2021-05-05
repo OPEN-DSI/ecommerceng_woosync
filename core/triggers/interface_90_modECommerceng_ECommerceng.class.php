@@ -123,8 +123,8 @@ class InterfaceECommerceng
 
         if ($action == 'COMPANY_MODIFY')
         {
-			if (get_class($object) != 'Societe') {
-				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Societe for the action " . $action;
+			if ($object->element != 'societe') {
+				$error_msg = "Trigger : Object element (" . $object->element . ") is not a societe for the action " . $action;
 				dol_syslog($error_msg, LOG_ERR);
 				$this->errors[] = $error_msg;
 				return -1;
@@ -236,8 +236,8 @@ class InterfaceECommerceng
 
         if ($action == 'CONTACT_MODIFY')
         {
-			if (get_class($object) != 'Contact') {
-				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Contact for the action " . $action;
+			if ($object->element != 'contact') {
+				$error_msg = "Trigger : Object element (" . $object->element . ") is not a contact for the action " . $action;
 				dol_syslog($error_msg, LOG_ERR);
 				$this->errors[] = $error_msg;
 				return -1;
@@ -335,8 +335,8 @@ class InterfaceECommerceng
 
         if ($action == 'PRODUCT_MODIFY')
         {
-			if (get_class($object) != 'Product') {
-				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Product for the action " . $action;
+			if ($object->element != 'product') {
+				$error_msg = "Trigger : Object element (" . $object->element . ") is not a product for the action " . $action;
 				dol_syslog($error_msg, LOG_ERR);
 				$this->errors[] = $error_msg;
 				return -1;
@@ -496,8 +496,8 @@ class InterfaceECommerceng
             $action == 'ORDER_VALIDATE' || $action == 'ORDER_UNVALIDATE' || $action == 'ORDER_REOPEN' ||
             $action == 'ORDER_CANCEL' || $action == 'ORDER_CLASSIFY_UNBILLED')
         {
-        	if (get_class($object) != 'Commande') {
-				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Commande for the action " . $action;
+        	if ($object->element != 'commande') {
+				$error_msg = "Trigger : Object element (" . $object->element . ") is not a commande for the action " . $action;
 				dol_syslog($error_msg, LOG_ERR);
 				$this->errors[] = $error_msg;
 				return -1;
@@ -680,8 +680,8 @@ class InterfaceECommerceng
 
     	if ($action == 'CATEGORY_DELETE' && ((int) $object->type == 0))     // Product category
         {
-			if (get_class($object) != 'Categorie') {
-				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Categorie for the action " . $action;
+			if ($object->element != 'category') {
+				$error_msg = "Trigger : Object element (" . $object->element . ") is not a category for the action " . $action;
 				dol_syslog($error_msg, LOG_ERR);
 				$this->errors[] = $error_msg;
 				return -1;
@@ -734,8 +734,8 @@ class InterfaceECommerceng
 
         if ($action == 'COMPANY_DELETE')
         {
-			if (get_class($object) != 'Societe') {
-				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Societe for the action " . $action;
+			if ($object->element != 'societe') {
+				$error_msg = "Trigger : Object element (" . $object->element . ") is not a societe for the action " . $action;
 				dol_syslog($error_msg, LOG_ERR);
 				$this->errors[] = $error_msg;
 				return -1;
@@ -772,8 +772,8 @@ class InterfaceECommerceng
 
         if ($action == 'CONTACT_DELETE')
         {
-			if (get_class($object) != 'Contact') {
-				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Contact for the action " . $action;
+			if ($object->element != 'contact') {
+				$error_msg = "Trigger : Object element (" . $object->element . ") is not a contact for the action " . $action;
 				dol_syslog($error_msg, LOG_ERR);
 				$this->errors[] = $error_msg;
 				return -1;
@@ -802,8 +802,8 @@ class InterfaceECommerceng
 
         if ($action == 'ORDER_DELETE')
         {
-			if (get_class($object) != 'Commande') {
-				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Commande for the action " . $action;
+			if ($object->element != 'commande') {
+				$error_msg = "Trigger : Object element (" . $object->element . ") is not a commande for the action " . $action;
 				dol_syslog($error_msg, LOG_ERR);
 				$this->errors[] = $error_msg;
 				return -1;
@@ -832,8 +832,8 @@ class InterfaceECommerceng
 
         if ($action == 'BILL_DELETE')
         {
-			if (get_class($object) != 'Facture') {
-				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Facture for the action " . $action;
+			if ($object->element != 'facture') {
+				$error_msg = "Trigger : Object element (" . $object->element . ") is not a facture for the action " . $action;
 				dol_syslog($error_msg, LOG_ERR);
 				$this->errors[] = $error_msg;
 				return -1;
@@ -866,8 +866,8 @@ class InterfaceECommerceng
         // A shipment is validated, it means order has status "In process"
         if ($action == 'SHIPPING_VALIDATE')
         {
-			if (get_class($object) != 'Expedition') {
-				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a Expedition for the action " . $action;
+			if ($object->element != 'shipping') {
+				$error_msg = "Trigger : Object element (" . $object->element . ") is not a shipping for the action " . $action;
 				dol_syslog($error_msg, LOG_ERR);
 				$this->errors[] = $error_msg;
 				return -1;
@@ -985,8 +985,8 @@ class InterfaceECommerceng
         // Stock Movement
         if ($action == 'STOCK_MOVEMENT')
         {
-			if (get_class($object) != 'MouvementStock') {
-				$error_msg = "Trigger : Object (" . get_class($object) . ") is not a MouvementStock for the action " . $action;
+			if ($object->element != 'stockmouvement') {
+				$error_msg = "Trigger : Object element (" . $object->element . ") is not a stockmouvement for the action " . $action;
 				dol_syslog($error_msg, LOG_ERR);
 				$this->errors[] = $error_msg;
 				return -1;
@@ -1035,7 +1035,7 @@ class InterfaceECommerceng
 
                             if (! $error)
                             {
-                                $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteStockProduct($eCommerceProduct->remote_id, $object);
+                                $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteStockProduct($eCommerceProduct->remote_id, $object, $dbProduct);
                                 $now = dol_now();
                                 if (! $result)
                                 {

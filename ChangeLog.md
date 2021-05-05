@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.0.68.0
+- Correction de l'execution des mises a jour des stock de Dolibarr vers Ecommerce
+- Correction mineure
+
 ## 4.0.67.0
 - Correction mineure et compatibilité dolibarr v7
 
