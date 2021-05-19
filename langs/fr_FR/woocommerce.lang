@@ -40,6 +40,8 @@ ECommercengWoocommerceDescription=Description boutique
 ECommercengWoocommerceShortDescription=Description courte boutique
 ECommercengWoocommerceOnlinePayment=Paiement en ligne
 ECommercengWoocommerceTaxClass=Classe de TVA pour le site [%s]
+ECommercengWoocommerceManageStock=Gestion du stock pour le site [%s]
+ECommercengWoocommerceDontUpdateStock=Ne pas mettre à jour le stock avec le site [%s]
 
 ECommercengWoocommerceDictTaxClass=Liste des classes de TVA sur Woocommerce
 ECommercengWoocommerceDictTaxClassUpdated=Dictionnaire des classes de TVA depuis Woocommerce mise à jour.
@@ -91,6 +93,9 @@ ECommerceWoocommerceProductSyncPrice               = Synchronisation des prix de
 ECommerceWoocommerceProductSyncPriceDescription    = Ce paramètre détermine quel type de prix dans WooCommerce doit être synchronisé avec le prix de vente dans Dolibarr
 ECommerceWoocommerceRegularPrice                   = Prix régulier
 ECommerceWoocommerceSellingPrice                   = Prix de vente
+
+ECommerceWoocommerceVariationProductIsParentProduct             = Variations
+ECommerceWoocommerceVariationProductIsParentProductDescription  = Synchronisation du produit parent et non ses variations (commandes inclus)
 
 ECommercengWoocommerceRegularPrice      = Prix régulier pour le site [%s]
 ECommercengWoocommerceSalePrice         = Prix promo pour le site [%s]

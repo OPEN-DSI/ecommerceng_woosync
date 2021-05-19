@@ -1008,8 +1008,10 @@ class InterfaceECommerceng
 
                 try
                 {
+                	$supported_warehouses = is_array($site->parameters['fk_warehouse_to_ecommerce']) ? $site->parameters['fk_warehouse_to_ecommerce'] : array();
+
                     // Do we sync the stock ?
-                    if (! $error && $site->stock_sync_direction == 'dolibarr2ecommerce' && $site->fk_warehouse == $object->entrepot_id)
+                    if (! $error && $site->stock_sync_direction == 'dolibarr2ecommerce' && in_array($object->entrepot_id, $supported_warehouses))
                     {
                         $eCommerceProduct = new eCommerceProduct($this->db);
                         $eCommerceProduct->fetchByProductId($object->product_id, $site->id);
@@ -1019,7 +1021,10 @@ class InterfaceECommerceng
                         $dbProduct->fetch($object->product_id);
                         $dbProduct->load_stock();
 
-                        $object->qty_after = isset($dbProduct->stock_warehouse[$object->entrepot_id]->real) ? $dbProduct->stock_warehouse[$object->entrepot_id]->real : 0;
+						$object->qty_after = 0;
+                        foreach ($supported_warehouses as $warehouse_id) {
+							$object->qty_after += isset($dbProduct->stock_warehouse[$warehouse_id]->real) ? $dbProduct->stock_warehouse[$warehouse_id]->real : 0;
+						}
 
                         if ($eCommerceProduct->remote_id > 0)
                         {

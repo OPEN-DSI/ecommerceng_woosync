@@ -228,18 +228,30 @@ function ecommerceng_download_image($image, $product, &$error_message)
     }
 
     // Get file
-    $timeout = 5;
+    $timeout = !empty($conf->global->ECOMMERCE_DOWNLOAD_TIMEOUT) ? $conf->global->ECOMMERCE_DOWNLOAD_TIMEOUT : 5;
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $image['url']);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+	$userAgent = 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; .NET CLR 1.1.4322)';
+	curl_setopt($ch, CURLOPT_USERAGENT, $userAgent);
+	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
     $data = curl_exec($ch);
-    curl_close($ch);
-    if ($data === false) {
-        $error_message = curl_error($ch);
+	if (curl_errno($ch) || $data === false) {
+        $error_message = "CURL - " . curl_error($ch);
         dol_syslog(__METHOD__.': '.$error_message, LOG_ERR);
         return false;
-    }
+	} else {
+		$code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		if ($code != 200) {
+			$error_message = "CURL - HTTP code: $code";
+			dol_syslog(__METHOD__.': '.$error_message, LOG_ERR);
+			return false;
+		}
+	}
+	curl_close($ch);
 
     // Get in temporary file name
     if (version_compare(phpversion(), '5.2.1', '<')) {

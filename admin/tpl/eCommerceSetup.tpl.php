@@ -20,8 +20,10 @@
 
 include_once DOL_DOCUMENT_ROOT.'/product/class/html.formproduct.class.php';
 include_once DOL_DOCUMENT_ROOT.'/core/lib/product.lib.php';
+dol_include_once('/ecommerceng/class/html.formecommerceng.class.php');
 
 $formproduct = new FormProduct($db);
+$formecommerceng = new FormECommerceNg($db);
 
 llxHeader();
 
@@ -519,6 +521,17 @@ if ($ecommerceType == 2)
           </td>
           <td><?php print $langs->trans('ECommerceProductStatusSyncDirectionDescription') ?></td>
         </tr>
+<?php if ($ecommerceType == 2) { ?>
+ 		<tr <?php print $bc[$var] ?>>
+		 <td><span><?php print $langs->trans('ECommerceWoocommerceVariationProductIsParentProduct') ?></span></td>
+		 <td>
+		  <?php
+		  print $form->selectyesno('ecommerce_variation_product_is_parent_product', $ecommerceVariationProductIsParentProduct, 1);
+		  ?>
+		 </td>
+		 <td><?php print $langs->trans('ECommerceWoocommerceVariationProductIsParentProductDescription') ?></td>
+		</tr>
+<?php } ?>
       </table>
 
     <!--
@@ -738,17 +751,36 @@ if ($conf->stock->enabled)
 <?php
     $var=!$var;
 ?>
-
 				<tr <?php print $bc[$var] ?>>
 					<td><span><?php print $langs->trans('ECommerceStockProduct') ?></span></td>
 					<td>
-							<?php
-								print $formproduct->selectWarehouses($ecommerceFkWarehouse, 'ecommerce_fk_warehouse', 0, 1);
-							?>
+						<span id="warehouse_dolibarr2ecommerce"><?php print $formecommerceng->multiselectWarehouses($ecommerceFkWarehouseToECommerce, 'ecommerce_fk_warehouse_to_ecommerce') ?></span>
+						<span id="warehouse_ecommerce2dolibarr"><?php print $formproduct->selectWarehouses($ecommerceFkWarehouse, 'ecommerce_fk_warehouse', 0, 1) ?></span>
 					</td>
 					<td><?php print $langs->trans('ECommerceStockProductDescription', $langs->transnoentitiesnoconv('ECommerceStockSyncDirection')) ?></td>
 				</tr>
       </table>
+	<script type="text/javascript">
+		function update_warehouse_display() {
+			var value = jQuery('#ecommerce_stock_sync_direction').val();
+			if (value == 'ecommerce2dolibarr') {
+				jQuery('#warehouse_dolibarr2ecommerce').hide();
+				jQuery('#warehouse_ecommerce2dolibarr').show();
+			} else if (value == 'dolibarr2ecommerce') {
+				jQuery('#warehouse_dolibarr2ecommerce').show();
+				jQuery('#warehouse_ecommerce2dolibarr').hide();
+			} else {
+				jQuery('#warehouse_dolibarr2ecommerce').hide();
+				jQuery('#warehouse_ecommerce2dolibarr').hide();
+			}
+		}
+		jQuery(document).ready(function (){
+			update_warehouse_display();
+			jQuery('#ecommerce_stock_sync_direction').on('change', function () {
+				update_warehouse_display();
+			});
+		});
+	</script>
 <?php
 }
 ?>

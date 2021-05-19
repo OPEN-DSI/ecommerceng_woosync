@@ -1,5 +1,13 @@
 # ChangeLog
 
+## 4.0.69.0
+- Case à cocher pour ne pas synchroniser les stocks sur un produit
+- Multi-entrepôt (Dolibarr vers ECommerce)
+- Synchronisation du produit parent et non ses variations (commandes inclus)
+- Ajout d'une variable globale ECOMMERCE_DOWNLOAD_TIMEOUT pour definir le timeout lors du téléchargement des images (par défaut: 5s)
+- Ne synchronise que les produits publiés ou présents dans une commande
+- Reecriture du script de mise a jour des stocks de Dolibarr vers Ecommerce
+
 ## 4.0.68.0
 - Correction de l'execution des mises a jour des stock de Dolibarr vers Ecommerce
 - Correction mineure

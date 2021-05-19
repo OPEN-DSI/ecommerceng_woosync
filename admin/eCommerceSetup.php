@@ -302,10 +302,12 @@ if ($_POST['site_form_detail_action'] == 'save')
 				'order_first_date_etod' => $ecommerceOrderFirstDateForECommerceToDolibarr,
                 'ef_crp' => $ecommerceExtrafieldsCorrespondence,
                 'payment_cond' => $_POST['ecommerce_payment_cond'],
+				'fk_warehouse_to_ecommerce' => GETPOST('ecommerce_fk_warehouse_to_ecommerce', 'array'),
                 'realtime_dtoe' => $ecommerceRealtimeDolibarrToECommerce,
                 'product_synch_direction' => $ecommerceProductSynchDirection,
                 'product_synch_price' => $ecommerceProductSynchPrice,
 				'product_weight_units' => $_POST['ecommerce_product_weight_units'],
+				'variation_product_is_parent_product' => $_POST['ecommerce_variation_product_is_parent_product'],
                 'customer_roles' => $ecommerceWoocommerceCustomerRoles,
             );
             if ($conf->commande->enabled || $conf->facture->enabled || $conf->supplier_invoice->enabled) {
@@ -448,8 +450,8 @@ if ($_POST['site_form_detail_action'] == 'save')
 						'perms' => '',
 						'list' => 1,
 					], [
-						'attrname' => "ecommerceng_wc_update_stock_{$siteDb->id}_{$conf->entity}",
-						'label' => $langs->trans('ECommercengWoocommerceUpdateStock', $siteDb->name),
+						'attrname' => "ecommerceng_wc_manage_stock_{$siteDb->id}_{$conf->entity}",
+						'label' => $langs->trans('ECommercengWoocommerceManageStock', $siteDb->name),
 						'type' => 'boolean',
 						'pos' => 9,
 						'size' => '',
@@ -461,7 +463,21 @@ if ($_POST['site_form_detail_action'] == 'save')
 						'alwayseditable' => 1,
 						'perms' => '',
 						'list' => 1,
-                    ], [
+					], [
+						'attrname' => "ecommerceng_wc_dont_update_stock_{$siteDb->id}_{$conf->entity}",
+						'label' => $langs->trans('ECommercengWoocommerceDontUpdateStock', $siteDb->name),
+						'type' => 'boolean',
+						'pos' => 10,
+						'size' => '',
+						'elementtype' => 'product',
+						'unique' => 0,
+						'required' => 0,
+						'default_value' => '0',
+						'param' => '',
+						'alwayseditable' => 1,
+						'perms' => '',
+						'list' => 1,
+					], [
                         'attrname' => "ecommerceng_online_payment_{$conf->entity}",
                         'label' => 'ECommercengWoocommerceOnlinePayment',
                         'type' => 'boolean',
@@ -528,6 +544,11 @@ if ($_POST['site_form_detail_action'] == 'save')
                         'list' => 1,
                     ],
                 ], $error);
+
+                // Fix extrafields wc_update_stock to wc_manage_stock on product
+                $db->query("UPDATE " . MAIN_DB_PREFIX . "product_extrafields SET ecommerceng_wc_manage_stock_{$siteDb->id}_{$conf->entity} = ecommerceng_wc_update_stock_{$siteDb->id}_{$conf->entity}");
+				$efields = new ExtraFields($db);
+				$efields->delete("ecommerceng_wc_update_stock_{$siteDb->id}_{$conf->entity}", 'product');
             }
 
             if ($result > 0 && (!empty($ecommerceOrderActions['create_order']) || !empty($ecommerceOrderActions['create_invoice']) || !empty($ecommerceOrderActions['create_supplier_invoice']))) {
@@ -693,6 +714,7 @@ $ecommerceFilterValue = ($_POST['ecommerce_filter_value'] ? $_POST['ecommerce_fi
 $ecommerceFkCatSociete = ($_POST['ecommerce_fk_cat_societe'] ? $_POST['ecommerce_fk_cat_societe'] : intval($siteDb->fk_cat_societe));
 $ecommerceFkCatProduct = ($_POST['ecommerce_fk_cat_product'] ? $_POST['ecommerce_fk_cat_product'] : intval($siteDb->fk_cat_product));
 $ecommerceFkAnonymousThirdparty = ($_POST['ecommerce_fk_anonymous_thirdparty'] ? $_POST['ecommerce_fk_anonymous_thirdparty'] : intval($siteDb->fk_anonymous_thirdparty));
+$ecommerceFkWarehouseToECommerce = GETPOSTISSET('ecommerce_fk_warehouse_to_ecommerce') ? GETPOST('ecommerce_fk_warehouse_to_ecommerce', 'array') : (isset($siteDb->parameters['fk_warehouse_to_ecommerce']) ? $siteDb->parameters['fk_warehouse_to_ecommerce'] : array());
 $ecommerceFkWarehouse = ($_POST['ecommerce_fk_warehouse'] ? $_POST['ecommerce_fk_warehouse'] : intval($siteDb->fk_warehouse));
 $ecommerceStockSyncDirection = ($_POST['ecommerce_stock_sync_direction'] ? $_POST['ecommerce_stock_sync_direction'] : $siteDb->stock_sync_direction);
 $ecommerceMagentoUseSpecialPrice = ($_POST['ecommerce_magento_use_special_price'] ? $_POST['ecommerce_magento_use_special_price'] : intval($siteDb->magento_use_special_price));
@@ -905,6 +927,7 @@ if ($ecommerceId > 0) {
         $ecommerceProductWeightSynchDirection = isset($siteDb->parameters['product_synch_direction']['weight']) ? $siteDb->parameters['product_synch_direction']['weight'] : 'etod';
         $ecommerceProductTaxSynchDirection = isset($siteDb->parameters['product_synch_direction']['tax']) ? $siteDb->parameters['product_synch_direction']['tax'] : 'etod';
         $ecommerceProductStatusSynchDirection = isset($siteDb->parameters['product_synch_direction']['status']) ? $siteDb->parameters['product_synch_direction']['status'] : 'etod';
+		$ecommerceVariationProductIsParentProduct = isset($siteDb->parameters['variation_product_is_parent_product']) ? $siteDb->parameters['variation_product_is_parent_product'] : 0;
         $ecommerceWoocommerceCustomerRoles = isset($siteDb->parameters['customer_roles']) ? $siteDb->parameters['customer_roles'] : 'customer';
     }
 }

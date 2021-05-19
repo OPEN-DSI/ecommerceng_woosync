@@ -3334,7 +3334,7 @@ class eCommerceSynchro
 			$error++;
 		}
 
-		if (!$error && !empty($product_data)) {
+		if (!$error && !empty($product_data) && ($product_data['status'] == 'publish' || is_object($object_origin))) {
 			$this->db->begin();
 
 			try {
@@ -3521,7 +3521,8 @@ class eCommerceSynchro
 
 						// Set stock
 						if (!$error && ($product->type != Product::TYPE_SERVICE || !empty($conf->global->STOCK_SUPPORTS_SERVICES)) &&
-							$this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr' && !empty($product->array_options["options_ecommerceng_wc_update_stock_{$this->eCommerceSite->id}_{$conf->entity}"])
+							$this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr' && !empty($product->array_options["options_ecommerceng_wc_manage_stock_{$this->eCommerceSite->id}_{$conf->entity}"]) &&
+							empty($product->array_options["options_ecommerceng_wc_dont_update_stock_{$this->eCommerceSite->id}_{$conf->entity}"])
 						) {
 							if (empty($this->eCommerceSite->fk_warehouse)) {
 								$error++;

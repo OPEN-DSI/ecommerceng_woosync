@@ -1,9 +1,6 @@
 #!/usr/bin/env php
 <?php
-/* Copyright (C) 2012      Nicolas Villa aka Boyquotes http://informetic.fr
- * Copyright (C) 2013      Florian Henry <forian.henry@open-concept.pro
- * Copyright (C) 2013-2015 Laurent Destailleur <eldy@users.sourceforge.net>
- * Copyright (C) 2019      Open-Dsi <support@open-dsi.fr>
+/* Copyright (C) 2019      Open-Dsi <support@open-dsi.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,13 +51,16 @@ $res=0;
 if (! $res && file_exists("../../main.inc.php")) $res=@include '../../main.inc.php';			// to work if your module directory is into a subdir of root htdocs directory
 if (! $res && file_exists("../../../main.inc.php")) $res=@include '../../../main.inc.php';		// to work if your module directory is into a subdir of root htdocs directory
 if (! $res) die("Include of main fails");
-require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
-require_once DOL_DOCUMENT_ROOT.'/categories/class/categorie.class.php';
+require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
+require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+require_once DOL_DOCUMENT_ROOT . '/product/stock/class/mouvementstock.class.php';
 dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
+dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
+dol_include_once('/ecommerceng/class/data/eCommerceProduct.class.php');
 
 // Global variables
 $version=DOL_VERSION;
-$error=0;
+$product_cached = array();
 
 /*
  * Main
@@ -85,93 +85,129 @@ if ($res == 0) {
     exit(0);
 }
 
+$movement_stock_static = new MouvementStock($db);
 $categories = new Categorie($db);
 $siteDb = new eCommerceSite($db);
+
+$all_cat_full_arbo = $categories->get_full_arbo('product');
 $sites = $siteDb->listSites('object');
 
-if (count($sites)) {
-    $woocommerce_product_categories = array();
-    $warehouses = array();
-    $max_jobs = 0;
-    $num_jobs = 0;
-    $startTime = microtime(true);
+$max_sites = count($sites);
+$num_sites = 0;
 
-    print "Get all WooCommerce product categories.\n";
-    $all_cat_full_arbo = $categories->get_full_arbo('product');
-    foreach ($sites as $site) {
-        if ($site->fk_warehouse > 0) {
-            if (!isset($warehouses[$site->fk_warehouse])) $warehouses[$site->fk_warehouse] = array('fk_warehouse' => $site->fk_warehouse, 'names' => array());
-            $warehouses[$site->fk_warehouse]['names'][$site->name] = $site->name;
-        }
-        if ($site->fk_cat_product > 0) {
-            $woocommerce_product_categories[$site->fk_cat_product] = $site->fk_cat_product;
+if ($max_sites > 0) {
+	$startTime = microtime(true);
 
-            foreach($all_cat_full_arbo as $cat_infos) {
-                if (preg_match("/^{$site->fk_cat_product}$/", $cat_infos['fullpath']) || preg_match("/^{$site->fk_cat_product}_/", $cat_infos['fullpath']) ||
-                    preg_match("/_{$site->fk_cat_product}_/", $cat_infos['fullpath']) || preg_match("/_{$site->fk_cat_product}$/", $cat_infos['fullpath'])) {
-                    $woocommerce_product_categories[$cat_infos['id']] = $cat_infos['id'];
-                }
-            }
-        }
-    }
+	foreach ($sites as $site) {
+		print "Processing the site '{$site->name}'.\n";
+		$num_sites++;
+		$max_jobs = 0;
+		$num_jobs = 0;
 
-    if (count($woocommerce_product_categories) == 0) {
-        print "WooCommerce product categories not found.\n";
-        $db->close();
-        exit(0);
-    }
+		print "Connect to the site.\n";
+		$eCommerceSynchro = new eCommerceSynchro($db, $site);
+		$eCommerceSynchro->connect();
+		if (count($eCommerceSynchro->errors)) {
+			print "Warning: Connect to site fails: {$eCommerceSynchro->errorsToString()}.\n";
+			continue;
+		}
 
-    print "Begin.\n";
-    $nb_warehouses = count($warehouses);
-    if ($nb_warehouses) {
-        $sql = "SELECT DISTINCT cp.fk_product";
-        $sql .= " FROM " . MAIN_DB_PREFIX . "categorie_product as cp";
-        $sql .= " WHERE cp.fk_categorie IN (" . implode(',', $woocommerce_product_categories) . ")";
+		print "Get all WooCommerce product categories.\n";
+		$woocommerce_product_categories = array();
+		if ($site->fk_cat_product > 0) {
+			$woocommerce_product_categories[$site->fk_cat_product] = $site->fk_cat_product;
+			foreach ($all_cat_full_arbo as $cat_infos) {
+				if (preg_match("/^{$site->fk_cat_product}$/", $cat_infos['fullpath']) || preg_match("/^{$site->fk_cat_product}_/", $cat_infos['fullpath']) ||
+					preg_match("/_{$site->fk_cat_product}_/", $cat_infos['fullpath']) || preg_match("/_{$site->fk_cat_product}$/", $cat_infos['fullpath'])) {
+					$woocommerce_product_categories[$cat_infos['id']] = $cat_infos['id'];
+				}
+			}
+		}
+		if (empty($woocommerce_product_categories)) {
+			print "Warning: WooCommerce product categories not found.\n";
+			continue;
+		}
 
-        $resql = $db->query($sql);
-        if ($resql) {
-            $max_jobs = $db->num_rows($resql) * $nb_warehouses;
+		$supported_warehouses = is_array($site->parameters['fk_warehouse_to_ecommerce']) ? $site->parameters['fk_warehouse_to_ecommerce'] : array();
+		if (empty($supported_warehouses)) {
+			print "Warning: Warehouses not configured.\n";
+			continue;
+		}
 
-            while ($obj = $db->fetch_object($resql)) {
-                $product_id = $obj->fk_product;
+		$sql = "SELECT DISTINCT cp.fk_product AS product_id";
+		$sql .= " FROM " . MAIN_DB_PREFIX . "categorie_product as cp";
+		$sql .= " WHERE cp.fk_categorie IN (" . implode(',', $woocommerce_product_categories) . ")";
 
-                $product = new Product($db);
-                $res = $product->fetch($product_id);
-                if ($res > 0) {
-                    foreach ($warehouses as $warehouse) {
-                        $warehouse_id = $warehouse['fk_warehouse'];
-                        $site_name = implode(', ', $warehouses[$warehouse_id]['names']);
+		$resql = $db->query($sql);
+		if ($resql) {
+			$max_jobs = $db->num_rows($resql);
+			while ($obj = $db->fetch_object($resql)) {
+				$error = 0;
 
-                        $res = $product->correct_stock($user, $warehouse_id, 0, 0, "Synchronisation forcée du stock du produit sur le site $site_name.");
-                        if ($res < 0) {
-                            print "\nError correct stock - product (ID: $product_id) - warehouse (ID: $warehouse_id) - site (Nom: $site_name) : " . $product->errorsToString() . "\n";
-                            $db->close();
-                            exit(0);
-                        }
-                        $num_jobs++;
-                        $percent = $num_jobs * 100 / $max_jobs;
-                        $elapsedTime = microtime(true) - $startTime;
-                        $remainingTime = $elapsedTime * (100 - $percent) / $percent;
-                        print sprintf("\rStatus: %6d / %6d - %3d%% - Elapsed: " . microTimeToTime($elapsedTime) . " - Remaining: " . microTimeToTime($remainingTime), $num_jobs, $max_jobs, $percent);
-                    }
-                } elseif ($res == 0) {
-                    print "\nError product (ID: $product_id) not found\n";
-                    $db->close();
-                    exit(0);
-                } else {
-                    print "\nError fetch product (ID: $product_id) : " . $product->errorsToString() . "\n";
-                    $db->close();
-                    exit(0);
-                }
-            }
+				// Get product link
+				$eCommerceProduct = new eCommerceProduct($db);
+				$result = $eCommerceProduct->fetchByProductId($obj->product_id, $site->id);
+				if ($result < 0) {
+					print "\nError: Get product link (ID: {$obj->product_id}): " . errorsToString($eCommerceProduct) . ".\n";
+					$error++;
+				} elseif (!($eCommerceProduct->remote_id > 0)) {
+					print "\nError: Get product remote ID (ID: {$obj->product_id}).\n";
+					$error++;
+				}
 
-            $db->free($result);
-        } else {
-            print "\nError: SQL : $sql; Error: " . $db->lasterror() . "\n";
-            $db->close();
-            exit(0);
-        }
-    }
+				// Get product
+				if (!$error) {
+					$dbProduct = getProduct($obj->product_id);
+					if (!($dbProduct->id > 0)) {
+						print "\nError: Get product (ID: {$obj->product_id}): " . errorsToString($dbProduct) . ".\n";
+						$error++;
+					} else {
+						$movement_stock_static->qty_after = 0;
+						foreach ($supported_warehouses as $warehouse_id) {
+							$movement_stock_static->qty_after += isset($dbProduct->stock_warehouse[$warehouse_id]->real) ? $dbProduct->stock_warehouse[$warehouse_id]->real : 0;
+						}
+					}
+				}
+
+				if (!$error) {
+					$db->begin();
+
+					// Update remote product stock
+					$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteStockProduct($eCommerceProduct->remote_id, $movement_stock_static, $dbProduct);
+					if (!$result) {
+						print "\nError: Update product stock (ID: {$obj->product_id}, remote ID: {$eCommerceProduct->remote_id}): " . errorsToString($eCommerceSynchro->eCommerceRemoteAccess) . ".\n";
+						$error++;
+					}
+
+					// Update product link
+					if (!$error) {
+						$eCommerceProduct->last_update = dol_print_date(dol_now(), '%Y-%m-%d %H:%M:%S');
+						$result = $eCommerceProduct->update($user);
+						if ($result < 0) {
+							print "\nError: Update product link (ID: {$obj->product_id}): " . errorsToString($eCommerceProduct) . ".\n";
+							$error++;
+						}
+					}
+
+					if ($error) {
+						$db->rollback();
+						$db->close();
+						exit(0);
+					} else {
+						$db->commit();
+					}
+				}
+
+				$num_jobs++;
+				printStatus($num_sites, $max_sites, $num_jobs, $max_jobs);
+			}
+
+			$db->free($resql);
+		} else {
+			print "\nError: SQL : $sql; Error: " . $db->lasterror() . "\n";
+			continue;
+		}
+	}
 }
 
 print "\nEnd.\n";
@@ -179,6 +215,37 @@ print "\nEnd.\n";
 $db->close();
 
 exit(0);
+
+function getProduct($product_id)
+{
+	global $db, $product_cached;
+
+	if (!isset($product_cached[$product_id])) {
+		$dbProduct = new Product($db);
+		$dbProduct->fetch($product_id);
+		$dbProduct->load_stock();
+
+		$product_cached[$product_id] = $dbProduct;
+	}
+
+	return $product_cached[$product_id];
+}
+
+function errorsToString($object, $separator = ', ')
+{
+	return $object->error . (is_array($object->errors) ? (!empty($object->error) ? $separator : '') . join($separator, $object->errors) : '');
+}
+
+function printStatus($num_sites, $max_sites, $num_jobs, $max_jobs)
+{
+	global $startTime;
+
+	$sub_percent = $num_sites * 100 / $max_sites;
+	$percent = $num_jobs * $sub_percent / $max_jobs;
+	$elapsedTime = microtime(true) - $startTime;
+	$remainingTime = $percent > 0 ? $elapsedTime * (100 - $percent) / $percent : 0;
+	print sprintf("\rStatus: Site: %2d / %2d - Product: %6d / %6d - %3d%% - Elapsed: " . microTimeToTime($elapsedTime) . " - Remaining: " . microTimeToTime($remainingTime), $num_sites, $max_sites, $num_jobs, $max_jobs, $percent);
+}
 
 function microTimeToTime($microtime)
 {

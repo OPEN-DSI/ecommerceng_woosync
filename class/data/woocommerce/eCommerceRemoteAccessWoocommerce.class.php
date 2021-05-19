@@ -802,6 +802,7 @@ class eCommerceRemoteAccessWoocommerce
         $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
 		$from_date = isset($from_date) ? dol_print_date($from_date, 'dayhourrfc') : null;
 		$to_date = isset($to_date) ? dol_print_date($to_date, 'dayhourrfc') : null;
+		$variation_product_is_parent_product = isset($this->site->parameters['variation_product_is_parent_product']) ? $this->site->parameters['variation_product_is_parent_product'] : 0;
 
 		$include_ids = [];
 		$include_variation_ids = [];
@@ -822,6 +823,7 @@ class eCommerceRemoteAccessWoocommerce
 			'order' => 'asc',
 		];
 		if ($toNb > 0) $filters['per_page'] = min($nb_max_by_request, $toNb);
+		if (empty($remoteObject)) $filters['status'] = 'publish';
 		if (!empty($include_ids)) $filters['include'] = implode(',', $include_ids);
 		else {
 			if (isset($from_date)) $filters['after'] = $from_date;
@@ -846,7 +848,7 @@ class eCommerceRemoteAccessWoocommerce
 
 			foreach ($page as $product) {
 				// Don't synchronize the variation parent
-				if (empty($product->variations) || !empty($product->parent_id)) {
+				if (empty($product->variations) || !empty($product->parent_id) || !empty($variation_product_is_parent_product)) {
 					$data = $this->convertProductDataIntoProcessedData($product);
 					if (!is_array($data)) {
 						$this->errors = array_merge(array($langs->trans('ECommerceErrorWhenConvertProductData', $product->id)), $this->errors);
@@ -856,7 +858,7 @@ class eCommerceRemoteAccessWoocommerce
 				}
 
 				// Synchronize all the variations of the product if only the parent is provided
-				if (!empty($product->variations) && empty($include_variation_ids[$product->id])) {
+				if (empty($variation_product_is_parent_product) && !empty($product->variations) && empty($include_variation_ids[$product->id])) {
 					$include_variation_ids[$product->id] = $product->variations;
 				}
 
@@ -940,6 +942,7 @@ class eCommerceRemoteAccessWoocommerce
 		$productTaxSynchDirection = isset($this->site->parameters['product_synch_direction']['tax']) ? $this->site->parameters['product_synch_direction']['tax'] : '';
 		$productStatusSynchDirection = isset($this->site->parameters['product_synch_direction']['status']) ? $this->site->parameters['product_synch_direction']['status'] : '';
 		$productWeightUnits = isset($this->site->parameters['product_weight_units']) ? $this->site->parameters['product_weight_units'] : (empty($conf->global->MAIN_WEIGHT_DEFAULT_UNIT)?0:$conf->global->MAIN_WEIGHT_DEFAULT_UNIT);
+		$variation_product_is_parent_product = isset($this->site->parameters['variation_product_is_parent_product']) ? $this->site->parameters['variation_product_is_parent_product'] : 0;
 
 		// Categories
 		$categories = [];
@@ -988,9 +991,10 @@ class eCommerceRemoteAccessWoocommerce
 			'remote_parent_id' => ($isVariation ? $parent_id : 0),
 			'last_update' => $last_update,
 			'fk_product_type' => ($remote_data->virtual ? 1 : 0), // 0 (product) or 1 (service)
+			'status' => $remote_data->status,
 			'label' => $label,
 			'price' => $price,
-			'envente' => ($isVariation || empty($remote_data->variations) ? 1 : 0),
+			'envente' => ($isVariation || !empty($variation_product_is_parent_product) || empty($remote_data->variations) ? 1 : 0),
 			'enachat' => null,
 			'finished' => 1,    // 1 = manufactured, 0 = raw material
 			'canvas' => $canvas,
@@ -1007,7 +1011,7 @@ class eCommerceRemoteAccessWoocommerce
 				"ecommerceng_wc_sale_price_{$this->site->id}_{$conf->entity}" => $remote_data->sale_price,
 				"ecommerceng_wc_date_on_sale_from_{$this->site->id}_{$conf->entity}" => $date_on_sale_from,
 				"ecommerceng_wc_date_on_sale_to_{$this->site->id}_{$conf->entity}" => $date_on_sale_to,
-				"ecommerceng_wc_update_stock_{$this->site->id}_{$conf->entity}" => !empty($remote_data->manage_stock) ? 1 : 0,
+				"ecommerceng_wc_manage_stock_{$this->site->id}_{$conf->entity}" => !empty($remote_data->manage_stock) ? 1 : 0,
 			],
 		];
 
@@ -1162,11 +1166,13 @@ class eCommerceRemoteAccessWoocommerce
 		// Set product lines
 		$items = [];
 		if (!empty($remote_data->line_items)) {
+			$variation_product_is_parent_product = isset($this->site->parameters['variation_product_is_parent_product']) ? $this->site->parameters['variation_product_is_parent_product'] : 0;
+
 			foreach ($remote_data->line_items as $item) {
 				$item_data = [
 					'item_id' => $item->id,
 					'label' => $item->name,
-					'id_remote_product' => !empty($item->variation_id) ? $item->product_id . '|' . $item->variation_id : $item->product_id,
+					'id_remote_product' => !empty($item->variation_id) && empty($variation_product_is_parent_product) ? $item->product_id . '|' . $item->variation_id : $item->product_id,
 					'product_type' => 'simple',
 					'price' => $item->subtotal != $item->total ? ($item->subtotal / $item->quantity) : $item->price,
 					'total_ht' => $item->subtotal,
@@ -1994,7 +2000,7 @@ class eCommerceRemoteAccessWoocommerce
                 //'download_expiry' => '',                                // integer      Number of days until access to downloadable files expires. Default is -1.
                 //'tax_status' => 'none',                                 // string       Tax status. Options: taxable, shipping and none. Default is taxable.
                 //'tax_class' => '',                                      // string       Tax class.
-                'manage_stock' => !empty($object->array_options["options_ecommerceng_wc_update_stock_{$this->site->id}_{$conf->entity}"]),                                   // boolean      Stock management at variation level. Default is false.
+                'manage_stock' => !empty($object->array_options["options_ecommerceng_wc_manage_stock_{$this->site->id}_{$conf->entity}"]),                                   // boolean      Stock management at variation level. Default is false.
                 //'stock_quantity' => '',                                 // integer      Stock quantity.
                 //'in_stock' => '',                                       // boolean      Controls whether or not the variation is listed as “in stock” or “out of stock” on the frontend. Default is true.
                 //'backorders' => '',                                     // string       If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
@@ -2030,7 +2036,7 @@ class eCommerceRemoteAccessWoocommerce
                     $variationData['tax_class'] = $object->array_options["options_ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"];
                 }
             }
-			if ($variationData['manage_stock']) {
+			if ($variationData['manage_stock'] && empty($object->array_options["options_ecommerceng_wc_dont_update_stock_{$this->site->id}_{$conf->entity}"])) {
 				$variationData['stock_quantity'] = $object->stock_reel;
 				$variationData['in_stock'] = $object->stock_reel > 0;
 			}
@@ -2171,7 +2177,7 @@ class eCommerceRemoteAccessWoocommerce
                 //'button_text'           => '',                                      // string		Product external button text. Only for external products.
                 //'tax_status' => 'none',                                  // string		Tax status. Options: taxable, shipping and none. Default is taxable.
                 //'tax_class'             => '',                                      // string		Tax class.
-                'manage_stock'          => !empty($object->array_options["options_ecommerceng_wc_update_stock_{$this->site->id}_{$conf->entity}"]),                                   // boolean		Stock management at product level. Default is false.
+                'manage_stock'          => !empty($object->array_options["options_ecommerceng_wc_manage_stock_{$this->site->id}_{$conf->entity}"]),                                   // boolean		Stock management at product level. Default is false.
                 //'stock_quantity'        => $object->stock_reel,                     // integer		Stock quantity.
                 //'in_stock'              => $object->stock_reel > 0,                 // boolean		Controls whether or not the product is listed as “in stock” or “out of stock” on the frontend. Default is true.
                 //'backorders'            => '',                                      // string		If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
@@ -2220,7 +2226,7 @@ class eCommerceRemoteAccessWoocommerce
             if ($productStatusSynchDirection == 'dtoe' || $productStatusSynchDirection == 'all') {
                 $productData['status'] = (!empty($status) ? $status : 'publish');
             }
-            if ($productData['manage_stock']) {
+            if ($productData['manage_stock'] && empty($object->array_options["options_ecommerceng_wc_dont_update_stock_{$this->site->id}_{$conf->entity}"])) {
 				$productData['stock_quantity'] = $object->stock_reel;
 				$productData['in_stock'] = $object->stock_reel > 0;
 			}
@@ -2329,7 +2335,7 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Update stock of the remote product ID $remote_id for MouvementStock ID {$object->id}, new qty: {$object->qty_after} for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs, $user;
 
-		if (empty($product->array_options["options_ecommerceng_wc_update_stock_{$this->site->id}_{$conf->entity}"])) {
+		if (empty($product->array_options["options_ecommerceng_wc_manage_stock_{$this->site->id}_{$conf->entity}"]) || !empty($product->array_options["options_ecommerceng_wc_dont_update_stock_{$this->site->id}_{$conf->entity}"])) {
 			dol_syslog(__METHOD__ . ": Ignore update stock of the remote product ID $remote_id for MouvementStock ID {$object->id}, new qty: {$object->qty_after} for site ID {$this->site->id}", LOG_INFO);
 			return true;
 		}
@@ -2344,7 +2350,7 @@ class eCommerceRemoteAccessWoocommerce
             $variationData = [
                 //'manage_stock'      => '',                      // boolean      Stock management at variation level. Default is false.
                 'stock_quantity' => $new_stocks,         // integer      Stock quantity.
-                'in_stock' => $object->qty_after > 0,           // boolean      Controls whether or not the variation is listed as “in stock” or “out of stock” on the frontend. Default is true.
+                'in_stock' => $new_stocks > 0,           // boolean      Controls whether or not the variation is listed as “in stock” or “out of stock” on the frontend. Default is true.
                 //'backorders'        => '',                      // string       If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
             ];
 
@@ -2361,7 +2367,7 @@ class eCommerceRemoteAccessWoocommerce
             $productData = [
                 //'manage_stock'      => false,                   // boolean      Stock management at product level. Default is false.
                 'stock_quantity' => $new_stocks,         // integer      Stock quantity.
-                'in_stock' => $object->qty_after > 0,           // boolean      Controls whether or not the product is listed as “in stock” or “out of stock” on the frontend. Default is true.
+                'in_stock' => $new_stocks > 0,           // boolean      Controls whether or not the product is listed as “in stock” or “out of stock” on the frontend. Default is true.
                 //'backorders'        => '',                      // string       If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
             ];
 
