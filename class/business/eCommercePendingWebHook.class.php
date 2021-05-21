@@ -844,6 +844,9 @@ class eCommercePendingWebHook
 				return -1;
 			}
 
+			$site->cleanOrphelins();
+			$site->cleanDuplicatesRemoteID();
+
 			dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
 			$synchro = new eCommerceSynchro($this->db, $site);
 

@@ -265,6 +265,9 @@ ECommerceProductTaxSyncDirectionDescription=Ce paramètre détermine le sens de 
 ECommerceProductStatusSyncDirection=Synchronisation du status sur la boutique
 ECommerceProductStatusSyncDirectionDescription=Ce paramètre détermine le sens de mise à jour du status sur la boutique
 
+ECommerceProductWeightUnits=Unité de poids sur la boutique
+ECommerceProductWeightUnitsDescription=Ce paramètre détermine l'unité de poids sur la boutique
+
 ECommerceExportProductsPrices=Export des prix des produits (WooSync)
 ECommerceImportProductsPrices=Import des prix des produits (WooSync) (Ne support pas l'ajout de nouveaux produits, la mis à jour n'est supporté que par le CSV)
 
@@ -503,6 +506,7 @@ ECommerceErrorWhenProcessPendingWebHooks            = Erreur lors de la synchron
 ECommerceErrorWebHooksStatusNotActivated            = Le crochet WEB (WebHook) "%s" (ID distant: %s) n'est pas activé (Infos complémentaires: %s)
 ECommerceErrorCheckWebHooksStatus                   = Erreur lors de la vérification des crochet WEB (WebHook) du site "%s" (ID: %s)
 ECommerceErrorWhenCheckingWebHooksStatus            = Erreur lors de la vérification des crochet WEB (WebHook)
+ECommerceErrorTooManyProductLinkToTheRemoteID       = Trop de produits (IDs: %s) liés au même produit distant (ID distant: %s, Site ID: %s)
 
 ############################################################################################
 # Warnings

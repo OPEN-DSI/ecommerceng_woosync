@@ -1087,6 +1087,7 @@ class eCommerceSynchro
 		try {
 			$from_date = isset($this->fromDate) ? $this->fromDate : $this->getSocieteLastUpdateDate();
 			$to_date = $this->toDate;
+			if (!empty($remote_ids)) $toNb = count($remote_ids);
 
 			$result = $this->synchronizeCustomers($from_date, $to_date, $remote_ids, $toNb);
 
@@ -1256,6 +1257,7 @@ class eCommerceSynchro
 		try {
 			$from_date = isset($this->fromDate) ? $this->fromDate : $this->getProductLastUpdateDate();
 			$to_date = $this->toDate;
+			if (!empty($remote_ids)) $toNb = count($remote_ids);
 
 			$result = $this->synchronizeProducts($from_date, $to_date, $remote_ids, $toNb);
 
@@ -1288,6 +1290,7 @@ class eCommerceSynchro
 		try {
 			$from_date = isset($this->fromDate) ? $this->fromDate : $this->getCommandeLastUpdateDate();
 			$to_date = $this->toDate;
+			if (!empty($remote_ids)) $toNb = count($remote_ids);
 
 			$result = $this->synchronizeOrders($from_date, $to_date, $remote_ids, $toNb, true, $dont_synchronize_products);
 
@@ -3006,7 +3009,6 @@ class eCommerceSynchro
 							// Check is the third party found is the anonymous third party
 							if ($third_party_id > 0 && $this->eCommerceSite->fk_anonymous_thirdparty == $third_party_id) {
 								$anonymous_customer = true;
-								$third_party_id = 0;
 							}
 						}
 
@@ -3022,7 +3024,7 @@ class eCommerceSynchro
 					}
 
 					// Fetch third party
-					if (!$error && $third_party_id > 0) {
+					if (!$error && $third_party_id > 0 && !$anonymous_customer) {
 						$result = $third_party->fetch($third_party_id);
 						if ($result < 0) {
 							$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdParty', $third_party_id);
@@ -3034,7 +3036,7 @@ class eCommerceSynchro
 
 					// Set the third party
 					//---------------------------
-					if (!$error && (!$anonymous_customer || $third_party->id > 0)) {
+					if (!$error && (!$anonymous_customer || $third_party_id > 0)) {
 						$third_party->name = $customer_data['name'];
 						$third_party->client = $customer_data['client'];
 						if (isset($customer_data['name_alias'])) $third_party->name_alias = $customer_data['name_alias'];
@@ -3136,37 +3138,6 @@ class eCommerceSynchro
 								$remote_ids_to_synchronize = $customer_data['remote_datas'];
 							}
 
-							// Get list of address/contact data to synchronize
-							$contacts_data = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSocpeople($remote_ids_to_synchronize);
-							if (!is_array($contacts_data)) {
-								$this->error = $this->eCommerceRemoteAccess->error;
-								$this->errors = array_merge($this->errors, $this->eCommerceRemoteAccess->errors);
-								$error++;
-							} else {
-								foreach ($contacts_data as $contact_data) {
-									if ($customer_data['type'] == 'company') {
-										$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $customer_data['name']);
-									} else {
-										$result = $this->getThirdPartyByEmail($contact_data['email']);
-									}
-									if ($result < 0) {
-										$error++;
-										break;
-									} elseif ($result > 0) {
-										$contact_data['fk_soc'] = $result;
-									} else {
-										$contact_data['fk_soc'] = $third_party->id > 0 ? $third_party->id : $this->eCommerceSite->fk_anonymous_thirdparty;
-									}
-									$contact_data['type'] = 1;    // address of company
-									// Synchronize the contact
-									$contact_id = $this->synchSocpeople($contact_data);
-									if (!($contact_id > 0)) {
-										$error++;
-										break;
-									}
-								}
-							}
-
 							// Move the contact in the anonymous third party to the third party found or newly created
 							if ($anonymous_customer && $third_party->id > 0) {
 								$sql = "UPDATE " . MAIN_DB_PREFIX . "socpeople AS sp";
@@ -3180,6 +3151,39 @@ class eCommerceSynchro
 									$this->errors[] = $this->langs->trans('ECommerceErrorMoveContactsInAnonymousThirdPartyToNewOrFoundThirdParty', $third_party->id, $customer_data['email_key']);
 									$this->errors[] = $this->db->error();
 									$error++;
+								}
+							}
+
+							// Get list of address/contact data to synchronize
+							if (!$error) {
+								$contacts_data = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSocpeople($remote_ids_to_synchronize);
+								if (!is_array($contacts_data)) {
+									$this->error = $this->eCommerceRemoteAccess->error;
+									$this->errors = array_merge($this->errors, $this->eCommerceRemoteAccess->errors);
+									$error++;
+								} else {
+									foreach ($contacts_data as $contact_data) {
+										if ($customer_data['type'] == 'company') {
+											$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $customer_data['name']);
+										} else {
+											$result = $this->getThirdPartyByEmail($contact_data['email']);
+										}
+										if ($result < 0) {
+											$error++;
+											break;
+										} elseif ($result > 0) {
+											$contact_data['fk_soc'] = $result;
+										} else {
+											$contact_data['fk_soc'] = $third_party->id > 0 ? $third_party->id : $this->eCommerceSite->fk_anonymous_thirdparty;
+										}
+										$contact_data['type'] = 1;    // address of company
+										// Synchronize the contact
+										$contact_id = $this->synchSocpeople($contact_data);
+										if (!($contact_id > 0)) {
+											$error++;
+											break;
+										}
+									}
 								}
 							}
 						}
@@ -3904,7 +3908,7 @@ class eCommerceSynchro
 							$third_party_id = $this->eCommerceSociete->fk_societe;
 						} else {
 							// Synchronize the new customer
-							$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 0, true, false);
+							$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 1, true, false);
 							if ($result < 0) {
 								$error++;
 							} elseif ($result > 0) {
@@ -4051,7 +4055,7 @@ class eCommerceSynchro
 										// Synchronize the product to synchronize
 										if (!empty($remote_id_to_synchronize) && !$dont_synchronize_products) {
 											// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
-											$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, 0, false, $order);
+											$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, count($remote_id_to_synchronize), false, $order);
 											if ($result < 0) {
 												$error++;
 											}
@@ -4069,6 +4073,7 @@ class eCommerceSynchro
 														$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $item['id_remote_product'], $this->eCommerceSite->id);
 														$this->errors[] = $this->eCommerceProduct->error;
 														$error++;
+														break;  // break on items
 													} elseif ($result > 0) {
 														$fk_product = $this->eCommerceProduct->fk_product;
 													}
@@ -4440,7 +4445,7 @@ class eCommerceSynchro
 				$this->db->commit();
 			}
 
-			if (!$error) {
+			if (!$error && !$bypass) {
 				$result = $this->synchronizeInvoiceFromOrder($order_data, $dont_synchronize_products);
 				if ($result < 0) {
 					$error++;
@@ -4556,7 +4561,7 @@ class eCommerceSynchro
 									$third_party_id = $this->eCommerceSociete->fk_societe;
 								} else {
 									// Synchronize the new customer
-									$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 0, true, false);
+									$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 1, true, false);
 									if ($result < 0) {
 										$error++;
 									} elseif ($result > 0) {
@@ -4774,7 +4779,7 @@ class eCommerceSynchro
 												// Synchronize the product to synchronize
 												if (!empty($remote_id_to_synchronize) && !$dont_synchronize_products) {
 													// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
-													$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, 0, false, $invoice);
+													$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, count($remote_id_to_synchronize), false, $invoice);
 													if ($result < 0) {
 														$error++;
 													}
@@ -4792,6 +4797,7 @@ class eCommerceSynchro
 																$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $item['id_remote_product'], $this->eCommerceSite->id);
 																$this->errors[] = $this->eCommerceProduct->error;
 																$error++;
+																break;  // break on items
 															} elseif ($result > 0) {
 																$fk_product = $this->eCommerceProduct->fk_product;
 															}
@@ -4829,6 +4835,7 @@ class eCommerceSynchro
 																		if (!empty($invoice->error)) $this->errors[] = $invoice->error;
 																		$this->errors = array_merge($this->errors, $invoice->errors);
 																		$error++;
+																		break;  // break on items
 																	}
 																} else {
 																	$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceDiscountCreate');

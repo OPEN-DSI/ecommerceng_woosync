@@ -1,5 +1,13 @@
 # ChangeLog
 
+## 4.0.71.0
+- Correction de la synchro des clients / produits depuis la synchro d'une commande
+- Correction de la synchro d'un client dans le cas ou il était en tant que contact dans le client anonyme Dolibarr préalablement
+
+## 4.0.70.0
+- Corrige le cas ou plusieurs produits sont liés au même produit d'un site
+- Correction break manquant
+
 ## 4.0.69.0
 - Case à cocher pour ne pas synchroniser les stocks sur un produit
 - Multi-entrepôt (Dolibarr vers ECommerce)

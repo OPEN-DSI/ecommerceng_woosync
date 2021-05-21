@@ -87,6 +87,7 @@ if ($id) {
 		$site->fetch($id);
 
 		$site->cleanOrphelins();
+		$site->cleanDuplicatesRemoteID();
 
 		require_once(DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php');
 //		$params = getSoapParams();
