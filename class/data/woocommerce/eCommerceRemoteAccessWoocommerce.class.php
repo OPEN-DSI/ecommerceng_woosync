@@ -219,19 +219,19 @@ class eCommerceRemoteAccessWoocommerce
                 ]
             );
             $this->client->get('customers', [ 'page' => 1, 'per_page' => 1 ]);
-
-            $this->clientOld = new Client(
-                $this->site->webservice_address,
-                $this->site->user_name,
-                $this->site->user_password,
-                [
-                    'wp_api' => false,
-                	'version' => 'v3',
-                    'timeout' => $response_timeout,
-                    'query_string_auth' => !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_QUERY_STRING_AUTH),
-                ]
-            );
-            $this->clientOld->get('customers', [ 'page' => 1, 'filter' => [ 'limit' => 1 ] ]);
+//
+//            $this->clientOld = new Client(
+//                $this->site->webservice_address,
+//                $this->site->user_name,
+//                $this->site->user_password,
+//                [
+//                    'wp_api' => false,
+//                	'version' => 'v3',
+//                    'timeout' => $response_timeout,
+//                    'query_string_auth' => !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_QUERY_STRING_AUTH),
+//                ]
+//            );
+//            $this->clientOld->get('customers', [ 'page' => 1, 'filter' => [ 'limit' => 1 ] ]);
         } catch (HttpClientException $fault) {
             $this->errors[] = $langs->trans('ECommerceWoocommerceConnect', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
             dol_syslog(__METHOD__ .
@@ -848,7 +848,7 @@ class eCommerceRemoteAccessWoocommerce
 
 			foreach ($page as $product) {
 				// Don't synchronize the variation parent
-				if (empty($product->variations) || !empty($product->parent_id) || !empty($variation_product_is_parent_product)) {
+				if (empty($product->variations) || !empty($product->parent_id)) {
 					$data = $this->convertProductDataIntoProcessedData($product);
 					if (!is_array($data)) {
 						$this->errors = array_merge(array($langs->trans('ECommerceErrorWhenConvertProductData', $product->id)), $this->errors);
@@ -858,12 +858,17 @@ class eCommerceRemoteAccessWoocommerce
 				}
 
 				// Synchronize all the variations of the product if only the parent is provided
-				if (empty($variation_product_is_parent_product) && !empty($product->variations) && empty($include_variation_ids[$product->id])) {
+				if (!empty($product->variations) && empty($include_variation_ids[$product->id])) {
 					$include_variation_ids[$product->id] = $product->variations;
 				}
 
 				// Variations
 				if (!empty($include_variation_ids[$product->id])) {
+					if (!empty($variation_product_is_parent_product)) {
+						$tmp = array_values($include_variation_ids[$product->id]);
+						$include_variation_ids[$product->id] = array($tmp[0]);
+					}
+
 					$requestGroupsVariations = $this->getRequestGroups($include_variation_ids[$product->id], $nb_max_by_request);
 					foreach ($requestGroupsVariations as $requestVariations) {
 						dol_syslog(__METHOD__ . ": Get " . count($requestVariations) . " products variations of remote product (ID:{$product->id}): " . implode(', ', $requestVariations), LOG_DEBUG);
@@ -920,7 +925,7 @@ class eCommerceRemoteAccessWoocommerce
 		$this->errors = array();
 		$isVariation = isset($parent_remote_data) || $remote_data->parent_id > 0;
 		$parent_id = isset($parent_remote_data) ? $parent_remote_data->id : ($remote_data->parent_id > 0 ? $remote_data->parent_id : 0);
-		if ($isVariation && empty($parent_remote_data) && (!is_array($remote_data->categories) || !isset($remote_data->name))) {
+		if ($isVariation && empty($parent_remote_data) && !empty($parent_id)) {
 			try {
 				$parent_remote_data = $this->client->get('products/' . $parent_id);
 			} catch (HttpClientException $fault) {
@@ -943,25 +948,21 @@ class eCommerceRemoteAccessWoocommerce
 		$productStatusSynchDirection = isset($this->site->parameters['product_synch_direction']['status']) ? $this->site->parameters['product_synch_direction']['status'] : '';
 		$productWeightUnits = isset($this->site->parameters['product_weight_units']) ? $this->site->parameters['product_weight_units'] : (empty($conf->global->MAIN_WEIGHT_DEFAULT_UNIT)?0:$conf->global->MAIN_WEIGHT_DEFAULT_UNIT);
 		$variation_product_is_parent_product = isset($this->site->parameters['variation_product_is_parent_product']) ? $this->site->parameters['variation_product_is_parent_product'] : 0;
+		$get_parent_data = $isVariation && !empty($variation_product_is_parent_product);
 
 		// Categories
 		$categories = [];
-		if (is_array($remote_data->categories)) {
-			foreach ($remote_data->categories as $category) {
-				$categories[] = $category->id;
-			}
-		} elseif (is_array($parent_remote_data->categories)) {
-			foreach ($parent_remote_data->categories as $category) {
-				$categories[] = $category->id;
-			}
+		$categories_data = is_array($remote_data->categories) && !$get_parent_data ? $remote_data->categories : (is_array($parent_remote_data->categories) ? $parent_remote_data->categories : array());
+		foreach ($categories_data as $category) {
+			$categories[] = $category->id;
 		}
 
 		// Label
 		$label = $remote_data->name;
-		if ($isVariation && empty($label)) {
+		if ($isVariation && (empty($label) || !empty($variation_product_is_parent_product))) {
 			$label = $parent_remote_data->name;
 			// Attributes of the variation
-			if (is_array($remote_data->attributes)) {
+			if (is_array($remote_data->attributes) && empty($variation_product_is_parent_product)) {
 				foreach ($remote_data->attributes as $attribute) {
 					$label .= ' - ' . $attribute->option;
 				}
@@ -987,7 +988,7 @@ class eCommerceRemoteAccessWoocommerce
 
 		$product = [
 			'create_date' => strtotime($remote_data->date_created),
-			'remote_id' => ($isVariation ? $parent_id . '|' : '') . $remote_data->id,
+			'remote_id' => ($isVariation ? (!empty($variation_product_is_parent_product) ? $parent_id . '|' . implode('|', $parent_remote_data->variations) : $parent_id . '|' . $remote_data->id) : $remote_data->id),
 			'remote_parent_id' => ($isVariation ? $parent_id : 0),
 			'last_update' => $last_update,
 			'fk_product_type' => ($remote_data->virtual ? 1 : 0), // 0 (product) or 1 (service)
@@ -1002,7 +1003,7 @@ class eCommerceRemoteAccessWoocommerce
 			'categories' => $categories,
 			'price_min' => '',
 			'fk_country' => '',
-			'url' => $remote_data->permalink,
+			'url' => $get_parent_data ? $parent_remote_data->permalink : $remote_data->permalink,
 			// Stock
 			'stock_qty' => $remote_data->stock_quantity,
 			'is_in_stock' => $remote_data->in_stock,   // not used
@@ -1017,22 +1018,22 @@ class eCommerceRemoteAccessWoocommerce
 
 		// Synchronize ref
 		if ($productRefSynchDirection == 'etod' || $productRefSynchDirection == 'all') {
-			$product['ref'] = $remote_data->sku;
+			$product['ref'] = $get_parent_data ? $parent_remote_data->sku : $remote_data->sku;
 		}
 		// Synchronize short and long description
 		if ($productDescriptionSynchDirection == 'etod' || $productDescriptionSynchDirection == 'all') {
-			$product['extrafields']["ecommerceng_description_{$conf->entity}"] = $this->replace4byte($remote_data->description);
+			$product['extrafields']["ecommerceng_description_{$conf->entity}"] = $this->replace4byte($get_parent_data ? $parent_remote_data->description : $remote_data->description);
 		}
 		if (!$isVariation && ($productShortDescriptionSynchDirection == 'etod' || $productShortDescriptionSynchDirection == 'all')) {
-			$product['extrafields']["ecommerceng_short_description_{$conf->entity}"] = $this->replace4byte($remote_data->short_description);
+			$product['extrafields']["ecommerceng_short_description_{$conf->entity}"] = $this->replace4byte($get_parent_data ? $parent_remote_data->short_description : $remote_data->short_description);
 		}
 		// Synchronize weight
 		if ($productWeightSynchDirection == 'etod' || $productWeightSynchDirection == 'all') {
-			$product['weight'] = $remote_data->weight;
+			$product['weight'] = $get_parent_data ? $parent_remote_data->weight : $remote_data->weight;
 			$product['weight_units'] = $productWeightUnits;
 		}
 		// Synchronize tax
-		$tax_info = $this->getTaxInfoFromTaxClass($remote_data->tax_class, $remote_data->tax_status);
+		$tax_info = $this->getTaxInfoFromTaxClass($get_parent_data ? $parent_remote_data->tax_class : $remote_data->tax_class, $get_parent_data ? $parent_remote_data->tax_status : $remote_data->tax_status);
 		if (!$isVariation) $product['tax_rate'] = $tax_info['tax_rate'];
 		if ($productTaxSynchDirection == 'etod' || $productTaxSynchDirection == 'all') {
 			if ($isVariation) $product['tax_rate'] = $tax_info['tax_rate'];
@@ -1040,21 +1041,23 @@ class eCommerceRemoteAccessWoocommerce
 		}
 		// Synchronize status
 		if (!$isVariation && ($productStatusSynchDirection == 'etod' || $productStatusSynchDirection == 'all')) {
-			$product['extrafields']["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"] = $remote_data->status;
+			$product['extrafields']["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"] = $get_parent_data ? $parent_remote_data->status : $remote_data->status;
 		}
 		// Synchronize images
-		if ((!empty($remote_data->image) || !empty($remote_data->images)) && ($productImageSynchDirection == 'etod' || $productImageSynchDirection == 'all')) {
+		$image_data = $get_parent_data ? $parent_remote_data->image : $remote_data->image;
+		$images_data = $get_parent_data ? $parent_remote_data->images : $remote_data->images;
+		if ((!empty($image_data) || !empty($images_data)) && ($productImageSynchDirection == 'etod' || $productImageSynchDirection == 'all')) {
 			$images = [];
 			$media_url = $this->site->webservice_address  . (substr($this->site->webservice_address, -1, 1) != '/' ? '/' : ''). 'wp-content/uploads/';
-			if (!empty($remote_data->image)) {
-				$last_update = $this->getDateTimeFromGMTDateTime(!empty($remote_data->image->date_modified_gmt) ? $remote_data->image->date_modified_gmt : $remote_data->image->date_created_gmt);
+			if (!empty($image_data)) {
+				$last_update = $this->getDateTimeFromGMTDateTime(!empty($image_data->date_modified_gmt) ? $image_data->date_modified_gmt : $image_data->date_created_gmt);
 				$images[] = [
-					'filename' => dol_sanitizeFileName(str_replace($media_url, '', $remote_data->image->src)),
-					'url' => $remote_data->image->src,
+					'filename' => dol_sanitizeFileName(str_replace($media_url, '', $image_data->src)),
+					'url' => $image_data->src,
 					'date_modified' => $last_update->format('Y-m-d H:i:s'),
 				];
 			} else {
-				foreach ($remote_data->images as $image) {
+				foreach ($images_data as $image) {
 					$last_update = $this->getDateTimeFromGMTDateTime(!empty($image->date_modified_gmt) ? $image->date_modified_gmt : $image->date_created_gmt);
 					$images[] = [
 						'filename' => dol_sanitizeFileName(str_replace($media_url, '', $image->src)),
@@ -1172,7 +1175,7 @@ class eCommerceRemoteAccessWoocommerce
 				$item_data = [
 					'item_id' => $item->id,
 					'label' => $item->name,
-					'id_remote_product' => !empty($item->variation_id) && empty($variation_product_is_parent_product) ? $item->product_id . '|' . $item->variation_id : $item->product_id,
+					'id_remote_product' => !empty($item->variation_id) ? (empty($variation_product_is_parent_product) ? $item->product_id . '|' . $item->variation_id : $item->product_id . '|%') : $item->product_id,
 					'product_type' => 'simple',
 					'price' => $item->subtotal != $item->total ? ($item->subtotal / $item->quantity) : $item->price,
 					'total_ht' => $item->subtotal,
@@ -1765,12 +1768,13 @@ class eCommerceRemoteAccessWoocommerce
 
 		$this->errors = array();
 		$isProductVariation = false;
+		$isProductVariationHasOne = false;
         $remote_product_id = $remote_id;
-        $remote_product_variation_id = 0;
+		$remote_product_variation_ids = array();
         if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsProduct) == 1) { // Variations
             $isProductVariation = true;
             $remote_product_id = $idsProduct[1];
-            $remote_product_variation_id = $idsProduct[2];
+			$remote_product_variation_ids[] = $idsProduct[2];
         }
 
         $productSynchPrice = isset($this->site->parameters['product_synch_price']) ? $this->site->parameters['product_synch_price'] : 'regular';
@@ -1781,6 +1785,16 @@ class eCommerceRemoteAccessWoocommerce
         $productWeightSynchDirection = isset($this->site->parameters['product_synch_direction']['weight']) ? $this->site->parameters['product_synch_direction']['weight'] : '';
         $productTaxSynchDirection = isset($this->site->parameters['product_synch_direction']['tax']) ? $this->site->parameters['product_synch_direction']['tax'] : '';
         $productStatusSynchDirection = isset($this->site->parameters['product_synch_direction']['status']) ? $this->site->parameters['product_synch_direction']['status'] : '';
+		$variation_product_is_parent_product = isset($this->site->parameters['variation_product_is_parent_product']) ? $this->site->parameters['variation_product_is_parent_product'] : 0;
+
+		if (!empty($variation_product_is_parent_product)) {
+			$idsProduct = explode('|', $remote_id);
+			if (count($idsProduct) > 1) {
+				$isProductVariationHasOne = true;
+				$remote_product_id = $idsProduct[0];
+				$remote_product_variation_ids = array_splice($idsProduct, 1);
+			}
+		}
 
         // Convert Weight
 		$from_unit = $object->weight_units;
@@ -1939,7 +1953,8 @@ class eCommerceRemoteAccessWoocommerce
         // Product - Meta data properties
         $object->fetch_optionals();
 
-        if ($isProductVariation) { // Variations
+		// Variations
+        if ($isProductVariation || $isProductVariationHasOne) {
             /*
             // Product variation - Downloads properties
             $downloads = [
@@ -2059,16 +2074,20 @@ class eCommerceRemoteAccessWoocommerce
             // 'name'    => $object->label,			                    // string		Product name.
             // 'status'  => $object->status ? 'publish' : 'pending',	// string		Product status (post status). Options: draft, pending, private and publish. Default is publish.
 
-            try {
-                $result = $this->client->put("products/$remote_product_id/variations/$remote_product_variation_id", $variationData);
-            } catch (HttpClientException $fault) {
-                $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
-                dol_syslog(__METHOD__ .
-                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
-                    ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
-                return false;
-            }
-        } else { // Product
+			foreach ($remote_product_variation_ids as $remote_product_variation_id) {
+				try {
+					$result = $this->client->put("products/$remote_product_id/variations/$remote_product_variation_id", $variationData);
+				} catch (HttpClientException $fault) {
+					$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+					dol_syslog(__METHOD__ .
+						': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+						' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+					return false;
+				}
+			}
+        }
+		// Product
+        if (!$isProductVariation || $isProductVariationHasOne) {
             /*
             // Product - Downloads properties
             $downloads = [
@@ -2258,43 +2277,55 @@ class eCommerceRemoteAccessWoocommerce
 
         // Support for WPML (Update (others than name and descriptions) infos on translated post)
         if (!empty($conf->global->ECOMMERCENG_WOOCOMMERCE_WPML_SUPPORT)) {
-            if ($isProductVariation) {
+            if ($isProductVariation || $isProductVariationHasOne) {
                 if (isset($variationData['name'])) unset($variationData['name']);
                 if (isset($variationData['description'])) unset($variationData['description']);
                 if (isset($variationData['short_description'])) unset($variationData['short_description']);
-                try {
-                    $result = $this->client->get("products/$remote_product_variation_id");
-                } catch (HttpClientException $fault) {
-                    $this->errors[] = $langs->trans('ECommerceWoocommerceGetProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
-                    dol_syslog(__METHOD__ .
-                        ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
-                        ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
-                    return false;
-                }
-                if (isset($result->translations)) {
-                    foreach ((array)$result->translations as $product_id) {
-                        try {
-                            $result2 = $this->client->get("products/$product_id");
-                        } catch (HttpClientException $fault) {
-                            $this->errors[] = $langs->trans('ECommerceWoocommerceGetTranslatedProductVariation', $product_id, $idsProduct[2], $idsProduct[1], $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
-                            dol_syslog(__METHOD__ .
-                                ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetTranslatedProductVariation', $product_id, $idsProduct[2], $idsProduct[1], $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
-                                ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
-                            return false;
-                        }
-                        try {
-                            $res = $this->client->put("products/{$result2->parent_id}/variations/$product_id", $variationData);
-                        } catch (HttpClientException $fault) {
-                            $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteTranslatedProductVariation', $result2->parent_id.'|'.$product_id, $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
-                            dol_syslog(__METHOD__ .
-                                ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteTranslatedProductVariation', $result2->parent_id.'|'.$product_id, $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
-                                ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
-                            return false;
-                        }
-                    }
-                }
-            } else {
-                if (isset($result->translations)) {
+				foreach ($remote_product_variation_ids as $remote_product_variation_id) {
+					try {
+						$result = $this->client->get("products/$remote_product_variation_id");
+					} catch (HttpClientException $fault) {
+						$this->errors[] = $langs->trans('ECommerceWoocommerceGetProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
+						dol_syslog(__METHOD__ .
+							': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
+							' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+						return false;
+					}
+					if (isset($result->translations)) {
+						foreach ((array)$result->translations as $product_id) {
+							try {
+								$result2 = $this->client->get("products/$product_id");
+							} catch (HttpClientException $fault) {
+								$this->errors[] = $langs->trans('ECommerceWoocommerceGetTranslatedProductVariation', $product_id, $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
+								dol_syslog(__METHOD__ .
+									': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetTranslatedProductVariation', $product_id, $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
+									' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+								return false;
+							}
+							try {
+								$res = $this->client->put("products/{$result2->parent_id}/variations/$product_id", $variationData);
+							} catch (HttpClientException $fault) {
+								$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteTranslatedProductVariation', $result2->parent_id . '|' . $product_id, $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
+								dol_syslog(__METHOD__ .
+									': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteTranslatedProductVariation', $result2->parent_id . '|' . $product_id, $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
+									' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+								return false;
+							}
+						}
+					}
+				}
+            }
+			if (!$isProductVariation || $isProductVariationHasOne) {
+				try {
+					$result = $this->client->get("products/$remote_product_id");
+				} catch (HttpClientException $fault) {
+					$this->errors[] = $langs->trans('ECommerceWoocommerceGetProduct', $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
+					dol_syslog(__METHOD__ .
+						': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetProduct', $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
+						' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+					return false;
+				}
+				if (isset($result->translations)) {
                     if (isset($productData['name'])) unset($productData['name']);
                     if (isset($productData['description'])) unset($productData['description']);
                     if (isset($productData['short_description'])) unset($productData['short_description']);
@@ -2344,8 +2375,28 @@ class eCommerceRemoteAccessWoocommerce
 		$new_stocks = floor($object->qty_after);
         $stocks_label = $object->qty_after . ' -> ' . $new_stocks;
 
-        $isProductVariation = preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsProduct) == 1;
-        if ($isProductVariation) {
+		$isProductVariation = false;
+		$isProductVariationHasOne = false;
+		$remote_product_id = $remote_id;
+		$remote_product_variation_ids = array();
+		if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsProduct) == 1) { // Variations
+			$isProductVariation = true;
+			$remote_product_id = $idsProduct[1];
+			$remote_product_variation_ids[] = $idsProduct[2];
+		}
+
+		$variation_product_is_parent_product = isset($this->site->parameters['variation_product_is_parent_product']) ? $this->site->parameters['variation_product_is_parent_product'] : 0;
+
+		if (!empty($variation_product_is_parent_product)) {
+			$idsProduct = explode('|', $remote_id);
+			if (count($idsProduct) > 1) {
+				$isProductVariationHasOne = true;
+				$remote_product_id = $idsProduct[0];
+				$remote_product_variation_ids = array_splice($idsProduct, 1);
+			}
+		}
+
+        if ($isProductVariation || $isProductVariationHasOne) {
             // Variations
             $variationData = [
                 //'manage_stock'      => '',                      // boolean      Stock management at variation level. Default is false.
@@ -2354,17 +2405,21 @@ class eCommerceRemoteAccessWoocommerce
                 //'backorders'        => '',                      // string       If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
             ];
 
-            try {
-                $result = $this->client->put("products/$idsProduct[1]/variations/$idsProduct[2]", $variationData);
-            } catch (HttpClientException $fault) {
-                $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProductVariation', $stocks_label, $idsProduct[2], $idsProduct[1], $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage();
-                dol_syslog(__METHOD__ .
-                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteStockProductVariation', $stocks_label, $idsProduct[2], $idsProduct[1], $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage()) .
-                                        ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse(), LOG_ERR);
-                return false;
-            }
-        } else {
-            $productData = [
+			foreach ($remote_product_variation_ids as $remote_product_variation_id) {
+				try {
+					$result = $this->client->put("products/$remote_product_id/variations/$remote_product_variation_id", $variationData);
+				} catch (HttpClientException $fault) {
+					$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProductVariation', $stocks_label, $remote_product_variation_id, $remote_product_id, $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage();
+					dol_syslog(__METHOD__ .
+						': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteStockProductVariation', $stocks_label, $remote_product_variation_id, $remote_product_id, $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage()) .
+					' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse(), LOG_ERR);
+					return false;
+				}
+			}
+        }
+		// Product
+		if (!$isProductVariation || $isProductVariationHasOne) {
+			$productData = [
                 //'manage_stock'      => false,                   // boolean      Stock management at product level. Default is false.
                 'stock_quantity' => $new_stocks,         // integer      Stock quantity.
                 'in_stock' => $new_stocks > 0,           // boolean      Controls whether or not the product is listed as “in stock” or “out of stock” on the frontend. Default is true.
@@ -2372,11 +2427,11 @@ class eCommerceRemoteAccessWoocommerce
             ];
 
             try {
-                $result = $this->client->put("products/$remote_id", $productData);
+                $result = $this->client->put("products/$remote_product_id", $productData);
             } catch (HttpClientException $fault) {
-                $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProduct', $stocks_label, $idsProduct[1], $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage();
+                $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProduct', $stocks_label, $remote_product_id, $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage();
                 dol_syslog(__METHOD__ .
-                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteStockProduct', $stocks_label, $idsProduct[1], $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage()) .
+                    ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteStockProduct', $stocks_label, $remote_product_id, $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage()) .
                                                             ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse(), LOG_ERR);
                 return false;
             }
@@ -2384,39 +2439,51 @@ class eCommerceRemoteAccessWoocommerce
 
 		// Support for WPML (Update stocks infos on translated post)
 		if (!empty($conf->global->ECOMMERCENG_WOOCOMMERCE_WPML_SUPPORT)) {
-			if ($isProductVariation) {
-				try {
-					$result = $this->client->get("products/$idsProduct[2]");
-				} catch (HttpClientException $fault) {
-					$this->errors[] = $langs->trans('ECommerceWoocommerceGetProductVariation', $idsProduct[2], $idsProduct[1], $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
-					dol_syslog(__METHOD__ .
-						': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetProductVariation', $idsProduct[2], $idsProduct[1], $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
-						' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
-					return false;
-				}
-				if (isset($result->translations)) {
-					foreach ((array)$result->translations as $product_id) {
-						try {
-							$result2 = $this->client->get("products/$product_id");
-						} catch (HttpClientException $fault) {
-							$this->errors[] = $langs->trans('ECommerceWoocommerceGetTranslatedProductVariation', $product_id, $idsProduct[2], $idsProduct[1], $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
-							dol_syslog(__METHOD__ .
-								': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetTranslatedProductVariation', $product_id, $idsProduct[2], $idsProduct[1], $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
-								' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
-							return false;
-						}
-						try {
-							$res = $this->client->put("products/{$result2->parent_id}/variations/$product_id", $variationData);
-						} catch (HttpClientException $fault) {
-							$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockTranslatedProductVariation', $stocks_label, $result2->parent_id.'|'.$product_id, $idsProduct[2], $idsProduct[1]) . ': ' . $this->site->name . ' - ' . $fault->getCode() . ': ' . $fault->getMessage();
-							dol_syslog(__METHOD__ .
-								': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteStockTranslatedProductVariation', $stocks_label, $result2->parent_id.'|'.$product_id, $idsProduct[2], $idsProduct[1]) . ': ' . $this->site->name . ' - ' . $fault->getCode() . ': ' . $fault->getMessage()) .
-							' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse(), LOG_ERR);
-							return false;
+			if ($isProductVariation || $isProductVariationHasOne) {
+				foreach ($remote_product_variation_ids as $remote_product_variation_id) {
+					try {
+						$result = $this->client->get("products/$remote_product_variation_id");
+					} catch (HttpClientException $fault) {
+						$this->errors[] = $langs->trans('ECommerceWoocommerceGetProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
+						dol_syslog(__METHOD__ .
+							': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
+							' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+						return false;
+					}
+					if (isset($result->translations)) {
+						foreach ((array)$result->translations as $product_id) {
+							try {
+								$result2 = $this->client->get("products/$product_id");
+							} catch (HttpClientException $fault) {
+								$this->errors[] = $langs->trans('ECommerceWoocommerceGetTranslatedProductVariation', $product_id, $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
+								dol_syslog(__METHOD__ .
+									': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetTranslatedProductVariation', $product_id, $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
+									' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+								return false;
+							}
+							try {
+								$res = $this->client->put("products/{$result2->parent_id}/variations/$product_id", $variationData);
+							} catch (HttpClientException $fault) {
+								$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockTranslatedProductVariation', $stocks_label, $result2->parent_id . '|' . $product_id, $remote_product_variation_id, $remote_product_id) . ': ' . $this->site->name . ' - ' . $fault->getCode() . ': ' . $fault->getMessage();
+								dol_syslog(__METHOD__ .
+									': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteStockTranslatedProductVariation', $stocks_label, $result2->parent_id . '|' . $product_id, $remote_product_variation_id, $remote_product_id) . ': ' . $this->site->name . ' - ' . $fault->getCode() . ': ' . $fault->getMessage()) .
+								' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse(), LOG_ERR);
+								return false;
+							}
 						}
 					}
 				}
-			} else {
+			}
+			if (!$isProductVariation || $isProductVariationHasOne) {
+				try {
+					$result = $this->client->get("products/$remote_product_id");
+				} catch (HttpClientException $fault) {
+					$this->errors[] = $langs->trans('ECommerceWoocommerceGetProduct', $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
+					dol_syslog(__METHOD__ .
+						': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetProduct', $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
+						' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+					return false;
+				}
 				if (isset($result->translations)) {
 					foreach ((array)$result->translations as $product_id) {
 						try {
@@ -2685,7 +2752,7 @@ class eCommerceRemoteAccessWoocommerce
 
 		$this->errors = array();
 		try {
-            $results = $this->clientOld->get('products', ['filter' => ['sku' => $object->ref], 'fields' => 'id']);
+            $results = $this->client->get('products', ['sku' => $object->ref]);
         } catch (HttpClientException $fault) {
             $this->errors[] = $langs->trans('ECommerceWoocommerceCheckRemoteProductExist', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
             dol_syslog(__METHOD__ .

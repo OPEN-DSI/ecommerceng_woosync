@@ -329,8 +329,9 @@ if (!empty($conf->commande->enabled)) {
             <input type="checkbox" id="ecommerce_create_invoice" name="ecommerce_create_invoice" value="1" <?php print !empty($ecommerceOrderActions['create_invoice']) ? ' checked' : '' ?>>&nbsp;<label for="ecommerce_create_invoice"><?php print $langs->trans('ECommerceCreateInvoice') ?></label>&nbsp;
             <?php
             if (!empty($ecommerceOrderActions['create_invoice'])) {
+				print $form->selectarray('ecommerce_create_invoice_type', array(Facture::TYPE_STANDARD => $langs->trans('InvoiceStandard'), Facture::TYPE_DEPOSIT => $langs->trans('InvoiceDeposit')), $ecommerceCreateInvoiceType);
             ?>
-            <input type="checkbox" id="ecommerce_send_invoice_by_mail" name="ecommerce_send_invoice_by_mail" value="1" <?php print !isset($ecommerceOrderActions['send_invoice_by_mail']) || !empty($ecommerceOrderActions['send_invoice_by_mail']) ? ' checked' : '' ?>>&nbsp;<label for="ecommerce_send_invoice_by_mail"><?php print $langs->trans('ECommerceSendInvoiceByMail') ?></label>
+			&nbsp;<input type="checkbox" id="ecommerce_send_invoice_by_mail" name="ecommerce_send_invoice_by_mail" value="1" <?php print !isset($ecommerceOrderActions['send_invoice_by_mail']) || !empty($ecommerceOrderActions['send_invoice_by_mail']) ? ' checked' : '' ?>>&nbsp;<label for="ecommerce_send_invoice_by_mail"><?php print $langs->trans('ECommerceSendInvoiceByMail') ?></label>
             <?php
             }
             }

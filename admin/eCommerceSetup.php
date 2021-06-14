@@ -41,6 +41,7 @@ require_once(DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php');
 require_once DOL_DOCUMENT_ROOT . '/includes/OAuth/bootstrap.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
+require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php';
 dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
 dol_include_once('/ecommerceng/admin/class/gui/eCommerceMenu.class.php');
 dol_include_once('/ecommerceng/lib/eCommerce.lib.php');
@@ -292,7 +293,10 @@ if ($_POST['site_form_detail_action'] == 'save')
                 'status' => isset($_POST['ecommerce_product_status_synch_direction']) ? GETPOST('ecommerce_product_status_synch_direction', 'alpha') : 'etod',
             );
 
-            $siteDb->parameters = array(
+			$ecommerceCreateInvoiceType = GETPOST('ecommerce_create_invoice_type', 'int');
+			if (empty($ecommerceCreateInvoiceType)) $ecommerceCreateInvoiceType = Facture::TYPE_STANDARD;
+
+			$siteDb->parameters = array(
 				'shipping_service' => $_POST['ecommerce_fk_shipping_service'],
 				'discount_code_service' => $_POST['ecommerce_fk_discount_code_service'],
 				'pw_gift_cards_service' => $_POST['ecommerce_fk_pw_gift_cards_service'],
@@ -309,6 +313,7 @@ if ($_POST['site_form_detail_action'] == 'save')
 				'product_weight_units' => $_POST['ecommerce_product_weight_units'],
 				'variation_product_is_parent_product' => $_POST['ecommerce_variation_product_is_parent_product'],
                 'customer_roles' => $ecommerceWoocommerceCustomerRoles,
+				'create_invoice_type' => $ecommerceCreateInvoiceType,
             );
             if ($conf->commande->enabled || $conf->facture->enabled || $conf->supplier_invoice->enabled) {
                 $siteDb->parameters['order_actions'] = $ecommerceOrderActions;
@@ -929,6 +934,7 @@ if ($ecommerceId > 0) {
         $ecommerceProductStatusSynchDirection = isset($siteDb->parameters['product_synch_direction']['status']) ? $siteDb->parameters['product_synch_direction']['status'] : 'etod';
 		$ecommerceVariationProductIsParentProduct = isset($siteDb->parameters['variation_product_is_parent_product']) ? $siteDb->parameters['variation_product_is_parent_product'] : 0;
         $ecommerceWoocommerceCustomerRoles = isset($siteDb->parameters['customer_roles']) ? $siteDb->parameters['customer_roles'] : 'customer';
+		$ecommerceCreateInvoiceType = isset($siteDb->parameters['create_invoice_type']) ? $siteDb->parameters['create_invoice_type'] : Facture::TYPE_STANDARD;
     }
 }
 

@@ -150,7 +150,7 @@ if ($max_sites > 0) {
 				if ($result < 0) {
 					print "\nError: Get product link (ID: {$obj->product_id}): " . errorsToString($eCommerceProduct) . ".\n";
 					$error++;
-				} elseif (!($eCommerceProduct->remote_id > 0)) {
+				} elseif (empty($eCommerceProduct->remote_id)) {
 					print "\nError: Get product remote ID (ID: {$obj->product_id}).\n";
 					$error++;
 				}

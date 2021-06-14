@@ -1,5 +1,14 @@
 # ChangeLog
 
+## 4.0.72.0
+- Correction de la synchronisation d'un produit variable considéré comme un produit unique
+- Desactivation de la connection a l'ancienne API et correction de la creation d'un produit sur WooCommerce avec la nouvelle api
+- N'ajoute pas le lien vers le produit Woocommerce dans Dolibarr si l'adresse fait plus de 255 charactères
+- Ajout de la possibilité de change le type de factures créées (standard ou d'acompte)
+- Timeout pour le telechargement des images par defaut a 30s
+- Correction de la création de la facture (renseignement du tiers client manquant lors de la creation de la facture)
+- Correction ajout oldcopy lors de la mise a jour sur Dolibarr d'un produit, tiers, commande, ... lors d'une synchro
+
 ## 4.0.71.0
 - Correction de la synchro des clients / produits depuis la synchro d'une commande
 - Correction de la synchro d'un client dans le cas ou il était en tant que contact dans le client anonyme Dolibarr préalablement

@@ -228,7 +228,7 @@ function ecommerceng_download_image($image, $product, &$error_message)
     }
 
     // Get file
-    $timeout = !empty($conf->global->ECOMMERCE_DOWNLOAD_TIMEOUT) ? $conf->global->ECOMMERCE_DOWNLOAD_TIMEOUT : 5;
+    $timeout = !empty($conf->global->ECOMMERCE_DOWNLOAD_TIMEOUT) ? $conf->global->ECOMMERCE_DOWNLOAD_TIMEOUT : 30;
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $image['url']);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);

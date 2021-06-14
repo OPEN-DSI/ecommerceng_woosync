@@ -960,6 +960,8 @@ class eCommerceSynchro
                             }
                         }
 
+						if ($dBCategorie->id > 0) $dBCategorie->oldcopy = clone $dBCategorie;
+
                         // Affect attributes of $categoryArray to $dBCategorie
                         $dBCategorie->type = 0; // for product category type
                         $dBCategorie->label = $categoryArray['name'];
@@ -1138,6 +1140,8 @@ class eCommerceSynchro
                 }
             }
 
+			if ($contactExists > 0) $dBContact->oldcopy = clone $dBContact;
+
             //set data into contact
             $dBContact->socid = $socpeopleArray['fk_soc'];
             $dBContact->fk_soc = $socpeopleArray['fk_soc'];
@@ -1165,6 +1169,7 @@ class eCommerceSynchro
                 $contactExists = $this->getContactIdFromInfos($dBContact);
                 if ($contactExists > 0) {
                     $contactExists = $dBContact->fetch($contactExists);
+					$dBContact->oldcopy = clone $dBContact;
                     if (isset($socpeopleArray['country_id'])) $dBContact->country_id = $socpeopleArray['country_id'];
                     if (isset($socpeopleArray['email'])) $dBContact->email = $socpeopleArray['email'];
                     if (isset($socpeopleArray['phone'])) $dBContact->phone_pro = dol_trunc($socpeopleArray['phone'], 30, 'right', 'UTF-8', 1);
@@ -2493,6 +2498,7 @@ class eCommerceSynchro
                     if ($synchExists > 0 && isset($this->eCommerceSociete->fk_societe)) {
                         $refExists = $dBSociete->fetch($this->eCommerceSociete->fk_societe);
                         if ($refExists >= 0) {
+							$dBSociete->oldcopy = clone $dBSociete;
                             $dBSociete->name = $societeArray['name'];
                             //$dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];      // No need of ref_ext, we will search if already exists on name
                             $dBSociete->client = $societeArray['client'];
@@ -2599,6 +2605,7 @@ class eCommerceSynchro
 
                             $dBSociete->update_note($societeArray['note_private'], '_private');
                         } else if ($result > 0) {
+							$dBSociete->oldcopy = clone $dBSociete;
                             $dBSociete->name = $societeArray['name'];
                             //$dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];      // No need of ref_ext, we will search if already exists on name
                             $dBSociete->client = $societeArray['client'];
@@ -3037,6 +3044,8 @@ class eCommerceSynchro
 					// Set the third party
 					//---------------------------
 					if (!$error && (!$anonymous_customer || $third_party_id > 0)) {
+						if ($third_party->id > 0) $third_party->oldcopy = clone $third_party;
+
 						$third_party->name = $customer_data['name'];
 						$third_party->client = $customer_data['client'];
 						if (isset($customer_data['name_alias'])) $third_party->name_alias = $customer_data['name_alias'];
@@ -3397,6 +3406,8 @@ class eCommerceSynchro
 
 					// Update if not found or the last update date more recent
 					if (!$error && (empty($product->id) || empty($this->eCommerceProduct->id) || !$bypass)) {
+						if ($product->id > 0) $product->oldcopy = clone $product;
+
 						// Set the product
 						$product->ref = !empty($product_ref) ? $product_ref : $product->ref;
 						$product->ref_ext = $this->eCommerceSite->name . '-' . $product_data['remote_id'];
@@ -3410,7 +3421,7 @@ class eCommerceSynchro
 						if (isset($product_data['enachat'])) $product->status_buy = $product_data['enachat'];
 
 						$product->country_id = $product_data['fk_country'];
-						$product->url = $product_data['url'];
+						$product->url = strlen($product_data['url']) > 255 ? '' : $product_data['url'];
 
 						if (!isset($product->stock_reel)) $product->stock_reel = 0;
 
@@ -3979,6 +3990,8 @@ class eCommerceSynchro
 								// Set the order
 								//---------------------------
 								if (!$error) {
+									if ($order->id > 0) $order->oldcopy = clone $order;
+
 									$order->socid = $third_party_id;
 									$order->ref_client = $order_data['ref_client'];
 									$order->ref_ext = $order_ref_ext;
@@ -4047,8 +4060,8 @@ class eCommerceSynchro
 //												$this->errors = array_merge($this->errors, $this->eCommerceProduct->errors);
 //												$error++;
 //											} elseif ($result <= 0) {
-												if (isset($item['id_remote_product']) && $item['id_remote_product'] > 0)
-													$remote_id_to_synchronize[] = $item['id_remote_product'];
+												if (!empty($item['id_remote_product']))
+													$remote_id_to_synchronize[] = str_replace('|%', '', $item['id_remote_product']);
 //											}
 										}
 
@@ -4254,7 +4267,8 @@ class eCommerceSynchro
 													}
 												}
 												// Classify billed
-												if (!$error && empty($order->billed) && $order_data['billed'] == 1) {
+												$isDepositType = isset($this->eCommerceSite->parameters['create_invoice_type']) && $this->eCommerceSite->parameters['create_invoice_type'] == Facture::TYPE_DEPOSIT;
+												if (!$error && empty($order->billed) && $order_data['billed'] == 1 && !$isDepositType) {
 													$result = $order->classifyBilled($this->user);
 													if ($result < 0) {
 														$this->errors[] = $this->langs->trans('ECommerceErrorClassifyOrderBilled');
@@ -4438,18 +4452,18 @@ class eCommerceSynchro
 				$error++;
 			}
 
-			// Commit / rollback actions
-			if ($error) {
-				$this->db->rollback();
-			} else {
-				$this->db->commit();
-			}
-
 			if (!$error && !$bypass) {
 				$result = $this->synchronizeInvoiceFromOrder($order_data, $dont_synchronize_products);
 				if ($result < 0) {
 					$error++;
 				}
+			}
+
+			// Commit / rollback actions
+			if ($error) {
+				$this->db->rollback();
+			} else {
+				$this->db->commit();
 			}
 		}
 
@@ -4549,42 +4563,46 @@ class eCommerceSynchro
 							if ($order->id > 0) $invoice->add_object_linked($order->element, $order->id);
 						} // Create the invoice only the first time
 						else {
-							// Check if third party already synchronized
-							if ($order_data['remote_id_societe'] > 0) {
-								$this->initECommerceSociete();
-								$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
-								if ($result < 0 && !empty($this->eCommerceSociete->error)) {
-									$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
-									$this->errors[] = $this->eCommerceSociete->error;
-									$error++;
-								} elseif ($result > 0) {
-									$third_party_id = $this->eCommerceSociete->fk_societe;
-								} else {
-									// Synchronize the new customer
-									$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 1, true, false);
-									if ($result < 0) {
+							if ($order->id > 0) {
+								$third_party_id = $order->socid;
+							} else {
+								// Check if third party already synchronized
+								if ($order_data['remote_id_societe'] > 0) {
+									$this->initECommerceSociete();
+									$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
+									if ($result < 0 && !empty($this->eCommerceSociete->error)) {
+										$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
+										$this->errors[] = $this->eCommerceSociete->error;
 										$error++;
 									} elseif ($result > 0) {
-										$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
-										if ($result < 0 && !empty($this->eCommerceSociete->error)) {
-											$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
-											$this->errors[] = $this->eCommerceSociete->error;
+										$third_party_id = $this->eCommerceSociete->fk_societe;
+									} else {
+										// Synchronize the new customer
+										$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 1, true, false);
+										if ($result < 0) {
 											$error++;
 										} elseif ($result > 0) {
-											$third_party_id = $this->eCommerceSociete->fk_societe;
-										} else {
-											// Customer not supported (eg. order created by admin so we don't need it)
-											$third_party_id = 0;
+											$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
+											if ($result < 0 && !empty($this->eCommerceSociete->error)) {
+												$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
+												$this->errors[] = $this->eCommerceSociete->error;
+												$error++;
+											} elseif ($result > 0) {
+												$third_party_id = $this->eCommerceSociete->fk_societe;
+											} else {
+												// Customer not supported (eg. order created by admin so we don't need it)
+												$third_party_id = 0;
+											}
 										}
 									}
-								}
-							} else {
-								// This is an guest customer.
-								if ($this->eCommerceSite->fk_anonymous_thirdparty > 0) {
-									$third_party_id = $this->eCommerceSite->fk_anonymous_thirdparty;
 								} else {
-									$this->errors[] = $this->langs->trans('ECommerceErrorAnonymousThirdPartyNotConfigured', $this->eCommerceSite->id);
-									$error++;
+									// This is an guest customer.
+									if ($this->eCommerceSite->fk_anonymous_thirdparty > 0) {
+										$third_party_id = $this->eCommerceSite->fk_anonymous_thirdparty;
+									} else {
+										$this->errors[] = $this->langs->trans('ECommerceErrorAnonymousThirdPartyNotConfigured', $this->eCommerceSite->id);
+										$error++;
+									}
 								}
 							}
 
@@ -4594,9 +4612,11 @@ class eCommerceSynchro
 							// Create the invoice only if the third party ID is found (otherwise it's bypassed)
 							if (!$error && !$bypass) {
 								if ($third_party_id > 0) {
+									$isDepositType = isset($this->eCommerceSite->parameters['create_invoice_type']) && $this->eCommerceSite->parameters['create_invoice_type'] == Facture::TYPE_DEPOSIT;
+
 									// Set the invoice
 									$invoice->socid = $third_party_id;
-									$invoice->type = Facture::TYPE_STANDARD;
+									$invoice->type = isset($this->eCommerceSite->parameters['create_invoice_type']) ? $this->eCommerceSite->parameters['create_invoice_type'] : Facture::TYPE_STANDARD;
 									$invoice->date = $order->id > 0 ? $order->date : strtotime($order_data['date_commande']);
 									$invoice->ref_client = $order->id > 0 ? $order->ref_client : $order_data['ref_client'];
 									$invoice->ref_ext = $invoice_ref_ext;
@@ -4638,94 +4658,108 @@ class eCommerceSynchro
 									// Add product lines and contacts
 									if (!$error) {
 										if ($order->id > 0) {
-											// Add product lines
-											if (empty($order->lines)) {
-												if (method_exists($order, 'fetch_lines')) $order->fetch_lines();
-												elseif (method_exists($order, 'getLinesArray')) $order->getLinesArray();
-											}
+											if ($isDepositType) {
+												// Add deposit line
+												$result = $invoice->addline('(DEPOSIT) (' . price($order_data['payment_amount_ttc'], '', $this->langs, 0, -1, -1,
+														(!empty($invoice->multicurrency_code) ? $invoice->multicurrency_code : $conf->currency)) . ') - ' . $order_data['ref_client'],
+													$order_data['payment_amount_ttc'], 1, 0, 0, 0,
+													(empty($conf->global->INVOICE_PRODUCTID_DEPOSIT) ? 0 : $conf->global->INVOICE_PRODUCTID_DEPOSIT));
+												if ($result < 0) {
+													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
+													if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+													$this->errors = array_merge($this->errors, $invoice->errors);
+													$error++;
+												}
+											} else {
+												// Add product lines
+												if (empty($order->lines)) {
+													if (method_exists($order, 'fetch_lines')) $order->fetch_lines();
+													elseif (method_exists($order, 'getLinesArray')) $order->getLinesArray();
+												}
 
-											$fk_parent_line = 0;
-											foreach ($order->lines as $line) {
-												$label = (!empty($line->label) ? $line->label : '');
-												$desc = (!empty($line->desc) ? $line->desc : $line->libelle);
+												$fk_parent_line = 0;
+												foreach ($order->lines as $line) {
+													$label = (!empty($line->label) ? $line->label : '');
+													$desc = (!empty($line->desc) ? $line->desc : $line->libelle);
 
-												if ($line->subprice < 0 && empty($conf->global->ECOMMERCE_KEEP_NEGATIVE_PRICE_LINES_WHEN_CREATE_INVOICE)) {
-													// Negative line, we create a discount line
-													$discount = new DiscountAbsolute($this->db);
-													$discount->fk_soc = $invoice->socid;
-													$discount->amount_ht = abs($line->total_ht);
-													$discount->amount_tva = abs($line->total_tva);
-													$discount->amount_ttc = abs($line->total_ttc);
-													$discount->tva_tx = $line->tva_tx;
-													$discount->fk_user = $this->user->id;
-													$discount->description = $desc;
-													$discount_id = $discount->create($this->user);
-													if ($discount_id > 0) {
-														$result = $invoice->insert_discount($discount_id); // This include link_to_invoice
+													if ($line->subprice < 0 && empty($conf->global->ECOMMERCE_KEEP_NEGATIVE_PRICE_LINES_WHEN_CREATE_INVOICE)) {
+														// Negative line, we create a discount line
+														$discount = new DiscountAbsolute($this->db);
+														$discount->fk_soc = $invoice->socid;
+														$discount->amount_ht = abs($line->total_ht);
+														$discount->amount_tva = abs($line->total_tva);
+														$discount->amount_ttc = abs($line->total_ttc);
+														$discount->tva_tx = $line->tva_tx;
+														$discount->fk_user = $this->user->id;
+														$discount->description = $desc;
+														$discount_id = $discount->create($this->user);
+														if ($discount_id > 0) {
+															$result = $invoice->insert_discount($discount_id); // This include link_to_invoice
+															if ($result < 0) {
+																$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceInsertDiscount');
+																if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+																$this->errors = array_merge($this->errors, $invoice->errors);
+																$error++;
+															}
+														} else {
+															$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceDiscountCreate');
+															if (!empty($discount->error)) $this->errors[] = $discount->error;
+															$this->errors = array_merge($this->errors, $discount->errors);
+															$error++;
+															break;
+														}
+													} else {
+														// Positive line
+														$product_type = ($line->product_type ? $line->product_type : 0);
+
+														// Date start
+														$date_start = false;
+														if ($line->date_debut_prevue)
+															$date_start = $line->date_debut_prevue;
+														if ($line->date_debut_reel)
+															$date_start = $line->date_debut_reel;
+														if ($line->date_start)
+															$date_start = $line->date_start;
+
+														// Date end
+														$date_end = false;
+														if ($line->date_fin_prevue)
+															$date_end = $line->date_fin_prevue;
+														if ($line->date_fin_reel)
+															$date_end = $line->date_fin_reel;
+														if ($line->date_end)
+															$date_end = $line->date_end;
+
+														// Reset fk_parent_line for no child products and special product
+														if (($line->product_type != 9 && empty($line->fk_parent_line)) || $line->product_type == 9) {
+															$fk_parent_line = 0;
+														}
+
+														// Extrafields
+														$array_options = array();
+														if (empty($conf->global->MAIN_EXTRAFIELDS_DISABLED)) {
+															$array_options = $line->array_options;
+														}
+
+														$tva_tx = $line->tva_tx;
+														if (!empty($line->vat_src_code) && !preg_match('/\(/', $tva_tx)) $tva_tx .= ' (' . $line->vat_src_code . ')';
+
+														$result = $invoice->addline($desc, $line->subprice, $line->qty, $tva_tx, $line->localtax1_tx, $line->localtax2_tx,
+															$line->fk_product, $line->remise_percent, $date_start, $date_end, 0, $line->info_bits, $line->fk_remise_except, 'HT',
+															0, $product_type, $line->rang, $line->special_code, $order->element, $line->id, $fk_parent_line, $line->fk_fournprice, $line->pa_ht,
+															$label, $array_options, 100, 0, $line->fk_unit, $line->multicurrency_subprice);
 														if ($result < 0) {
-															$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceInsertDiscount');
+															$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
 															if (!empty($invoice->error)) $this->errors[] = $invoice->error;
 															$this->errors = array_merge($this->errors, $invoice->errors);
 															$error++;
+															break;
 														}
-													} else {
-														$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceDiscountCreate');
-														if (!empty($discount->error)) $this->errors[] = $discount->error;
-														$this->errors = array_merge($this->errors, $discount->errors);
-														$error++;
-														break;
-													}
-												} else {
-													// Positive line
-													$product_type = ($line->product_type ? $line->product_type : 0);
 
-													// Date start
-													$date_start = false;
-													if ($line->date_debut_prevue)
-														$date_start = $line->date_debut_prevue;
-													if ($line->date_debut_reel)
-														$date_start = $line->date_debut_reel;
-													if ($line->date_start)
-														$date_start = $line->date_start;
-
-													// Date end
-													$date_end = false;
-													if ($line->date_fin_prevue)
-														$date_end = $line->date_fin_prevue;
-													if ($line->date_fin_reel)
-														$date_end = $line->date_fin_reel;
-													if ($line->date_end)
-														$date_end = $line->date_end;
-
-													// Reset fk_parent_line for no child products and special product
-													if (($line->product_type != 9 && empty($line->fk_parent_line)) || $line->product_type == 9) {
-														$fk_parent_line = 0;
-													}
-
-													// Extrafields
-													$array_options = array();
-													if (empty($conf->global->MAIN_EXTRAFIELDS_DISABLED)) {
-														$array_options = $line->array_options;
-													}
-
-													$tva_tx = $line->tva_tx;
-													if (!empty($line->vat_src_code) && !preg_match('/\(/', $tva_tx)) $tva_tx .= ' (' . $line->vat_src_code . ')';
-
-													$result = $invoice->addline($desc, $line->subprice, $line->qty, $tva_tx, $line->localtax1_tx, $line->localtax2_tx,
-														$line->fk_product, $line->remise_percent, $date_start, $date_end, 0, $line->info_bits, $line->fk_remise_except, 'HT',
-														0, $product_type, $line->rang, $line->special_code, $order->element, $line->id, $fk_parent_line, $line->fk_fournprice, $line->pa_ht,
-														$label, $array_options, 100, 0, $line->fk_unit, $line->multicurrency_subprice);
-													if ($result < 0) {
-														$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
-														if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-														$this->errors = array_merge($this->errors, $invoice->errors);
-														$error++;
-														break;
-													}
-
-													// Defined the new fk_parent_line
-													if ($result > 0 && $line->product_type == 9) {
-														$fk_parent_line = $result;
+														// Defined the new fk_parent_line
+														if ($result > 0 && $line->product_type == 9) {
+															$fk_parent_line = $result;
+														}
 													}
 												}
 											}
@@ -4760,11 +4794,24 @@ class eCommerceSynchro
 												}
 											}
 										} else {
-											// Add product lines
-											if (!$error && count($order_data['items'])) {
-												// Get products to synchronize
-												$remote_id_to_synchronize = array();
-												foreach ($order_data['items'] as $item) {
+											if ($isDepositType) {
+												// Add deposit line
+												$result = $invoice->addline('(DEPOSIT) (' . price($order_data['payment_amount_ttc'], '', $this->langs, 0, -1, -1,
+														(!empty($invoice->multicurrency_code) ? $invoice->multicurrency_code : $conf->currency)) . ') - ' . $order_data['ref_client'],
+													$order_data['payment_amount_ttc'], 1, 0, 0, 0,
+													(empty($conf->global->INVOICE_PRODUCTID_DEPOSIT) ? 0 : $conf->global->INVOICE_PRODUCTID_DEPOSIT));
+												if ($result < 0) {
+													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
+													if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+													$this->errors = array_merge($this->errors, $invoice->errors);
+													$error++;
+												}
+											} else {
+												// Add product lines
+												if (!$error && count($order_data['items'])) {
+													// Get products to synchronize
+													$remote_id_to_synchronize = array();
+													foreach ($order_data['items'] as $item) {
 //													$this->initECommerceProduct();
 //													$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
 //													if ($result < 0 && !empty($this->eCommerceProduct->error)) {
@@ -4772,124 +4819,126 @@ class eCommerceSynchro
 //														$this->errors = array_merge($this->errors, $this->eCommerceProduct->errors);
 //														$error++;
 //													} elseif ($result <= 0) {
-														$remote_id_to_synchronize[] = $item['id_remote_product'];
+														if (!empty($item['id_remote_product']))
+															$remote_id_to_synchronize[] = str_replace('|%', '', $item['id_remote_product']);
 //													}
-												}
-
-												// Synchronize the product to synchronize
-												if (!empty($remote_id_to_synchronize) && !$dont_synchronize_products) {
-													// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
-													$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, count($remote_id_to_synchronize), false, $invoice);
-													if ($result < 0) {
-														$error++;
 													}
-												}
 
-												// Add product lines
-												if (!$error) {
-													foreach ($order_data['items'] as $item) {
-														// Get product ID
-														$fk_product = 0;
-														if (!empty($item['id_remote_product'])) {
-															$this->initECommerceProduct();
-															$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
-															if ($result < 0 && !empty($this->eCommerceProduct->error)) {
-																$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $item['id_remote_product'], $this->eCommerceSite->id);
-																$this->errors[] = $this->eCommerceProduct->error;
-																$error++;
-																break;  // break on items
-															} elseif ($result > 0) {
-																$fk_product = $this->eCommerceProduct->fk_product;
-															}
-														} elseif (!empty($item['id_product'])) {
-															$fk_product = $item['id_product'];
+													// Synchronize the product to synchronize
+													if (!empty($remote_id_to_synchronize) && !$dont_synchronize_products) {
+														// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
+														$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, count($remote_id_to_synchronize), false, $invoice);
+														if ($result < 0) {
+															$error++;
 														}
+													}
 
-														if (!$error) {
-															$price = $item['price'];
-															$total_ht = $item['total_ht'];
-															$total_tva = $item['total_tva'];
-															$total_ttc = $item['total_ttc'];
-															$description = $item['description'];
-															if (empty($description) && $fk_product > 0) {
-																$product = new Product($this->db);
-																$product->fetch($fk_product);
-																$description = $product->description;
+													// Add product lines
+													if (!$error) {
+														foreach ($order_data['items'] as $item) {
+															// Get product ID
+															$fk_product = 0;
+															if (!empty($item['id_remote_product'])) {
+																$this->initECommerceProduct();
+																$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
+																if ($result < 0 && !empty($this->eCommerceProduct->error)) {
+																	$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $item['id_remote_product'], $this->eCommerceSite->id);
+																	$this->errors[] = $this->eCommerceProduct->error;
+																	$error++;
+																	break;  // break on items
+																} elseif ($result > 0) {
+																	$fk_product = $this->eCommerceProduct->fk_product;
+																}
+															} elseif (!empty($item['id_product'])) {
+																$fk_product = $item['id_product'];
 															}
 
-															if ($price < 0 && empty($conf->global->ECOMMERCE_KEEP_NEGATIVE_PRICE_LINES_WHEN_CREATE_INVOICE)) {
-																// Negative line, we create a discount line
-																$discount = new DiscountAbsolute($this->db);
-																$discount->fk_soc = $invoice->socid;
-																$discount->amount_ht = abs($total_ht);
-																$discount->amount_tva = abs($total_tva);
-																$discount->amount_ttc = abs($total_ttc);
-																$discount->tva_tx = $item['tva_tx'];
-																$discount->fk_user = $this->user->id;
-																$discount->description = $description;
-																$discount_id = $discount->create($this->user);
-																if ($discount_id > 0) {
-																	$result = $invoice->insert_discount($discount_id); // This include link_to_invoice
-																	if ($result < 0) {
-																		$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceInsertDiscount');
-																		if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-																		$this->errors = array_merge($this->errors, $invoice->errors);
+															if (!$error) {
+																$price = $item['price'];
+																$total_ht = $item['total_ht'];
+																$total_tva = $item['total_tva'];
+																$total_ttc = $item['total_ttc'];
+																$description = $item['description'];
+																if (empty($description) && $fk_product > 0) {
+																	$product = new Product($this->db);
+																	$product->fetch($fk_product);
+																	$description = $product->description;
+																}
+
+																if ($price < 0 && empty($conf->global->ECOMMERCE_KEEP_NEGATIVE_PRICE_LINES_WHEN_CREATE_INVOICE)) {
+																	// Negative line, we create a discount line
+																	$discount = new DiscountAbsolute($this->db);
+																	$discount->fk_soc = $invoice->socid;
+																	$discount->amount_ht = abs($total_ht);
+																	$discount->amount_tva = abs($total_tva);
+																	$discount->amount_ttc = abs($total_ttc);
+																	$discount->tva_tx = $item['tva_tx'];
+																	$discount->fk_user = $this->user->id;
+																	$discount->description = $description;
+																	$discount_id = $discount->create($this->user);
+																	if ($discount_id > 0) {
+																		$result = $invoice->insert_discount($discount_id); // This include link_to_invoice
+																		if ($result < 0) {
+																			$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceInsertDiscount');
+																			if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+																			$this->errors = array_merge($this->errors, $invoice->errors);
+																			$error++;
+																			break;  // break on items
+																		}
+																	} else {
+																		$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceDiscountCreate');
+																		if (!empty($discount->error)) $this->errors[] = $discount->error;
+																		$this->errors = array_merge($this->errors, $discount->errors);
+																		$error++;
+																		break;
+																	}
+																} else {
+																	// Define the buy price for margin calculation
+																	if (isset($item['buy_price'])) {
+																		$buy_price = $item['buy_price'];
+																	} else {
+																		$buy_price = $item['price'];
+																		if ($fk_product > 0) {
+																			$result = $order->defineBuyPrice($buy_price, 0, $fk_product);
+																			if ($result < 0) {
+																				$this->errors[] = $this->langs->trans('ECommerceErrorOrderDefineBuyPrice', $fk_product, $buy_price);
+																				if (!empty($order->error)) $this->errors[] = $order->error;
+																				$this->errors = array_merge($this->errors, $order->errors);
+																				$error++;
+																				break;    // break on items
+																			} else {
+																				$buy_price = $result;
+																			}
+																		}
+																	}
+
+																	$label = !empty($item['label']) ? $item['label'] : '';
+																	$discount = $item['discount'];
+																	$product_type = $item['product_type'] != "simple" ? 1 : 0;
+
+																	$array_options = array();
+																	if (is_array($item['extrafields'])) {
+																		foreach ($item['extrafields'] as $extrafield => $extrafield_value) {
+																			$array_options['options_' . $extrafield] = $extrafield_value;
+																		}
+																	}
+
+																	$result = $invoice->addline($description, $price, $item['qty'], $item['tva_tx'], $item['local_tax1_tx'], $item['local_tax2_tx'],
+																		$fk_product, $discount, '', '', 0, 0, 0, 'HT',
+																		0, $product_type, -1, 0, '', 0, 0, 0, $buy_price,
+																		$label, $array_options, 100, 0, 0, 0);
+																	if ($result <= 0) {
+																		$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
+																		if (!empty($order->error)) $this->errors[] = $order->error;
+																		$this->errors = array_merge($this->errors, $order->errors);
 																		$error++;
 																		break;  // break on items
 																	}
-																} else {
-																	$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceDiscountCreate');
-																	if (!empty($discount->error)) $this->errors[] = $discount->error;
-																	$this->errors = array_merge($this->errors, $discount->errors);
-																	$error++;
-																	break;
-																}
-															} else {
-																// Define the buy price for margin calculation
-																if (isset($item['buy_price'])) {
-																	$buy_price = $item['buy_price'];
-																} else {
-																	$buy_price = $item['price'];
-																	if ($fk_product > 0) {
-																		$result = $order->defineBuyPrice($buy_price, 0, $fk_product);
-																		if ($result < 0) {
-																			$this->errors[] = $this->langs->trans('ECommerceErrorOrderDefineBuyPrice', $fk_product, $buy_price);
-																			if (!empty($order->error)) $this->errors[] = $order->error;
-																			$this->errors = array_merge($this->errors, $order->errors);
-																			$error++;
-																			break;    // break on items
-																		} else {
-																			$buy_price = $result;
-																		}
-																	}
-																}
-
-																$label = !empty($item['label']) ? $item['label'] : '';
-																$discount = $item['discount'];
-																$product_type = $item['product_type'] != "simple" ? 1 : 0;
-
-																$array_options = array();
-																if (is_array($item['extrafields'])) {
-																	foreach ($item['extrafields'] as $extrafield => $extrafield_value) {
-																		$array_options['options_' . $extrafield] = $extrafield_value;
-																	}
-																}
-
-																$result = $invoice->addline($description, $price, $item['qty'], $item['tva_tx'], $item['local_tax1_tx'], $item['local_tax2_tx'],
-																	$fk_product, $discount, '', '', 0, 0, 0, 'HT',
-																	0, $product_type, -1, 0, '', 0, 0, 0, $buy_price,
-																	$label, $array_options, 100, 0, 0, 0);
-																if ($result <= 0) {
-																	$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
-																	if (!empty($order->error)) $this->errors[] = $order->error;
-																	$this->errors = array_merge($this->errors, $order->errors);
-																	$error++;
-																	break;  // break on items
 																}
 															}
-														}
 
-														unset($this->eCommerceProduct);
+															unset($this->eCommerceProduct);
+														}
 													}
 												}
 											}
@@ -5101,6 +5150,15 @@ class eCommerceSynchro
 //										}
 //									}
 
+									if ($isDepositType) {
+										$save_WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER = $conf->global->WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER;
+										$save_WORKFLOW_INVOICE_CLASSIFY_BILLED_PROPAL = $conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_PROPAL;
+										$save_WORKFLOW_INVOICE_CLASSIFY_BILLED_ORDER = $conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_ORDER;
+										$conf->global->WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER = 0;
+										$conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_PROPAL = 0;
+										$conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_ORDER = 0;
+									}
+
 									// Validate invoice
 									if (!$error) {
 										$result = $invoice->validate($this->user, '', $warehouse_id);
@@ -5149,6 +5207,12 @@ class eCommerceSynchro
 												$error++;
 											}
 										}
+									}
+
+									if ($isDepositType) {
+										$conf->global->WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER = $save_WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER;
+										$conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_PROPAL = $save_WORKFLOW_INVOICE_CLASSIFY_BILLED_PROPAL;
+										$conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_ORDER = $save_WORKFLOW_INVOICE_CLASSIFY_BILLED_ORDER;
 									}
 
 									// Generate document

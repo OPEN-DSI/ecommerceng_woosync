@@ -343,7 +343,7 @@ class eCommerceProduct // extends CommonObject
 		$sql .= " t.last_update";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "ecommerce_product as t";
 		$sql .= " WHERE t.fk_site = " . $siteId;
-		$sql .= " AND t.remote_id = '" . $this->db->escape($remoteId) . "'";
+		$sql .= " AND t.remote_id LIKE '" . $this->db->escape($remoteId) . "'";
 		dol_syslog(get_class($this) . "::fetchByRemoteId sql=" . $sql, LOG_DEBUG);
 		$resql = $this->db->query($sql);
 		if ($resql) {
