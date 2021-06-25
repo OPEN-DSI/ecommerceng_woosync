@@ -180,11 +180,19 @@ function ecommerceng_download_image($image, $product, &$error_message)
             $upload_dir = $conf->service->multidir_output[$entity] . '/' . substr(substr("000" . $product->id, -2), 1, 1) . '/' . substr(substr("000" . $product->id, -2), 0, 1) . '/' . $product->id . "/photos";
         }
     } else {
-        if ($product->type == Product::TYPE_PRODUCT) {
-            $upload_dir = $conf->product->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $product, 'product') . dol_sanitizeFileName($product->ref);
-        } else {
-            $upload_dir = $conf->service->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $product, 'product') . dol_sanitizeFileName($product->ref);
-        }
+		if (version_compare(DOL_VERSION, "13.0.0") >= 0) {
+			if ($product->type == Product::TYPE_PRODUCT) {
+				$upload_dir = $conf->product->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 1, $product, 'product');
+			} else {
+				$upload_dir = $conf->service->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 1, $product, 'product');
+			}
+		} else {
+			if ($product->type == Product::TYPE_PRODUCT) {
+				$upload_dir = $conf->product->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $product, 'product') . dol_sanitizeFileName($product->ref);
+			} else {
+				$upload_dir = $conf->service->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $product, 'product') . dol_sanitizeFileName($product->ref);
+			}
+		}
     }
 
     // Define $destpath (path to file including filename) and $destfile (only filename)
@@ -353,11 +361,19 @@ function ecommerceng_remove_obsolete_image($product, $images, &$error_message)
             $upload_dir = $conf->service->multidir_output[$entity] . '/' . substr(substr("000" . $product->id, -2), 1, 1) . '/' . substr(substr("000" . $product->id, -2), 0, 1) . '/' . $product->id . "/photos/";
         }
     } else {
-        if ($product->type == Product::TYPE_PRODUCT) {
-            $upload_dir = $conf->product->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $product, 'product') . dol_sanitizeFileName($product->ref) . '/';
-        } else {
-            $upload_dir = $conf->service->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $product, 'product') . dol_sanitizeFileName($product->ref) . '/';
-        }
+		if (version_compare(DOL_VERSION, "13.0.0") >= 0) {
+			if ($product->type == Product::TYPE_PRODUCT) {
+				$upload_dir = $conf->product->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 1, $product, 'product') . '/';
+			} else {
+				$upload_dir = $conf->service->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 1, $product, 'product') . '/';
+			}
+		} else {
+			if ($product->type == Product::TYPE_PRODUCT) {
+				$upload_dir = $conf->product->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $product, 'product') . dol_sanitizeFileName($product->ref) . '/';
+			} else {
+				$upload_dir = $conf->service->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $product, 'product') . dol_sanitizeFileName($product->ref) . '/';
+			}
+		}
     }
 
     $images_name = [];

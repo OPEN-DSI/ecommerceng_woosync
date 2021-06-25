@@ -802,7 +802,7 @@ class eCommerceRemoteAccessWoocommerce
         $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
 		$from_date = isset($from_date) ? dol_print_date($from_date, 'dayhourrfc') : null;
 		$to_date = isset($to_date) ? dol_print_date($to_date, 'dayhourrfc') : null;
-		$variation_product_is_parent_product = isset($this->site->parameters['variation_product_is_parent_product']) ? $this->site->parameters['variation_product_is_parent_product'] : 0;
+		$product_variation_mode_all_to_one = !empty($this->site->parameters['product_variation_mode']) && $this->site->parameters['product_variation_mode'] == 'all_to_one';
 
 		$include_ids = [];
 		$include_variation_ids = [];
@@ -864,7 +864,7 @@ class eCommerceRemoteAccessWoocommerce
 
 				// Variations
 				if (!empty($include_variation_ids[$product->id])) {
-					if (!empty($variation_product_is_parent_product)) {
+					if ($product_variation_mode_all_to_one) {
 						$tmp = array_values($include_variation_ids[$product->id]);
 						$include_variation_ids[$product->id] = array($tmp[0]);
 					}
@@ -947,22 +947,23 @@ class eCommerceRemoteAccessWoocommerce
 		$productTaxSynchDirection = isset($this->site->parameters['product_synch_direction']['tax']) ? $this->site->parameters['product_synch_direction']['tax'] : '';
 		$productStatusSynchDirection = isset($this->site->parameters['product_synch_direction']['status']) ? $this->site->parameters['product_synch_direction']['status'] : '';
 		$productWeightUnits = isset($this->site->parameters['product_weight_units']) ? $this->site->parameters['product_weight_units'] : (empty($conf->global->MAIN_WEIGHT_DEFAULT_UNIT)?0:$conf->global->MAIN_WEIGHT_DEFAULT_UNIT);
-		$variation_product_is_parent_product = isset($this->site->parameters['variation_product_is_parent_product']) ? $this->site->parameters['variation_product_is_parent_product'] : 0;
-		$get_parent_data = $isVariation && !empty($variation_product_is_parent_product);
+		$product_variation_mode_all_to_one = !empty($this->site->parameters['product_variation_mode']) && $this->site->parameters['product_variation_mode'] == 'all_to_one';
 
 		// Categories
 		$categories = [];
-		$categories_data = is_array($remote_data->categories) && !$get_parent_data ? $remote_data->categories : (is_array($parent_remote_data->categories) ? $parent_remote_data->categories : array());
+		$parent_categories = is_array($parent_remote_data->categories) ? $parent_remote_data->categories : array();
+		$categories_data = is_array($remote_data->categories) ? $remote_data->categories : array();
+		$categories_data = array_merge($categories_data, $parent_categories);
 		foreach ($categories_data as $category) {
-			$categories[] = $category->id;
+			$categories[$category->id] = $category->id;
 		}
 
 		// Label
 		$label = $remote_data->name;
-		if ($isVariation && (empty($label) || !empty($variation_product_is_parent_product))) {
+		if ($isVariation && (empty($label) || $product_variation_mode_all_to_one)) {
 			$label = $parent_remote_data->name;
 			// Attributes of the variation
-			if (is_array($remote_data->attributes) && empty($variation_product_is_parent_product)) {
+			if (is_array($remote_data->attributes) && !$product_variation_mode_all_to_one) {
 				foreach ($remote_data->attributes as $attribute) {
 					$label .= ' - ' . $attribute->option;
 				}
@@ -988,14 +989,14 @@ class eCommerceRemoteAccessWoocommerce
 
 		$product = [
 			'create_date' => strtotime($remote_data->date_created),
-			'remote_id' => ($isVariation ? (!empty($variation_product_is_parent_product) ? $parent_id . '|' . implode('|', $parent_remote_data->variations) : $parent_id . '|' . $remote_data->id) : $remote_data->id),
+			'remote_id' => ($isVariation ? ($product_variation_mode_all_to_one ? $parent_id . '|' . implode('|', $parent_remote_data->variations) : $parent_id . '|' . $remote_data->id) : $remote_data->id),
 			'remote_parent_id' => ($isVariation ? $parent_id : 0),
 			'last_update' => $last_update,
 			'fk_product_type' => ($remote_data->virtual ? 1 : 0), // 0 (product) or 1 (service)
 			'status' => $remote_data->status,
 			'label' => $label,
 			'price' => $price,
-			'envente' => ($isVariation || !empty($variation_product_is_parent_product) || empty($remote_data->variations) ? 1 : 0),
+			'envente' => ($isVariation || $product_variation_mode_all_to_one || empty($remote_data->variations) ? 1 : 0),
 			'enachat' => null,
 			'finished' => 1,    // 1 = manufactured, 0 = raw material
 			'canvas' => $canvas,
@@ -1003,7 +1004,7 @@ class eCommerceRemoteAccessWoocommerce
 			'categories' => $categories,
 			'price_min' => '',
 			'fk_country' => '',
-			'url' => $get_parent_data ? $parent_remote_data->permalink : $remote_data->permalink,
+			'url' => $isVariation && $product_variation_mode_all_to_one ? $parent_remote_data->permalink : $remote_data->permalink,
 			// Stock
 			'stock_qty' => $remote_data->stock_quantity,
 			'is_in_stock' => $remote_data->in_stock,   // not used
@@ -1018,74 +1019,97 @@ class eCommerceRemoteAccessWoocommerce
 
 		// Synchronize ref
 		if ($productRefSynchDirection == 'etod' || $productRefSynchDirection == 'all') {
-			$product['ref'] = $get_parent_data ? $parent_remote_data->sku : $remote_data->sku;
+			$product['ref'] = $remote_data->sku;
 		}
 		// Synchronize short and long description
 		if ($productDescriptionSynchDirection == 'etod' || $productDescriptionSynchDirection == 'all') {
-			$product['extrafields']["ecommerceng_description_{$conf->entity}"] = $this->replace4byte($get_parent_data ? $parent_remote_data->description : $remote_data->description);
+			$product['extrafields']["ecommerceng_description_{$conf->entity}"] = $this->replace4byte(empty($remote_data->description) ? $parent_remote_data->description : $remote_data->description);
 		}
-		if (!$isVariation && ($productShortDescriptionSynchDirection == 'etod' || $productShortDescriptionSynchDirection == 'all')) {
-			$product['extrafields']["ecommerceng_short_description_{$conf->entity}"] = $this->replace4byte($get_parent_data ? $parent_remote_data->short_description : $remote_data->short_description);
+		if ($productShortDescriptionSynchDirection == 'etod' || $productShortDescriptionSynchDirection == 'all') {
+			$product['extrafields']["ecommerceng_short_description_{$conf->entity}"] = $this->replace4byte(empty($remote_data->short_description) ? $parent_remote_data->short_description : $remote_data->short_description);
 		}
 		// Synchronize weight
 		if ($productWeightSynchDirection == 'etod' || $productWeightSynchDirection == 'all') {
-			$product['weight'] = $get_parent_data ? $parent_remote_data->weight : $remote_data->weight;
+			$product['weight'] = empty($remote_data->weight) ? $parent_remote_data->weight : $remote_data->weight;
 			$product['weight_units'] = $productWeightUnits;
 		}
 		// Synchronize tax
-		$tax_info = $this->getTaxInfoFromTaxClass($get_parent_data ? $parent_remote_data->tax_class : $remote_data->tax_class, $get_parent_data ? $parent_remote_data->tax_status : $remote_data->tax_status);
+		$tax_info = $this->getTaxInfoFromTaxClass(empty($remote_data->tax_class) ? $parent_remote_data->tax_class : $remote_data->tax_class, empty($remote_data->tax_status) ? $parent_remote_data->tax_status : $remote_data->tax_status);
 		if (!$isVariation) $product['tax_rate'] = $tax_info['tax_rate'];
 		if ($productTaxSynchDirection == 'etod' || $productTaxSynchDirection == 'all') {
 			if ($isVariation) $product['tax_rate'] = $tax_info['tax_rate'];
 			$product['extrafields']["ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"] = $tax_info['tax_class'];
 		}
 		// Synchronize status
-		if (!$isVariation && ($productStatusSynchDirection == 'etod' || $productStatusSynchDirection == 'all')) {
-			$product['extrafields']["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"] = $get_parent_data ? $parent_remote_data->status : $remote_data->status;
+		if ($productStatusSynchDirection == 'etod' || $productStatusSynchDirection == 'all') {
+			$product['extrafields']["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"] = empty($remote_data->status) ? $parent_remote_data->status : $remote_data->status;
 		}
 		// Synchronize images
-		$image_data = $get_parent_data ? $parent_remote_data->image : $remote_data->image;
-		$images_data = $get_parent_data ? $parent_remote_data->images : $remote_data->images;
-		if ((!empty($image_data) || !empty($images_data)) && ($productImageSynchDirection == 'etod' || $productImageSynchDirection == 'all')) {
+		if ($productImageSynchDirection == 'etod' || $productImageSynchDirection == 'all') {
 			$images = [];
-			$media_url = $this->site->webservice_address  . (substr($this->site->webservice_address, -1, 1) != '/' ? '/' : ''). 'wp-content/uploads/';
-			if (!empty($image_data)) {
-				$last_update = $this->getDateTimeFromGMTDateTime(!empty($image_data->date_modified_gmt) ? $image_data->date_modified_gmt : $image_data->date_created_gmt);
-				$images[] = [
-					'filename' => dol_sanitizeFileName(str_replace($media_url, '', $image_data->src)),
-					'url' => $image_data->src,
-					'date_modified' => $last_update->format('Y-m-d H:i:s'),
-				];
-			} else {
+
+			// Image of the product or the parent product if is a variation
+			$images_data = $isVariation ? $parent_remote_data->images : $remote_data->images;
+			$images_data = is_array($images_data) ? $images_data : array();
+			// Image of the variation
+			if ($isVariation && !empty($remote_data->image)) $images_data[] = $remote_data->image;
+
+			if (!empty($images_data)) {
+				$media_url = $this->site->webservice_address . (substr($this->site->webservice_address, -1, 1) != '/' ? '/' : '') . 'wp-content/uploads/';
+
 				foreach ($images_data as $image) {
 					$last_update = $this->getDateTimeFromGMTDateTime(!empty($image->date_modified_gmt) ? $image->date_modified_gmt : $image->date_created_gmt);
+					$image_url = $this->getCleanedRelativeUrl($media_url, $image->src);
 					$images[] = [
-						'filename' => dol_sanitizeFileName(str_replace($media_url, '', $image->src)),
+						'filename' => dol_sanitizeFileName($image_url),
 						'url' => $image->src,
 						'date_modified' => $last_update->format('Y-m-d H:i:s'),
 					];
 				}
-				array_reverse($images);
 			}
+
 			$product['images'] = $images;
 		}
 
 		// Synchronize metadata to extra fields
-		if (!empty($remote_data->meta_data) && !empty($this->site->parameters['ef_crp']['product'])) {
-			$correspondences = array();
-			foreach ($this->site->parameters['ef_crp']['product'] as $key => $options_saved) {
-				if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
-					$correspondences[$options_saved['correspondences']] = $key;
+		if (!empty($this->site->parameters['ef_crp']['product'])) {
+			$metas_data = is_array($remote_data->meta_data) ? $remote_data->meta_data : array();
+			if ($isVariation && is_array($parent_remote_data->meta_data)) $metas_data = array_merge($parent_remote_data->meta_data, $metas_data);
+
+			if (!empty($metas_data)) {
+				$correspondences = array();
+				foreach ($this->site->parameters['ef_crp']['product'] as $key => $options_saved) {
+					if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
+						$correspondences[$options_saved['correspondences']] = $key;
+					}
 				}
-			}
-			foreach ($remote_data->meta_data as $meta) {
-				if (isset($correspondences[$meta->key])) {
-					$product['extrafields'][$correspondences[$meta->key]] = $meta->value;
+				foreach ($metas_data as $meta) {
+					if (isset($correspondences[$meta->key])) {
+						$product['extrafields'][$correspondences[$meta->key]] = $meta->value;
+					}
 				}
 			}
 		}
 
 		return $product;
+	}
+
+	/**
+	 *  Get the cleaned image path (without the base url path to the media folder and other parameters after character '?')
+	 *
+	 * @param	string		$root_url		Root url to remove
+	 * @param	string		$img_url		Image URL
+	 * @return  string                 		The cleaned image path
+	 */
+	public function getCleanedRelativeUrl($root_url, $img_url)
+	{
+		if (!empty($img_url)) {
+			$img_url = str_replace($root_url, '/', $img_url);
+			$pos = strpos($img_url, '?');
+			if ($pos !== false) $img_url = substr($img_url, 0, $pos);
+		}
+
+		return $img_url;
 	}
 
     /**
@@ -1169,15 +1193,16 @@ class eCommerceRemoteAccessWoocommerce
 		// Set product lines
 		$items = [];
 		if (!empty($remote_data->line_items)) {
-			$variation_product_is_parent_product = isset($this->site->parameters['variation_product_is_parent_product']) ? $this->site->parameters['variation_product_is_parent_product'] : 0;
+			$product_variation_mode_all_to_one = !empty($this->site->parameters['product_variation_mode']) && $this->site->parameters['product_variation_mode'] == 'all_to_one';
 			$order_metadata_product_lines_to_description_etod = !empty($this->site->parameters['order_metadata_product_lines_to_description_etod']);
-			$order_exclude_metadata_product_lines_to_description_etod = !empty($this->site->parameters['order_exclude_metadata_product_lines_to_description_etod']) ? explode(',', array_filter(array_map('trim', explode(',', (string)$this->site->parameters['order_exclude_metadata_product_lines_to_description_etod'])), 'strlen')) : array();
+			$order_filter_mode_metadata_product_lines_to_description_etod = !empty($this->site->parameters['order_filter_mode_metadata_product_lines_to_description_etod']) ? $this->site->parameters['order_filter_mode_metadata_product_lines_to_description_etod'] : 'exclude';
+			$order_filter_keys_metadata_product_lines_to_description_etod = !empty($this->site->parameters['order_filter_keys_metadata_product_lines_to_description_etod']) ? array_filter(array_map('trim', explode(',', (string)$this->site->parameters['order_filter_keys_metadata_product_lines_to_description_etod'])), 'strlen') : array();
 
 			foreach ($remote_data->line_items as $item) {
 				$item_data = [
 					'item_id' => $item->id,
 					'label' => $item->name,
-					'id_remote_product' => !empty($item->variation_id) ? (empty($variation_product_is_parent_product) ? $item->product_id . '|' . $item->variation_id : $item->product_id . '|%') : $item->product_id,
+					'id_remote_product' => !empty($item->variation_id) ? (!$product_variation_mode_all_to_one ? $item->product_id . '|' . $item->variation_id : $item->product_id . '|%') : $item->product_id,
 					'product_type' => 'simple',
 					'price' => $item->subtotal != $item->total ? ($item->subtotal / $item->quantity) : $item->price,
 					'total_ht' => $item->subtotal,
@@ -1200,28 +1225,36 @@ class eCommerceRemoteAccessWoocommerce
 				if (isset($item->cog_item_cost)) $item_data['buy_price'] = $this->site->ecommerce_price_type == 'TTC' ? 100 * $item->cog_item_cost / (100 + $item_data['tva_tx']) : $item->cog_item_cost;
 				if ($this->site->ecommerce_price_type == 'TTC') $item_data['price'] = (100 * ($item->subtotal + $item->subtotal_tax) / (100 + $item_data['tva_tx'])) / $item->quantity;
 
-				$metadata_in_description = array();
-
-				// Synch extrafields <=> metadatas
-				if (!empty($item->meta_data) && !empty($this->site->parameters['ef_crp']['commandedet'])) {
-					$correspondences = array();
-					foreach ($this->site->parameters['ef_crp']['commandedet'] as $key => $options_saved) {
-						if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
-							$correspondences[$options_saved['correspondences']] = $key;
+				if (!empty($item->meta_data)) {
+					// Synch extrafields <=> metadatas
+					if (!empty($this->site->parameters['ef_crp']['commandedet'])) {
+						$correspondences = array();
+						foreach ($this->site->parameters['ef_crp']['commandedet'] as $key => $options_saved) {
+							if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
+								$correspondences[$options_saved['correspondences']] = $key;
+							}
+						}
+						foreach ($item->meta_data as $meta) {
+							if (isset($correspondences[$meta->key])) {
+								$item_data['extrafields'][$correspondences[$meta->key]] = $meta->value;
+							}
 						}
 					}
-					foreach ($item->meta_data as $meta) {
-						if ($order_metadata_product_lines_to_description_etod && !empty($meta->display_key) && !empty($meta->display_value) && !in_array($meta->key, $order_exclude_metadata_product_lines_to_description_etod)) {
-							$metadata_in_description[] = $meta->display_key . ' : ' . $meta->display_value;
+					// Add meta-data in description
+					if ($order_metadata_product_lines_to_description_etod) {
+						$metadata_in_description = array();
+						foreach ($item->meta_data as $meta) {
+							if (!empty($meta->display_key) && !empty($meta->display_value) && (
+									($order_filter_mode_metadata_product_lines_to_description_etod == 'include' && in_array($meta->key, $order_filter_keys_metadata_product_lines_to_description_etod)) ||
+									($order_filter_mode_metadata_product_lines_to_description_etod == 'exclude' && !in_array($meta->key, $order_filter_keys_metadata_product_lines_to_description_etod))
+								)
+							) {
+								$metadata_in_description[] = $meta->display_key . ' : ' . $meta->display_value;
+							}
 						}
-
-						if (isset($correspondences[$meta->key])) {
-							$item_data['extrafields'][$correspondences[$meta->key]] = $meta->value;
-						}
+						if (!empty($metadata_in_description)) $item_data['additional_description'] = implode('<br>', $metadata_in_description);
 					}
 				}
-
-				if (!empty($metadata_in_description)) $item_data['additional_description'] = implode('<br>', $metadata_in_description);
 
 				$items[] = $item_data;
 			}
@@ -1795,9 +1828,9 @@ class eCommerceRemoteAccessWoocommerce
         $productWeightSynchDirection = isset($this->site->parameters['product_synch_direction']['weight']) ? $this->site->parameters['product_synch_direction']['weight'] : '';
         $productTaxSynchDirection = isset($this->site->parameters['product_synch_direction']['tax']) ? $this->site->parameters['product_synch_direction']['tax'] : '';
         $productStatusSynchDirection = isset($this->site->parameters['product_synch_direction']['status']) ? $this->site->parameters['product_synch_direction']['status'] : '';
-		$variation_product_is_parent_product = isset($this->site->parameters['variation_product_is_parent_product']) ? $this->site->parameters['variation_product_is_parent_product'] : 0;
+		$product_variation_mode_all_to_one = !empty($this->site->parameters['product_variation_mode']) && $this->site->parameters['product_variation_mode'] == 'all_to_one';
 
-		if (!empty($variation_product_is_parent_product)) {
+		if ($product_variation_mode_all_to_one) {
 			$idsProduct = explode('|', $remote_id);
 			if (count($idsProduct) > 1) {
 				$isProductVariationHasOne = true;
@@ -1915,11 +1948,19 @@ class eCommerceRemoteAccessWoocommerce
                     $dir = $conf->service->multidir_output[$entity] . '/' . substr(substr("000" . $object->id, -2), 1, 1) . '/' . substr(substr("000" . $object->id, -2), 0, 1) . '/' . $object->id . "/photos/";
                 }
             } else {
-                if ($object->type == Product::TYPE_PRODUCT) {
-                    $dir = $conf->product->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $object, 'product') . dol_sanitizeFileName($object->ref) . '/';
-                } else {
-                    $dir = $conf->service->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $object, 'product') . dol_sanitizeFileName($object->ref) . '/';
-                }
+            	if (version_compare(DOL_VERSION, "13.0.0") >= 0) {
+					if ($object->type == Product::TYPE_PRODUCT) {
+						$dir = $conf->product->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 1, $object, 'product') . '/';
+					} else {
+						$dir = $conf->service->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 1, $object, 'product') . '/';
+					}
+				} else {
+					if ($object->type == Product::TYPE_PRODUCT) {
+						$dir = $conf->product->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $object, 'product') . dol_sanitizeFileName($object->ref) . '/';
+					} else {
+						$dir = $conf->service->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $object, 'product') . dol_sanitizeFileName($object->ref) . '/';
+					}
+				}
             }
             $photos = $object->liste_photos($dir);
             foreach ($photos as $index => $photo) {
@@ -2395,9 +2436,9 @@ class eCommerceRemoteAccessWoocommerce
 			$remote_product_variation_ids[] = $idsProduct[2];
 		}
 
-		$variation_product_is_parent_product = isset($this->site->parameters['variation_product_is_parent_product']) ? $this->site->parameters['variation_product_is_parent_product'] : 0;
+		$product_variation_mode_all_to_one = !empty($this->site->parameters['product_variation_mode']) && $this->site->parameters['product_variation_mode'] == 'all_to_one';
 
-		if (!empty($variation_product_is_parent_product)) {
+		if ($product_variation_mode_all_to_one) {
 			$idsProduct = explode('|', $remote_id);
 			if (count($idsProduct) > 1) {
 				$isProductVariationHasOne = true;
@@ -2837,11 +2878,19 @@ class eCommerceRemoteAccessWoocommerce
                         $dir = $conf->service->multidir_output[$entity] . '/' . substr(substr("000" . $object->id, -2), 1, 1) . '/' . substr(substr("000" . $object->id, -2), 0, 1) . '/' . $object->id . "/photos/";
                     }
                 } else {
-                    if ($object->type == Product::TYPE_PRODUCT) {
-                        $dir = $conf->product->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $object, 'product') . dol_sanitizeFileName($object->ref) . '/';
-                    } else {
-                        $dir = $conf->service->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $object, 'product') . dol_sanitizeFileName($object->ref) . '/';
-                    }
+					if (version_compare(DOL_VERSION, "13.0.0") >= 0) {
+						if ($object->type == Product::TYPE_PRODUCT) {
+							$dir = $conf->product->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 1, $object, 'product') . '/';
+						} else {
+							$dir = $conf->service->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 1, $object, 'product') . '/';
+						}
+					} else {
+						if ($object->type == Product::TYPE_PRODUCT) {
+							$dir = $conf->product->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $object, 'product') . dol_sanitizeFileName($object->ref) . '/';
+						} else {
+							$dir = $conf->service->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $object, 'product') . dol_sanitizeFileName($object->ref) . '/';
+						}
+					}
                 }
                 $photos = $object->liste_photos($dir);
                 foreach ($photos as $index => $photo) {
@@ -3303,11 +3352,19 @@ class eCommerceRemoteAccessWoocommerce
                             $dir = $conf->service->multidir_output[$entity] . '/' . substr(substr("000" . $product_static->id, -2), 1, 1) . '/' . substr(substr("000" . $product_static->id, -2), 0, 1) . '/' . $product_static->id . "/photos/";
                         }
                     } else {
-                        if ($product_static->type == Product::TYPE_PRODUCT) {
-                            $dir = $conf->product->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $product_static, 'product') . dol_sanitizeFileName($product_static->ref) . '/';
-                        } else {
-                            $dir = $conf->service->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $product_static, 'product') . dol_sanitizeFileName($product_static->ref) . '/';
-                        }
+						if (version_compare(DOL_VERSION, "13.0.0") >= 0) {
+							if ($product_static->type == Product::TYPE_PRODUCT) {
+								$dir = $conf->product->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 1, $product_static, 'product') . '/';
+							} else {
+								$dir = $conf->service->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 1, $product_static, 'product') . '/';
+							}
+						} else {
+							if ($product_static->type == Product::TYPE_PRODUCT) {
+								$dir = $conf->product->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $product_static, 'product') . dol_sanitizeFileName($product_static->ref) . '/';
+							} else {
+								$dir = $conf->service->multidir_output[$entity] . '/' . get_exdir(0, 0, 0, 0, $product_static, 'product') . dol_sanitizeFileName($product_static->ref) . '/';
+							}
+						}
                     }
                     $photos = $product_static->liste_photos($dir);
                     foreach ($photos as $index => $photo) {

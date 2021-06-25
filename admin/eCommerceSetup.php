@@ -311,11 +311,12 @@ if ($_POST['site_form_detail_action'] == 'save')
                 'product_synch_direction' => $ecommerceProductSynchDirection,
                 'product_synch_price' => $ecommerceProductSynchPrice,
 				'product_weight_units' => $_POST['ecommerce_product_weight_units'],
-				'variation_product_is_parent_product' => $_POST['ecommerce_variation_product_is_parent_product'],
+				'product_variation_mode' => GETPOSTISSET('ecommerce_product_variation_mode') ? GETPOST('ecommerce_product_variation_mode', 'aZ09') : 'one_to_one',
                 'customer_roles' => $ecommerceWoocommerceCustomerRoles,
 				'create_invoice_type' => $ecommerceCreateInvoiceType,
 				'order_metadata_product_lines_to_description_etod' => GETPOSTISSET('ecommerce_order_metadata_product_lines_to_description_etod') ? (GETPOST('ecommerce_order_metadata_product_lines_to_description_etod', 'int') > 0 ? 1 : 0) : 0,
-				'order_exclude_metadata_product_lines_to_description_etod' => GETPOST('ecommerce_order_exclude_metadata_product_lines_to_description_etod', 'alpha'),
+				'order_filter_mode_metadata_product_lines_to_description_etod' => GETPOSTISSET('ecommerce_order_filter_mode_metadata_product_lines_to_description_etod') ? GETPOST('ecommerce_order_filter_mode_metadata_product_lines_to_description_etod', 'aZ09') : 'exclude',
+				'order_filter_keys_metadata_product_lines_to_description_etod' => GETPOST('ecommerce_order_filter_keys_metadata_product_lines_to_description_etod', 'alpha'),
             );
             if ($conf->commande->enabled || $conf->facture->enabled || $conf->supplier_invoice->enabled) {
                 $siteDb->parameters['order_actions'] = $ecommerceOrderActions;
@@ -934,11 +935,12 @@ if ($ecommerceId > 0) {
         $ecommerceProductWeightSynchDirection = isset($siteDb->parameters['product_synch_direction']['weight']) ? $siteDb->parameters['product_synch_direction']['weight'] : 'etod';
         $ecommerceProductTaxSynchDirection = isset($siteDb->parameters['product_synch_direction']['tax']) ? $siteDb->parameters['product_synch_direction']['tax'] : 'etod';
         $ecommerceProductStatusSynchDirection = isset($siteDb->parameters['product_synch_direction']['status']) ? $siteDb->parameters['product_synch_direction']['status'] : 'etod';
-		$ecommerceVariationProductIsParentProduct = isset($siteDb->parameters['variation_product_is_parent_product']) ? $siteDb->parameters['variation_product_is_parent_product'] : 0;
+		$ecommerceProductVariationMode = isset($siteDb->parameters['product_variation_mode']) ? $siteDb->parameters['product_variation_mode'] : 'one_to_one';
         $ecommerceWoocommerceCustomerRoles = isset($siteDb->parameters['customer_roles']) ? $siteDb->parameters['customer_roles'] : 'customer';
 		$ecommerceCreateInvoiceType = isset($siteDb->parameters['create_invoice_type']) ? $siteDb->parameters['create_invoice_type'] : Facture::TYPE_STANDARD;
 		$ecommerceOrderMetadataProductLinesToDescriptionEtod = isset($siteDb->parameters['order_metadata_product_lines_to_description_etod']) ? $siteDb->parameters['order_metadata_product_lines_to_description_etod'] : 0;
-		$ecommerceOrderExcludeMetadataProductLinesToDescriptionEtod = isset($siteDb->parameters['order_exclude_metadata_product_lines_to_description_etod']) ? $siteDb->parameters['order_exclude_metadata_product_lines_to_description_etod'] : '';
+		$ecommerceOrderFilterModeMetadataProductLinesToDescriptionEtod = isset($siteDb->parameters['order_filter_mode_metadata_product_lines_to_description_etod']) ? $siteDb->parameters['order_filter_mode_metadata_product_lines_to_description_etod'] : '';
+		$ecommerceOrderFilterKeysMetadataProductLinesToDescriptionEtod = isset($siteDb->parameters['order_filter_keys_metadata_product_lines_to_description_etod']) ? $siteDb->parameters['order_filter_keys_metadata_product_lines_to_description_etod'] : '';
     }
 }
 

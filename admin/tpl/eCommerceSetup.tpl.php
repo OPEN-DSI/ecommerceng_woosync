@@ -524,13 +524,14 @@ if ($ecommerceType == 2)
         </tr>
 <?php if ($ecommerceType == 2) { ?>
  		<tr <?php print $bc[$var] ?>>
-		 <td><span><?php print $langs->trans('ECommerceWoocommerceVariationProductIsParentProduct') ?></span></td>
+		 <td><span><?php print $langs->trans('ECommerceWoocommerceProductVariationMode') ?></span></td>
 		 <td>
 		  <?php
-		  print $form->selectyesno('ecommerce_variation_product_is_parent_product', $ecommerceVariationProductIsParentProduct, 1);
+		  $array=array('one_to_one'=>$langs->trans('ECommerceWoocommerceProductVariationOneToOne'), 'all_to_one'=>$langs->trans('ECommerceWoocommerceProductVariationAllToOne'));
+		  print $form->selectarray('ecommerce_product_variation_mode', $array, $ecommerceProductVariationMode);
 		  ?>
 		 </td>
-		 <td><?php print $langs->trans('ECommerceWoocommerceVariationProductIsParentProductDescription') ?></td>
+		 <td><?php print $langs->trans('ECommerceWoocommerceProductVariationModeDescription') ?></td>
 		</tr>
 <?php } ?>
       </table>
@@ -814,9 +815,14 @@ if ($ecommerceOrderStatus)
 				<td><?php print $langs->trans('ECommerceWoocommerceOrderMetaDataInProductLineToDescriptionForECommerceToDolibarrDescription') ?></td>
 			</tr>
 			<tr <?php print $bc[$var] ?>>
-				<td><span><?php print $langs->trans('ECommerceWoocommerceOrderExcludeMetaDataInProductLineToDescriptionForECommerceToDolibarr') ?></span></td>
-				<td><input type="text" name="ecommerce_order_exclude_metadata_product_lines_to_description_etod" value="<?php print dol_escape_js(dol_escape_htmltag($ecommerceOrderExcludeMetadataProductLinesToDescriptionEtod), 2) ?>"></td>
-				<td><?php print $langs->trans('ECommerceWoocommerceOrderExcludeMetaDataInProductLineToDescriptionForECommerceToDolibarrDescription') ?></td>
+				<td><span><?php print $langs->trans('ECommerceWoocommerceOrderFilterMetaDataInProductLineToDescriptionForECommerceToDolibarr') ?></span></td>
+				<td>
+					<?php
+					$array=array('exclude'=>$langs->trans('ECommerceExclude'), 'include'=>$langs->trans('ECommerceInclude'));
+					print $form->selectarray('ecommerce_order_filter_mode_metadata_product_lines_to_description_etod', $array, $ecommerceOrderFilterModeMetadataProductLinesToDescriptionEtod);
+					?>
+					<input type="text" name="ecommerce_order_filter_keys_metadata_product_lines_to_description_etod" value="<?php print dol_escape_js(dol_escape_htmltag($ecommerceOrderFilterKeysMetadataProductLinesToDescriptionEtod), 2) ?>"></td>
+				<td><?php print $langs->trans('ECommerceWoocommerceOrderFilterMetaDataInProductLineToDescriptionForECommerceToDolibarrDescription') ?></td>
 			</tr>
 		</table>
 <?php

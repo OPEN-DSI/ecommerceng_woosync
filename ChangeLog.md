@@ -1,5 +1,12 @@
 # ChangeLog
 
+## 4.0.74.0
+- Eclaircissement de la methode de synchronisation des produits variables
+- Recupere les informations du produit parent si celui du produit variable n'est pas renseigné et regroupe les catégories, les images et les méta-données et produit parent avec le produit variable
+- Compatibilité de la recupération de repertoire des images des produits avec les versions 13+ de Dolibarr
+- Amelioration du nom de l'image du produit enregistré dans Dolibarr lors d'une synchro WooCommerce vers Dolibarr
+- Corrections et ajout compatibilité avec Dolibarr v13
+
 ## 4.0.73.0
 - Correction des données sur le stock lors de la synchronisation d'un produit
 - Ajoute une option pour afficher les meta-données des produits de la commandes Woocommerce dans la description des lignes de produits de la commande sur Dolibarr

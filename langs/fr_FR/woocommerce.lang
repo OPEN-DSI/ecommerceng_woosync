@@ -94,8 +94,10 @@ ECommerceWoocommerceProductSyncPriceDescription    = Ce paramètre détermine qu
 ECommerceWoocommerceRegularPrice                   = Prix régulier
 ECommerceWoocommerceSellingPrice                   = Prix de vente
 
-ECommerceWoocommerceVariationProductIsParentProduct             = Variations
-ECommerceWoocommerceVariationProductIsParentProductDescription  = Synchronisation du produit parent et non ses variations (commandes inclus)
+ECommerceWoocommerceProductVariationMode            = Synchronisation des variations
+ECommerceWoocommerceProductVariationOneToOne        = Un => un
+ECommerceWoocommerceProductVariationAllToOne        = Tous => un
+ECommerceWoocommerceProductVariationModeDescription = Choisi comment on synchronise les variations<br>'Un => un' créera un produit pour chaque variation du produit WooCommerce<br>'Tous => un' créera un produit et un seul pour le produit variant avec les informations du parent et les meta-datas de la première variation
 
 ECommercengWoocommerceRegularPrice      = Prix régulier pour le site [%s]
 ECommercengWoocommerceSalePrice         = Prix promo pour le site [%s]

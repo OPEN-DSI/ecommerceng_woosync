@@ -3103,7 +3103,7 @@ class eCommerceSynchro
 							else {
 								$third_party->code_client = -1;            // Automatic code
 								$third_party->code_fournisseur = -1;        // Automatic code
-								$third_party->note_private = isset($order_data['note']) ? $customer_data['note'] : "";
+								$third_party->note_private = isset($customer_data['note']) ? $customer_data['note'] : "";
 								if (!empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE)) {
 									$third_party->note_private = dol_concatdesc($third_party->note_private, $this->langs->trans('ECommerceCreateThirdPartyFromSiteNote', $this->eCommerceSite->name) . " :\n" . json_encode($customer_data['remote_datas']));
 								}
@@ -3436,10 +3436,12 @@ class eCommerceSynchro
 						// Update product
 						if ($product->id > 0) {
 							if (!empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE)) {
+								if (empty($product->note_private) && !empty($product->note)) $product->note_private = $product->note;
 								$product->note_private = dol_concatdesc($product->note_private, $this->langs->trans('ECommerceUpdateProductFromSiteNote', dol_print_date(dol_now(), 'dayhour'), $this->eCommerceSite->name, $product_data['remote_id']));
 								if (!empty($conf->global->ECOMMERCENG_ENABLE_DETAILED_UPDATE_LOG_IN_NOTE)) {
 									$product->note_private = dol_concatdesc($product->note_private . " :", json_encode($product_data['remote_datas']));
 								}
+								$product->note = $product->note_private;
 							}
 
 							$product->error = '';
@@ -3453,7 +3455,8 @@ class eCommerceSynchro
 							$new_product = true;
 							if (!isset($product_data['enachat']) && !empty($conf->global->ECOMMERCENG_PRODUCT_IN_PURCHASE_WHEN_CREATED)) $product->status_buy = 1;
 							$product->canvas = $product_data['canvas'];
-							$product->note_private = isset($order_data['note']) ? $product_data['note'] : "";
+							$product->note_private = isset($product_data['note']) ? $product_data['note'] : "";
+							$product->note = $product->note_private;
 							if (!empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE)) {
 								$product->note_private = dol_concatdesc($product->note_private, $this->langs->trans('ECommerceCreateProductFromSiteNote', $this->eCommerceSite->name) . " :\n" . json_encode($product_data['remote_datas']));
 							}
@@ -4123,7 +4126,7 @@ class eCommerceSynchro
 														$product->fetch($fk_product);
 														$description = $product->description;
 													}
-													dol_concatdesc($description, $item['additional_description']);
+													$description = dol_concatdesc($description, $item['additional_description']);
 													$product_type = $item['product_type'] != "simple" ? 1 : 0;
 
 													$array_options = array();
@@ -4865,7 +4868,7 @@ class eCommerceSynchro
 																	$product->fetch($fk_product);
 																	$description = $product->description;
 																}
-																dol_concatdesc($description, $item['additional_description']);
+																$description = dol_concatdesc($description, $item['additional_description']);
 
 																if ($price < 0 && empty($conf->global->ECOMMERCE_KEEP_NEGATIVE_PRICE_LINES_WHEN_CREATE_INVOICE)) {
 																	// Negative line, we create a discount line
