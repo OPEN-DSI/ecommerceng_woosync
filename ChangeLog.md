@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.75.0
+- Fix sql request by removing ) by pierrejego
+
 ## 4.0.74.0
 - Eclaircissement de la methode de synchronisation des produits variables
 - Recupere les informations du produit parent si celui du produit variable n'est pas renseigné et regroupe les catégories, les images et les méta-données et produit parent avec le produit variable
