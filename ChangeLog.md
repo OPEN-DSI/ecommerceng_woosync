@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 4.0.73.0
+- Correction des données sur le stock lors de la synchronisation d'un produit
+- Ajoute une option pour afficher les meta-données des produits de la commandes Woocommerce dans la description des lignes de produits de la commande sur Dolibarr
+  Et une autre pour spécifier les meta-données a ne pas inclure dans la description des lignes de produits
+
 ## 4.0.72.0
 - Correction de la synchronisation d'un produit variable considéré comme un produit unique
 - Desactivation de la connection a l'ancienne API et correction de la creation d'un produit sur WooCommerce avec la nouvelle api

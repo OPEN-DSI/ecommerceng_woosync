@@ -218,7 +218,7 @@ class eCommerceRemoteAccessWoocommerce
                     'query_string_auth' => !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_QUERY_STRING_AUTH),
                 ]
             );
-            $this->client->get('customers', [ 'page' => 1, 'per_page' => 1 ]);
+            $this->client->get('products/categories', [ 'page' => 1, 'per_page' => 1 ]);
 //
 //            $this->clientOld = new Client(
 //                $this->site->webservice_address,
@@ -231,7 +231,7 @@ class eCommerceRemoteAccessWoocommerce
 //                    'query_string_auth' => !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_QUERY_STRING_AUTH),
 //                ]
 //            );
-//            $this->clientOld->get('customers', [ 'page' => 1, 'filter' => [ 'limit' => 1 ] ]);
+//            $this->clientOld->get('products/categories', [ 'page' => 1, 'filter' => [ 'limit' => 1 ] ]);
         } catch (HttpClientException $fault) {
             $this->errors[] = $langs->trans('ECommerceWoocommerceConnect', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
             dol_syslog(__METHOD__ .
@@ -1170,6 +1170,8 @@ class eCommerceRemoteAccessWoocommerce
 		$items = [];
 		if (!empty($remote_data->line_items)) {
 			$variation_product_is_parent_product = isset($this->site->parameters['variation_product_is_parent_product']) ? $this->site->parameters['variation_product_is_parent_product'] : 0;
+			$order_metadata_product_lines_to_description_etod = !empty($this->site->parameters['order_metadata_product_lines_to_description_etod']);
+			$order_exclude_metadata_product_lines_to_description_etod = !empty($this->site->parameters['order_exclude_metadata_product_lines_to_description_etod']) ? explode(',', array_filter(array_map('trim', explode(',', (string)$this->site->parameters['order_exclude_metadata_product_lines_to_description_etod'])), 'strlen')) : array();
 
 			foreach ($remote_data->line_items as $item) {
 				$item_data = [
@@ -1198,6 +1200,8 @@ class eCommerceRemoteAccessWoocommerce
 				if (isset($item->cog_item_cost)) $item_data['buy_price'] = $this->site->ecommerce_price_type == 'TTC' ? 100 * $item->cog_item_cost / (100 + $item_data['tva_tx']) : $item->cog_item_cost;
 				if ($this->site->ecommerce_price_type == 'TTC') $item_data['price'] = (100 * ($item->subtotal + $item->subtotal_tax) / (100 + $item_data['tva_tx'])) / $item->quantity;
 
+				$metadata_in_description = array();
+
 				// Synch extrafields <=> metadatas
 				if (!empty($item->meta_data) && !empty($this->site->parameters['ef_crp']['commandedet'])) {
 					$correspondences = array();
@@ -1207,11 +1211,17 @@ class eCommerceRemoteAccessWoocommerce
 						}
 					}
 					foreach ($item->meta_data as $meta) {
+						if ($order_metadata_product_lines_to_description_etod && !empty($meta->display_key) && !empty($meta->display_value) && !in_array($meta->key, $order_exclude_metadata_product_lines_to_description_etod)) {
+							$metadata_in_description[] = $meta->display_key . ' : ' . $meta->display_value;
+						}
+
 						if (isset($correspondences[$meta->key])) {
 							$item_data['extrafields'][$correspondences[$meta->key]] = $meta->value;
 						}
 					}
 				}
+
+				if (!empty($metadata_in_description)) $item_data['additional_description'] = implode('<br>', $metadata_in_description);
 
 				$items[] = $item_data;
 			}
@@ -2052,8 +2062,8 @@ class eCommerceRemoteAccessWoocommerce
                 }
             }
 			if ($variationData['manage_stock'] && empty($object->array_options["options_ecommerceng_wc_dont_update_stock_{$this->site->id}_{$conf->entity}"])) {
-				$variationData['stock_quantity'] = $object->stock_reel;
-				$variationData['in_stock'] = $object->stock_reel > 0;
+				$variationData['stock_quantity'] = floor($object->stock_reel);
+				$variationData['in_stock'] = $variationData['stock_quantity'] > 0;
 			}
 
             // Synch extrafields <=> metadatas
@@ -2246,8 +2256,8 @@ class eCommerceRemoteAccessWoocommerce
                 $productData['status'] = (!empty($status) ? $status : 'publish');
             }
             if ($productData['manage_stock'] && empty($object->array_options["options_ecommerceng_wc_dont_update_stock_{$this->site->id}_{$conf->entity}"])) {
-				$productData['stock_quantity'] = $object->stock_reel;
-				$productData['in_stock'] = $object->stock_reel > 0;
+				$productData['stock_quantity'] = floor($object->stock_reel);
+				$productData['in_stock'] = $variationData['stock_quantity'] > 0;
 			}
 
             // Synch extrafields <=> metadatas

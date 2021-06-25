@@ -349,6 +349,11 @@ ECommerceOrdersSyncSetup                                            = Synchronis
 ECommerceWoocommerceOrderFirstDateForECommerceToDolibarr            = Date de reprise
 ECommerceWoocommerceOrderFirstDateForECommerceToDolibarrDescription = Les commandes dont la date de creation est entérieur seront ignorées
 
+ECommerceWoocommerceOrderMetaDataInProductLineToDescriptionForECommerceToDolibarr                   = Méta-données sur ligne de produit
+ECommerceWoocommerceOrderMetaDataInProductLineToDescriptionForECommerceToDolibarrDescription        = Ajoute les méta-données des produits des lignes de la commandes WooCommerce dans la description du produit dans la ligne de produit dans la commande Dolibarr<br>Les méta-données des lignes de produits des commandes WooCommerce doivent posséder les propriétées 'display_key' et 'display_value' pour que cette fonctionnalité fonctionne
+ECommerceWoocommerceOrderExcludeMetaDataInProductLineToDescriptionForECommerceToDolibarr            = Méta-données sur ligne de produit
+ECommerceWoocommerceOrderExcludeMetaDataInProductLineToDescriptionForECommerceToDolibarrDescription = Liste des clés des méta-données à ne pas inclure dans la description (séparés par des virgules)
+
 ############################################################################################
 # Web Hooks
 ############################################################################################

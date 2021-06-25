@@ -4123,6 +4123,7 @@ class eCommerceSynchro
 														$product->fetch($fk_product);
 														$description = $product->description;
 													}
+													dol_concatdesc($description, $item['additional_description']);
 													$product_type = $item['product_type'] != "simple" ? 1 : 0;
 
 													$array_options = array();
@@ -4864,6 +4865,7 @@ class eCommerceSynchro
 																	$product->fetch($fk_product);
 																	$description = $product->description;
 																}
+																dol_concatdesc($description, $item['additional_description']);
 
 																if ($price < 0 && empty($conf->global->ECOMMERCE_KEEP_NEGATIVE_PRICE_LINES_WHEN_CREATE_INVOICE)) {
 																	// Negative line, we create a discount line

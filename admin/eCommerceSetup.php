@@ -314,6 +314,8 @@ if ($_POST['site_form_detail_action'] == 'save')
 				'variation_product_is_parent_product' => $_POST['ecommerce_variation_product_is_parent_product'],
                 'customer_roles' => $ecommerceWoocommerceCustomerRoles,
 				'create_invoice_type' => $ecommerceCreateInvoiceType,
+				'order_metadata_product_lines_to_description_etod' => GETPOSTISSET('ecommerce_order_metadata_product_lines_to_description_etod') ? (GETPOST('ecommerce_order_metadata_product_lines_to_description_etod', 'int') > 0 ? 1 : 0) : 0,
+				'order_exclude_metadata_product_lines_to_description_etod' => GETPOST('ecommerce_order_exclude_metadata_product_lines_to_description_etod', 'alpha'),
             );
             if ($conf->commande->enabled || $conf->facture->enabled || $conf->supplier_invoice->enabled) {
                 $siteDb->parameters['order_actions'] = $ecommerceOrderActions;
@@ -935,6 +937,8 @@ if ($ecommerceId > 0) {
 		$ecommerceVariationProductIsParentProduct = isset($siteDb->parameters['variation_product_is_parent_product']) ? $siteDb->parameters['variation_product_is_parent_product'] : 0;
         $ecommerceWoocommerceCustomerRoles = isset($siteDb->parameters['customer_roles']) ? $siteDb->parameters['customer_roles'] : 'customer';
 		$ecommerceCreateInvoiceType = isset($siteDb->parameters['create_invoice_type']) ? $siteDb->parameters['create_invoice_type'] : Facture::TYPE_STANDARD;
+		$ecommerceOrderMetadataProductLinesToDescriptionEtod = isset($siteDb->parameters['order_metadata_product_lines_to_description_etod']) ? $siteDb->parameters['order_metadata_product_lines_to_description_etod'] : 0;
+		$ecommerceOrderExcludeMetadataProductLinesToDescriptionEtod = isset($siteDb->parameters['order_exclude_metadata_product_lines_to_description_etod']) ? $siteDb->parameters['order_exclude_metadata_product_lines_to_description_etod'] : '';
     }
 }
 

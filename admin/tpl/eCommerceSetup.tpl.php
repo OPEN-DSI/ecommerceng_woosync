@@ -808,6 +808,16 @@ if ($ecommerceOrderStatus)
 				</td>
 				<td><?php print $langs->trans('ECommerceWoocommerceOrderFirstDateForECommerceToDolibarrDescription') ?></td>
 			</tr>
+			<tr <?php print $bc[$var] ?>>
+				<td><span><?php print $langs->trans('ECommerceWoocommerceOrderMetaDataInProductLineToDescriptionForECommerceToDolibarr') ?></span></td>
+				<td><input type="checkbox" name="ecommerce_order_metadata_product_lines_to_description_etod" value="1" <?php print !empty($ecommerceOrderMetadataProductLinesToDescriptionEtod) ? ' checked' : '' ?>></td>
+				<td><?php print $langs->trans('ECommerceWoocommerceOrderMetaDataInProductLineToDescriptionForECommerceToDolibarrDescription') ?></td>
+			</tr>
+			<tr <?php print $bc[$var] ?>>
+				<td><span><?php print $langs->trans('ECommerceWoocommerceOrderExcludeMetaDataInProductLineToDescriptionForECommerceToDolibarr') ?></span></td>
+				<td><input type="text" name="ecommerce_order_exclude_metadata_product_lines_to_description_etod" value="<?php print dol_escape_js(dol_escape_htmltag($ecommerceOrderExcludeMetadataProductLinesToDescriptionEtod), 2) ?>"></td>
+				<td><?php print $langs->trans('ECommerceWoocommerceOrderExcludeMetaDataInProductLineToDescriptionForECommerceToDolibarrDescription') ?></td>
+			</tr>
 		</table>
 <?php
 	}
