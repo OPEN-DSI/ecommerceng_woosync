@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.76.0
+- Correction mineure compatibilité V13+ avec la note d'un produit lors de sa creation sur Dolibarr pendant d'une synchro
+
 ## 4.0.75.0
 - Fix sql request by removing ) by pierrejego
 

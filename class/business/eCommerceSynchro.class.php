@@ -3456,10 +3456,10 @@ class eCommerceSynchro
 							if (!isset($product_data['enachat']) && !empty($conf->global->ECOMMERCENG_PRODUCT_IN_PURCHASE_WHEN_CREATED)) $product->status_buy = 1;
 							$product->canvas = $product_data['canvas'];
 							$product->note_private = isset($product_data['note']) ? $product_data['note'] : "";
-							$product->note = $product->note_private;
 							if (!empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE)) {
 								$product->note_private = dol_concatdesc($product->note_private, $this->langs->trans('ECommerceCreateProductFromSiteNote', $this->eCommerceSite->name) . " :\n" . json_encode($product_data['remote_datas']));
 							}
+							$product->note = $product->note_private;
 
 							$product->error = '';
 							$product->errors = array();
