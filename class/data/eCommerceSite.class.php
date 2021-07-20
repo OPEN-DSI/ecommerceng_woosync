@@ -109,8 +109,10 @@ class eCommerceSite // extends CommonObject
 				$ids[] = $obj->remote_id;
 			}
 		}
-		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_product WHERE remote_id IN (" . implode(',', $ids) . ")";
-		$this->db->query($sql);
+		if (!empty($ids)) {
+			$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_product WHERE remote_id IN (" . implode(',', $ids) . ")";
+			$this->db->query($sql);
+		}
 	}
 
     /**

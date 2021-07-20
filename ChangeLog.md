@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.77.0
+- Fix requête sql qui supprimer les liens en double pour un même ID distant sur les produits
+
 ## 4.0.76.0
 - Correction mineure compatibilité V13+ avec la note d'un produit lors de sa creation sur Dolibarr pendant d'une synchro
 
