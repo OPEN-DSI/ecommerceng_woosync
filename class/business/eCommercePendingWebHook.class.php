@@ -165,12 +165,23 @@ class eCommercePendingWebHook
 		if (!($this->site_id > 0) || empty($this->delivery_id) || empty($this->webhook_id) || empty($this->webhook_topic) || empty($this->webhook_resource) ||
 			empty($this->webhook_event) || empty($this->webhook_data) || empty($this->webhook_signature) || empty($this->webhook_source)
 		) {
+			if (!($this->site_id > 0)) $this->errors[] = 'Bad site_id';
+			if (empty($this->delivery_id)) $this->errors[] = 'Bad delivery_id';
+			if (empty($this->webhook_id)) $this->errors[] = 'Bad webhook_id';
+			if (empty($this->webhook_topic)) $this->errors[] = 'Bad webhook_topic';
+			if (empty($this->webhook_resource)) $this->errors[] = 'Bad webhook_resource';
+			if (empty($this->webhook_event)) $this->errors[] = 'Bad webhook_event';
+			if (empty($this->webhook_data)) $this->errors[] = 'Bad webhook_data';
+			if (empty($this->webhook_signature)) $this->errors[] = 'Bad webhook_signature';
+			if (empty($this->webhook_source)) $this->errors[] = 'Bad webhook_source';
+
 			// Bad values
 			return -1;
 		}
 
 		$site = $this->getSite($this->site_id);
 		if (!is_object($site)) {
+			$this->errors[] = "Site {$this->site_id} not found.";
 			// Bad values
 			return -1;
 		}
@@ -481,8 +492,14 @@ class eCommercePendingWebHook
 
 		// Product
 		if ($webhook_resource == 'product') {
-			if ($webhook_event == 'created' || $webhook_event == 'updated') {
+			if ($webhook_event == 'created' || $webhook_event == 'updated' || $webhook_event == 'restored') {
 				$result = $synchro->synchronizeProductFromData($data);
+				if ($result == 0 && !empty($synchro->warnings)) {
+					$this->warnings = array_merge($synchro->warnings, $this->warnings);
+					return -2;
+				}
+			} elseif ($webhook_event == 'deleted') {
+				$result = $synchro->deleteProductLink($data->id);
 				if ($result == 0 && !empty($synchro->warnings)) {
 					$this->warnings = array_merge($synchro->warnings, $this->warnings);
 					return -2;

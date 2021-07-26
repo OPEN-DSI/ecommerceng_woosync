@@ -987,6 +987,31 @@ class eCommerceRemoteAccessWoocommerce
 			$date_on_sale_to = '';
 		}
 
+		// Manage the variations products removed
+		$variations = array();
+		if (!$product_variation_mode_all_to_one) {
+			$variations_list = array();
+			if (!empty($parent_remote_data->variations)) {
+				foreach ($parent_remote_data->variations as $v) {
+					$variations_list[] = $parent_id . '|' . $v;
+				}
+				$variations = array(
+					'parent_remote_id' => $parent_id,
+					'filter' => $parent_id . '|%',
+					'list' => $variations_list,
+				);
+			} elseif (!empty($remote_data->variations)) {
+				foreach ($remote_data->variations as $v) {
+					$variations_list[] = $remote_data->id . '|' . $v;
+				}
+				$variations = array(
+					'parent_remote_id' => $remote_data->id,
+					'filter' => $remote_data->id . '|%',
+					'list' => $variations_list,
+				);
+			}
+		}
+
 		$product = [
 			'create_date' => strtotime($remote_data->date_created),
 			'remote_id' => ($isVariation ? ($product_variation_mode_all_to_one ? $parent_id . '|' . implode('|', $parent_remote_data->variations) : $parent_id . '|' . $remote_data->id) : $remote_data->id),
@@ -1008,6 +1033,7 @@ class eCommerceRemoteAccessWoocommerce
 			// Stock
 			'stock_qty' => $remote_data->stock_quantity,
 			'is_in_stock' => $remote_data->in_stock,   // not used
+			'variations' => $variations,
 			'extrafields' => [
 				"ecommerceng_wc_regular_price_{$this->site->id}_{$conf->entity}" => $remote_data->regular_price,
 				"ecommerceng_wc_sale_price_{$this->site->id}_{$conf->entity}" => $remote_data->sale_price,

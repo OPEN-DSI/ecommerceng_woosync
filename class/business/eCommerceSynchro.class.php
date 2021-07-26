@@ -2824,6 +2824,68 @@ class eCommerceSynchro
 	}
 
 	/**
+	 * Delete product link
+	 *
+	 * @param   string   $remote_id 		Remote ID
+	 * @return  int                 	>0 if OK, <0 if KO
+	 */
+	public function deleteProductLink($remote_id)
+	{
+		dol_syslog(__METHOD__ . " remote_id=$remote_id", LOG_DEBUG);
+
+		$this->error = '';
+		$this->errors = array();
+		$error = 0;
+
+		if (empty($remote_id)) {
+			$this->langs->load('errors');
+			$this->errors[] = $this->langs->trans('ErrorBadParameters') . '; remote_id=' . $remote_id;
+			$error++;
+		}
+
+		if (!$error) {
+			$this->db->begin();
+
+			try {
+				// Check if product already synchronized
+				$this->initECommerceProduct();
+				$result = $this->eCommerceProduct->fetchByRemoteId($remote_id, $this->eCommerceSite->id);
+				if ($result < 0 && !empty($this->eCommerceProduct->error)) {
+					$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $remote_id, $this->eCommerceSite->id);
+					$this->errors[] = $this->eCommerceProduct->error;
+					$error++;
+				}
+
+				// Delete the link of the synchronization
+				if (!$error && $this->eCommerceProduct->id > 0) {
+					$result = $this->eCommerceProduct->delete($this->user);
+					if ($result < 0) {
+						$this->errors[] = $this->langs->trans('ECommerceErrorDeleteProductLink', $remote_id);
+						$this->errors = array_merge($this->errors, $this->eCommerceProduct->errors);
+						$error++;
+					}
+				}
+			} catch (Exception $e) {
+				$this->errors[] = $e->getMessage();
+				$error++;
+			}
+
+			// Commit / rollback actions
+			if ($error) {
+				$this->db->rollback();
+			} else {
+				$this->db->commit();
+			}
+		}
+
+		if ($error) {
+			return -1;
+		} else {
+			return 1;
+		}
+	}
+
+	/**
 	 * Check if order is too old (create date) in dolibarr from the remote order data
 	 *
 	 * @param   array   $raw_data 		Raw data to synchronize
@@ -3358,13 +3420,46 @@ class eCommerceSynchro
 					$this->errors[] = $this->langs->trans('ECommerceErrorProductRefMandatory');
 					$error++;
 				} else {
+					// Unlink product of remote product removed
+					if (!empty($product_data['variations'])) {
+						$variations = array();
+						foreach ($product_data['variations']['list'] as $v) {
+							$variations[] = $this->db->escape($v);
+						}
+
+						// Get all product to unlink (product variations removed)
+						$sql = "SELECT remote_id FROM " . MAIN_DB_PREFIX . "ecommerce_product" .
+							" WHERE fk_site = " . $this->eCommerceSite->id .
+							" AND (remote_id = '" . $this->db->escape($product_data['variations']['parent_remote_id']) . "'" .
+							"      OR (remote_id LIKE '" . $this->db->escape($product_data['variations']['filter']) . "'" .
+							"          AND remote_id NOT IN ('" . implode("','", $variations) . "')))";
+
+						$resql = $this->db->query($sql);
+						if (!$resql) {
+							dol_syslog(__METHOD__ . ' SQL: ' . $sql . '; Errors: ' . $this->db->lasterror(), LOG_ERR);
+							$errors[] = $this->langs->trans('ECommerceErrorWhenGetProductToUnlink', $this->eCommerceSite->name, json_encode($product_data['variations']));
+							$errors[] = $this->db->lasterror();
+							$error++;
+						} else {
+							while($obj = $this->db->fetch_object($resql)) {
+								$result = $this->unlinkProduct($this->eCommerceSite->id, 0, $obj->remote_id);
+								if ($result < 0) {
+									$error++;
+									break;
+								}
+							}
+						}
+					}
+
 					// Check if product already synchronized
-					$this->initECommerceProduct();
-					$result = $this->eCommerceProduct->fetchByRemoteId($product_data['remote_id'], $this->eCommerceSite->id);
-					if ($result < 0 && !empty($this->eCommerceProduct->error)) {
-						$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $product_data['remote_id'], $this->eCommerceSite->id);
-						$this->errors[] = $this->eCommerceProduct->error;
-						$error++;
+					if (!$error) {
+						$this->initECommerceProduct();
+						$result = $this->eCommerceProduct->fetchByRemoteId($product_data['remote_id'], $this->eCommerceSite->id);
+						if ($result < 0 && !empty($this->eCommerceProduct->error)) {
+							$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $product_data['remote_id'], $this->eCommerceSite->id);
+							$this->errors[] = $this->eCommerceProduct->error;
+							$error++;
+						}
 					}
 
 					// Fetch product
@@ -3731,6 +3826,80 @@ class eCommerceSynchro
 			return -1;
 		} else {
 			return $product->id > 0 && empty($bypass) ? $product->id : 0;
+		}
+	}
+
+	/**
+	 *  Unlink product
+	 *
+	 * @param	int		$site_id		Site ID
+	 * @param	int		$product_id		Product ID
+	 * @param	string	$remote_id		Remote ID
+	 * @return	int						<0 if KO, >0 if OK
+	 */
+	public function unlinkProduct($site_id, $product_id = 0, $remote_id = '')
+	{
+		dol_syslog(__METHOD__ . " site_id=$site_id, product_id=$product_id, remote_id=$remote_id", LOG_DEBUG);
+		global $user;
+
+		$error = 0;
+		$this->db->begin();
+
+		// Delete link to ecommerce
+		$eCommerceProduct = new eCommerceProduct($this->db);
+		if ($product_id > 0 && $eCommerceProduct->fetchByProductId($product_id, $site_id) > 0) {
+			if ($eCommerceProduct->delete($user) < 0) {
+				$errors[] = $this->langs->trans('ECommerceErrorWhenUnlinkProductByProductId', $this->eCommerceSite->name, $product_id);
+				$error++;
+			}
+		} elseif ($remote_id > 0 && $eCommerceProduct->fetchByRemoteId($remote_id, $site_id) > 0) {
+			if ($eCommerceProduct->delete($user) < 0) {
+				$errors[] = $this->langs->trans('ECommerceErrorWhenUnlinkProductByRemoteId', $this->eCommerceSite->name, $remote_id);
+				$error++;
+			}
+		} else {
+			$errors[] = $this->langs->trans('ECommerceErrorWhenUnlinkProduct', $this->eCommerceSite->name, $product_id, $remote_id);
+			$error++;
+		}
+
+		// Delete all categories of the ecommerce
+		if (!$error) {
+			require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
+			$eCommerceSite = new eCommerceSite($this->db);
+			$product = new Product($this->db);
+			if ($eCommerceSite->fetch($site_id) > 0 && $product->fetch($eCommerceProduct->fk_product) > 0) {
+				require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+				$cat = new Categorie($this->db);
+				$cat_root = $eCommerceSite->fk_cat_product;
+				$all_cat_full_arbo = $cat->get_full_arbo('product');
+				$cats_full_arbo = array();
+				foreach ($all_cat_full_arbo as $category) {
+					$cats_full_arbo[$category['id']] = $category['fullpath'];
+				}
+				$categories = $cat->containing($product->id, 'product', 'id');
+				foreach ($categories as $cat_id) {
+					if (isset($cats_full_arbo[$cat_id]) &&
+						(preg_match("/^{$cat_root}$/", $cats_full_arbo[$cat_id]) || preg_match("/^{$cat_root}_/", $cats_full_arbo[$cat_id]) ||
+							preg_match("/_{$cat_root}_/", $cats_full_arbo[$cat_id]) || preg_match("/_{$cat_root}$/", $cats_full_arbo[$cat_id])
+						)
+					) {
+						if ($cat->fetch($cat_id) > 0) {
+							if ($cat->del_type($product, 'product') < 0) {
+								$errors[] = $this->langs->trans('ECommerceErrorWhenUnlinkProductCategory', $this->eCommerceSite->name, $product->id, $cat_id);
+								$error++;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if ($error) {
+			$this->db->rollback();
+			return -1;
+		} else {
+			$this->db->commit();
+			return 1;
 		}
 	}
 

@@ -29,6 +29,7 @@ $res=0;
 if (! $res && file_exists("../main.inc.php")) $res=@include '../main.inc.php';			// to work if your module directory is into a subdir of root htdocs directory
 if (! $res && file_exists("../../main.inc.php")) $res=@include '../../main.inc.php';		// to work if your module directory is into a subdir of root htdocs directory
 if (! $res) die("Include of main fails");
+require_once DOL_DOCUMENT_ROOT . '/core/lib/functions.lib.php';
 dol_include_once("/ecommerceng/class/business/eCommercePendingWebHook.class.php");
 
 /*dol_syslog('_SERVER : ' . json_encode($_SERVER), LOG_ERR);
@@ -45,6 +46,7 @@ $langs->load("ecommerce@ecommerceng");
 $site_id = GETPOST('ecommerce_id', 'int');
 if (!($site_id > 0)) {
 	// Bad values
+	dol_syslog("webhooks.php - Error bad values: ecommerce_id", LOG_ERR);
 	http_response_code(400);
 	die();
 }
@@ -71,10 +73,12 @@ $webhook->webhook_data = file_get_contents("php://input");
 $result = $webhook->check();
 if ($result == -1) {
 	// Bad values
+	dol_syslog("webhooks.php - Error bad values: " . $webhook->errorsToString(), LOG_ERR);
 	http_response_code(400);
 	die();
 } elseif ($result == -2) {
 	// Unauthorized
+	dol_syslog("webhooks.php - Error check signature failed", LOG_ERR);
 	http_response_code(401);
 	die();
 }
@@ -82,6 +86,7 @@ if ($result == -1) {
 $result = $webhook->create();
 if ($result < 0) {
 	// Error
+	dol_syslog("webhooks.php - Error create webhook: " . $webhook->errorsToString(), LOG_ERR);
 	http_response_code(500);
 	die();
 }
