@@ -496,8 +496,16 @@ class InterfaceECommerceng
             $action == 'ORDER_VALIDATE' || $action == 'ORDER_UNVALIDATE' || $action == 'ORDER_REOPEN' ||
             $action == 'ORDER_CANCEL' || $action == 'ORDER_CLASSIFY_UNBILLED')
         {
-        	if ($object->element != 'commande') {
-				$error_msg = "Trigger : Object element (" . $object->element . ") is not a commande for the action " . $action;
+        	$obj = $object;
+			if ($obj->element == 'shipping') {
+				if ($object->origin == 'commande') {
+					require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
+					$obj = new Commande($this->db);
+					$obj->fetch($object->origin_id);
+				}
+			}
+			if ($obj->element != 'commande') {
+				$error_msg = "Trigger : Object element (" . $obj->element . ") is not a commande for the action " . $action;
 				dol_syslog($error_msg, LOG_ERR);
 				$this->errors[] = $error_msg;
 				return -1;
@@ -506,11 +514,11 @@ class InterfaceECommerceng
             $this->db->begin();
 
             switch ($action) {
-                case 'ORDER_VALIDATE': $object->statut = Commande::STATUS_VALIDATED; break;
-                case 'ORDER_UNVALIDATE': $object->statut = Commande::STATUS_DRAFT; break;
-                case 'ORDER_REOPEN': $object->statut = Commande::STATUS_DRAFT; break;
-                case 'ORDER_CLOSE': $object->statut = Commande::STATUS_CLOSED; break;
-                case 'ORDER_CANCEL': $object->statut = Commande::STATUS_CANCELED; break;
+                case 'ORDER_VALIDATE': $obj->statut = Commande::STATUS_VALIDATED; break;
+                case 'ORDER_UNVALIDATE': $obj->statut = Commande::STATUS_DRAFT; break;
+                case 'ORDER_REOPEN': $obj->statut = Commande::STATUS_DRAFT; break;
+                case 'ORDER_CLOSE': $obj->statut = Commande::STATUS_CLOSED; break;
+                case 'ORDER_CANCEL': $obj->statut = Commande::STATUS_CANCELED; break;
             }
 
             $eCommerceSite = new eCommerceSite($this->db);
@@ -518,7 +526,7 @@ class InterfaceECommerceng
 
             foreach($sites as $site)
             {
-                if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id)
+                if ($obj->context['fromsyncofecommerceid'] && $obj->context['fromsyncofecommerceid'] == $site->id)
                 {
                     dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
                     continue;
@@ -532,7 +540,7 @@ class InterfaceECommerceng
                 if (! $error)
                 {
     				$eCommerceCommande = new eCommerceCommande($this->db);
-    				$eCommerceCommande->fetchByCommandeId($object->id, $site->id);
+    				$eCommerceCommande->fetchByCommandeId($obj->id, $site->id);
 
     				if ($eCommerceCommande->remote_id > 0)
     				{
@@ -547,13 +555,11 @@ class InterfaceECommerceng
 
                         if (! $error)
                         {
-        				    $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteCommande($eCommerceCommande->remote_id, $object);
+        				    $result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteCommande($eCommerceCommande->remote_id, $obj);
                             $now = dol_now();
         				    if (! $result)
         				    {
         				        $error++;
-        				        var_dump($eCommerceSynchro->eCommerceRemoteAccess->error);
-        				        var_dump($eCommerceSynchro->eCommerceRemoteAccess->errors);exit;
         				        $this->error=$eCommerceSynchro->eCommerceRemoteAccess->error;
         				        $this->errors=$eCommerceSynchro->eCommerceRemoteAccess->errors;
         				    }
@@ -564,7 +570,7 @@ class InterfaceECommerceng
                             $eCommerceCommande->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
                             if ($eCommerceCommande->update($user) < 0) {
                                 $error++;
-                                $error_msg = $langs->trans('ECommerceUpdateRemoteOrderLink', $object->id, $site->name, $eCommerceCommande->error);
+                                $error_msg = $langs->trans('ECommerceUpdateRemoteOrderLink', $obj->id, $site->name, $eCommerceCommande->error);
                                 $this->errors[] = $error_msg;
                                 $this->errors = array_merge($this->errors, $eCommerceCommande->errors);
                                 dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
@@ -573,7 +579,7 @@ class InterfaceECommerceng
     				}
     				else
     				{
-   				        dol_syslog("Order with id ".$object->id." is not linked to an ecommerce record so we don't sync it.");
+   				        dol_syslog("Order with id ".$obj->id." is not linked to an ecommerce record so we don't sync it.");
     				}
                 }
             }

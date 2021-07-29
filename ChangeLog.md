@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.79.0
+- Correction trigger si une commande est cloturé depuis une expédition 
+
 ## 4.0.78.0
 - Ajout la gestion des actions de restauration et de suppression de produit dans les webhooks
 - Delie les produits pour les produits distants standard transformés en variants ou les variants qui auraient été supprimés
