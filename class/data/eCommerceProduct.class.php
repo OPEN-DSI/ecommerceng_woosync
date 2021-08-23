@@ -410,7 +410,7 @@ class eCommerceProduct // extends CommonObject
                 return 1;
             }
             $this->db->free($resql);
-            return -1;
+            return 0;
         }
         else
         {

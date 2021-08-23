@@ -3489,6 +3489,39 @@ class eCommerceSynchro
 								$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByProductId', $product->id, $this->eCommerceSite->id);
 								$this->errors[] = $this->eCommerceProduct->error;
 								$error++;
+							} elseif ($result > 0 && strpos($product_data['remote_id'], '|') === false && preg_match('/^' . preg_quote($product_data['remote_id'] . '|') . '/', $this->eCommerceProduct->remote_id)) {
+								// Variation who is transformed to simple
+
+								// Get all product to unlink (product variations)
+								$sql = "SELECT remote_id FROM " . MAIN_DB_PREFIX . "ecommerce_product" .
+									" WHERE fk_site = " . $this->eCommerceSite->id .
+									" AND remote_id LIKE '" . $this->db->escape($product_data['remote_id'] . '|%') . "'";
+
+								$resql = $this->db->query($sql);
+								if (!$resql) {
+									dol_syslog(__METHOD__ . ' SQL: ' . $sql . '; Errors: ' . $this->db->lasterror(), LOG_ERR);
+									$errors[] = $this->langs->trans('ECommerceErrorWhenGetProductToUnlink', $this->eCommerceSite->name, $product_data['remote_id'] . '|%');
+									$errors[] = $this->db->lasterror();
+									$error++;
+								} else {
+									while($obj = $this->db->fetch_object($resql)) {
+										$result = $this->unlinkProduct($this->eCommerceSite->id, 0, $obj->remote_id);
+										if ($result < 0) {
+											$error++;
+											break;
+										}
+									}
+								}
+
+								$this->initECommerceProduct();
+							} elseif ($result > 0 && strpos($this->eCommerceProduct->remote_id, '|') === false && preg_match('/^' . preg_quote($this->eCommerceProduct->remote_id . '|') . '/', $product_data['remote_id'])) {
+								// Simple who is transformed to variable
+								$result = $this->unlinkProduct($this->eCommerceSite->id, 0, $this->eCommerceProduct->remote_id);
+								if ($result < 0) {
+									$error++;
+								}
+
+								$this->initECommerceProduct();
 							} elseif ($result > 0 && $this->eCommerceProduct->remote_id !== $product_data['remote_id']) {
 								$this->errors[] = $this->langs->trans('ECommerceErrorProductAlreadyLinkedWithRemoteProduct', $product_ref, $this->eCommerceProduct->remote_id);
 								$error++;

@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.80.0
+- Correction de la gestion des liens des produits dans le cas où un produit simple deviens un produit variable et inversement
+
 ## 4.0.79.0
 - Correction trigger si une commande est cloturé depuis une expédition 
 

@@ -1012,10 +1012,25 @@ class eCommerceRemoteAccessWoocommerce
 			}
 		}
 
+		$remote_id = $remote_data->id;
+		$remote_parent_id = 0;
+		if ($isVariation) {
+			if ($product_variation_mode_all_to_one) {
+				$remote_id = $parent_id . '|' . implode('|', $parent_remote_data->variations);
+				$remote_parent_id = $parent_id;
+			} else {
+				$remote_id = $parent_id . '|' . $remote_data->id;
+				$remote_parent_id = $parent_id;
+			}
+		} elseif (!empty($remote_data->variations) && $product_variation_mode_all_to_one) {
+			$remote_id = $remote_data->id . '|' . implode('|', $remote_data->variations);
+			$remote_parent_id = $remote_data->id;
+		}
+
 		$product = [
 			'create_date' => strtotime($remote_data->date_created),
-			'remote_id' => ($isVariation ? ($product_variation_mode_all_to_one ? $parent_id . '|' . implode('|', $parent_remote_data->variations) : $parent_id . '|' . $remote_data->id) : $remote_data->id),
-			'remote_parent_id' => ($isVariation ? $parent_id : 0),
+			'remote_id' => $remote_id,
+			'remote_parent_id' => $remote_parent_id,
 			'last_update' => $last_update,
 			'fk_product_type' => ($remote_data->virtual ? 1 : 0), // 0 (product) or 1 (service)
 			'status' => $remote_data->status,
