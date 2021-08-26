@@ -151,7 +151,7 @@ class eCommerceRemoteAccessWoocommerce
 	 *
 	 * @var bool
 	 */
-	private static $disable_put_post_to_api = true;
+	private static $disable_put_post_to_api = false;
 
     /**
      * Constructor

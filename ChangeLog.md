@@ -12,7 +12,7 @@
 - Correction d'accumulation de warnings lors du traitement des commandes
 - Prend le premier tiers qui n'est pas le tiers anonyme si il trouve plus de 1 tiers lors de la recherche du tiers de la commande grace a son email
 - Correction suppression du message d'erreur lorsque le webhooks est passé au statut traité
-- Correction des fichier de langues anglaises
+- Correction des fichiers de langues anglaises
 
 ## 4.0.80.0
 - Correction de la gestion des liens des produits dans le cas où un produit simple deviens un produit variable et inversement
