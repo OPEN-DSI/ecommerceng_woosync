@@ -146,6 +146,13 @@ class eCommerceRemoteAccessWoocommerce
 	 */
 	private static $taxes_rates_by_class_cached;
 
+	/**
+	 * Disabled all call af the api for method PUT and POST for testing.
+	 *
+	 * @var bool
+	 */
+	private static $disable_put_post_to_api = true;
+
     /**
      * Constructor
      * @param   DoliDB          $db     Database handler
@@ -937,6 +944,14 @@ class eCommerceRemoteAccessWoocommerce
 			}
 		}
 
+		// if the parent has no variations (ex: webhook of a variation transformed in a simple product before the webhook is precessed)
+		if ($isVariation && empty($parent_remote_data->variations)) {
+			$isVariation = false;
+			$parent_id = 0;
+			$remote_data = $parent_remote_data;
+			$parent_remote_data = null;
+		}
+
 		$canvas = '';
 		$productSynchPrice = isset($this->site->parameters['product_synch_price']) ? $this->site->parameters['product_synch_price'] : 'regular';
 		$productImageSynchDirection = isset($this->site->parameters['product_synch_direction']['image']) ? $this->site->parameters['product_synch_direction']['image'] : '';
@@ -1114,8 +1129,19 @@ class eCommerceRemoteAccessWoocommerce
 
 		// Synchronize metadata to extra fields
 		if (!empty($this->site->parameters['ef_crp']['product'])) {
-			$metas_data = is_array($remote_data->meta_data) ? $remote_data->meta_data : array();
-			if ($isVariation && is_array($parent_remote_data->meta_data)) $metas_data = array_merge($parent_remote_data->meta_data, $metas_data);
+			$metas_data = array();
+			if (is_array($remote_data->meta_data)) {
+				foreach ($remote_data->meta_data as $meta) {
+					$metas_data[$meta->key] = $meta;
+				}
+			}
+			if ($isVariation && is_array($parent_remote_data->meta_data)) {
+				foreach ($parent_remote_data->meta_data as $meta) {
+					if (!isset($metas_data[$meta->key])) {
+						$metas_data[$meta->key] = $meta;
+					}
+				}
+			}
 
 			if (!empty($metas_data)) {
 				$correspondences = array();
@@ -2168,7 +2194,8 @@ class eCommerceRemoteAccessWoocommerce
 
 			foreach ($remote_product_variation_ids as $remote_product_variation_id) {
 				try {
-					$result = $this->client->put("products/$remote_product_id/variations/$remote_product_variation_id", $variationData);
+					if (!self::$disable_put_post_to_api) $result = $this->client->put("products/$remote_product_id/variations/$remote_product_variation_id", $variationData);
+					dol_syslog(__METHOD__ . " - Send PUT to API 'products/$remote_product_id/variations/$remote_product_variation_id' : Data: " . json_encode($variationData), LOG_NOTICE);
 				} catch (HttpClientException $fault) {
 					$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
 					dol_syslog(__METHOD__ .
@@ -2339,7 +2366,7 @@ class eCommerceRemoteAccessWoocommerce
             }
             if ($productData['manage_stock'] && empty($object->array_options["options_ecommerceng_wc_dont_update_stock_{$this->site->id}_{$conf->entity}"])) {
 				$productData['stock_quantity'] = floor($object->stock_reel);
-				$productData['in_stock'] = $variationData['stock_quantity'] > 0;
+				$productData['in_stock'] = $productData['stock_quantity'] > 0;
 			}
 
             // Synch extrafields <=> metadatas
@@ -2357,7 +2384,8 @@ class eCommerceRemoteAccessWoocommerce
             }
 
             try {
-                $result = $this->client->put("products/$remote_product_id", $productData);
+				if (!self::$disable_put_post_to_api) $result = $this->client->put("products/$remote_product_id", $productData);
+				dol_syslog(__METHOD__ . " - Send PUT to API 'products/$remote_product_id' : Data: " . json_encode($productData), LOG_NOTICE);
             } catch (HttpClientException $fault) {
                 $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProduct', $remote_product_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                 dol_syslog(__METHOD__ .
@@ -2395,7 +2423,8 @@ class eCommerceRemoteAccessWoocommerce
 								return false;
 							}
 							try {
-								$res = $this->client->put("products/{$result2->parent_id}/variations/$product_id", $variationData);
+								if (!self::$disable_put_post_to_api) $res = $this->client->put("products/{$result2->parent_id}/variations/$product_id", $variationData);
+								dol_syslog(__METHOD__ . " - Send PUT to API 'products/{$result2->parent_id}/variations/$product_id' : Data: " . json_encode($variationData), LOG_NOTICE);
 							} catch (HttpClientException $fault) {
 								$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteTranslatedProductVariation', $result2->parent_id . '|' . $product_id, $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
 								dol_syslog(__METHOD__ .
@@ -2423,7 +2452,8 @@ class eCommerceRemoteAccessWoocommerce
                     if (isset($productData['short_description'])) unset($productData['short_description']);
                     foreach ((array)$result->translations as $product_id) {
                         try {
-                            $res = $this->client->put("products/$product_id", $productData);
+							if (!self::$disable_put_post_to_api) $res = $this->client->put("products/$product_id", $productData);
+							dol_syslog(__METHOD__ . " - Send PUT to API 'products/$product_id' : Data: " . json_encode($productData), LOG_NOTICE);
                         } catch (HttpClientException $fault) {
                             $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteTranslatedProduct', $product_id, $remote_product_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                             dol_syslog(__METHOD__ .
@@ -2459,7 +2489,7 @@ class eCommerceRemoteAccessWoocommerce
         global $conf, $langs, $user;
 
 		if (empty($product->array_options["options_ecommerceng_wc_manage_stock_{$this->site->id}_{$conf->entity}"]) || !empty($product->array_options["options_ecommerceng_wc_dont_update_stock_{$this->site->id}_{$conf->entity}"])) {
-			dol_syslog(__METHOD__ . ": Ignore update stock of the remote product ID $remote_id for MouvementStock ID {$object->id}, new qty: {$object->qty_after} for site ID {$this->site->id}", LOG_INFO);
+			dol_syslog(__METHOD__ . " - Ignore update stock of the remote product ID $remote_id for MouvementStock ID {$object->id}, new qty: {$object->qty_after} for site ID {$this->site->id}", LOG_INFO);
 			return true;
 		}
 
@@ -2499,7 +2529,8 @@ class eCommerceRemoteAccessWoocommerce
 
 			foreach ($remote_product_variation_ids as $remote_product_variation_id) {
 				try {
-					$result = $this->client->put("products/$remote_product_id/variations/$remote_product_variation_id", $variationData);
+					if (!self::$disable_put_post_to_api) $result = $this->client->put("products/$remote_product_id/variations/$remote_product_variation_id", $variationData);
+					dol_syslog(__METHOD__ . " - Send PUT to API 'products/$remote_product_id/variations/$remote_product_variation_id' : Data: " . json_encode($variationData), LOG_NOTICE);
 				} catch (HttpClientException $fault) {
 					$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProductVariation', $stocks_label, $remote_product_variation_id, $remote_product_id, $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage();
 					dol_syslog(__METHOD__ .
@@ -2519,7 +2550,8 @@ class eCommerceRemoteAccessWoocommerce
             ];
 
             try {
-                $result = $this->client->put("products/$remote_product_id", $productData);
+				if (!self::$disable_put_post_to_api) $result = $this->client->put("products/$remote_product_id", $productData);
+				dol_syslog(__METHOD__ . " - Send PUT to API 'products/$remote_product_id' : Data: " . json_encode($productData), LOG_NOTICE);
             } catch (HttpClientException $fault) {
                 $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProduct', $stocks_label, $remote_product_id, $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage();
                 dol_syslog(__METHOD__ .
@@ -2554,7 +2586,8 @@ class eCommerceRemoteAccessWoocommerce
 								return false;
 							}
 							try {
-								$res = $this->client->put("products/{$result2->parent_id}/variations/$product_id", $variationData);
+								if (!self::$disable_put_post_to_api) $res = $this->client->put("products/{$result2->parent_id}/variations/$product_id", $variationData);
+								dol_syslog(__METHOD__ . " - Send PUT to API 'products/{$result2->parent_id}/variations/$product_id' : Data: " . json_encode($variationData), LOG_NOTICE);
 							} catch (HttpClientException $fault) {
 								$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockTranslatedProductVariation', $stocks_label, $result2->parent_id . '|' . $product_id, $remote_product_variation_id, $remote_product_id) . ': ' . $this->site->name . ' - ' . $fault->getCode() . ': ' . $fault->getMessage();
 								dol_syslog(__METHOD__ .
@@ -2579,7 +2612,8 @@ class eCommerceRemoteAccessWoocommerce
 				if (isset($result->translations)) {
 					foreach ((array)$result->translations as $product_id) {
 						try {
-							$res = $this->client->put("products/$product_id", $productData);
+							if (!self::$disable_put_post_to_api) $res = $this->client->put("products/$product_id", $productData);
+							dol_syslog(__METHOD__ . " - Send PUT to API 'products/$product_id' : Data: " . json_encode($productData), LOG_NOTICE);
 						} catch (HttpClientException $fault) {
 							$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockTranslatedProduct', $stocks_label, $product_id, $remote_id, $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage();
 							dol_syslog(__METHOD__ .
@@ -2701,7 +2735,7 @@ class eCommerceRemoteAccessWoocommerce
         if (isset($contactData)) {
             if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsCustomer) == 1) {
                 try {
-                    $result = $this->client->put("customers/$idsCustomer[1]", $contactData);
+//                    $result = $this->client->put("customers/$idsCustomer[1]", $contactData);
                 } catch (HttpClientException $fault) {
                     $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteSocpeople', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                     dol_syslog(__METHOD__ .
@@ -2783,7 +2817,7 @@ class eCommerceRemoteAccessWoocommerce
             }
 
             try {
-                $result = $this->client->put("orders/$remote_id", $orderData);
+//                $result = $this->client->put("orders/$remote_id", $orderData);
             } catch (HttpClientException $fault) {
                 $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                 dol_syslog(__METHOD__ .
@@ -3146,8 +3180,9 @@ class eCommerceRemoteAccessWoocommerce
             }
 
             try {
-                $res = $this->client->post("products", $productData);
+                if (!self::$disable_put_post_to_api) $res = $this->client->post("products", $productData);
                 $remoteId = $res->id;
+				dol_syslog(__METHOD__ . " - Send POST to API 'products' : Data: " . json_encode($productData) . "; Remote ID: $remoteId", LOG_NOTICE);
             } catch (HttpClientException $fault) {
                 $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                 dol_syslog(__METHOD__ .
@@ -3236,7 +3271,8 @@ class eCommerceRemoteAccessWoocommerce
                 $error = 0;
 
                 try {
-                    $results = $this->client->post("products/categories/batch", ['create' => $request]);
+					if (!self::$disable_put_post_to_api) $results = $this->client->post("products/categories/batch", ['create' => $request]);
+					dol_syslog(__METHOD__ . " - Send POST to API 'products/categories/batch' : Data: " . json_encode(['create' => $request]), LOG_NOTICE);
                 } catch (HttpClientException $fault) {
                     $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteBatchCategories', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                     dol_syslog(__METHOD__ .
@@ -3669,7 +3705,8 @@ class eCommerceRemoteAccessWoocommerce
             $error = 0;
 
             try {
-                $results = $this->client->post("products/batch", $batch_datas);
+				if (!self::$disable_put_post_to_api) $results = $this->client->post("products/batch", $batch_datas);
+				dol_syslog(__METHOD__ . " - Send POST to API 'products/batch' : Data: " . json_encode($batch_datas), LOG_NOTICE);
             } catch (HttpClientException $fault) {
                 $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteBatchProducts', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                 dol_syslog(__METHOD__ .
@@ -3717,7 +3754,8 @@ class eCommerceRemoteAccessWoocommerce
                 $error = 0;
 
                 try {
-                    $results = $this->client->post("products/$remote_product_id/variations/batch", $batch_datas);
+					if (!self::$disable_put_post_to_api) $results = $this->client->post("products/$remote_product_id/variations/batch", $batch_datas);
+					dol_syslog(__METHOD__ . " - Send POST to API 'products/$remote_product_id/variations/batch' : Data: " . json_encode($batch_datas), LOG_NOTICE);
                 } catch (HttpClientException $fault) {
                     $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteBatchProducts', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                     dol_syslog(__METHOD__ .
@@ -3806,7 +3844,7 @@ class eCommerceRemoteAccessWoocommerce
             ]
         ];
         try {
-            $result = $this->client->put("orders/$order_remote_id", $commandeData);
+//            $result = $this->client->put("orders/$order_remote_id", $commandeData);
         } catch (HttpClientException $fault) {
             $this->errors[] = $langs->trans('ECommerceWoocommerceSendFileForCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
             dol_syslog(__METHOD__ .

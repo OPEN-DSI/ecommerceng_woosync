@@ -264,21 +264,21 @@ if ($resql) {
 	$param = '&viewstatut=' . urlencode($viewstatut);
 	if (!empty($contextpage) && $contextpage != $_SERVER["PHP_SELF"]) $param .= '&contextpage=' . urlencode($contextpage);
 	if ($limit > 0 && $limit != $conf->liste_limit) $param .= '&limit=' . urlencode($limit);
-	if ($search_technical_id) $param .= '&$search_technical_id=' . urlencode($search_technical_id);
-	if ($search_site > 0) $param .= '&$search_site=' . urlencode($search_site);
-	if ($search_delivery_id) $param .= '&$search_delivery_id=' . urlencode($search_delivery_id);
-	if ($search_webhook_id) $param .= '&$search_webhook_id=' . urlencode($search_webhook_id);
-	if ($search_webhook_topic) $param .= '&$search_webhook_topic=' . urlencode($search_webhook_topic);
-	if ($search_webhook_resource) $param .= '&$search_webhook_resource=' . urlencode($search_webhook_resource);
-	if ($search_webhook_event) $param .= '&$search_webhook_event=' . urlencode($search_webhook_event);
-	if ($search_webhook_signature) $param .= '&$search_webhook_signature=' . urlencode($search_webhook_signature);
-	if ($search_webhook_source) $param .= '&$search_webhook_source=' . urlencode($search_webhook_source);
-	if ($search_webhook_data) $param .= '&$search_webhook_data=' . urlencode($search_webhook_data);
-	if ($search_error_msg) $param .= '&$search_error_msg=' . urlencode($search_error_msg);
-	if ($search_datep_start) $param .= '&$search_datep_start=' . urlencode($search_datep_start);
-	if ($search_datep_end) $param .= '&$search_datep_end=' . urlencode($search_datep_end);
-	if ($search_datec_start) $param .= '&$search_datec_start=' . urlencode($search_datec_start);
-	if ($search_datec_end) $param .= '&$search_datec_end=' . urlencode($search_datec_end);
+	if ($search_technical_id) $param .= '&search_technical_id=' . urlencode($search_technical_id);
+	if ($search_site > 0) $param .= '&search_site=' . urlencode($search_site);
+	if ($search_delivery_id) $param .= '&search_delivery_id=' . urlencode($search_delivery_id);
+	if ($search_webhook_id) $param .= '&search_webhook_id=' . urlencode($search_webhook_id);
+	if ($search_webhook_topic) $param .= '&search_webhook_topic=' . urlencode($search_webhook_topic);
+	if ($search_webhook_resource) $param .= '&search_webhook_resource=' . urlencode($search_webhook_resource);
+	if ($search_webhook_event) $param .= '&search_webhook_event=' . urlencode($search_webhook_event);
+	if ($search_webhook_signature) $param .= '&search_webhook_signature=' . urlencode($search_webhook_signature);
+	if ($search_webhook_source) $param .= '&search_webhook_source=' . urlencode($search_webhook_source);
+	if ($search_webhook_data) $param .= '&search_webhook_data=' . urlencode($search_webhook_data);
+	if ($search_error_msg) $param .= '&search_error_msg=' . urlencode($search_error_msg);
+	if ($search_datep_start) $param .= '&search_datep_start=' . urlencode($search_datep_start);
+	if ($search_datep_end) $param .= '&search_datep_end=' . urlencode($search_datep_end);
+	if ($search_datec_start) $param .= '&search_datec_start=' . urlencode($search_datec_start);
+	if ($search_datec_end) $param .= '&search_datec_end=' . urlencode($search_datec_end);
 	if ($optioncss != '') $param .= '&optioncss=' . urlencode($optioncss);
 
 	// List of mass actions available
@@ -547,8 +547,10 @@ if ($resql) {
 
 		// Error message
 		if (!empty($arrayfields['epw.error_msg']['checked'])) {
-			print '<td class="nowrap tdoverflowmax200">';
-			print $form->textwithtooltip(dol_trunc($obj->error_msg, 25), $obj->error_msg, 3, 1, '', '', 2, '', '', 'tterror' . $obj->rowid);
+			print '<td>';
+//			print '<td class="nowrap tdoverflowmax200">';
+			print $obj->error_msg;
+//			print $form->textwithtooltip(dol_trunc($obj->error_msg, 25), $obj->error_msg, 3, 1, '', '', 2, '', '', 'tterror' . $obj->rowid);
 			print '</td>';
 			if (!$i) $totalarray['nbfield']++;
 		}

@@ -2800,18 +2800,54 @@ class eCommerceSynchro
 	 */
 	public function synchronizeProductFromData($raw_data)
 	{
+		global $conf;
 		dol_syslog(__METHOD__ . ' raw_data=' . json_encode($raw_data), LOG_DEBUG);
 
 		$this->error = '';
 		$this->errors = array();
 
 		try {
-			$order_data = $this->eCommerceRemoteAccess->convertProductDataIntoProcessedData($raw_data);
-			if ($order_data === false) {
+			$product_data = $this->eCommerceRemoteAccess->convertProductDataIntoProcessedData($raw_data);
+			if ($product_data === false) {
 				$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenConvertProductData', $raw_data->id)), $this->errors);
 				$this->errors = array_merge($this->errors, $this->eCommerceRemoteAccess->errors);
 			} else {
-				$result = $this->synchronizeProduct($order_data);
+				$product_ref = dol_string_nospecial(trim($product_data['ref']));
+				// if the ref not defined in the data provided
+				if (empty($product_ref) && (empty($conf->global->PRODUCT_CODEPRODUCT_ADDON) || $conf->global->PRODUCT_CODEPRODUCT_ADDON == 'mod_codeproduct_leopard')) {
+					$tmp = explode('|', $product_data['remote_id']);
+					if (count($tmp) > 2) {
+						$remote_id_to_synchronize = array($product_data['remote_parent_id']);
+					} else {
+						$remote_id_to_synchronize = array($product_data['remote_id']);
+					}
+
+					// Check if product already synchronized
+					$this->initECommerceProduct();
+					$result = $this->eCommerceProduct->fetchByRemoteId($product_data['remote_id'], $this->eCommerceSite->id);
+					if ($result < 0 && !empty($this->eCommerceProduct->error)) {
+						$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $product_data['remote_id'], $this->eCommerceSite->id);
+						$this->errors[] = $this->eCommerceProduct->error;
+						return -1;
+					}
+
+					// Need to synchronize ?
+					$bypass = $this->eCommerceProduct->fk_product > 0 && !empty($this->eCommerceProduct->last_update) && strtotime($product_data['last_update']) <= strtotime($this->eCommerceProduct->last_update);
+					if ($bypass) {
+						return 0;
+					}
+
+					// Get last data of product
+					$products_data = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrProduct(null, null, $remote_id_to_synchronize, 1);
+					if ($products_data === false) {
+						$this->errors = array_merge($this->errors, $this->eCommerceRemoteAccess->errors);
+						return -1;
+					}
+
+					$product_data = $products_data[0];
+				}
+
+				$result = $this->synchronizeProduct($product_data);
 
 				return $result;
 			}
@@ -3072,7 +3108,17 @@ class eCommerceSynchro
 						// Search customer by email
 						$result = $this->getThirdPartyByEmail($customer_data['email_key']);
 						if ($result < 0) {
-							$error++;
+							if ($result == -2) {
+								$this->warnings[] = $this->langs->trans('ECommerceErrorTooManyThirdPartyFoundDueToEmail', $customer_data['email_key'], 0);
+								$result = $this->getFirstThirdPartyWhoNotAnonymousByEmail($customer_data['email_key']);
+								if ($result < 0) {
+									$error++;
+								} else {
+									$third_party_id = $result;
+								}
+							} else {
+								$error++;
+							}
 						} else {
 							$third_party_id = $result;
 							// Check is the third party found is the anonymous third party
@@ -3085,7 +3131,7 @@ class eCommerceSynchro
 						if (!$error && !($third_party_id > 0) && (!isset($customer_data['type']) || $customer_data['type'] == 'company')) {
 							$result = $this->getThirdPartyByName($customer_data['name']);
 							if ($result < 0) {
-								$error++;
+								if ($result != -2) $error++;
 							} else {
 								$third_party_id = $result;
 							}
@@ -3234,19 +3280,7 @@ class eCommerceSynchro
 									$error++;
 								} else {
 									foreach ($contacts_data as $contact_data) {
-										if ($customer_data['type'] == 'company') {
-											$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $customer_data['name']);
-										} else {
-											$result = $this->getThirdPartyByEmail($contact_data['email']);
-										}
-										if ($result < 0) {
-											$error++;
-											break;
-										} elseif ($result > 0) {
-											$contact_data['fk_soc'] = $result;
-										} else {
-											$contact_data['fk_soc'] = $third_party->id > 0 ? $third_party->id : $this->eCommerceSite->fk_anonymous_thirdparty;
-										}
+										$contact_data['fk_soc'] = $third_party->id > 0 ? $third_party->id : $this->eCommerceSite->fk_anonymous_thirdparty;
 										$contact_data['type'] = 1;    // address of company
 										// Synchronize the contact
 										$contact_id = $this->synchSocpeople($contact_data);
@@ -4087,6 +4121,7 @@ class eCommerceSynchro
 
 		$this->error = '';
 		$this->errors = array();
+		$this->warnings = array();
 		$error = 0;
 
 		require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
@@ -4112,64 +4147,64 @@ class eCommerceSynchro
 				if (!empty($order_data) && !empty($this->eCommerceSite->parameters['order_actions']['create_order'])) {
 					$this->initECommerceCommande();
 
-					// Check if third party already synchronized
-					if ($order_data['remote_id_societe'] > 0) {
-						$this->initECommerceSociete();
-						$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
-						if ($result < 0 && !empty($this->eCommerceSociete->error)) {
-							$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
-							$this->errors[] = $this->eCommerceSociete->error;
-							$error++;
-						} elseif ($result > 0) {
-							$third_party_id = $this->eCommerceSociete->fk_societe;
-						} else {
-							// Synchronize the new customer
-							$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 1, true, false);
-							if ($result < 0) {
-								$error++;
-							} elseif ($result > 0) {
-								$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
-								if ($result < 0 && !empty($this->eCommerceSociete->error)) {
-									$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
-									$this->errors[] = $this->eCommerceSociete->error;
-									$error++;
-								} elseif ($result > 0) {
-									$third_party_id = $this->eCommerceSociete->fk_societe;
-								} else {
-									// Customer not supported (eg. order created by admin so we don't need it)
-									$third_party_id = 0;
-								}
-							}
-						}
+					// Check if order already synchronized
+					$result = $this->eCommerceCommande->fetchByRemoteId($order_data['remote_id'], $this->eCommerceSite->id);
+					if ($result < 0 && !empty($this->eCommerceCommande->error)) {
+						$this->errors[] = $this->langs->trans('ECommerceErrorFetchOrderLinkByRemoteId', $order_data['remote_id'], $this->eCommerceSite->id);
+						$this->errors[] = $this->eCommerceCommande->error;
+						$error++;
 					} else {
-						// This is an guest customer.
-						if ($this->eCommerceSite->fk_anonymous_thirdparty > 0) {
-							$third_party_id = $this->eCommerceSite->fk_anonymous_thirdparty;
-						} else {
-							$this->errors[] = $this->langs->trans('ECommerceErrorAnonymousThirdPartyNotConfigured', $this->eCommerceSite->id);
-							$error++;
-						}
+						$order_id = $this->eCommerceCommande->fk_commande;
 					}
 
-					// Create the order only if the third party ID is found (otherwise it's bypassed)
-					if (!$error) {
-						if ($third_party_id > 0) {
-							// Check if order already synchronized
-							$result = $this->eCommerceCommande->fetchByRemoteId($order_data['remote_id'], $this->eCommerceSite->id);
-							if ($result < 0 && !empty($this->eCommerceCommande->error)) {
-								$this->errors[] = $this->langs->trans('ECommerceErrorFetchOrderLinkByRemoteId', $order_data['remote_id'], $this->eCommerceSite->id);
-								$this->errors[] = $this->eCommerceCommande->error;
+					// Need to synchronize ?
+					$bypass = (!empty($this->eCommerceCommande->last_update) && strtotime($order_data['last_update']) <= strtotime($this->eCommerceCommande->last_update)) ||
+						$order_data['create_date'] < $this->eCommerceSite->parameters['order_first_date_etod'];
+
+					// Bypass the synchronization ?
+					if (!$bypass) {
+						// Check if third party already synchronized
+						if ($order_data['remote_id_societe'] > 0) {
+							$this->initECommerceSociete();
+							$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
+							if ($result < 0 && !empty($this->eCommerceSociete->error)) {
+								$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
+								$this->errors[] = $this->eCommerceSociete->error;
 								$error++;
+							} elseif ($result > 0) {
+								$third_party_id = $this->eCommerceSociete->fk_societe;
 							} else {
-								$order_id = $this->eCommerceCommande->fk_commande;
+								// Synchronize the new customer
+								$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 1, true, false);
+								if ($result < 0) {
+									$error++;
+								} elseif ($result > 0) {
+									$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
+									if ($result < 0 && !empty($this->eCommerceSociete->error)) {
+										$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
+										$this->errors[] = $this->eCommerceSociete->error;
+										$error++;
+									} elseif ($result > 0) {
+										$third_party_id = $this->eCommerceSociete->fk_societe;
+									} else {
+										// Customer not supported (eg. order created by admin so we don't need it)
+										$third_party_id = 0;
+									}
+								}
 							}
+						} else {
+							// This is an guest customer.
+							if ($this->eCommerceSite->fk_anonymous_thirdparty > 0) {
+								$third_party_id = $this->eCommerceSite->fk_anonymous_thirdparty;
+							} else {
+								$this->errors[] = $this->langs->trans('ECommerceErrorAnonymousThirdPartyNotConfigured', $this->eCommerceSite->id);
+								$error++;
+							}
+						}
 
-							// Need to synchronize ?
-							$bypass = (!empty($this->eCommerceCommande->last_update) && strtotime($order_data['last_update']) <= strtotime($this->eCommerceCommande->last_update)) ||
-								$order_data['create_date'] < $this->eCommerceSite->parameters['order_first_date_etod'];
-
-							// Bypass the synchronization ?
-							if (!$bypass) {
+						// Create the order only if the third party ID is found (otherwise it's bypassed)
+						if (!$error) {
+							if ($third_party_id > 0) {
 								// Fetch order
 								if (!$error) {
 									if (!($order_id > 0)) {
@@ -4265,8 +4300,8 @@ class eCommerceSynchro
 //												$this->errors = array_merge($this->errors, $this->eCommerceProduct->errors);
 //												$error++;
 //											} elseif ($result <= 0) {
-												if (!empty($item['id_remote_product']))
-													$remote_id_to_synchronize[] = str_replace('|%', '', $item['id_remote_product']);
+											if (!empty($item['id_remote_product']))
+												$remote_id_to_synchronize[] = str_replace('|%', '', $item['id_remote_product']);
 //											}
 										}
 
@@ -4502,19 +4537,38 @@ class eCommerceSynchro
 									if (!$error) {
 										// Search or create the third party for customer contact
 										$contact_data = $order_data['socpeopleCommande'];
-										$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $contact_data['company']);
-										if ($result < 0) {
+										$result = $this->getContactInfosFromData($contact_data, $order->socid);
+										if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
+										if (!is_array($result)) {
 											$error++;
-										} elseif ($result > 0) {
-											$order_data['socpeopleCommande']['fk_soc'] = $result;
+										} elseif (!empty($result) && $result['company_id'] > 0) {
+											$order_data['socpeopleCommande']['fk_soc'] = $result['company_id'];
 										} else {
-											$result = $this->createThirdParty($order_data['ref_client'],
-												$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
-												$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
+											if (empty($contact_data['company'])) {
+												if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
+													$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
+												} elseif (!empty($contact_data['firstname'])) {
+													$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
+												} else {
+													$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
+												}
+											} else {
+												$third_party_name = $contact_data['company'];
+											}
+											$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
 											if ($result < 0) {
 												$error++;
 											} elseif ($result > 0) {
 												$order_data['socpeopleCommande']['fk_soc'] = $result;
+											} else {
+												$result = $this->createThirdParty($order_data['ref_client'],
+													$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
+													$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
+												if ($result < 0) {
+													$error++;
+												} elseif ($result > 0) {
+													$order_data['socpeopleCommande']['fk_soc'] = $result;
+												}
 											}
 										}
 
@@ -4535,19 +4589,38 @@ class eCommerceSynchro
 										// Search or create the third party for billing contact
 										if (!$error) {
 											$contact_data = $order_data['socpeopleFacture'];
-											$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $contact_data['company']);
-											if ($result < 0) {
+											$result = $this->getContactInfosFromData($contact_data, $order->socid);
+											if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
+											if (!is_array($result)) {
 												$error++;
-											} elseif ($result > 0) {
-												$order_data['socpeopleFacture']['fk_soc'] = $result;
+											} elseif (!empty($result) && $result['company_id'] > 0) {
+												$order_data['socpeopleFacture']['fk_soc'] = $result['company_id'];
 											} else {
-												$result = $this->createThirdParty($order_data['ref_client'],
-													$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
-													$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
+												if (empty($contact_data['company'])) {
+													if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
+														$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
+													} elseif (!empty($contact_data['firstname'])) {
+														$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
+													} else {
+														$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
+													}
+												} else {
+													$third_party_name = $contact_data['company'];
+												}
+												$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
 												if ($result < 0) {
 													$error++;
 												} elseif ($result > 0) {
 													$order_data['socpeopleFacture']['fk_soc'] = $result;
+												} else {
+													$result = $this->createThirdParty($order_data['ref_client'],
+														$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
+														$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
+													if ($result < 0) {
+														$error++;
+													} elseif ($result > 0) {
+														$order_data['socpeopleFacture']['fk_soc'] = $result;
+													}
 												}
 											}
 										}
@@ -4569,19 +4642,38 @@ class eCommerceSynchro
 										// Search or create the third party for shipping contact
 										if (!$error) {
 											$contact_data = $order_data['socpeopleLivraison'];
-											$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $contact_data['company']);
-											if ($result < 0) {
+											$result = $this->getContactInfosFromData($contact_data, $order->socid);
+											if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
+											if (!is_array($result)) {
 												$error++;
-											} elseif ($result > 0) {
-												$order_data['socpeopleLivraison']['fk_soc'] = $result;
+											} elseif (!empty($result) && $result['company_id'] > 0) {
+												$order_data['socpeopleLivraison']['fk_soc'] = $result['company_id'];
 											} else {
-												$result = $this->createThirdParty($order_data['ref_client'],
-													$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
-													$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
+												if (empty($contact_data['company'])) {
+													if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
+														$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
+													} elseif (!empty($contact_data['firstname'])) {
+														$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
+													} else {
+														$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
+													}
+												} else {
+													$third_party_name = $contact_data['company'];
+												}
+												$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
 												if ($result < 0) {
 													$error++;
 												} elseif ($result > 0) {
 													$order_data['socpeopleLivraison']['fk_soc'] = $result;
+												} else {
+													$result = $this->createThirdParty($order_data['ref_client'],
+														$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
+														$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
+													if ($result < 0) {
+														$error++;
+													} elseif ($result > 0) {
+														$order_data['socpeopleLivraison']['fk_soc'] = $result;
+													}
 												}
 											}
 										}
@@ -4609,10 +4701,10 @@ class eCommerceSynchro
 										}
 									}
 								}
+							} else {
+								$this->warnings[] = $this->langs->trans('ECommerceWarningOrderThirdPartyNotSupported', $order_data['remote_id'], $order_data['remote_id_societe']);
+								$bypass = true;
 							}
-						} else {
-							$this->warnings[] = $this->langs->trans('ECommerceWarningOrderThirdPartyNotSupported', $order_data['remote_id'], $order_data['remote_id_societe']);
-							$bypass = true;
 						}
 					}
 
@@ -4769,255 +4861,256 @@ class eCommerceSynchro
 							if ($order->id > 0) $invoice->add_object_linked($order->element, $order->id);
 						} // Create the invoice only the first time
 						else {
-							if ($order->id > 0) {
-								$third_party_id = $order->socid;
-							} else {
-								// Check if third party already synchronized
-								if ($order_data['remote_id_societe'] > 0) {
-									$this->initECommerceSociete();
-									$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
-									if ($result < 0 && !empty($this->eCommerceSociete->error)) {
-										$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
-										$this->errors[] = $this->eCommerceSociete->error;
-										$error++;
-									} elseif ($result > 0) {
-										$third_party_id = $this->eCommerceSociete->fk_societe;
-									} else {
-										// Synchronize the new customer
-										$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 1, true, false);
-										if ($result < 0) {
-											$error++;
-										} elseif ($result > 0) {
-											$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
-											if ($result < 0 && !empty($this->eCommerceSociete->error)) {
-												$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
-												$this->errors[] = $this->eCommerceSociete->error;
-												$error++;
-											} elseif ($result > 0) {
-												$third_party_id = $this->eCommerceSociete->fk_societe;
-											} else {
-												// Customer not supported (eg. order created by admin so we don't need it)
-												$third_party_id = 0;
-											}
-										}
-									}
-								} else {
-									// This is an guest customer.
-									if ($this->eCommerceSite->fk_anonymous_thirdparty > 0) {
-										$third_party_id = $this->eCommerceSite->fk_anonymous_thirdparty;
-									} else {
-										$this->errors[] = $this->langs->trans('ECommerceErrorAnonymousThirdPartyNotConfigured', $this->eCommerceSite->id);
-										$error++;
-									}
-								}
-							}
-
 							// Need to synchronize ?
 							$bypass = $order_data['create_date'] < $this->eCommerceSite->parameters['order_first_date_etod'];
 
-							// Create the invoice only if the third party ID is found (otherwise it's bypassed)
-							if (!$error && !$bypass) {
-								if ($third_party_id > 0) {
-									$isDepositType = isset($this->eCommerceSite->parameters['create_invoice_type']) && $this->eCommerceSite->parameters['create_invoice_type'] == Facture::TYPE_DEPOSIT;
-
-									// Set the invoice
-									$invoice->socid = $third_party_id;
-									$invoice->type = isset($this->eCommerceSite->parameters['create_invoice_type']) ? $this->eCommerceSite->parameters['create_invoice_type'] : Facture::TYPE_STANDARD;
-									$invoice->date = $order->id > 0 ? $order->date : strtotime($order_data['date_commande']);
-									$invoice->ref_client = $order->id > 0 ? $order->ref_client : $order_data['ref_client'];
-									$invoice->ref_ext = $invoice_ref_ext;
-									$invoice->modelpdf = $conf->global->FACTURE_ADDON_PDF;
-									$invoice->cond_reglement_id = $order->id > 0 ? $order->cond_reglement_id : (isset($this->eCommerceSite->parameters['payment_cond']) ? $this->eCommerceSite->parameters['payment_cond'] : null);
-									$invoice->multicurrency_code = $order->id > 0 ? $order->multicurrency_code : null;
-									$invoice->multicurrency_tx = $order->id > 0 ? $order->multicurrency_tx : null;
-									$invoice->entity = $conf->entity;
-									$invoice->statut = Facture::STATUS_DRAFT;
-
-									$invoice->note_private = isset($order_data['note']) ? $order_data['note'] : "";
-									if (!empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE)) {
-										$invoice->note_private = dol_concatdesc($invoice->note_private, $this->langs->trans('ECommerceCreateInvoiceFromSiteNote', $this->eCommerceSite->name) . " :\n" . json_encode($order_data['remote_order']));
-									}
-
-									if ($order->id > 0) {
-										$invoice->linkedObjectsIds[$order->element] = $order->id;
-									}
-
-									if ($order->id > 0) {
-										$invoice->array_options = $order->array_options;
-									} elseif (is_array($order_data['extrafields'])) {
-										foreach ($order_data['extrafields'] as $key => $value) {
-											$invoice->array_options['options_' . $key] = $value;
+							if (!$bypass) {
+								if ($order->id > 0) {
+									$third_party_id = $order->socid;
+								} else {
+									// Check if third party already synchronized
+									if ($order_data['remote_id_societe'] > 0) {
+										$this->initECommerceSociete();
+										$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
+										if ($result < 0 && !empty($this->eCommerceSociete->error)) {
+											$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
+											$this->errors[] = $this->eCommerceSociete->error;
+											$error++;
+										} elseif ($result > 0) {
+											$third_party_id = $this->eCommerceSociete->fk_societe;
+										} else {
+											// Synchronize the new customer
+											$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 1, true, false);
+											if ($result < 0) {
+												$error++;
+											} elseif ($result > 0) {
+												$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
+												if ($result < 0 && !empty($this->eCommerceSociete->error)) {
+													$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
+													$this->errors[] = $this->eCommerceSociete->error;
+													$error++;
+												} elseif ($result > 0) {
+													$third_party_id = $this->eCommerceSociete->fk_societe;
+												} else {
+													// Customer not supported (eg. order created by admin so we don't need it)
+													$third_party_id = 0;
+												}
+											}
+										}
+									} else {
+										// This is an guest customer.
+										if ($this->eCommerceSite->fk_anonymous_thirdparty > 0) {
+											$third_party_id = $this->eCommerceSite->fk_anonymous_thirdparty;
+										} else {
+											$this->errors[] = $this->langs->trans('ECommerceErrorAnonymousThirdPartyNotConfigured', $this->eCommerceSite->id);
+											$error++;
 										}
 									}
+								}
 
-									$invoice->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+								// Create the invoice only if the third party ID is found (otherwise it's bypassed)
+								if (!$error) {
+									if ($third_party_id > 0) {
+										$isDepositType = isset($this->eCommerceSite->parameters['create_invoice_type']) && $this->eCommerceSite->parameters['create_invoice_type'] == Facture::TYPE_DEPOSIT;
 
-									// Create invoice
-									$result = $invoice->create($this->user);
-									if ($result < 0) {
-										$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceCreate');
-										if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-										$this->errors = array_merge($this->errors, $invoice->errors);
-										$error++;
-									}
+										// Set the invoice
+										$invoice->socid = $third_party_id;
+										$invoice->type = isset($this->eCommerceSite->parameters['create_invoice_type']) ? $this->eCommerceSite->parameters['create_invoice_type'] : Facture::TYPE_STANDARD;
+										$invoice->date = $order->id > 0 ? $order->date : strtotime($order_data['date_commande']);
+										$invoice->ref_client = $order->id > 0 ? $order->ref_client : $order_data['ref_client'];
+										$invoice->ref_ext = $invoice_ref_ext;
+										$invoice->modelpdf = $conf->global->FACTURE_ADDON_PDF;
+										$invoice->cond_reglement_id = $order->id > 0 ? $order->cond_reglement_id : (isset($this->eCommerceSite->parameters['payment_cond']) ? $this->eCommerceSite->parameters['payment_cond'] : null);
+										$invoice->multicurrency_code = $order->id > 0 ? $order->multicurrency_code : null;
+										$invoice->multicurrency_tx = $order->id > 0 ? $order->multicurrency_tx : null;
+										$invoice->entity = $conf->entity;
+										$invoice->statut = Facture::STATUS_DRAFT;
 
-									// Add product lines and contacts
-									if (!$error) {
+										$invoice->note_private = isset($order_data['note']) ? $order_data['note'] : "";
+										if (!empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE)) {
+											$invoice->note_private = dol_concatdesc($invoice->note_private, $this->langs->trans('ECommerceCreateInvoiceFromSiteNote', $this->eCommerceSite->name) . " :\n" . json_encode($order_data['remote_order']));
+										}
+
 										if ($order->id > 0) {
-											if ($isDepositType) {
-												// Add deposit line
-												$result = $invoice->addline('(DEPOSIT) (' . price($order_data['payment_amount_ttc'], '', $this->langs, 0, -1, -1,
-														(!empty($invoice->multicurrency_code) ? $invoice->multicurrency_code : $conf->currency)) . ') - ' . $order_data['ref_client'],
-													$order_data['payment_amount_ttc'], 1, 0, 0, 0,
-													(empty($conf->global->INVOICE_PRODUCTID_DEPOSIT) ? 0 : $conf->global->INVOICE_PRODUCTID_DEPOSIT));
-												if ($result < 0) {
-													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
-													if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-													$this->errors = array_merge($this->errors, $invoice->errors);
-													$error++;
-												}
-											} else {
-												// Add product lines
-												if (empty($order->lines)) {
-													if (method_exists($order, 'fetch_lines')) $order->fetch_lines();
-													elseif (method_exists($order, 'getLinesArray')) $order->getLinesArray();
-												}
+											$invoice->linkedObjectsIds[$order->element] = $order->id;
+										}
 
-												$fk_parent_line = 0;
-												foreach ($order->lines as $line) {
-													$label = (!empty($line->label) ? $line->label : '');
-													$desc = (!empty($line->desc) ? $line->desc : $line->libelle);
+										if ($order->id > 0) {
+											$invoice->array_options = $order->array_options;
+										} elseif (is_array($order_data['extrafields'])) {
+											foreach ($order_data['extrafields'] as $key => $value) {
+												$invoice->array_options['options_' . $key] = $value;
+											}
+										}
 
-													if ($line->subprice < 0 && empty($conf->global->ECOMMERCE_KEEP_NEGATIVE_PRICE_LINES_WHEN_CREATE_INVOICE)) {
-														// Negative line, we create a discount line
-														$discount = new DiscountAbsolute($this->db);
-														$discount->fk_soc = $invoice->socid;
-														$discount->amount_ht = abs($line->total_ht);
-														$discount->amount_tva = abs($line->total_tva);
-														$discount->amount_ttc = abs($line->total_ttc);
-														$discount->tva_tx = $line->tva_tx;
-														$discount->fk_user = $this->user->id;
-														$discount->description = $desc;
-														$discount_id = $discount->create($this->user);
-														if ($discount_id > 0) {
-															$result = $invoice->insert_discount($discount_id); // This include link_to_invoice
+										$invoice->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+
+										// Create invoice
+										$result = $invoice->create($this->user);
+										if ($result < 0) {
+											$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceCreate');
+											if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+											$this->errors = array_merge($this->errors, $invoice->errors);
+											$error++;
+										}
+
+										// Add product lines and contacts
+										if (!$error) {
+											if ($order->id > 0) {
+												if ($isDepositType) {
+													// Add deposit line
+													$result = $invoice->addline('(DEPOSIT) (' . price($order_data['payment_amount_ttc'], '', $this->langs, 0, -1, -1,
+															(!empty($invoice->multicurrency_code) ? $invoice->multicurrency_code : $conf->currency)) . ') - ' . $order_data['ref_client'],
+														$order_data['payment_amount_ttc'], 1, 0, 0, 0,
+														(empty($conf->global->INVOICE_PRODUCTID_DEPOSIT) ? 0 : $conf->global->INVOICE_PRODUCTID_DEPOSIT));
+													if ($result < 0) {
+														$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
+														if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+														$this->errors = array_merge($this->errors, $invoice->errors);
+														$error++;
+													}
+												} else {
+													// Add product lines
+													if (empty($order->lines)) {
+														if (method_exists($order, 'fetch_lines')) $order->fetch_lines();
+														elseif (method_exists($order, 'getLinesArray')) $order->getLinesArray();
+													}
+
+													$fk_parent_line = 0;
+													foreach ($order->lines as $line) {
+														$label = (!empty($line->label) ? $line->label : '');
+														$desc = (!empty($line->desc) ? $line->desc : $line->libelle);
+
+														if ($line->subprice < 0 && empty($conf->global->ECOMMERCE_KEEP_NEGATIVE_PRICE_LINES_WHEN_CREATE_INVOICE)) {
+															// Negative line, we create a discount line
+															$discount = new DiscountAbsolute($this->db);
+															$discount->fk_soc = $invoice->socid;
+															$discount->amount_ht = abs($line->total_ht);
+															$discount->amount_tva = abs($line->total_tva);
+															$discount->amount_ttc = abs($line->total_ttc);
+															$discount->tva_tx = $line->tva_tx;
+															$discount->fk_user = $this->user->id;
+															$discount->description = $desc;
+															$discount_id = $discount->create($this->user);
+															if ($discount_id > 0) {
+																$result = $invoice->insert_discount($discount_id); // This include link_to_invoice
+																if ($result < 0) {
+																	$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceInsertDiscount');
+																	if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+																	$this->errors = array_merge($this->errors, $invoice->errors);
+																	$error++;
+																}
+															} else {
+																$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceDiscountCreate');
+																if (!empty($discount->error)) $this->errors[] = $discount->error;
+																$this->errors = array_merge($this->errors, $discount->errors);
+																$error++;
+																break;
+															}
+														} else {
+															// Positive line
+															$product_type = ($line->product_type ? $line->product_type : 0);
+
+															// Date start
+															$date_start = false;
+															if ($line->date_debut_prevue)
+																$date_start = $line->date_debut_prevue;
+															if ($line->date_debut_reel)
+																$date_start = $line->date_debut_reel;
+															if ($line->date_start)
+																$date_start = $line->date_start;
+
+															// Date end
+															$date_end = false;
+															if ($line->date_fin_prevue)
+																$date_end = $line->date_fin_prevue;
+															if ($line->date_fin_reel)
+																$date_end = $line->date_fin_reel;
+															if ($line->date_end)
+																$date_end = $line->date_end;
+
+															// Reset fk_parent_line for no child products and special product
+															if (($line->product_type != 9 && empty($line->fk_parent_line)) || $line->product_type == 9) {
+																$fk_parent_line = 0;
+															}
+
+															// Extrafields
+															$array_options = array();
+															if (empty($conf->global->MAIN_EXTRAFIELDS_DISABLED)) {
+																$array_options = $line->array_options;
+															}
+
+															$tva_tx = $line->tva_tx;
+															if (!empty($line->vat_src_code) && !preg_match('/\(/', $tva_tx)) $tva_tx .= ' (' . $line->vat_src_code . ')';
+
+															$result = $invoice->addline($desc, $line->subprice, $line->qty, $tva_tx, $line->localtax1_tx, $line->localtax2_tx,
+																$line->fk_product, $line->remise_percent, $date_start, $date_end, 0, $line->info_bits, $line->fk_remise_except, 'HT',
+																0, $product_type, $line->rang, $line->special_code, $order->element, $line->id, $fk_parent_line, $line->fk_fournprice, $line->pa_ht,
+																$label, $array_options, 100, 0, $line->fk_unit, $line->multicurrency_subprice);
 															if ($result < 0) {
-																$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceInsertDiscount');
+																$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
 																if (!empty($invoice->error)) $this->errors[] = $invoice->error;
 																$this->errors = array_merge($this->errors, $invoice->errors);
 																$error++;
+																break;
 															}
-														} else {
-															$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceDiscountCreate');
-															if (!empty($discount->error)) $this->errors[] = $discount->error;
-															$this->errors = array_merge($this->errors, $discount->errors);
-															$error++;
-															break;
-														}
-													} else {
-														// Positive line
-														$product_type = ($line->product_type ? $line->product_type : 0);
 
-														// Date start
-														$date_start = false;
-														if ($line->date_debut_prevue)
-															$date_start = $line->date_debut_prevue;
-														if ($line->date_debut_reel)
-															$date_start = $line->date_debut_reel;
-														if ($line->date_start)
-															$date_start = $line->date_start;
-
-														// Date end
-														$date_end = false;
-														if ($line->date_fin_prevue)
-															$date_end = $line->date_fin_prevue;
-														if ($line->date_fin_reel)
-															$date_end = $line->date_fin_reel;
-														if ($line->date_end)
-															$date_end = $line->date_end;
-
-														// Reset fk_parent_line for no child products and special product
-														if (($line->product_type != 9 && empty($line->fk_parent_line)) || $line->product_type == 9) {
-															$fk_parent_line = 0;
-														}
-
-														// Extrafields
-														$array_options = array();
-														if (empty($conf->global->MAIN_EXTRAFIELDS_DISABLED)) {
-															$array_options = $line->array_options;
-														}
-
-														$tva_tx = $line->tva_tx;
-														if (!empty($line->vat_src_code) && !preg_match('/\(/', $tva_tx)) $tva_tx .= ' (' . $line->vat_src_code . ')';
-
-														$result = $invoice->addline($desc, $line->subprice, $line->qty, $tva_tx, $line->localtax1_tx, $line->localtax2_tx,
-															$line->fk_product, $line->remise_percent, $date_start, $date_end, 0, $line->info_bits, $line->fk_remise_except, 'HT',
-															0, $product_type, $line->rang, $line->special_code, $order->element, $line->id, $fk_parent_line, $line->fk_fournprice, $line->pa_ht,
-															$label, $array_options, 100, 0, $line->fk_unit, $line->multicurrency_subprice);
-														if ($result < 0) {
-															$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
-															if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-															$this->errors = array_merge($this->errors, $invoice->errors);
-															$error++;
-															break;
-														}
-
-														// Defined the new fk_parent_line
-														if ($result > 0 && $line->product_type == 9) {
-															$fk_parent_line = $result;
+															// Defined the new fk_parent_line
+															if ($result > 0 && $line->product_type == 9) {
+																$fk_parent_line = $result;
+															}
 														}
 													}
 												}
-											}
 
-											// Get order internal contacts
-											$internal_contact_list = $order->liste_contact(-1, 'internal');
-											if (!is_array($internal_contact_list)) {
-												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceGetOrderInternalContacts', $order->id);
-												if (!empty($order->error)) $this->errors[] = $order->error;
-												$this->errors = array_merge($this->errors, $order->errors);
-												$error++;
-											}
-
-											// Get order external contacts
-											$external_contact_list = $order->liste_contact(-1, 'external');
-											if (!is_array($external_contact_list)) {
-												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceGetOrderExternalContacts', $order->id);
-												if (!empty($order->error)) $this->errors[] = $order->error;
-												$this->errors = array_merge($this->errors, $order->errors);
-												$error++;
-											}
-
-											$contact_list = array_merge($internal_contact_list, $external_contact_list);
-											foreach ($contact_list as $contact_infos) {
-												$result = $invoice->add_contact($contact_infos['id'], $contact_infos['code'], $contact_infos['source']);    // May failed because of duplicate key or because code of contact type does not exists for new object
-												if ($result < 0 && $this->db->errno() != 'DB_ERROR_RECORD_ALREADY_EXISTS' && $invoice->error != 'CODE_NOT_VALID_FOR_THIS_ELEMENT') {
-													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddContact', $contact_infos['id'], $contact_infos['code'], $contact_infos['source']);
-													if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-													$this->errors = array_merge($this->errors, $invoice->errors);
+												// Get order internal contacts
+												$internal_contact_list = $order->liste_contact(-1, 'internal');
+												if (!is_array($internal_contact_list)) {
+													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceGetOrderInternalContacts', $order->id);
+													if (!empty($order->error)) $this->errors[] = $order->error;
+													$this->errors = array_merge($this->errors, $order->errors);
 													$error++;
-													break;
 												}
-											}
-										} else {
-											if ($isDepositType) {
-												// Add deposit line
-												$result = $invoice->addline('(DEPOSIT) (' . price($order_data['payment_amount_ttc'], '', $this->langs, 0, -1, -1,
-														(!empty($invoice->multicurrency_code) ? $invoice->multicurrency_code : $conf->currency)) . ') - ' . $order_data['ref_client'],
-													$order_data['payment_amount_ttc'], 1, 0, 0, 0,
-													(empty($conf->global->INVOICE_PRODUCTID_DEPOSIT) ? 0 : $conf->global->INVOICE_PRODUCTID_DEPOSIT));
-												if ($result < 0) {
-													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
-													if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-													$this->errors = array_merge($this->errors, $invoice->errors);
+
+												// Get order external contacts
+												$external_contact_list = $order->liste_contact(-1, 'external');
+												if (!is_array($external_contact_list)) {
+													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceGetOrderExternalContacts', $order->id);
+													if (!empty($order->error)) $this->errors[] = $order->error;
+													$this->errors = array_merge($this->errors, $order->errors);
 													$error++;
+												}
+
+												$contact_list = array_merge($internal_contact_list, $external_contact_list);
+												foreach ($contact_list as $contact_infos) {
+													$result = $invoice->add_contact($contact_infos['id'], $contact_infos['code'], $contact_infos['source']);    // May failed because of duplicate key or because code of contact type does not exists for new object
+													if ($result < 0 && $this->db->errno() != 'DB_ERROR_RECORD_ALREADY_EXISTS' && $invoice->error != 'CODE_NOT_VALID_FOR_THIS_ELEMENT') {
+														$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddContact', $contact_infos['id'], $contact_infos['code'], $contact_infos['source']);
+														if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+														$this->errors = array_merge($this->errors, $invoice->errors);
+														$error++;
+														break;
+													}
 												}
 											} else {
-												// Add product lines
-												if (!$error && count($order_data['items'])) {
-													// Get products to synchronize
-													$remote_id_to_synchronize = array();
-													foreach ($order_data['items'] as $item) {
+												if ($isDepositType) {
+													// Add deposit line
+													$result = $invoice->addline('(DEPOSIT) (' . price($order_data['payment_amount_ttc'], '', $this->langs, 0, -1, -1,
+															(!empty($invoice->multicurrency_code) ? $invoice->multicurrency_code : $conf->currency)) . ') - ' . $order_data['ref_client'],
+														$order_data['payment_amount_ttc'], 1, 0, 0, 0,
+														(empty($conf->global->INVOICE_PRODUCTID_DEPOSIT) ? 0 : $conf->global->INVOICE_PRODUCTID_DEPOSIT));
+													if ($result < 0) {
+														$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
+														if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+														$this->errors = array_merge($this->errors, $invoice->errors);
+														$error++;
+													}
+												} else {
+													// Add product lines
+													if (!$error && count($order_data['items'])) {
+														// Get products to synchronize
+														$remote_id_to_synchronize = array();
+														foreach ($order_data['items'] as $item) {
 //													$this->initECommerceProduct();
 //													$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
 //													if ($result < 0 && !empty($this->eCommerceProduct->error)) {
@@ -5025,324 +5118,381 @@ class eCommerceSynchro
 //														$this->errors = array_merge($this->errors, $this->eCommerceProduct->errors);
 //														$error++;
 //													} elseif ($result <= 0) {
-														if (!empty($item['id_remote_product']))
-															$remote_id_to_synchronize[] = str_replace('|%', '', $item['id_remote_product']);
+															if (!empty($item['id_remote_product']))
+																$remote_id_to_synchronize[] = str_replace('|%', '', $item['id_remote_product']);
 //													}
-													}
-
-													// Synchronize the product to synchronize
-													if (!empty($remote_id_to_synchronize) && !$dont_synchronize_products) {
-														// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
-														$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, count($remote_id_to_synchronize), false, $invoice);
-														if ($result < 0) {
-															$error++;
 														}
-													}
 
-													// Add product lines
-													if (!$error) {
-														foreach ($order_data['items'] as $item) {
-															// Get product ID
-															$fk_product = 0;
-															if (!empty($item['id_remote_product'])) {
-																$this->initECommerceProduct();
-																$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
-																if ($result < 0 && !empty($this->eCommerceProduct->error)) {
-																	$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $item['id_remote_product'], $this->eCommerceSite->id);
-																	$this->errors[] = $this->eCommerceProduct->error;
-																	$error++;
-																	break;  // break on items
-																} elseif ($result > 0) {
-																	$fk_product = $this->eCommerceProduct->fk_product;
-																}
-															} elseif (!empty($item['id_product'])) {
-																$fk_product = $item['id_product'];
+														// Synchronize the product to synchronize
+														if (!empty($remote_id_to_synchronize) && !$dont_synchronize_products) {
+															// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
+															$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, count($remote_id_to_synchronize), false, $invoice);
+															if ($result < 0) {
+																$error++;
 															}
+														}
 
-															if (!$error) {
-																$price = $item['price'];
-																$total_ht = $item['total_ht'];
-																$total_tva = $item['total_tva'];
-																$total_ttc = $item['total_ttc'];
-																$description = $item['description'];
-																if (empty($description) && $fk_product > 0) {
-																	$product = new Product($this->db);
-																	$product->fetch($fk_product);
-																	$description = $product->description;
+														// Add product lines
+														if (!$error) {
+															foreach ($order_data['items'] as $item) {
+																// Get product ID
+																$fk_product = 0;
+																if (!empty($item['id_remote_product'])) {
+																	$this->initECommerceProduct();
+																	$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
+																	if ($result < 0 && !empty($this->eCommerceProduct->error)) {
+																		$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $item['id_remote_product'], $this->eCommerceSite->id);
+																		$this->errors[] = $this->eCommerceProduct->error;
+																		$error++;
+																		break;  // break on items
+																	} elseif ($result > 0) {
+																		$fk_product = $this->eCommerceProduct->fk_product;
+																	}
+																} elseif (!empty($item['id_product'])) {
+																	$fk_product = $item['id_product'];
 																}
-																$description = dol_concatdesc($description, $item['additional_description']);
 
-																if ($price < 0 && empty($conf->global->ECOMMERCE_KEEP_NEGATIVE_PRICE_LINES_WHEN_CREATE_INVOICE)) {
-																	// Negative line, we create a discount line
-																	$discount = new DiscountAbsolute($this->db);
-																	$discount->fk_soc = $invoice->socid;
-																	$discount->amount_ht = abs($total_ht);
-																	$discount->amount_tva = abs($total_tva);
-																	$discount->amount_ttc = abs($total_ttc);
-																	$discount->tva_tx = $item['tva_tx'];
-																	$discount->fk_user = $this->user->id;
-																	$discount->description = $description;
-																	$discount_id = $discount->create($this->user);
-																	if ($discount_id > 0) {
-																		$result = $invoice->insert_discount($discount_id); // This include link_to_invoice
-																		if ($result < 0) {
-																			$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceInsertDiscount');
-																			if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-																			$this->errors = array_merge($this->errors, $invoice->errors);
+																if (!$error) {
+																	$price = $item['price'];
+																	$total_ht = $item['total_ht'];
+																	$total_tva = $item['total_tva'];
+																	$total_ttc = $item['total_ttc'];
+																	$description = $item['description'];
+																	if (empty($description) && $fk_product > 0) {
+																		$product = new Product($this->db);
+																		$product->fetch($fk_product);
+																		$description = $product->description;
+																	}
+																	$description = dol_concatdesc($description, $item['additional_description']);
+
+																	if ($price < 0 && empty($conf->global->ECOMMERCE_KEEP_NEGATIVE_PRICE_LINES_WHEN_CREATE_INVOICE)) {
+																		// Negative line, we create a discount line
+																		$discount = new DiscountAbsolute($this->db);
+																		$discount->fk_soc = $invoice->socid;
+																		$discount->amount_ht = abs($total_ht);
+																		$discount->amount_tva = abs($total_tva);
+																		$discount->amount_ttc = abs($total_ttc);
+																		$discount->tva_tx = $item['tva_tx'];
+																		$discount->fk_user = $this->user->id;
+																		$discount->description = $description;
+																		$discount_id = $discount->create($this->user);
+																		if ($discount_id > 0) {
+																			$result = $invoice->insert_discount($discount_id); // This include link_to_invoice
+																			if ($result < 0) {
+																				$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceInsertDiscount');
+																				if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+																				$this->errors = array_merge($this->errors, $invoice->errors);
+																				$error++;
+																				break;  // break on items
+																			}
+																		} else {
+																			$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceDiscountCreate');
+																			if (!empty($discount->error)) $this->errors[] = $discount->error;
+																			$this->errors = array_merge($this->errors, $discount->errors);
+																			$error++;
+																			break;
+																		}
+																	} else {
+																		// Define the buy price for margin calculation
+																		if (isset($item['buy_price'])) {
+																			$buy_price = $item['buy_price'];
+																		} else {
+																			$buy_price = $item['price'];
+																			if ($fk_product > 0) {
+																				$result = $order->defineBuyPrice($buy_price, 0, $fk_product);
+																				if ($result < 0) {
+																					$this->errors[] = $this->langs->trans('ECommerceErrorOrderDefineBuyPrice', $fk_product, $buy_price);
+																					if (!empty($order->error)) $this->errors[] = $order->error;
+																					$this->errors = array_merge($this->errors, $order->errors);
+																					$error++;
+																					break;    // break on items
+																				} else {
+																					$buy_price = $result;
+																				}
+																			}
+																		}
+
+																		$label = !empty($item['label']) ? $item['label'] : '';
+																		$discount = $item['discount'];
+																		$product_type = $item['product_type'] != "simple" ? 1 : 0;
+
+																		$array_options = array();
+																		if (is_array($item['extrafields'])) {
+																			foreach ($item['extrafields'] as $extrafield => $extrafield_value) {
+																				$array_options['options_' . $extrafield] = $extrafield_value;
+																			}
+																		}
+
+																		$result = $invoice->addline($description, $price, $item['qty'], $item['tva_tx'], $item['local_tax1_tx'], $item['local_tax2_tx'],
+																			$fk_product, $discount, '', '', 0, 0, 0, 'HT',
+																			0, $product_type, -1, 0, '', 0, 0, 0, $buy_price,
+																			$label, $array_options, 100, 0, 0, 0);
+																		if ($result <= 0) {
+																			$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
+																			if (!empty($order->error)) $this->errors[] = $order->error;
+																			$this->errors = array_merge($this->errors, $order->errors);
 																			$error++;
 																			break;  // break on items
 																		}
-																	} else {
-																		$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceDiscountCreate');
-																		if (!empty($discount->error)) $this->errors[] = $discount->error;
-																		$this->errors = array_merge($this->errors, $discount->errors);
-																		$error++;
-																		break;
-																	}
-																} else {
-																	// Define the buy price for margin calculation
-																	if (isset($item['buy_price'])) {
-																		$buy_price = $item['buy_price'];
-																	} else {
-																		$buy_price = $item['price'];
-																		if ($fk_product > 0) {
-																			$result = $order->defineBuyPrice($buy_price, 0, $fk_product);
-																			if ($result < 0) {
-																				$this->errors[] = $this->langs->trans('ECommerceErrorOrderDefineBuyPrice', $fk_product, $buy_price);
-																				if (!empty($order->error)) $this->errors[] = $order->error;
-																				$this->errors = array_merge($this->errors, $order->errors);
-																				$error++;
-																				break;    // break on items
-																			} else {
-																				$buy_price = $result;
-																			}
-																		}
-																	}
-
-																	$label = !empty($item['label']) ? $item['label'] : '';
-																	$discount = $item['discount'];
-																	$product_type = $item['product_type'] != "simple" ? 1 : 0;
-
-																	$array_options = array();
-																	if (is_array($item['extrafields'])) {
-																		foreach ($item['extrafields'] as $extrafield => $extrafield_value) {
-																			$array_options['options_' . $extrafield] = $extrafield_value;
-																		}
-																	}
-
-																	$result = $invoice->addline($description, $price, $item['qty'], $item['tva_tx'], $item['local_tax1_tx'], $item['local_tax2_tx'],
-																		$fk_product, $discount, '', '', 0, 0, 0, 'HT',
-																		0, $product_type, -1, 0, '', 0, 0, 0, $buy_price,
-																		$label, $array_options, 100, 0, 0, 0);
-																	if ($result <= 0) {
-																		$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
-																		if (!empty($order->error)) $this->errors[] = $order->error;
-																		$this->errors = array_merge($this->errors, $order->errors);
-																		$error++;
-																		break;  // break on items
 																	}
 																}
+
+																unset($this->eCommerceProduct);
 															}
-
-															unset($this->eCommerceProduct);
 														}
 													}
 												}
-											}
 
-											// Set amount paid warning
-											if (!$error && price2num($order_data['payment_amount_ttc']) != price2num($invoice->total_ttc)) {
-												$result = $invoice->update_note(dol_concatdesc($this->langs->trans('ECommerceWarningWrongAmountTTCWithPaid', $order_data['payment_amount_ttc']), $invoice->note_private), '_private');
-												if ($result < 0) {
-													$this->errors[] = $this->langs->trans('ECommerceErrorUpdatePrivateNote');
-													if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-													$this->errors = array_merge($this->errors, $invoice->errors);
-													$error++;
-												}
-											}
-
-											// Add contacts
-											if (!$error) {
-												// Search or create the third party for customer contact
-												$contact_data = $order_data['socpeopleCommande'];
-												$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $contact_data['company']);
-												if ($result < 0) {
-													$error++;
-												} elseif ($result > 0) {
-													$order_data['socpeopleCommande']['fk_soc'] = $result;
-												} else {
-													$result = $this->createThirdParty($order_data['ref_client'],
-														$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
-														$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
+												// Set amount paid warning
+												if (!$error && price2num($order_data['payment_amount_ttc']) != price2num($invoice->total_ttc)) {
+													$result = $invoice->update_note(dol_concatdesc($this->langs->trans('ECommerceWarningWrongAmountTTCWithPaid', $order_data['payment_amount_ttc']), $invoice->note_private), '_private');
 													if ($result < 0) {
+														$this->errors[] = $this->langs->trans('ECommerceErrorUpdatePrivateNote');
+														if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+														$this->errors = array_merge($this->errors, $invoice->errors);
 														$error++;
-													} elseif ($result > 0) {
-														$order_data['socpeopleCommande']['fk_soc'] = $result;
 													}
 												}
 
-												// Add customer contact
+												// Add contacts
 												if (!$error) {
-													$result = $this->synchSocpeople($order_data['socpeopleCommande']);
-													if ($result > 0) {
-														$result = $this->addUpdateContact($invoice, true, $result, 'CUSTOMER');
-														if ($result < 0) {
-															$error++;
+													// Search or create the third party for customer contact
+													$contact_data = $order_data['socpeopleCommande'];
+													$result = $this->getContactInfosFromData($contact_data, $order->socid);
+													if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
+													if (!is_array($result)) {
+														$error++;
+													} elseif (!empty($result) && $result['company_id'] > 0) {
+														$order_data['socpeopleCommande']['fk_soc'] = $result['company_id'];
+													} else {
+														if (empty($contact_data['company'])) {
+															if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
+																$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
+															} elseif (!empty($contact_data['firstname'])) {
+																$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
+															} else {
+																$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
+															}
+														} else {
+															$third_party_name = $contact_data['company'];
 														}
-													} else {
-														$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
-														$error++;
-													}
-												}
-
-												// Search or create the third party for billing contact
-												if (!$error) {
-													$contact_data = $order_data['socpeopleFacture'];
-													$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $contact_data['company']);
-													if ($result < 0) {
-														$error++;
-													} elseif ($result > 0) {
-														$order_data['socpeopleFacture']['fk_soc'] = $result;
-													} else {
-														$result = $this->createThirdParty($order_data['ref_client'],
-															$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
-															$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
+														$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
 														if ($result < 0) {
 															$error++;
 														} elseif ($result > 0) {
-															$order_data['socpeopleFacture']['fk_soc'] = $result;
+															$order_data['socpeopleCommande']['fk_soc'] = $result;
+														} else {
+															$result = $this->createThirdParty($order_data['ref_client'],
+																$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
+																$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
+															if ($result < 0) {
+																$error++;
+															} elseif ($result > 0) {
+																$order_data['socpeopleCommande']['fk_soc'] = $result;
+															}
 														}
 													}
-												}
 
-												// Add billing contact
-												if (!$error) {
-													$result = $this->synchSocpeople($order_data['socpeopleFacture']);
-													if ($result > 0) {
-														$result = $this->addUpdateContact($invoice, true, $result, 'BILLING');
+													// Add customer contact
+													if (!$error) {
+														$result = $this->synchSocpeople($order_data['socpeopleCommande']);
+														if ($result > 0) {
+															$result = $this->addUpdateContact($invoice, true, $result, 'CUSTOMER');
+															if ($result < 0) {
+																$error++;
+															}
+														} else {
+															$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
+															$error++;
+														}
+													}
+
+													// Search or create the third party for billing contact
+													if (!$error) {
+														$contact_data = $order_data['socpeopleFacture'];
+														$result = $this->getContactInfosFromData($contact_data, $order->socid);
+														if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
+														if (!is_array($result)) {
+															$error++;
+														} elseif (!empty($result) && $result['company_id'] > 0) {
+															$order_data['socpeopleCommande']['fk_soc'] = $result['company_id'];
+														} else {
+															if (empty($contact_data['company'])) {
+																if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
+																	$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
+																} elseif (!empty($contact_data['firstname'])) {
+																	$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
+																} else {
+																	$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
+																}
+															} else {
+																$third_party_name = $contact_data['company'];
+															}
+															$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
+															if ($result < 0) {
+																$error++;
+															} elseif ($result > 0) {
+																$order_data['socpeopleFacture']['fk_soc'] = $result;
+															} else {
+																$result = $this->createThirdParty($order_data['ref_client'],
+																	$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
+																	$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
+																if ($result < 0) {
+																	$error++;
+																} elseif ($result > 0) {
+																	$order_data['socpeopleFacture']['fk_soc'] = $result;
+																}
+															}
+														}
+													}
+
+													// Add billing contact
+													if (!$error) {
+														$result = $this->synchSocpeople($order_data['socpeopleFacture']);
+														if ($result > 0) {
+															$result = $this->addUpdateContact($invoice, true, $result, 'BILLING');
+															if ($result < 0) {
+																$error++;
+															}
+														} else {
+															$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
+															$error++;
+														}
+													}
+
+													// Search or create the third party for shipping contact
+													if (!$error) {
+														$contact_data = $order_data['socpeopleLivraison'];
+														$result = $this->getContactInfosFromData($contact_data, $order->socid);
+														if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
+														if (!is_array($result)) {
+															$error++;
+														} elseif (!empty($result) && $result['company_id'] > 0) {
+															$order_data['socpeopleCommande']['fk_soc'] = $result['company_id'];
+														} else {
+															if (empty($contact_data['company'])) {
+																if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
+																	$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
+																} elseif (!empty($contact_data['firstname'])) {
+																	$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
+																} else {
+																	$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
+																}
+															} else {
+																$third_party_name = $contact_data['company'];
+															}
+															$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
+															if ($result < 0) {
+																$error++;
+															} elseif ($result > 0) {
+																$order_data['socpeopleLivraison']['fk_soc'] = $result;
+															} else {
+																$result = $this->createThirdParty($order_data['ref_client'],
+																	$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
+																	$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
+																if ($result < 0) {
+																	$error++;
+																} elseif ($result > 0) {
+																	$order_data['socpeopleLivraison']['fk_soc'] = $result;
+																}
+															}
+														}
+													}
+
+													// Add shipping contact
+													if (!$error) {
+														$result = $this->synchSocpeople($order_data['socpeopleLivraison']);
+														if ($result > 0) {
+															$result = $this->addUpdateContact($invoice, true, $result, 'SHIPPING');
+															if ($result < 0) {
+																$error++;
+															}
+														} else {
+															$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
+															$error++;
+														}
+													}
+
+													// Add contact
+													if (!$error && $this->eCommerceSite->parameters['default_sales_representative_follow'] > 0) {
+														$result = $this->addUpdateContact($invoice, true, $this->eCommerceSite->parameters['default_sales_representative_follow'], 'SALESREPFOLL', 'internal');
 														if ($result < 0) {
 															$error++;
 														}
-													} else {
-														$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
-														$error++;
-													}
-												}
-
-												// Search or create the third party for shipping contact
-												if (!$error) {
-													$contact_data = $order_data['socpeopleLivraison'];
-													$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $contact_data['company']);
-													if ($result < 0) {
-														$error++;
-													} elseif ($result > 0) {
-														$order_data['socpeopleLivraison']['fk_soc'] = $result;
-													} else {
-														$result = $this->createThirdParty($order_data['ref_client'],
-															$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
-															$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
-														if ($result < 0) {
-															$error++;
-														} elseif ($result > 0) {
-															$order_data['socpeopleLivraison']['fk_soc'] = $result;
-														}
-													}
-												}
-
-												// Add shipping contact
-												if (!$error) {
-													$result = $this->synchSocpeople($order_data['socpeopleLivraison']);
-													if ($result > 0) {
-														$result = $this->addUpdateContact($invoice, true, $result, 'SHIPPING');
-														if ($result < 0) {
-															$error++;
-														}
-													} else {
-														$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
-														$error++;
-													}
-												}
-
-												// Add contact
-												if (!$error && $this->eCommerceSite->parameters['default_sales_representative_follow'] > 0) {
-													$result = $this->addUpdateContact($invoice, true, $this->eCommerceSite->parameters['default_sales_representative_follow'], 'SALESREPFOLL', 'internal');
-													if ($result < 0) {
-														$error++;
 													}
 												}
 											}
 										}
-									}
 
-									// Get payment gateways
-									if (!$error && !empty($order_data['payment_method_id'])) {
-										$result = $this->loadPaymentGateways();
-										if ($result < 0) {
-											$error++;
-										} else {
-											if (isset(self::$payment_gateways_cached[$order_data['payment_method_id']])) {
-												$selected_payment_gateways = self::$payment_gateways_cached[$order_data['payment_method_id']];
+										// Get payment gateways
+										if (!$error && !empty($order_data['payment_method_id'])) {
+											$result = $this->loadPaymentGateways();
+											if ($result < 0) {
+												$error++;
 											} else {
-												$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysNotFound', $order_data['payment_method_id'], $order_data['payment_method']);
+												if (isset(self::$payment_gateways_cached[$order_data['payment_method_id']])) {
+													$selected_payment_gateways = self::$payment_gateways_cached[$order_data['payment_method_id']];
+												} else {
+													$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysNotFound', $order_data['payment_method_id'], $order_data['payment_method']);
+													$error++;
+												}
+											}
+										}
+
+										// Search payment mode by ID if payment gateways found
+										if (!$error && isset($selected_payment_gateways)) {
+											if ($selected_payment_gateways['payment_mode_id'] > 0) {
+												$payment_method_id = $selected_payment_gateways['payment_mode_id'];
+											} else {
+												$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysPaymentMethodNotConfigured', $order_data['payment_method_id'], $order_data['payment_method']);
 												$error++;
 											}
 										}
-									}
 
-									// Search payment mode by ID if payment gateways found
-									if (!$error && isset($selected_payment_gateways)) {
-										if ($selected_payment_gateways['payment_mode_id'] > 0) {
-											$payment_method_id = $selected_payment_gateways['payment_mode_id'];
-										} else {
-											$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysPaymentMethodNotConfigured', $order_data['payment_method_id'], $order_data['payment_method']);
-											$error++;
-										}
-									}
-
-									// Search payment mode by label
-									if (!$error && !($payment_method_id > 0) && !empty($order_data['payment_method'])) {
-										require_once DOL_DOCUMENT_ROOT . '/core/lib/functions.lib.php';
-										$result = dol_getIdFromCode($this->db, $order_data['payment_method'], 'c_paiement', 'libelle', 'id');
-										if ($result < 0) {
-											$this->errors[] = $this->langs->trans('ECommerceErrorWhenFetchPaymentMethodByLabel', $order_data['payment_method']);
-											$this->errors[] = $this->db->lasterror();
-											$error++;
-										} elseif ($result != '' && $result > 0) {
-											$payment_method_id = $result;
-										}
-									}
-
-									// Set payment mode
-									if (!$error && $payment_method_id > 0) {
-										$result = $invoice->setPaymentMethods($payment_method_id);
-										if ($result < 0) {
-											$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceSetPaymentMethods');
-											if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-											$this->errors = array_merge($this->errors, $invoice->errors);
-											$error++;
-										}
-									}
-
-									// Set bank account
-									if (!$error && isset($selected_payment_gateways)) {
-										$bank_account_id = $selected_payment_gateways['bank_account_id'] > 0 ? $selected_payment_gateways['bank_account_id'] : 0;
-										if ($bank_account_id == 0 && $conf->banque->enabled && (!empty($selected_payment_gateways['create_invoice_payment']) || !empty($selected_payment_gateways['create_supplier_invoice_payment']))) {
-											$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysBankAccountNotConfigured', $order_data['payment_method_id'], $order_data['payment_method']);
-											$error++;
-										} elseif ($bank_account_id > 0) {
-											$result = $invoice->setBankAccount($bank_account_id);
+										// Search payment mode by label
+										if (!$error && !($payment_method_id > 0) && !empty($order_data['payment_method'])) {
+											require_once DOL_DOCUMENT_ROOT . '/core/lib/functions.lib.php';
+											$result = dol_getIdFromCode($this->db, $order_data['payment_method'], 'c_paiement', 'libelle', 'id');
 											if ($result < 0) {
-												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceSetBankAccount');
+												$this->errors[] = $this->langs->trans('ECommerceErrorWhenFetchPaymentMethodByLabel', $order_data['payment_method']);
+												$this->errors[] = $this->db->lasterror();
+												$error++;
+											} elseif ($result != '' && $result > 0) {
+												$payment_method_id = $result;
+											}
+										}
+
+										// Set payment mode
+										if (!$error && $payment_method_id > 0) {
+											$result = $invoice->setPaymentMethods($payment_method_id);
+											if ($result < 0) {
+												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceSetPaymentMethods');
 												if (!empty($invoice->error)) $this->errors[] = $invoice->error;
 												$this->errors = array_merge($this->errors, $invoice->errors);
 												$error++;
 											}
 										}
-									}
 
-									// Get warehouse ID
-									$warehouse_id = 0;
-									// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
+										// Set bank account
+										if (!$error && isset($selected_payment_gateways)) {
+											$bank_account_id = $selected_payment_gateways['bank_account_id'] > 0 ? $selected_payment_gateways['bank_account_id'] : 0;
+											if ($bank_account_id == 0 && $conf->banque->enabled && (!empty($selected_payment_gateways['create_invoice_payment']) || !empty($selected_payment_gateways['create_supplier_invoice_payment']))) {
+												$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysBankAccountNotConfigured', $order_data['payment_method_id'], $order_data['payment_method']);
+												$error++;
+											} elseif ($bank_account_id > 0) {
+												$result = $invoice->setBankAccount($bank_account_id);
+												if ($result < 0) {
+													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceSetBankAccount');
+													if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+													$this->errors = array_merge($this->errors, $invoice->errors);
+													$error++;
+												}
+											}
+										}
+
+										// Get warehouse ID
+										$warehouse_id = 0;
+										// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
 //									if (!$error && !empty($conf->global->STOCK_CALCULATE_ON_BILL) && $this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') {
 //									 	$warehouse_id = $this->eCommerceSite->fk_warehouse > 0 ? $this->eCommerceSite->fk_warehouse : 0;
 //										if (empty($conf->global->STOCK_SUPPORTS_SERVICES)) {
@@ -5357,414 +5507,415 @@ class eCommerceSynchro
 //										}
 //									}
 
-									if ($isDepositType) {
-										$save_WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER = $conf->global->WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER;
-										$save_WORKFLOW_INVOICE_CLASSIFY_BILLED_PROPAL = $conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_PROPAL;
-										$save_WORKFLOW_INVOICE_CLASSIFY_BILLED_ORDER = $conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_ORDER;
-										$conf->global->WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER = 0;
-										$conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_PROPAL = 0;
-										$conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_ORDER = 0;
-									}
-
-									// Validate invoice
-									if (!$error) {
-										$result = $invoice->validate($this->user, '', $warehouse_id);
-										if ($result < 0) {
-											$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceValidate');
-											if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-											$this->errors = array_merge($this->errors, $invoice->errors);
-											$error++;
+										if ($isDepositType) {
+											$save_WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER = $conf->global->WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER;
+											$save_WORKFLOW_INVOICE_CLASSIFY_BILLED_PROPAL = $conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_PROPAL;
+											$save_WORKFLOW_INVOICE_CLASSIFY_BILLED_ORDER = $conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_ORDER;
+											$conf->global->WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER = 0;
+											$conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_PROPAL = 0;
+											$conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_ORDER = 0;
 										}
-									}
 
-									// Creation of payment line
-									if (!$error) {
-										if ($invoice->total_ttc != 0) {
-											if ($conf->banque->enabled && !empty($selected_payment_gateways['create_invoice_payment'])) {
-												$payment = new Paiement($this->db);
-												$payment->datepaye = $invoice->date;
-												$payment->amounts = array($invoice->id => $invoice->total_ttc);   // Array with all payments dispatching with invoice id
-												$payment->multicurrency_amounts = array();   // Array with all payments dispatching
-												$payment->paiementid = $invoice->mode_reglement_id;
-												$payment->num_paiement = '';
-												$payment->note = 'Created by WooSync';
-
-												$payment_id = $payment->create($this->user, 1);
-												if ($payment_id < 0) {
-													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceCreatePayment');
-													if (!empty($payment->error)) $this->errors[] = $payment->error;
-													$this->errors = array_merge($this->errors, $payment->errors);
-													$error++;
-												} else {
-													$result = $payment->addPaymentToBank($this->user, 'payment', '(CustomerInvoicePayment)', $bank_account_id, '', '');
-													if ($result < 0) {
-														$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddPaymentToBank');
-														if (!empty($payment->error)) $this->errors[] = $payment->error;
-														$this->errors = array_merge($this->errors, $payment->errors);
-														$error++;
-													}
-												}
-											}
-										} else {
-											$result = $invoice->set_paid($this->user);
+										// Validate invoice
+										if (!$error) {
+											$result = $invoice->validate($this->user, '', $warehouse_id);
 											if ($result < 0) {
-												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceSetPaid');
+												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceValidate');
 												if (!empty($invoice->error)) $this->errors[] = $invoice->error;
 												$this->errors = array_merge($this->errors, $invoice->errors);
 												$error++;
 											}
 										}
-									}
 
-									if ($isDepositType) {
-										$conf->global->WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER = $save_WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER;
-										$conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_PROPAL = $save_WORKFLOW_INVOICE_CLASSIFY_BILLED_PROPAL;
-										$conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_ORDER = $save_WORKFLOW_INVOICE_CLASSIFY_BILLED_ORDER;
-									}
+										// Creation of payment line
+										if (!$error) {
+											if ($invoice->total_ttc != 0) {
+												if ($conf->banque->enabled && !empty($selected_payment_gateways['create_invoice_payment'])) {
+													$payment = new Paiement($this->db);
+													$payment->datepaye = $invoice->date;
+													$payment->amounts = array($invoice->id => $invoice->total_ttc);   // Array with all payments dispatching with invoice id
+													$payment->multicurrency_amounts = array();   // Array with all payments dispatching
+													$payment->paiementid = $invoice->mode_reglement_id;
+													$payment->num_paiement = '';
+													$payment->note = 'Created by WooSync';
 
-									// Generate document
-									if (!$error && !empty($invoice->modelpdf) && empty($conf->global->MAIN_DISABLE_PDF_AUTOUPDATE)) {
-										// Define output language
-										$outputlangs = $this->langs;
-										$newlang = '';
-										if ($conf->global->MAIN_MULTILANGS && empty($newlang)) $newlang = $invoice->thirdparty->default_lang;
-										if (!empty($newlang)) {
-											$outputlangs = new Translate("", $conf);
-											$outputlangs->setDefaultLang($newlang);
-											$outputlangs->load('products');
-										}
-										$invoice->fetch($invoice->id); // Reload to get new records
-
-										$hidedetails = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DETAILS) ? 1 : 0;
-										$hidedesc = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DESC) ? 1 : 0;
-										$hideref = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_REF) ? 1 : 0;
-										$result = $invoice->generateDocument($invoice->modelpdf, $outputlangs, $hidedetails, $hidedesc, $hideref);
-										if ($result < 0) {
-											$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceGenerateDocument');
-											if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-											$this->errors = array_merge($this->errors, $invoice->errors);
-											$error++;
-										}
-									}
-
-									// Create supplier invoice
-									if (!$error && !empty($this->eCommerceSite->parameters['order_actions']['create_supplier_invoice']) && is_array($order_data['fee_lines']) && count($order_data['fee_lines']) > 0) {
-										// Check if supplier third party configured
-										$supplier_id = $selected_payment_gateways['supplier_id'] > 0 ? $selected_payment_gateways['supplier_id'] : 0;
-										if ($supplier_id == 0) {
-											$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysSupplierNotConfigured', $order_data['payment_method_id'], $order_data['payment_method']);
-											$error++;
-										} else {
-											// Set the supplier invoice
-											$supplier_invoice = new FactureFournisseur($this->db);
-											$supplier_invoice->type = FactureFournisseur::TYPE_STANDARD;
-											$supplier_invoice->ref = '';
-											$supplier_invoice->ref_supplier = $invoice_ref_ext;
-											$supplier_invoice->socid = $supplier_id;
-											$supplier_invoice->libelle = '';
-											$supplier_invoice->date = $invoice->date;
-											$supplier_invoice->date_echeance = '';
-											$supplier_invoice->cond_reglement_id = 0;
-											$supplier_invoice->mode_reglement_id = $invoice->mode_reglement_id;
-											$supplier_invoice->fk_account = $bank_account_id;
-
-											if (!empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE)) {
-												$supplier_invoice->note_private = dol_concatdesc($supplier_invoice->note_private, $this->langs->trans('ECommerceCreateSupplierInvoiceFromSiteNote', $this->eCommerceSite->name) . " :\n" . json_encode($order_data['remote_order']));
-											}
-
-											$supplier_invoice->linkedObjectsIds[$invoice->element] = $invoice->id;
-											if ($order->id > 0) {
-												$supplier_invoice->linkedObjectsIds[$order->element] = $order->id;
-											}
-
-											// Create supplier invoice
-											$id = $supplier_invoice->create($this->user);
-											if ($id < 0) {
-												$this->errors[] = $this->langs->trans('ECommerceErrorSupplierInvoiceCreate');
-												if (!empty($supplier_invoice->error)) $this->errors[] = $supplier_invoice->error;
-												$this->errors = array_merge($this->errors, $supplier_invoice->errors);
-												$error++;
-											}
-
-											// Add lines
-											if (!$error) {
-												$product_id = $selected_payment_gateways['product_id_for_fee'] > 0 ? $selected_payment_gateways['product_id_for_fee'] : 0;
-												foreach ($order_data['fee_lines'] as $fee_line) {
-													if (floatval(DOL_VERSION) < 8) $this->db->begin(); // Not exist in addline function but commit and rollback exist
-													$result = $supplier_invoice->addline(
-														$fee_line['label'],
-														$fee_line['price'],
-														$fee_line['tax'],
-														$fee_line['local_tax1_tx'],
-														$fee_line['local_tax2_tx'],
-														$fee_line['qty'],
-														$product_id);
-													if ($result < 0) {
-														$this->errors[] = $this->langs->trans('ECommerceErrorSupplierInvoiceAddLine');
-														if (!empty($supplier_invoice->error)) $this->errors[] = $supplier_invoice->error;
-														$this->errors = array_merge($this->errors, $supplier_invoice->errors);
-														$error++;
-														break;
-													}
-												}
-											}
-
-											// Validate invoice
-											if (!$error) {
-												$result = $supplier_invoice->validate($this->user);
-												if ($result < 0) {
-													$this->errors[] = $this->langs->trans('ECommerceErrorSupplierInvoiceValidate');
-													if (!empty($supplier_invoice->error)) $this->errors[] = $supplier_invoice->error;
-													$this->errors = array_merge($this->errors, $supplier_invoice->errors);
-													$error++;
-												}
-											}
-
-											// Creation of payment line
-											if (!$error && $conf->banque->enabled && !empty($selected_payment_gateways['create_supplier_invoice_payment'])) {
-												$payment = new PaiementFourn($this->db);
-												$payment->datepaye = $supplier_invoice->date;
-												$payment->amounts = array($supplier_invoice->id => $supplier_invoice->total_ttc);   // Array of amounts
-												$payment->multicurrency_amounts = array();
-												$payment->paiementid = $supplier_invoice->mode_reglement_id;
-												$payment->num_paiement = '';
-												$payment->note = 'Created by WooSync';
-
-												$payment_id = $payment->create($this->user, 1);
-												if ($payment_id < 0) {
-													$this->errors[] = $this->langs->trans('ECommerceErrorSupplierInvoiceCreatePayment');
-													if (!empty($payment->error)) $this->errors[] = $payment->error;
-													$this->errors = array_merge($this->errors, $payment->errors);
-													$error++;
-												} else {
-													$result = $payment->addPaymentToBank($this->user, 'payment_supplier', '(SupplierInvoicePayment)', $bank_account_id, '', '');
-													if ($result < 0) {
-														$this->errors[] = $this->langs->trans('ECommerceErrorSupplierInvoiceAddPaymentToBank');
+													$payment_id = $payment->create($this->user, 1);
+													if ($payment_id < 0) {
+														$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceCreatePayment');
 														if (!empty($payment->error)) $this->errors[] = $payment->error;
 														$this->errors = array_merge($this->errors, $payment->errors);
 														$error++;
+													} else {
+														$result = $payment->addPaymentToBank($this->user, 'payment', '(CustomerInvoicePayment)', $bank_account_id, '', '');
+														if ($result < 0) {
+															$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddPaymentToBank');
+															if (!empty($payment->error)) $this->errors[] = $payment->error;
+															$this->errors = array_merge($this->errors, $payment->errors);
+															$error++;
+														}
 													}
 												}
-											}
-
-											// Generate document
-											if (!$error && !empty($conf->global->INVOICE_SUPPLIER_ADDON_PDF) && empty($conf->global->MAIN_DISABLE_PDF_AUTOUPDATE)) {
-												// Define output language
-												$outputlangs = $this->langs;
-												$newlang = '';
-												if ($conf->global->MAIN_MULTILANGS && empty($newlang)) $newlang = $supplier_invoice->thirdparty->default_lang;
-												if (!empty($newlang)) {
-													$outputlangs = new Translate("", $conf);
-													$outputlangs->setDefaultLang($newlang);
-													$outputlangs->load('products');
-												}
-												$supplier_invoice->fetch($supplier_invoice->id); // Reload to get new records
-
-												$hidedetails = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DETAILS) ? 1 : 0;
-												$hidedesc = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DESC) ? 1 : 0;
-												$hideref = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_REF) ? 1 : 0;
-												$result = $supplier_invoice->generateDocument($conf->global->INVOICE_SUPPLIER_ADDON_PDF, $outputlangs, $hidedetails, $hidedesc, $hideref);
+											} else {
+												$result = $invoice->set_paid($this->user);
 												if ($result < 0) {
-													$this->errors[] = $this->langs->trans('ECommerceErrorSupplierInvoiceGenerateDocument');
+													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceSetPaid');
+													if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+													$this->errors = array_merge($this->errors, $invoice->errors);
+													$error++;
+												}
+											}
+										}
+
+										if ($isDepositType) {
+											$conf->global->WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER = $save_WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER;
+											$conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_PROPAL = $save_WORKFLOW_INVOICE_CLASSIFY_BILLED_PROPAL;
+											$conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_ORDER = $save_WORKFLOW_INVOICE_CLASSIFY_BILLED_ORDER;
+										}
+
+										// Generate document
+										if (!$error && !empty($invoice->modelpdf) && empty($conf->global->MAIN_DISABLE_PDF_AUTOUPDATE)) {
+											// Define output language
+											$outputlangs = $this->langs;
+											$newlang = '';
+											if ($conf->global->MAIN_MULTILANGS && empty($newlang)) $newlang = $invoice->thirdparty->default_lang;
+											if (!empty($newlang)) {
+												$outputlangs = new Translate("", $conf);
+												$outputlangs->setDefaultLang($newlang);
+												$outputlangs->load('products');
+											}
+											$invoice->fetch($invoice->id); // Reload to get new records
+
+											$hidedetails = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DETAILS) ? 1 : 0;
+											$hidedesc = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DESC) ? 1 : 0;
+											$hideref = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_REF) ? 1 : 0;
+											$result = $invoice->generateDocument($invoice->modelpdf, $outputlangs, $hidedetails, $hidedesc, $hideref);
+											if ($result < 0) {
+												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceGenerateDocument');
+												if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+												$this->errors = array_merge($this->errors, $invoice->errors);
+												$error++;
+											}
+										}
+
+										// Create supplier invoice
+										if (!$error && !empty($this->eCommerceSite->parameters['order_actions']['create_supplier_invoice']) && is_array($order_data['fee_lines']) && count($order_data['fee_lines']) > 0) {
+											// Check if supplier third party configured
+											$supplier_id = $selected_payment_gateways['supplier_id'] > 0 ? $selected_payment_gateways['supplier_id'] : 0;
+											if ($supplier_id == 0) {
+												$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysSupplierNotConfigured', $order_data['payment_method_id'], $order_data['payment_method']);
+												$error++;
+											} else {
+												// Set the supplier invoice
+												$supplier_invoice = new FactureFournisseur($this->db);
+												$supplier_invoice->type = FactureFournisseur::TYPE_STANDARD;
+												$supplier_invoice->ref = '';
+												$supplier_invoice->ref_supplier = $invoice_ref_ext;
+												$supplier_invoice->socid = $supplier_id;
+												$supplier_invoice->libelle = '';
+												$supplier_invoice->date = $invoice->date;
+												$supplier_invoice->date_echeance = '';
+												$supplier_invoice->cond_reglement_id = 0;
+												$supplier_invoice->mode_reglement_id = $invoice->mode_reglement_id;
+												$supplier_invoice->fk_account = $bank_account_id;
+
+												if (!empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE)) {
+													$supplier_invoice->note_private = dol_concatdesc($supplier_invoice->note_private, $this->langs->trans('ECommerceCreateSupplierInvoiceFromSiteNote', $this->eCommerceSite->name) . " :\n" . json_encode($order_data['remote_order']));
+												}
+
+												$supplier_invoice->linkedObjectsIds[$invoice->element] = $invoice->id;
+												if ($order->id > 0) {
+													$supplier_invoice->linkedObjectsIds[$order->element] = $order->id;
+												}
+
+												// Create supplier invoice
+												$id = $supplier_invoice->create($this->user);
+												if ($id < 0) {
+													$this->errors[] = $this->langs->trans('ECommerceErrorSupplierInvoiceCreate');
 													if (!empty($supplier_invoice->error)) $this->errors[] = $supplier_invoice->error;
 													$this->errors = array_merge($this->errors, $supplier_invoice->errors);
 													$error++;
 												}
-											}
-										}
-									}
 
-									// Auto send invoice by mail
-									if (!$error && !empty($this->eCommerceSite->parameters['order_actions']['send_invoice_by_mail'])) {
-										$send_to = trim($order_data['socpeopleCommande']['email']);
-										if (empty($send_to)) {
-											$this->errors[] = $this->langs->trans('ECommerceErrorCustomerEmailEmptyForSendInvoiceByEmail');
-											$error++;
-										} elseif (!($selected_payment_gateways['mail_model_for_send_invoice'] > 0)) {
-											$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysMailModelNotConfigured', $order_data['payment_method_id'], $order_data['payment_method']);
-											$error++;
-										}
-
-										if (!$error) {
-											$ret = $invoice->fetch($invoice->id);
-											$ret = $invoice->fetch_thirdparty();
-
-											require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
-											require_once DOL_DOCUMENT_ROOT . '/core/class/html.formmail.class.php';
-											$formmail = new FormMail($this->db);
-
-											$this->langs->load('mails');
-											$this->langs->load("commercial");
-											if (!empty($conf->dolimail->enabled)) $this->langs->load("dolimail@dolimail");
-
-											$trackid = 'inv' . $invoice->id;
-											$deliveryreceipt = 0;
-
-											// from / send to / ...
-											$from = $conf->global->MAIN_INFO_SOCIETE_NOM . ' <' . $conf->global->MAIN_INFO_SOCIETE_MAIL . '>';
-											$sendtocc = '';
-											$sendtobcc = !empty($conf->global->MAIN_MAIL_AUTOCOPY_INVOICE_TO) ? $conf->global->MAIN_MAIL_AUTOCOPY_INVOICE_TO : '';
-
-											// Define output language
-											$outputlangs = $this->langs;
-											$newlang = $conf->global->MAIN_MULTILANGS ? $invoice->thirdparty->default_lang : '';
-											if (!empty($newlang)) {
-												$outputlangs = new Translate('', $conf);
-												$outputlangs->setDefaultLang($newlang);
-												$outputlangs->loadLangs(array('commercial', 'bills', 'orders', 'contracts', 'members', 'propal', 'products', 'supplier_proposal', 'interventions'));
-											}
-
-											// Make substitution in email content
-											$substitutionarray = getCommonSubstitutionArray($outputlangs, 0, null, $invoice);
-											$substitutionarray['__CHECK_READ__'] = (is_object($invoice) && is_object($invoice->thirdparty)) ? '<img src="' . DOL_MAIN_URL_ROOT . '/public/emailing/mailing-read.php?tag=' . $invoice->thirdparty->tag . '&securitykey=' . urlencode($conf->global->MAILING_EMAIL_UNSUBSCRIBE_KEY) . '" width="1" height="1" style="width:1px;height:1px" border="0"/>' : '';
-											$substitutionarray['__PERSONALIZED__'] = '';    // deprecated
-											$substitutionarray['__CONTACTCIVNAME__'] = '';
-											$parameters = array('mode' => 'formemail');
-											complete_substitutions_array($substitutionarray, $outputlangs, $invoice, $parameters);
-
-											// Get email template
-											$type_template = 'facture_send';
-											$arraydefaultmessage = $formmail->getEMailTemplate($this->db, $type_template, $this->user, $outputlangs, $selected_payment_gateways['mail_model_for_send_invoice']);
-											if (is_numeric($arraydefaultmessage) && $arraydefaultmessage < 0) {
-												$this->errors[] = $this->langs->trans('ECommerceErrorGetEMailTemplate');
-												if (!empty($formmail->error)) $this->errors[] = $formmail->error;
-												else $this->errors[] = $this->db->lasterror();
-												$error++;
-											}
-
-											if (!$error) {
-												// Complete substitution array
-												if (empty($substitutionarray['__REF__'])) {
-													$paymenturl = '';
-												} else {
-													// Set the online payment url link into __ONLINE_PAYMENT_URL__ key
-													require_once DOL_DOCUMENT_ROOT . '/core/lib/payments.lib.php';
-													$outputlangs->load('paypal');
-													$paymenturl = getOnlinePaymentUrl(0, 'invoice', $substitutionarray['__REF__']);
-												}
-												$substitutionarray['__ONLINE_PAYMENT_URL__'] = $paymenturl;
-
-												// Define subject / message
-												$message = str_replace('\n', "\n", is_array($arraydefaultmessage) ? $arraydefaultmessage['content'] : $arraydefaultmessage->content);
-												// Deal with format differences between message and signature (text / HTML)
-												if (dol_textishtml($message) && !dol_textishtml($substitutionarray['__USER_SIGNATURE__'])) {
-													$substitutionarray['__USER_SIGNATURE__'] = dol_nl2br($substitutionarray['__USER_SIGNATURE__']);
-												} else if (!dol_textishtml($message) && dol_textishtml($substitutionarray['__USER_SIGNATURE__'])) {
-													$message = dol_nl2br($message);
-												}
-
-												$subject = make_substitutions(is_array($arraydefaultmessage) ? $arraydefaultmessage['topic'] : $arraydefaultmessage->topic, $substitutionarray);
-												$message = make_substitutions($message, $substitutionarray);
-												if (method_exists($invoice, 'makeSubstitution')) {
-													$subject = $invoice->makeSubstitution($subject);
-													$message = $invoice->makeSubstitution($message);
-												}
-
-												// Clean first \n and br (to avoid empty line when CONTACTCIVNAME is empty)
-												$message = preg_replace("/^(<br>)+/", "", $message);
-												$message = preg_replace("/^\n+/", "", $message);
-
-												// Define $urlwithroot
-												global $dolibarr_main_url_root;
-												$urlwithouturlroot = preg_replace('/' . preg_quote(DOL_URL_ROOT, '/') . '$/i', '', trim($dolibarr_main_url_root));
-												$urlwithroot = $urlwithouturlroot . DOL_URL_ROOT;        // This is to use external domain name found into config file
-												//$urlwithroot=DOL_MAIN_URL_ROOT;					// This is to use same domain name than current
-												// Make a change into HTML code to allow to include images from medias directory with an external reabable URL.
-												// <img alt="" src="/dolibarr_dev/htdocs/viewimage.php?modulepart=medias&amp;entity=1&amp;file=image/ldestailleur_166x166.jpg" style="height:166px; width:166px" />
-												// become
-												// <img alt="" src="'.$urlwithroot.'viewimage.php?modulepart=medias&amp;entity=1&amp;file=image/ldestailleur_166x166.jpg" style="height:166px; width:166px" />
-												$message = preg_replace('/(<img.*src=")[^\"]*viewimage\.php([^\"]*)modulepart=medias([^\"]*)file=([^\"]*)("[^\/]*\/>)/', '\1' . $urlwithroot . '/viewimage.php\2modulepart=medias\3file=\4\5', $message);
-
-												// Attach invoice file
-												$formmail->trackid = $trackid;      // $trackid must be defined
-												$formmail->clear_attached_files();
-												if (!empty(is_array($arraydefaultmessage) ? $arraydefaultmessage['joinfiles'] : $arraydefaultmessage->joinfiles)) {
-													$ref = dol_sanitizeFileName($invoice->ref);
-													$fileparams = dol_most_recent_file($conf->facture->dir_output . '/' . $ref, preg_quote($ref, '/') . '[^\-]+');
-													$file = $fileparams['fullname'];
-													$formmail->add_attached_files($file, basename($file), dol_mimetype($file));
-												}
-												$attachedfiles = $formmail->get_attached_files();
-												$filepath = $attachedfiles['paths'];
-												$filename = $attachedfiles['names'];
-												$mimetype = $attachedfiles['mimes'];
-
-												// Send mail (substitutionarray must be done just before this)
-												require_once DOL_DOCUMENT_ROOT . '/core/class/CMailFile.class.php';
-												$sendcontext = 'standard';
-												$mailfile = new CMailFile($subject, $send_to, $from, $message, $filepath, $mimetype, $filename, $sendtocc, $sendtobcc, $deliveryreceipt, -1, '', '', $trackid, '', $sendcontext);
-												if ($mailfile->error) {
-													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceCreateMail');
-													if (!empty($mailfile->error)) $this->errors[] = $mailfile->error;
-													$this->errors = array_merge($this->errors, $mailfile->errors);
-													$error++;
-												} else {
-													$result = $mailfile->sendfile();
-													if ($result) {
-														// Get order contacts
-														$contact_list = $invoice->liste_contact(-1, 'external');
-														if (!is_array($contact_list)) {
-															$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceGetExternalContacts', $invoice->id);
-															if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-															$this->errors = array_merge($this->errors, $invoice->errors);
+												// Add lines
+												if (!$error) {
+													$product_id = $selected_payment_gateways['product_id_for_fee'] > 0 ? $selected_payment_gateways['product_id_for_fee'] : 0;
+													foreach ($order_data['fee_lines'] as $fee_line) {
+														if (floatval(DOL_VERSION) < 8) $this->db->begin(); // Not exist in addline function but commit and rollback exist
+														$result = $supplier_invoice->addline(
+															$fee_line['label'],
+															$fee_line['price'],
+															$fee_line['tax'],
+															$fee_line['local_tax1_tx'],
+															$fee_line['local_tax2_tx'],
+															$fee_line['qty'],
+															$product_id);
+														if ($result < 0) {
+															$this->errors[] = $this->langs->trans('ECommerceErrorSupplierInvoiceAddLine');
+															if (!empty($supplier_invoice->error)) $this->errors[] = $supplier_invoice->error;
+															$this->errors = array_merge($this->errors, $supplier_invoice->errors);
 															$error++;
-														} else {
-															// Event send email
-															$sendtoid = array();
-															foreach ($contact_list as $contact_infos) {
-																$sendtoid[$contact_infos['id']] = $contact_infos['id'];
-															}
-															$sendtoid = array_values($sendtoid);
-
-															$actionmsg = '';
-															$actionmsg2 = $this->langs->transnoentities('MailSentBy') . ' ' . CMailFile::getValidAddress($from, 4, 0, 1) . ' ' . $this->langs->transnoentities('To') . ' ' . CMailFile::getValidAddress($send_to, 4, 0, 1);
-															if ($message) {
-																$actionmsg = $this->langs->transnoentities('MailFrom') . ': ' . dol_escape_htmltag($from);
-																$actionmsg = dol_concatdesc($actionmsg, $this->langs->transnoentities('MailTo') . ': ' . dol_escape_htmltag($send_to));
-																$actionmsg = dol_concatdesc($actionmsg, $this->langs->transnoentities('MailTopic') . ": " . $subject);
-																$actionmsg = dol_concatdesc($actionmsg, $this->langs->transnoentities('TextUsedInTheMessageBody') . ":");
-																$actionmsg = dol_concatdesc($actionmsg, $message);
-															}
-
-															$invoice->sendtoid = $sendtoid;       // To link to contacts/addresses. This is an array.
-															$invoice->actiontypecode = 'AC_OTH_AUTO'; // Type of event ('AC_OTH', 'AC_OTH_AUTO', 'AC_XXX'...)
-															$invoice->actionmsg = $actionmsg;      // Long text
-															$invoice->actionmsg2 = $actionmsg2;     // Short text
-															$invoice->trackid = $trackid;
-															$invoice->fk_element = $invoice->id;
-															$invoice->elementtype = $invoice->element;
-															if (is_array($attachedfiles) && count($attachedfiles) > 0) {
-																$invoice->attachedfiles = $attachedfiles;
-															}
-
-															include_once DOL_DOCUMENT_ROOT . '/core/class/interfaces.class.php';
-															$interface = new Interfaces($this->db);
-															$result = $interface->run_triggers('BILL_SENTBYMAIL', $invoice, $this->user, $this->langs, $conf);
-															if ($result < 0) {
-																$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceCreateSendMailEvent');
-																if (!empty($interface->error)) $this->errors[] = $interface->error;
-																$this->errors = array_merge($this->errors, $interface->errors);
-																$error++;
-															}
+															break;
 														}
+													}
+												}
+
+												// Validate invoice
+												if (!$error) {
+													$result = $supplier_invoice->validate($this->user);
+													if ($result < 0) {
+														$this->errors[] = $this->langs->trans('ECommerceErrorSupplierInvoiceValidate');
+														if (!empty($supplier_invoice->error)) $this->errors[] = $supplier_invoice->error;
+														$this->errors = array_merge($this->errors, $supplier_invoice->errors);
+														$error++;
+													}
+												}
+
+												// Creation of payment line
+												if (!$error && $conf->banque->enabled && !empty($selected_payment_gateways['create_supplier_invoice_payment'])) {
+													$payment = new PaiementFourn($this->db);
+													$payment->datepaye = $supplier_invoice->date;
+													$payment->amounts = array($supplier_invoice->id => $supplier_invoice->total_ttc);   // Array of amounts
+													$payment->multicurrency_amounts = array();
+													$payment->paiementid = $supplier_invoice->mode_reglement_id;
+													$payment->num_paiement = '';
+													$payment->note = 'Created by WooSync';
+
+													$payment_id = $payment->create($this->user, 1);
+													if ($payment_id < 0) {
+														$this->errors[] = $this->langs->trans('ECommerceErrorSupplierInvoiceCreatePayment');
+														if (!empty($payment->error)) $this->errors[] = $payment->error;
+														$this->errors = array_merge($this->errors, $payment->errors);
+														$error++;
 													} else {
-														$this->langs->load("other");
-														$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceSendByMail');
-														if ($mailfile->error) {
-															$this->errors[] = $this->langs->trans('ErrorFailedToSendMail', $from, $send_to);
-															$this->errors[] = $mailfile->error;
-														} else {
-															$this->errors[] = ' No mail sent. Feature is disabled by option MAIN_DISABLE_ALL_MAILS';
+														$result = $payment->addPaymentToBank($this->user, 'payment_supplier', '(SupplierInvoicePayment)', $bank_account_id, '', '');
+														if ($result < 0) {
+															$this->errors[] = $this->langs->trans('ECommerceErrorSupplierInvoiceAddPaymentToBank');
+															if (!empty($payment->error)) $this->errors[] = $payment->error;
+															$this->errors = array_merge($this->errors, $payment->errors);
+															$error++;
 														}
+													}
+												}
+
+												// Generate document
+												if (!$error && !empty($conf->global->INVOICE_SUPPLIER_ADDON_PDF) && empty($conf->global->MAIN_DISABLE_PDF_AUTOUPDATE)) {
+													// Define output language
+													$outputlangs = $this->langs;
+													$newlang = '';
+													if ($conf->global->MAIN_MULTILANGS && empty($newlang)) $newlang = $supplier_invoice->thirdparty->default_lang;
+													if (!empty($newlang)) {
+														$outputlangs = new Translate("", $conf);
+														$outputlangs->setDefaultLang($newlang);
+														$outputlangs->load('products');
+													}
+													$supplier_invoice->fetch($supplier_invoice->id); // Reload to get new records
+
+													$hidedetails = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DETAILS) ? 1 : 0;
+													$hidedesc = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DESC) ? 1 : 0;
+													$hideref = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_REF) ? 1 : 0;
+													$result = $supplier_invoice->generateDocument($conf->global->INVOICE_SUPPLIER_ADDON_PDF, $outputlangs, $hidedetails, $hidedesc, $hideref);
+													if ($result < 0) {
+														$this->errors[] = $this->langs->trans('ECommerceErrorSupplierInvoiceGenerateDocument');
+														if (!empty($supplier_invoice->error)) $this->errors[] = $supplier_invoice->error;
+														$this->errors = array_merge($this->errors, $supplier_invoice->errors);
 														$error++;
 													}
 												}
 											}
 										}
+
+										// Auto send invoice by mail
+										if (!$error && !empty($this->eCommerceSite->parameters['order_actions']['send_invoice_by_mail'])) {
+											$send_to = trim($order_data['socpeopleCommande']['email']);
+											if (empty($send_to)) {
+												$this->errors[] = $this->langs->trans('ECommerceErrorCustomerEmailEmptyForSendInvoiceByEmail');
+												$error++;
+											} elseif (!($selected_payment_gateways['mail_model_for_send_invoice'] > 0)) {
+												$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysMailModelNotConfigured', $order_data['payment_method_id'], $order_data['payment_method']);
+												$error++;
+											}
+
+											if (!$error) {
+												$ret = $invoice->fetch($invoice->id);
+												$ret = $invoice->fetch_thirdparty();
+
+												require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+												require_once DOL_DOCUMENT_ROOT . '/core/class/html.formmail.class.php';
+												$formmail = new FormMail($this->db);
+
+												$this->langs->load('mails');
+												$this->langs->load("commercial");
+												if (!empty($conf->dolimail->enabled)) $this->langs->load("dolimail@dolimail");
+
+												$trackid = 'inv' . $invoice->id;
+												$deliveryreceipt = 0;
+
+												// from / send to / ...
+												$from = $conf->global->MAIN_INFO_SOCIETE_NOM . ' <' . $conf->global->MAIN_INFO_SOCIETE_MAIL . '>';
+												$sendtocc = '';
+												$sendtobcc = !empty($conf->global->MAIN_MAIL_AUTOCOPY_INVOICE_TO) ? $conf->global->MAIN_MAIL_AUTOCOPY_INVOICE_TO : '';
+
+												// Define output language
+												$outputlangs = $this->langs;
+												$newlang = $conf->global->MAIN_MULTILANGS ? $invoice->thirdparty->default_lang : '';
+												if (!empty($newlang)) {
+													$outputlangs = new Translate('', $conf);
+													$outputlangs->setDefaultLang($newlang);
+													$outputlangs->loadLangs(array('commercial', 'bills', 'orders', 'contracts', 'members', 'propal', 'products', 'supplier_proposal', 'interventions'));
+												}
+
+												// Make substitution in email content
+												$substitutionarray = getCommonSubstitutionArray($outputlangs, 0, null, $invoice);
+												$substitutionarray['__CHECK_READ__'] = (is_object($invoice) && is_object($invoice->thirdparty)) ? '<img src="' . DOL_MAIN_URL_ROOT . '/public/emailing/mailing-read.php?tag=' . $invoice->thirdparty->tag . '&securitykey=' . urlencode($conf->global->MAILING_EMAIL_UNSUBSCRIBE_KEY) . '" width="1" height="1" style="width:1px;height:1px" border="0"/>' : '';
+												$substitutionarray['__PERSONALIZED__'] = '';    // deprecated
+												$substitutionarray['__CONTACTCIVNAME__'] = '';
+												$parameters = array('mode' => 'formemail');
+												complete_substitutions_array($substitutionarray, $outputlangs, $invoice, $parameters);
+
+												// Get email template
+												$type_template = 'facture_send';
+												$arraydefaultmessage = $formmail->getEMailTemplate($this->db, $type_template, $this->user, $outputlangs, $selected_payment_gateways['mail_model_for_send_invoice']);
+												if (is_numeric($arraydefaultmessage) && $arraydefaultmessage < 0) {
+													$this->errors[] = $this->langs->trans('ECommerceErrorGetEMailTemplate');
+													if (!empty($formmail->error)) $this->errors[] = $formmail->error;
+													else $this->errors[] = $this->db->lasterror();
+													$error++;
+												}
+
+												if (!$error) {
+													// Complete substitution array
+													if (empty($substitutionarray['__REF__'])) {
+														$paymenturl = '';
+													} else {
+														// Set the online payment url link into __ONLINE_PAYMENT_URL__ key
+														require_once DOL_DOCUMENT_ROOT . '/core/lib/payments.lib.php';
+														$outputlangs->load('paypal');
+														$paymenturl = getOnlinePaymentUrl(0, 'invoice', $substitutionarray['__REF__']);
+													}
+													$substitutionarray['__ONLINE_PAYMENT_URL__'] = $paymenturl;
+
+													// Define subject / message
+													$message = str_replace('\n', "\n", is_array($arraydefaultmessage) ? $arraydefaultmessage['content'] : $arraydefaultmessage->content);
+													// Deal with format differences between message and signature (text / HTML)
+													if (dol_textishtml($message) && !dol_textishtml($substitutionarray['__USER_SIGNATURE__'])) {
+														$substitutionarray['__USER_SIGNATURE__'] = dol_nl2br($substitutionarray['__USER_SIGNATURE__']);
+													} else if (!dol_textishtml($message) && dol_textishtml($substitutionarray['__USER_SIGNATURE__'])) {
+														$message = dol_nl2br($message);
+													}
+
+													$subject = make_substitutions(is_array($arraydefaultmessage) ? $arraydefaultmessage['topic'] : $arraydefaultmessage->topic, $substitutionarray);
+													$message = make_substitutions($message, $substitutionarray);
+													if (method_exists($invoice, 'makeSubstitution')) {
+														$subject = $invoice->makeSubstitution($subject);
+														$message = $invoice->makeSubstitution($message);
+													}
+
+													// Clean first \n and br (to avoid empty line when CONTACTCIVNAME is empty)
+													$message = preg_replace("/^(<br>)+/", "", $message);
+													$message = preg_replace("/^\n+/", "", $message);
+
+													// Define $urlwithroot
+													global $dolibarr_main_url_root;
+													$urlwithouturlroot = preg_replace('/' . preg_quote(DOL_URL_ROOT, '/') . '$/i', '', trim($dolibarr_main_url_root));
+													$urlwithroot = $urlwithouturlroot . DOL_URL_ROOT;        // This is to use external domain name found into config file
+													//$urlwithroot=DOL_MAIN_URL_ROOT;					// This is to use same domain name than current
+													// Make a change into HTML code to allow to include images from medias directory with an external reabable URL.
+													// <img alt="" src="/dolibarr_dev/htdocs/viewimage.php?modulepart=medias&amp;entity=1&amp;file=image/ldestailleur_166x166.jpg" style="height:166px; width:166px" />
+													// become
+													// <img alt="" src="'.$urlwithroot.'viewimage.php?modulepart=medias&amp;entity=1&amp;file=image/ldestailleur_166x166.jpg" style="height:166px; width:166px" />
+													$message = preg_replace('/(<img.*src=")[^\"]*viewimage\.php([^\"]*)modulepart=medias([^\"]*)file=([^\"]*)("[^\/]*\/>)/', '\1' . $urlwithroot . '/viewimage.php\2modulepart=medias\3file=\4\5', $message);
+
+													// Attach invoice file
+													$formmail->trackid = $trackid;      // $trackid must be defined
+													$formmail->clear_attached_files();
+													if (!empty(is_array($arraydefaultmessage) ? $arraydefaultmessage['joinfiles'] : $arraydefaultmessage->joinfiles)) {
+														$ref = dol_sanitizeFileName($invoice->ref);
+														$fileparams = dol_most_recent_file($conf->facture->dir_output . '/' . $ref, preg_quote($ref, '/') . '[^\-]+');
+														$file = $fileparams['fullname'];
+														$formmail->add_attached_files($file, basename($file), dol_mimetype($file));
+													}
+													$attachedfiles = $formmail->get_attached_files();
+													$filepath = $attachedfiles['paths'];
+													$filename = $attachedfiles['names'];
+													$mimetype = $attachedfiles['mimes'];
+
+													// Send mail (substitutionarray must be done just before this)
+													require_once DOL_DOCUMENT_ROOT . '/core/class/CMailFile.class.php';
+													$sendcontext = 'standard';
+													$mailfile = new CMailFile($subject, $send_to, $from, $message, $filepath, $mimetype, $filename, $sendtocc, $sendtobcc, $deliveryreceipt, -1, '', '', $trackid, '', $sendcontext);
+													if ($mailfile->error) {
+														$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceCreateMail');
+														if (!empty($mailfile->error)) $this->errors[] = $mailfile->error;
+														$this->errors = array_merge($this->errors, $mailfile->errors);
+														$error++;
+													} else {
+														$result = $mailfile->sendfile();
+														if ($result) {
+															// Get order contacts
+															$contact_list = $invoice->liste_contact(-1, 'external');
+															if (!is_array($contact_list)) {
+																$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceGetExternalContacts', $invoice->id);
+																if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+																$this->errors = array_merge($this->errors, $invoice->errors);
+																$error++;
+															} else {
+																// Event send email
+																$sendtoid = array();
+																foreach ($contact_list as $contact_infos) {
+																	$sendtoid[$contact_infos['id']] = $contact_infos['id'];
+																}
+																$sendtoid = array_values($sendtoid);
+
+																$actionmsg = '';
+																$actionmsg2 = $this->langs->transnoentities('MailSentBy') . ' ' . CMailFile::getValidAddress($from, 4, 0, 1) . ' ' . $this->langs->transnoentities('To') . ' ' . CMailFile::getValidAddress($send_to, 4, 0, 1);
+																if ($message) {
+																	$actionmsg = $this->langs->transnoentities('MailFrom') . ': ' . dol_escape_htmltag($from);
+																	$actionmsg = dol_concatdesc($actionmsg, $this->langs->transnoentities('MailTo') . ': ' . dol_escape_htmltag($send_to));
+																	$actionmsg = dol_concatdesc($actionmsg, $this->langs->transnoentities('MailTopic') . ": " . $subject);
+																	$actionmsg = dol_concatdesc($actionmsg, $this->langs->transnoentities('TextUsedInTheMessageBody') . ":");
+																	$actionmsg = dol_concatdesc($actionmsg, $message);
+																}
+
+																$invoice->sendtoid = $sendtoid;       // To link to contacts/addresses. This is an array.
+																$invoice->actiontypecode = 'AC_OTH_AUTO'; // Type of event ('AC_OTH', 'AC_OTH_AUTO', 'AC_XXX'...)
+																$invoice->actionmsg = $actionmsg;      // Long text
+																$invoice->actionmsg2 = $actionmsg2;     // Short text
+																$invoice->trackid = $trackid;
+																$invoice->fk_element = $invoice->id;
+																$invoice->elementtype = $invoice->element;
+																if (is_array($attachedfiles) && count($attachedfiles) > 0) {
+																	$invoice->attachedfiles = $attachedfiles;
+																}
+
+																include_once DOL_DOCUMENT_ROOT . '/core/class/interfaces.class.php';
+																$interface = new Interfaces($this->db);
+																$result = $interface->run_triggers('BILL_SENTBYMAIL', $invoice, $this->user, $this->langs, $conf);
+																if ($result < 0) {
+																	$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceCreateSendMailEvent');
+																	if (!empty($interface->error)) $this->errors[] = $interface->error;
+																	$this->errors = array_merge($this->errors, $interface->errors);
+																	$error++;
+																}
+															}
+														} else {
+															$this->langs->load("other");
+															$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceSendByMail');
+															if ($mailfile->error) {
+																$this->errors[] = $this->langs->trans('ErrorFailedToSendMail', $from, $send_to);
+																$this->errors[] = $mailfile->error;
+															} else {
+																$this->errors[] = ' No mail sent. Feature is disabled by option MAIN_DISABLE_ALL_MAILS';
+															}
+															$error++;
+														}
+													}
+												}
+											}
+										}
+									} elseif (empty($this->eCommerceSite->parameters['order_actions']['create_order'])) {
+										$this->warnings[] = $this->langs->trans('ECommerceWarningOrderThirdPartyNotSupported', $order_data['remote_id'], $order_data['remote_id_societe']);
+										$bypass = true;
 									}
-								} elseif (empty($this->eCommerceSite->parameters['order_actions']['create_order'])) {
-									$this->warnings[] = $this->langs->trans('ECommerceWarningOrderThirdPartyNotSupported', $order_data['remote_id'], $order_data['remote_id_societe']);
-									$bypass = true;
 								}
 							}
 
@@ -5877,6 +6028,49 @@ class eCommerceSynchro
 	}
 
 	/**
+	 * Get first third party who not anonymous by email
+	 *
+	 * @param	string		$email			Third party email
+	 * @param	int			$site_id		Site ID
+	 * @return	int							<0 if KO, =0 if not found, otherwise the third party ID
+	 */
+	public function getFirstThirdPartyWhoNotAnonymousByEmail($email, $site_id = 0)
+	{
+		$email = trim($email);
+
+		if (empty($email)) {
+			return 0;
+		}
+
+		// Search by email
+		$email = $this->db->escape($email);
+
+		$sql = "SELECT DISTINCT s.rowid FROM " . MAIN_DB_PREFIX . "societe AS s";
+		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "socpeople AS sp ON sp.fk_soc = s.rowid";
+		if ($site_id > 0) $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_societe AS es ON es.fk_societe = s.rowid";
+		$sql .= " WHERE (s.email = '$email' OR sp.email = '$email')";
+		if ($this->eCommerceSite->fk_anonymous_thirdparty > 0) $sql .= " AND s.rowid != " . $this->eCommerceSite->fk_anonymous_thirdparty;
+		if ($site_id > 0) $sql .= " AND es.fk_site = $site_id";
+		$sql .= " AND s.status = 1";
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			dol_syslog(__METHOD__ . ' SQL: ' . $sql . '; Error: ' . $this->db->lasterror(), LOG_ERR);
+			$this->errors[] = $this->langs->trans('ECommerceErrorSearchThirdPartyByEmail', $email, $site_id);
+			$this->errors[] = $this->db->error();
+			return -1;
+		}
+
+		if ($obj = $this->db->fetch_object($resql)) {
+			return $obj->rowid;
+		}
+
+		$this->db->free($resql);
+
+		return 0;
+	}
+
+	/**
 	 * Get third party by name
 	 *
 	 * @param	string		$name			Third party name
@@ -5942,6 +6136,76 @@ class eCommerceSynchro
 		if ($result == 0) $result = $this->getThirdPartyByName($name, $site_id);
 
 		return $result;
+	}
+
+	/**
+	 *  Get contact infos (contact id and company id) from data
+	 *
+	 * @param	array			$contact_data		Contact datas
+	 * @param	int				$company_id			Specified company
+	 * @return	array|int							<0 if KO, otherwise empty array if not found or if found array('contact_id' => xxx, 'company_id' => xxx)
+	 */
+	public function getContactInfosFromData($contact_data, $company_id = 0)
+	{
+		global $conf;
+
+		// Clean parameters
+		$socid = $contact_data['fk_soc'];
+		$lastname = trim($contact_data['lastname']);
+		$firstname = trim($contact_data['firstname']);
+		if (!empty($conf->global->ECOMMERCENG_UPPERCASE_LASTNAME)) {
+			$firstname = dol_ucwords(dol_strtolower($firstname));
+			$lastname = dol_strtoupper($lastname);
+		}
+		if (!empty($conf->global->MAIN_FIRST_TO_UPPER)) $lastname = ucwords($lastname);
+		if (!empty($conf->global->MAIN_FIRST_TO_UPPER)) $firstname = ucwords($firstname);
+		$address = $contact_data['address'];
+		if (version_compare(DOL_VERSION, '6.0') >= 0) {
+			$zip = dol_trunc($contact_data['zip'], 25, 'right', 'UTF-8', 1);
+		} else {
+			$zip = dol_trunc($contact_data['zip'], 10, 'right', 'UTF-8', 1);
+		}
+		$town = dol_trunc($contact_data['town'], 30, 'right', 'UTF-8', 1);
+		$country_id = $contact_data['country_id'];
+		$email = trim($contact_data['email']);
+		$phone_pro = trim(dol_trunc($contact_data['phone'], 30, 'right', 'UTF-8', 1));
+		$fax = trim(dol_trunc($contact_data['fax'], 30, 'right', 'UTF-8', 1));
+		$entity = $conf->entity;
+
+		$sql = 'SELECT rowid, fk_soc FROM ' . MAIN_DB_PREFIX . 'socpeople';
+		$sql .= ' WHERE lastname LIKE "' . $this->db->escape($lastname) . '"';
+		$sql .= ' AND firstname LIKE "' . $this->db->escape($firstname) . '"';
+		$sql .= ' AND address LIKE "' . $this->db->escape($address) . '"';
+		$sql .= ' AND town LIKE "' . $this->db->escape($town) . '"';
+		$sql .= ' AND zip LIKE "' . $this->db->escape($zip) . '"';
+		if (isset($contact->country_id)) $sql .= ' AND fk_pays' . ($country_id > 0 ? ' = ' . $country_id : ' IS NULL');
+		if (isset($contact->email)) $sql .= ' AND email LIKE "' . $this->db->escape($email) . '"';
+		if (isset($contact->phone_pro)) $sql .= ' AND phone LIKE "' . $this->db->escape($phone_pro) . '"';
+		if (isset($contact->fax)) $sql .= ' AND fax LIKE "' . $this->db->escape($fax) . '"';
+		if ($company_id > 0) {
+			$sql .= ' AND fk_soc = ' . $this->db->escape($company_id);
+		} else {
+			if ($socid > 0) $sql .= ' AND fk_soc = ' . $this->db->escape($socid);
+			else if ($socid == -1) $sql .= " AND fk_soc IS NULL";
+		}
+		$sql .= ' AND entity = ' . $entity;
+
+		$resql = $this->db->query($sql);
+		if ($resql) {
+			$result = array();
+
+			if ($obj = $this->db->fetch_object($resql)) {
+				$result = array('contact_id' => $obj->rowid, 'company_id' => $obj->fk_soc);
+			}
+
+			$this->db->free($resql);
+
+			return $result;
+		} else {
+			$this->error = $this->db->lasterror();
+			dol_syslog(__METHOD__ . " - Error: " . $this->error, LOG_ERR);
+			return -1;
+		}
 	}
 
 	/**

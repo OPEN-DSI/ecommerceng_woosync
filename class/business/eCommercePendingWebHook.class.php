@@ -351,6 +351,7 @@ class eCommercePendingWebHook
 		$sql = "UPDATE " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks SET" .
 			"  status = " . self::STATUS_PROCESSED .
 			", datep = '" . $this->db->idate($now) . "'" .
+			", error_msg = NULL" .
 			" WHERE rowid = " . $row_id .
 			" AND status IN (" . self::STATUS_NOT_PROCESSED . "," . self::STATUS_WARNING . ")";
 
@@ -476,6 +477,7 @@ class eCommercePendingWebHook
 
 		$this->error = '';
 		$this->errors = array();
+		$this->warnings = array();
 
 		$synchro = $this->getSynchro($site_id);
 		if (!is_object($synchro)) {

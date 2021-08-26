@@ -1,5 +1,19 @@
 # ChangeLog
 
+## 4.0.81.0
+- Correction de la définition de la variable in_stock pour les produit simple lors de la mise a jour d'un produit
+- Lors du traitement des webhooks, recupère la derniere version du produit si le webhook ne fournit pas d'UGS et la ref est obligatoire dans dolibarr
+- Correction d'un bug possible lors du merge des meta-datas du produit variant et du produit racine pour la gestion des extrafields
+- Affiche l'erreur completement dans la liste des webhooks (popup retiré)
+- Correction du cas lorsqu'un webhook d'un produit arrivé en tant que variant est transformer en produit simple avant son traitement dans Dolibarr
+- Correction des filtres sur la liste des webhooks
+- Correction de la creation possible de tiers en doublon lors de la synchronisation des contacts d'une commande WooCommerce pendant la creation de la commande/facture sur Dolibarr
+- Vérifie avant de synchroniser le client de la commande si la commande doit etre synchronisé et non après, idem pour la facture
+- Correction d'accumulation de warnings lors du traitement des commandes
+- Prend le premier tiers qui n'est pas le tiers anonyme si il trouve plus de 1 tiers lors de la recherche du tiers de la commande grace a son email
+- Correction suppression du message d'erreur lorsque le webhooks est passé au statut traité
+- Correction des fichier de langues anglaises
+
 ## 4.0.80.0
 - Correction de la gestion des liens des produits dans le cas où un produit simple deviens un produit variable et inversement
 
