@@ -1,5 +1,13 @@
 # ChangeLog
 
+## 4.0.82.0
+- Ajout des options pour la generation de la facture d'acompte (options sur les lignes)
+- Correction de la suppression du lien entre la commande WooCommerce et la facture Dolibarr si l'on a choisi de ne générer que la facture lors de la synchronisation
+- Affichage de l'erreur survenue d'un changement de la référence d'un produit WooCommerce dont la référence existe deja sur un autre produit Dolibarr
+- Passe la synchronisation des webhooks concernant des produits effacés avant leurs traitement
+- N'affiche les meta-data dans la description des lignes que si elle ne sont pas de type object ou array
+- Correction diverses
+
 ## 4.0.81.0
 - Correction de la définition de la variable in_stock pour les produit simple lors de la mise a jour d'un produit
 - Lors du traitement des webhooks, recupère la derniere version du produit si le webhook ne fournit pas d'UGS et la ref est obligatoire dans dolibarr

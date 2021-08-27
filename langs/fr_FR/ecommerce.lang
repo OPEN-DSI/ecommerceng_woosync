@@ -510,6 +510,7 @@ ECommerceErrorWhenUnlinkProductByProductId          = Erreur lors de la suppress
 ECommerceErrorWhenUnlinkProductByRemoteId           = Erreur lors de la suppression du lien du produit (Site: %s; ID distant: %s)
 ECommerceErrorWhenUnlinkProduct                     = Erreur lors de la suppression du lien du produit (Site: %s; ID: %s; ID distant: %s)
 ECommerceErrorWhenUnlinkProductCategory             = Erreur lors de la suppression de la catégorie sur le produit (Site: %s; ID: %s; Catégorie ID: %s)
+ECommerceErrorUpdateRefProduct                      = Erreur lors de la modification de la référence du produit '%s' vers la nouvelle référence '%s' (elle existe déja)
 
 ############################################################################################
 # Warnings

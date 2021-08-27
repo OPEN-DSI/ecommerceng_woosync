@@ -1311,7 +1311,7 @@ class eCommerceRemoteAccessWoocommerce
 					if ($order_metadata_product_lines_to_description_etod) {
 						$metadata_in_description = array();
 						foreach ($item->meta_data as $meta) {
-							if (!empty($meta->display_key) && !empty($meta->display_value) && (
+							if (!empty($meta->display_key) && !empty($meta->display_value) && !is_array($meta->display_value) && !is_object($meta->display_value) && (
 									($order_filter_mode_metadata_product_lines_to_description_etod == 'include' && in_array($meta->key, $order_filter_keys_metadata_product_lines_to_description_etod)) ||
 									($order_filter_mode_metadata_product_lines_to_description_etod == 'exclude' && !in_array($meta->key, $order_filter_keys_metadata_product_lines_to_description_etod))
 								)

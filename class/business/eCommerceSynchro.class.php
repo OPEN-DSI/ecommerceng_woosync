@@ -2845,6 +2845,11 @@ class eCommerceSynchro
 					}
 
 					$product_data = $products_data[0];
+					if (empty($product_data)) {
+						// Product not found
+						dol_syslog(__METHOD__ . " - Product not found (Remote ID: {$remote_id_to_synchronize[0]})", LOG_NOTICE);
+						return 0;
+					}
 				}
 
 				$result = $this->synchronizeProduct($product_data);
@@ -3611,6 +3616,9 @@ class eCommerceSynchro
 							$result = $product->update($product->id, $this->user);
 							if ($result < 0) {
 								$this->errors[] = $this->langs->trans('ECommerceErrorUpdateProduct', $product->id);
+								if (!empty($product_ref) && $product_ref != $product->oldcopy->ref && $product->db->errno() == 'DB_ERROR_RECORD_ALREADY_EXISTS' && empty($conf->barcode->enabled) || empty($product->barcode)) {
+									$this->errors[] = $this->langs->trans('ECommerceErrorUpdateRefProduct', $product->oldcopy->ref, $product_ref);
+								}
 							}
 						} // Create product
 						else {
@@ -4912,6 +4920,8 @@ class eCommerceSynchro
 								if (!$error) {
 									if ($third_party_id > 0) {
 										$isDepositType = isset($this->eCommerceSite->parameters['create_invoice_type']) && $this->eCommerceSite->parameters['create_invoice_type'] == Facture::TYPE_DEPOSIT;
+										$typeAmount = isset($this->eCommerceSite->parameters['order_actions']['create_invoice_deposit_type']) ? $this->eCommerceSite->parameters['order_actions']['create_invoice_deposit_type'] : '';
+										$valueDeposit = isset($this->eCommerceSite->parameters['order_actions']['create_invoice_deposit_value']) ? $this->eCommerceSite->parameters['order_actions']['create_invoice_deposit_value'] : 0;
 
 										// Set the invoice
 										$invoice->socid = $third_party_id;
@@ -4957,107 +4967,183 @@ class eCommerceSynchro
 										// Add product lines and contacts
 										if (!$error) {
 											if ($order->id > 0) {
-												if ($isDepositType) {
-													// Add deposit line
-													$result = $invoice->addline('(DEPOSIT) (' . price($order_data['payment_amount_ttc'], '', $this->langs, 0, -1, -1,
-															(!empty($invoice->multicurrency_code) ? $invoice->multicurrency_code : $conf->currency)) . ') - ' . $order_data['ref_client'],
-														$order_data['payment_amount_ttc'], 1, 0, 0, 0,
-														(empty($conf->global->INVOICE_PRODUCTID_DEPOSIT) ? 0 : $conf->global->INVOICE_PRODUCTID_DEPOSIT));
-													if ($result < 0) {
-														$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
-														if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-														$this->errors = array_merge($this->errors, $invoice->errors);
-														$error++;
-													}
-												} else {
-													// Add product lines
-													if (empty($order->lines)) {
-														if (method_exists($order, 'fetch_lines')) $order->fetch_lines();
-														elseif (method_exists($order, 'getLinesArray')) $order->getLinesArray();
+												if (empty($order->lines)) {
+													if (method_exists($order, 'fetch_lines')) $order->fetch_lines();
+													elseif (method_exists($order, 'getLinesArray')) $order->getLinesArray();
+												}
+
+												// Add deposit lines
+												if ($isDepositType && in_array($typeAmount, array('amount', 'variable'))) {
+													$amount_ttc_diff = 0;
+													$amountdeposit = array();
+
+													if (!empty($conf->global->MAIN_DEPOSIT_MULTI_TVA)) {
+														if ($typeAmount == 'amount') $amount = $order->total_ttc;
+														else $amount = $order->total_ttc * ($valueDeposit / 100);
+
+														$TTotalByTva = array();
+														foreach ($order->lines as &$line) {
+															if (!empty($line->special_code)) continue;
+															$TTotalByTva[$line->tva_tx] += $line->total_ttc;
+														}
+
+														foreach ($TTotalByTva as $tva => &$total) {
+															$coef = $total / $order->total_ttc; // Calc coef
+															$am = $amount * $coef;
+															$amount_ttc_diff += $am;
+															$amountdeposit[$tva] += $am / (1 + $tva / 100); // Convert into HT for the addline
+														}
+													} else {
+														if ($typeAmount == 'amount') {
+															$amountdeposit[0] = $order->total_ttc;
+														} elseif ($typeAmount == 'variable') {
+															$totalamount = 0;
+															$lines = $order->lines;
+															$numlines = count($lines);
+															for ($i = 0; $i < $numlines; $i++) {
+																$qualified = 1;
+																if (empty($lines[$i]->qty)) $qualified = 0; // We discard qty=0, it is an option
+																if (!empty($lines[$i]->special_code)) $qualified = 0; // We discard special_code (frais port, ecotaxe, option, ...)
+																if ($qualified) {
+																	$totalamount += $lines[$i]->total_ht; // Fixme : is it not for the customer ? Shouldn't we take total_ttc ?
+																	$tva_tx = $lines[$i]->tva_tx;
+																	$amountdeposit[$tva_tx] += ($lines[$i]->total_ht * $valueDeposit) / 100;
+																}
+															}
+
+															if ($totalamount == 0) {
+																$amountdeposit[0] = 0;
+															}
+														}
+
+														$amount_ttc_diff = $amountdeposit[0];
 													}
 
+													foreach ($amountdeposit as $tva => $amount) {
+														if (empty($amount)) continue;
+
+														$descline = '(DEPOSIT)';
+														if ($typeAmount == 'amount') {
+															$descline .= ' (' . price($valueDeposit, '', $this->langs, 0, -1, -1, (!empty($invoice->multicurrency_code) ? $invoice->multicurrency_code : $conf->currency)) . ')';
+														} elseif ($typeAmount == 'variable') {
+															$descline .= ' (' . $valueDeposit . '%)';
+														}
+														$descline .= ' - ' . $order->ref;
+
+														// Add deposit line
+														$result = $invoice->addline($descline, $amount, 1, $tva, 0, 0, (empty($conf->global->INVOICE_PRODUCTID_DEPOSIT) ? 0 : $conf->global->INVOICE_PRODUCTID_DEPOSIT));
+														if ($result < 0) {
+															$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
+															if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+															$this->errors = array_merge($this->errors, $invoice->errors);
+															$error++;
+															break;
+														}
+													}
+
+													if (!$error) {
+														$diff = $invoice->total_ttc - $amount_ttc_diff;
+														if (!empty($conf->global->MAIN_DEPOSIT_MULTI_TVA) && $diff != 0) {
+															$invoice->fetch_lines();
+															$subprice_diff = $invoice->lines[0]->subprice - $diff / (1 + $invoice->lines[0]->tva_tx / 100);
+															$invoice->updateline($invoice->lines[0]->id, $invoice->lines[0]->desc, $subprice_diff, $invoice->lines[0]->qty, $invoice->lines[0]->remise_percent, $invoice->lines[0]->date_start, $invoice->lines[0]->date_end, $invoice->lines[0]->tva_tx, 0, 0, 'HT', $invoice->lines[0]->info_bits, $invoice->lines[0]->product_type, 0, 0, 0, $invoice->lines[0]->pa_ht, $invoice->lines[0]->label, 0, array(), 100);
+														}
+													}
+												} // Add product lines
+												else {
 													$fk_parent_line = 0;
-													foreach ($order->lines as $line) {
-														$label = (!empty($line->label) ? $line->label : '');
-														$desc = (!empty($line->desc) ? $line->desc : $line->libelle);
+													$lines = $order->lines;
+													if (is_array($lines) && count($lines) > 0) {
+														// If we create a deposit with all lines and a percent, we change amount
+														if ($isDepositType && $typeAmount == 'variablealllines') {
+															foreach ($lines as $k => $line) {
+																// We keep ->subprice and ->pa_ht, but we change the qty
+																$lines[$k]->qty = price2num($line->qty * $valueDeposit / 100, 'MS');
+															}
+														}
 
-														if ($line->subprice < 0 && empty($conf->global->ECOMMERCE_KEEP_NEGATIVE_PRICE_LINES_WHEN_CREATE_INVOICE)) {
-															// Negative line, we create a discount line
-															$discount = new DiscountAbsolute($this->db);
-															$discount->fk_soc = $invoice->socid;
-															$discount->amount_ht = abs($line->total_ht);
-															$discount->amount_tva = abs($line->total_tva);
-															$discount->amount_ttc = abs($line->total_ttc);
-															$discount->tva_tx = $line->tva_tx;
-															$discount->fk_user = $this->user->id;
-															$discount->description = $desc;
-															$discount_id = $discount->create($this->user);
-															if ($discount_id > 0) {
-																$result = $invoice->insert_discount($discount_id); // This include link_to_invoice
+														foreach ($lines as $line) {
+															$label = (!empty($line->label) ? $line->label : '');
+															$desc = (!empty($line->desc) ? $line->desc : $line->libelle);
+
+															if ($line->subprice < 0 && empty($conf->global->ECOMMERCE_KEEP_NEGATIVE_PRICE_LINES_WHEN_CREATE_INVOICE)) {
+																// Negative line, we create a discount line
+																$discount = new DiscountAbsolute($this->db);
+																$discount->fk_soc = $invoice->socid;
+																$discount->amount_ht = abs($line->total_ht);
+																$discount->amount_tva = abs($line->total_tva);
+																$discount->amount_ttc = abs($line->total_ttc);
+																$discount->tva_tx = $line->tva_tx;
+																$discount->fk_user = $this->user->id;
+																$discount->description = $desc;
+																$discount_id = $discount->create($this->user);
+																if ($discount_id > 0) {
+																	$result = $invoice->insert_discount($discount_id); // This include link_to_invoice
+																	if ($result < 0) {
+																		$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceInsertDiscount');
+																		if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+																		$this->errors = array_merge($this->errors, $invoice->errors);
+																		$error++;
+																	}
+																} else {
+																	$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceDiscountCreate');
+																	if (!empty($discount->error)) $this->errors[] = $discount->error;
+																	$this->errors = array_merge($this->errors, $discount->errors);
+																	$error++;
+																	break;
+																}
+															} else {
+																// Positive line
+																$product_type = ($line->product_type ? $line->product_type : 0);
+
+																// Date start
+																$date_start = false;
+																if ($line->date_debut_prevue)
+																	$date_start = $line->date_debut_prevue;
+																if ($line->date_debut_reel)
+																	$date_start = $line->date_debut_reel;
+																if ($line->date_start)
+																	$date_start = $line->date_start;
+
+																// Date end
+																$date_end = false;
+																if ($line->date_fin_prevue)
+																	$date_end = $line->date_fin_prevue;
+																if ($line->date_fin_reel)
+																	$date_end = $line->date_fin_reel;
+																if ($line->date_end)
+																	$date_end = $line->date_end;
+
+																// Reset fk_parent_line for no child products and special product
+																if (($line->product_type != 9 && empty($line->fk_parent_line)) || $line->product_type == 9) {
+																	$fk_parent_line = 0;
+																}
+
+																// Extrafields
+																$array_options = array();
+																if (empty($conf->global->MAIN_EXTRAFIELDS_DISABLED)) {
+																	$array_options = $line->array_options;
+																}
+
+																$tva_tx = $line->tva_tx;
+																if (!empty($line->vat_src_code) && !preg_match('/\(/', $tva_tx)) $tva_tx .= ' (' . $line->vat_src_code . ')';
+
+																$result = $invoice->addline($desc, $line->subprice, $line->qty, $tva_tx, $line->localtax1_tx, $line->localtax2_tx,
+																	$line->fk_product, $line->remise_percent, $date_start, $date_end, 0, $line->info_bits, $line->fk_remise_except, 'HT',
+																	0, $product_type, $line->rang, $line->special_code, $order->element, $line->id, $fk_parent_line, $line->fk_fournprice, $line->pa_ht,
+																	$label, $array_options, 100, 0, $line->fk_unit, $line->multicurrency_subprice);
 																if ($result < 0) {
-																	$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceInsertDiscount');
+																	$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
 																	if (!empty($invoice->error)) $this->errors[] = $invoice->error;
 																	$this->errors = array_merge($this->errors, $invoice->errors);
 																	$error++;
+																	break;
 																}
-															} else {
-																$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceDiscountCreate');
-																if (!empty($discount->error)) $this->errors[] = $discount->error;
-																$this->errors = array_merge($this->errors, $discount->errors);
-																$error++;
-																break;
-															}
-														} else {
-															// Positive line
-															$product_type = ($line->product_type ? $line->product_type : 0);
 
-															// Date start
-															$date_start = false;
-															if ($line->date_debut_prevue)
-																$date_start = $line->date_debut_prevue;
-															if ($line->date_debut_reel)
-																$date_start = $line->date_debut_reel;
-															if ($line->date_start)
-																$date_start = $line->date_start;
-
-															// Date end
-															$date_end = false;
-															if ($line->date_fin_prevue)
-																$date_end = $line->date_fin_prevue;
-															if ($line->date_fin_reel)
-																$date_end = $line->date_fin_reel;
-															if ($line->date_end)
-																$date_end = $line->date_end;
-
-															// Reset fk_parent_line for no child products and special product
-															if (($line->product_type != 9 && empty($line->fk_parent_line)) || $line->product_type == 9) {
-																$fk_parent_line = 0;
-															}
-
-															// Extrafields
-															$array_options = array();
-															if (empty($conf->global->MAIN_EXTRAFIELDS_DISABLED)) {
-																$array_options = $line->array_options;
-															}
-
-															$tva_tx = $line->tva_tx;
-															if (!empty($line->vat_src_code) && !preg_match('/\(/', $tva_tx)) $tva_tx .= ' (' . $line->vat_src_code . ')';
-
-															$result = $invoice->addline($desc, $line->subprice, $line->qty, $tva_tx, $line->localtax1_tx, $line->localtax2_tx,
-																$line->fk_product, $line->remise_percent, $date_start, $date_end, 0, $line->info_bits, $line->fk_remise_except, 'HT',
-																0, $product_type, $line->rang, $line->special_code, $order->element, $line->id, $fk_parent_line, $line->fk_fournprice, $line->pa_ht,
-																$label, $array_options, 100, 0, $line->fk_unit, $line->multicurrency_subprice);
-															if ($result < 0) {
-																$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
-																if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-																$this->errors = array_merge($this->errors, $invoice->errors);
-																$error++;
-																break;
-															}
-
-															// Defined the new fk_parent_line
-															if ($result > 0 && $line->product_type == 9) {
-																$fk_parent_line = $result;
+																// Defined the new fk_parent_line
+																if ($result > 0 && $line->product_type == 9) {
+																	$fk_parent_line = $result;
+																}
 															}
 														}
 													}
@@ -5093,21 +5179,85 @@ class eCommerceSynchro
 													}
 												}
 											} else {
-												if ($isDepositType) {
-													// Add deposit line
-													$result = $invoice->addline('(DEPOSIT) (' . price($order_data['payment_amount_ttc'], '', $this->langs, 0, -1, -1,
-															(!empty($invoice->multicurrency_code) ? $invoice->multicurrency_code : $conf->currency)) . ') - ' . $order_data['ref_client'],
-														$order_data['payment_amount_ttc'], 1, 0, 0, 0,
-														(empty($conf->global->INVOICE_PRODUCTID_DEPOSIT) ? 0 : $conf->global->INVOICE_PRODUCTID_DEPOSIT));
-													if ($result < 0) {
-														$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
-														if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-														$this->errors = array_merge($this->errors, $invoice->errors);
-														$error++;
+												// Add deposit lines
+												if ($isDepositType && in_array($typeAmount, array('amount', 'variable'))) {
+													$amount_ttc_diff = 0;
+													$amountdeposit = array();
+
+													$order_total_ttc = price2num($order_data['payment_amount_ttc'], 'MT');
+													if ($typeAmount == 'amount') $valueDeposit = $order_total_ttc;
+
+													if (!empty($conf->global->MAIN_DEPOSIT_MULTI_TVA)) {
+														if ($typeAmount == 'amount') $amount = $valueDeposit;
+														else $amount = $order_total_ttc * ($valueDeposit / 100);
+
+														$TTotalByTva = array();
+														foreach ($order_data['items'] as $item) {
+															$TTotalByTva[$item['tva_tx']] += $item['total_ttc'];
+														}
+
+														foreach ($TTotalByTva as $tva => &$total) {
+															$coef = $total / $order_total_ttc; // Calc coef
+															$am = $amount * $coef;
+															$amount_ttc_diff += $am;
+															$amountdeposit[$tva] += $am / (1 + $tva / 100); // Convert into HT for the addline
+														}
+													} else {
+														if ($typeAmount == 'amount') {
+															$amountdeposit[0] = $valueDeposit;
+														} elseif ($typeAmount == 'variable') {
+															$totalamount = 0;
+															foreach ($order_data['items'] as $item) {
+																$qualified = 1;
+																if (empty($item['qty'])) $qualified = 0; // We discard qty=0, it is an option
+																if ($qualified) {
+																	$totalamount += $item['total_ht']; // Fixme : is it not for the customer ? Shouldn't we take total_ttc ?
+																	$tva_tx = $item['tva_tx'];
+																	$amountdeposit[$tva_tx] += ($item['total_ht'] * $valueDeposit) / 100;
+																}
+															}
+
+															if ($totalamount == 0) {
+																$amountdeposit[0] = 0;
+															}
+														}
+
+														$amount_ttc_diff = $amountdeposit[0];
+													}
+
+													foreach ($amountdeposit as $tva => $amount) {
+														if (empty($amount)) continue;
+
+														$descline = '(DEPOSIT)';
+														if ($typeAmount == 'amount') {
+															$descline .= ' (' . price($valueDeposit, '', $this->langs, 0, -1, -1, (!empty($invoice->multicurrency_code) ? $invoice->multicurrency_code : $conf->currency)) . ')';
+														} elseif ($typeAmount == 'variable') {
+															$descline .= ' (' . $valueDeposit . '%)';
+														}
+														$descline .= ' - ' . $order_data['ref_client'];
+
+														// Add deposit line
+														$result = $invoice->addline($descline, $amount, 1, $tva, 0, 0, (empty($conf->global->INVOICE_PRODUCTID_DEPOSIT) ? 0 : $conf->global->INVOICE_PRODUCTID_DEPOSIT));
+														if ($result < 0) {
+															$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
+															if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+															$this->errors = array_merge($this->errors, $invoice->errors);
+															$error++;
+															break;
+														}
+													}
+
+													if (!$error) {
+														$diff = $invoice->total_ttc - $amount_ttc_diff;
+														if (!empty($conf->global->MAIN_DEPOSIT_MULTI_TVA) && $diff != 0) {
+															$invoice->fetch_lines();
+															$subprice_diff = $invoice->lines[0]->subprice - $diff / (1 + $invoice->lines[0]->tva_tx / 100);
+															$invoice->updateline($invoice->lines[0]->id, $invoice->lines[0]->desc, $subprice_diff, $invoice->lines[0]->qty, $invoice->lines[0]->remise_percent, $invoice->lines[0]->date_start, $invoice->lines[0]->date_end, $invoice->lines[0]->tva_tx, 0, 0, 'HT', $invoice->lines[0]->info_bits, $invoice->lines[0]->product_type, 0, 0, 0, $invoice->lines[0]->pa_ht, $invoice->lines[0]->label, 0, array(), 100);
+														}
 													}
 												} else {
 													// Add product lines
-													if (!$error && count($order_data['items'])) {
+													if (!$error && is_array($order_data['items']) && count($order_data['items']) > 0) {
 														// Get products to synchronize
 														$remote_id_to_synchronize = array();
 														foreach ($order_data['items'] as $item) {
@@ -5134,6 +5284,14 @@ class eCommerceSynchro
 
 														// Add product lines
 														if (!$error) {
+															// If we create a deposit with all lines and a percent, we change amount
+															if ($isDepositType && $typeAmount == 'variablealllines') {
+																foreach ($order_data['items'] as $k => $item) {
+																	// We keep 'price', but we change the 'qty'
+																	$order_data['items'][$k]['qty'] = price2num($item['qty'] * $valueDeposit / 100, 'MS');
+																}
+															}
+
 															foreach ($order_data['items'] as $item) {
 																// Get product ID
 																$fk_product = 0;
@@ -5229,8 +5387,8 @@ class eCommerceSynchro
 																			$label, $array_options, 100, 0, 0, 0);
 																		if ($result <= 0) {
 																			$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
-																			if (!empty($order->error)) $this->errors[] = $order->error;
-																			$this->errors = array_merge($this->errors, $order->errors);
+																			if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+																			$this->errors = array_merge($this->errors, $invoice->errors);
 																			$error++;
 																			break;  // break on items
 																		}
@@ -5258,7 +5416,7 @@ class eCommerceSynchro
 												if (!$error) {
 													// Search or create the third party for customer contact
 													$contact_data = $order_data['socpeopleCommande'];
-													$result = $this->getContactInfosFromData($contact_data, $order->socid);
+													$result = $this->getContactInfosFromData($contact_data, $invoice->socid);
 													if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
 													if (!is_array($result)) {
 														$error++;
@@ -5310,7 +5468,7 @@ class eCommerceSynchro
 													// Search or create the third party for billing contact
 													if (!$error) {
 														$contact_data = $order_data['socpeopleFacture'];
-														$result = $this->getContactInfosFromData($contact_data, $order->socid);
+														$result = $this->getContactInfosFromData($contact_data, $invoice->socid);
 														if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
 														if (!is_array($result)) {
 															$error++;
@@ -5363,7 +5521,7 @@ class eCommerceSynchro
 													// Search or create the third party for shipping contact
 													if (!$error) {
 														$contact_data = $order_data['socpeopleLivraison'];
-														$result = $this->getContactInfosFromData($contact_data, $order->socid);
+														$result = $this->getContactInfosFromData($contact_data, $invoice->socid);
 														if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
 														if (!is_array($result)) {
 															$error++;

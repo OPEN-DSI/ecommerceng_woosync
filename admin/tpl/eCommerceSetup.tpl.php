@@ -324,17 +324,72 @@ if (!empty($conf->commande->enabled)) {
             <?php
             }
             if ($conf->facture->enabled) {
-            ?>
-            <br>
-            <input type="checkbox" id="ecommerce_create_invoice" name="ecommerce_create_invoice" value="1" <?php print !empty($ecommerceOrderActions['create_invoice']) ? ' checked' : '' ?>>&nbsp;<label for="ecommerce_create_invoice"><?php print $langs->trans('ECommerceCreateInvoice') ?></label>&nbsp;
-            <?php
-            if (!empty($ecommerceOrderActions['create_invoice'])) {
-				print $form->selectarray('ecommerce_create_invoice_type', array(Facture::TYPE_STANDARD => $langs->trans('InvoiceStandard'), Facture::TYPE_DEPOSIT => $langs->trans('InvoiceDeposit')), $ecommerceCreateInvoiceType);
-            ?>
-			&nbsp;<input type="checkbox" id="ecommerce_send_invoice_by_mail" name="ecommerce_send_invoice_by_mail" value="1" <?php print !isset($ecommerceOrderActions['send_invoice_by_mail']) || !empty($ecommerceOrderActions['send_invoice_by_mail']) ? ' checked' : '' ?>>&nbsp;<label for="ecommerce_send_invoice_by_mail"><?php print $langs->trans('ECommerceSendInvoiceByMail') ?></label>
-            <?php
-            }
-            }
+			?>
+			<br>
+			<input type="checkbox" id="ecommerce_create_invoice" name="ecommerce_create_invoice"
+				   value="1" <?php print !empty($ecommerceOrderActions['create_invoice']) ? ' checked' : '' ?>>&nbsp;
+			<label for="ecommerce_create_invoice"><?php print $langs->trans('ECommerceCreateInvoice') ?></label>&nbsp;
+				<?php
+				if (!empty($ecommerceOrderActions['create_invoice'])) {
+			print $form->selectarray('ecommerce_create_invoice_type', array(Facture::TYPE_STANDARD => $langs->trans('InvoiceStandard'), Facture::TYPE_DEPOSIT => $langs->trans('InvoiceDeposit')), $ecommerceCreateInvoiceType);
+			?>
+			&nbsp;<input type="checkbox" id="ecommerce_send_invoice_by_mail"
+						 name="ecommerce_send_invoice_by_mail"
+						 value="1" <?php print !isset($ecommerceOrderActions['send_invoice_by_mail']) || !empty($ecommerceOrderActions['send_invoice_by_mail']) ? ' checked' : '' ?>>&nbsp;
+			<label for="ecommerce_send_invoice_by_mail"><?php print $langs->trans('ECommerceSendInvoiceByMail') ?></label>
+			<?php
+			print '<div id="ecommerce_create_invoice_deposit_options">';
+			$arraylist = array(
+				'amount' => $langs->transnoentitiesnoconv('FixAmount', $langs->transnoentitiesnoconv('Deposit')),
+				'variable' => $langs->transnoentitiesnoconv('VarAmountOneLine', $langs->transnoentitiesnoconv('Deposit')),
+				'variablealllines' => $langs->transnoentitiesnoconv('VarAmountAllLines')
+			);
+			print '<br>';
+			print $form->selectarray('ecommerce_create_invoice_deposit_type', $arraylist, $ecommerceOrderActions['create_invoice_deposit_type'], 0, 0, 0, '', 1);
+			print '<span id="ecommerce_create_invoice_deposit_type_variable" > '.$langs->trans('Value');
+			print ': <input type="text" id="ecommerce_create_invoice_deposit_value" name="ecommerce_create_invoice_deposit_value" size="3" value="' . $ecommerceOrderActions['create_invoice_deposit_value'] . '"/></span>';
+			print '</div>';
+			?>
+			<script type="text/javascript">
+				jQuery(document).ready(function () {
+					var ecommerce_create_invoice_type_select = $("#ecommerce_create_invoice_type");
+					var ecommerce_create_invoice_deposit_options_div = $("#ecommerce_create_invoice_deposit_options");
+					var ecommerce_create_invoice_deposit_type_select = $("#ecommerce_create_invoice_deposit_type");
+					var ecommerce_create_invoice_deposit_type_variable_span = $("#ecommerce_create_invoice_deposit_type_variable");
+
+					ecommerce_update_invoice_deposit_options();
+					ecommerce_create_invoice_type_select.on('change', function() {
+						ecommerce_update_invoice_deposit_options();
+					});
+					ecommerce_update_invoice_deposit_value_text();
+					ecommerce_create_invoice_deposit_type_select.on('change', function() {
+						ecommerce_update_invoice_deposit_value_text();
+					});
+
+					function ecommerce_update_invoice_deposit_options() {
+						var invoice_type = ecommerce_create_invoice_type_select.val();
+
+						if (invoice_type == <?php print Facture::TYPE_DEPOSIT ?>) {
+							ecommerce_create_invoice_deposit_options_div.show();
+						} else {
+							ecommerce_create_invoice_deposit_options_div.hide();
+						}
+					}
+
+					function ecommerce_update_invoice_deposit_value_text() {
+						var invoice_deposit_type = ecommerce_create_invoice_deposit_type_select.val();
+
+						if (invoice_deposit_type == 'amount') {
+							ecommerce_create_invoice_deposit_type_variable_span.hide();
+						} else {
+							ecommerce_create_invoice_deposit_type_variable_span.show();
+						}
+					}
+				});
+			</script>
+			<?php
+				}
+			}
             if ($conf->supplier_invoice->enabled && !empty($ecommerceOrderActions['create_invoice'])) {
             ?>
             <br>

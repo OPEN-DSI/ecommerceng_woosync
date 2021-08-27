@@ -854,6 +854,15 @@ class InterfaceECommerceng
                 $error++;
             }
 
+			if (!$error) {
+				$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_commande WHERE fk_commande = '" . $this->db->escape(-$object->id) . "'";
+				$resql = $this->db->query($sql);
+				if (!$resql) {
+					$this->error = $this->db->lasterror();
+					$error++;
+				}
+			}
+
             if ($error)
             {
                 $this->db->rollback();

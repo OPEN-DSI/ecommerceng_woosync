@@ -520,6 +520,7 @@ ECommerceErrorWhenUnlinkProductByProductId          = Error when deleting the pr
 ECommerceErrorWhenUnlinkProductByRemoteId           = Error when deleting the product link (Site: %s; remote ID: %s)
 ECommerceErrorWhenUnlinkProduct                     = Error when deleting the product link (Site: %s; ID: %s; remote ID: %s)
 ECommerceErrorWhenUnlinkProductCategory             = Error when deleting the category on the product (Site: %s; ID: %s; Category ID: %s)
+ECommerceErrorUpdateRefProduct                      = Error when modify the product reference '%s' to new reference '%s' (already exist)
 
 ############################################################################################
 # Warnings

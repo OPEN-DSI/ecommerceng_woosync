@@ -90,6 +90,8 @@ class eCommerceSite // extends CommonObject
 		$this->db->query($sql);
 		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_commande WHERE (fk_commande > 0 AND fk_commande NOT IN (select rowid from " . MAIN_DB_PREFIX . "commande)) OR fk_site NOT IN (select rowid from " . MAIN_DB_PREFIX . "ecommerce_site)";
 		$this->db->query($sql);
+		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_commande WHERE (fk_commande < 0 AND ABS(fk_commande) NOT IN (select rowid from " . MAIN_DB_PREFIX . "facture)) OR fk_site NOT IN (select rowid from " . MAIN_DB_PREFIX . "ecommerce_site)";
+		$this->db->query($sql);
 		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_facture WHERE fk_facture NOT IN (select rowid from " . MAIN_DB_PREFIX . "facture)";
 		$this->db->query($sql);
 	}
