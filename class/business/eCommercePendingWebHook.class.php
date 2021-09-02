@@ -559,7 +559,7 @@ class eCommercePendingWebHook
 				// Archive successful pending lines before x days into a file
 				$result = $this->archive();
 				if ($result < 0) {
-					dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZEATION', 0);
+					dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION', 0);
 					return -1;
 				}
 
@@ -570,7 +570,7 @@ class eCommercePendingWebHook
 
 				$resql = $this->db->query($sql);
 				if (!$resql) {
-					dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZEATION', 0);
+					dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION', 0);
 					$this->error = 'Error ' . $this->db->lasterror();
 					$this->errors = array();
 					dol_syslog(__METHOD__ . " SQL: " . $sql . "; Error: " . $this->db->lasterror(), LOG_ERR);

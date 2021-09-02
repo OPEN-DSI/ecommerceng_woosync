@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.83.0
+- Correction typo ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZEATION en ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION
+
 ## 4.0.82.0
 - Ajout des options pour la generation de la facture d'acompte (options sur les lignes)
 - Correction de la suppression du lien entre la commande WooCommerce et la facture Dolibarr si l'on a choisi de ne générer que la facture lors de la synchronisation
