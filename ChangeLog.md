@@ -2,6 +2,7 @@
 
 ## 4.0.83.0
 - Correction typo ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZEATION en ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION
+- Permet de mettre les webhook en erreur au statut traité dans les actions en masses
 
 ## 4.0.82.0
 - Ajout des options pour la generation de la facture d'acompte (options sur les lignes)

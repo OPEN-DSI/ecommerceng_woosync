@@ -353,7 +353,7 @@ class eCommercePendingWebHook
 			", datep = '" . $this->db->idate($now) . "'" .
 			", error_msg = NULL" .
 			" WHERE rowid = " . $row_id .
-			" AND status IN (" . self::STATUS_NOT_PROCESSED . "," . self::STATUS_WARNING . ")";
+			" AND status IN (" . self::STATUS_ERROR . "," .self::STATUS_NOT_PROCESSED . "," . self::STATUS_WARNING . ")";
 
 		$this->db->begin();
 
