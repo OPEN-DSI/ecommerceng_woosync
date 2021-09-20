@@ -656,16 +656,18 @@ class eCommercePendingWebHook
 						$error_site++;
 					}
 
-					$webhooks = $synchro->getAllWebHooks();
-					if ($webhooks === false) {
-						$error_msg_site .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $synchro->errorsToString('<br>') . '</span>' . "<br>";
-						$error_site++;
-					}
-
-					foreach ($webhooks as $webhook) {
-						if (!$webhook['status']) {
-							$error_msg_site .= '<span style="color: red;">' . $langs->trans('ECommerceErrorWebHooksStatusNotActivated', $webhook['name'], $webhook['remote_id'], $webhook['infos']) . '</span>' . "<br>";
+					if (!$error_site) {
+						$webhooks = $synchro->getAllWebHooks();
+						if ($webhooks === false) {
+							$error_msg_site .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $synchro->errorsToString('<br>') . '</span>' . "<br>";
 							$error_site++;
+						} elseif (is_array($webhooks)) {
+							foreach ($webhooks as $webhook) {
+								if (!$webhook['status']) {
+									$error_msg_site .= '<span style="color: red;">' . $langs->trans('ECommerceErrorWebHooksStatusNotActivated', $webhook['name'], $webhook['remote_id'], $webhook['infos']) . '</span>' . "<br>";
+									$error_site++;
+								}
+							}
 						}
 					}
 

@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.0.84.0
+- Correction gestion des erreurs lors de la verifiction des webhooks activé sur WooCommerce
+- Maj des fichiers de langues FR par Romain Deschamps
+
 ## 4.0.83.0
 - Correction typo ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZEATION en ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION
 - Permet de mettre les webhook en erreur au statut traité dans les actions en masses
