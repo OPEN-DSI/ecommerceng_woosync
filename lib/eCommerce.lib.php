@@ -621,6 +621,7 @@ function get_company_by_email($db, $email, $site=0)
 	$sql .= " WHERE (s.email = '$email' OR sp.email = '$email')";
 	if ($site > 0) $sql .= " AND es.fk_site = $site";
 	$sql .= " AND s.status = 1";
+	$sql .= " AND s.entity IN (" . getEntity('societe') . ")";
 
 	$resql = $db->query($sql);
 	if ($resql) {

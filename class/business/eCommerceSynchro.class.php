@@ -340,7 +340,8 @@ class eCommerceSynchro
     public function getNbCategoriesInDolibarr()
     {
         $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."categorie WHERE type = 0";
-        $resql=$this->db->query($sql);
+		$sql .= " WHERE entity IN (" . getEntity('category') . ")";
+		$resql=$this->db->query($sql);
         if ($resql)
         {
             $obj=$this->db->fetch_object($resql);
@@ -425,7 +426,8 @@ class eCommerceSynchro
     public function getNbProductInDolibarr()
     {
         $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."product";
-        $resql=$this->db->query($sql);
+		$sql .= " WHERE entity IN (" . getEntity('product') . ")";
+		$resql=$this->db->query($sql);
         if ($resql)
         {
             $obj=$this->db->fetch_object($resql);
@@ -460,7 +462,8 @@ class eCommerceSynchro
             " INNER JOIN ".MAIN_DB_PREFIX."categorie_product as cp ON p.rowid = cp.fk_product AND cp.fk_categorie IN (".implode(',', $cats_id).")" .
             " LEFT JOIN ".MAIN_DB_PREFIX."ecommerce_product as ep ON p.rowid = ep.fk_product AND ep.fk_site=".$this->eCommerceSite->id .
             " WHERE ep.rowid IS NULL" .
-            " OR ep.last_update < p.tms";
+            " OR ep.last_update < p.tms" .
+			" AND p.entity IN (" . getEntity('product') . ")";
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -479,6 +482,7 @@ class eCommerceSynchro
         $sql.=" WHERE s.rowid = cs.fk_soc AND cs.fk_categorie = ".$this->eCommerceSite->fk_cat_societe;
 		*/
     	$sql="SELECT COUNT(s.rowid) as nb FROM ".MAIN_DB_PREFIX."societe as s";
+		$sql .= " WHERE s.entity IN (" . getEntity('societe') . ")";
 
         $resql=$this->db->query($sql);
         if ($resql)
@@ -511,6 +515,7 @@ class eCommerceSynchro
     public function getNbCommandeInDolibarr()
     {
         $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."commande";
+		$sql .= " WHERE entity IN (" . getEntity('commande') . ")";
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -541,6 +546,7 @@ class eCommerceSynchro
     public function getNbFactureInDolibarr()
     {
         $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."facture";
+		$sql .= " WHERE entity IN (" . getEntity('facture') . ")";
         $resql=$this->db->query($sql);
         if ($resql)
         {
@@ -1930,8 +1936,9 @@ class eCommerceSynchro
             " INNER JOIN " . MAIN_DB_PREFIX . "categorie_product as cp ON p.rowid = cp.fk_product AND cp.fk_categorie IN (" . implode(',', $cats_id) . ")" .
             " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_product as ep ON p.rowid = ep.fk_product AND ep.fk_site=" . $this->eCommerceSite->id .
             " WHERE ep.rowid IS NULL" .
-            " OR ep.last_update < p.tms";
-        $resql = $this->db->query($sql);
+            " OR ep.last_update < p.tms" .
+			" AND p.entity IN (" . getEntity('product') . ")";
+		$resql = $this->db->query($sql);
         if ($resql) {
             $index = 0;
             $group = array();
@@ -3266,6 +3273,7 @@ class eCommerceSynchro
 								$sql .= " SET sp.fk_soc = " . $third_party->id;
 								$sql .= " WHERE sp.email = '" . $this->db->escape($customer_data['email_key']) . "'";
 								$sql .= " AND sp.fk_soc = " . $this->eCommerceSite->fk_anonymous_thirdparty;
+								$sql .= " AND sp.entity IN (" . getEntity('socpeople') . ")";
 
 								$resql = $this->db->query($sql);
 								if (!$resql) {
@@ -6162,6 +6170,7 @@ class eCommerceSynchro
 		$sql .= " WHERE (s.email = '$email' OR sp.email = '$email')";
 		if ($site_id > 0) $sql .= " AND es.fk_site = $site_id";
 		$sql .= " AND s.status = 1";
+		$sql .= " AND s.entity IN (" . getEntity('societe') . ")";
 
 		$resql = $this->db->query($sql);
 		if (!$resql) {
@@ -6210,6 +6219,7 @@ class eCommerceSynchro
 		if ($this->eCommerceSite->fk_anonymous_thirdparty > 0) $sql .= " AND s.rowid != " . $this->eCommerceSite->fk_anonymous_thirdparty;
 		if ($site_id > 0) $sql .= " AND es.fk_site = $site_id";
 		$sql .= " AND s.status = 1";
+		$sql .= " AND s.entity IN (" . getEntity('societe') . ")";
 
 		$resql = $this->db->query($sql);
 		if (!$resql) {
@@ -6249,6 +6259,7 @@ class eCommerceSynchro
 		$sql .= " WHERE (s.nom = '$name' OR s.name_alias = '$name')";
 		if ($site_id > 0) $sql .= " AND es.fk_site = $site_id";
 		$sql .= " AND s.status = 1";
+		$sql .= " AND s.entity IN (" . getEntity('societe') . ")";
 
 		$resql = $this->db->query($sql);
 		if (!$resql) {

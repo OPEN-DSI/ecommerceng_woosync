@@ -258,6 +258,7 @@ class eCommerceSociete // extends CommonObject
 
 		$sql2 = "UPDATE ".MAIN_DB_PREFIX."societe";
 		$sql2.= " SET name_alias = NULL where name_alias = '".$sitename.' id '.$this->remote_id."'";      // Magento id xxx
+		$sql2 .= " AND entity IN (" . getEntity('societe') . ")";
 
 		$this->db->begin();
 

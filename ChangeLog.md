@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.85.0
+- Correction compatibilité multi-entités
+
 ## 4.0.84.0
 - Correction gestion des erreurs lors de la verifiction des webhooks activé sur WooCommerce
 - Maj des fichiers de langues FR par Romain Deschamps
