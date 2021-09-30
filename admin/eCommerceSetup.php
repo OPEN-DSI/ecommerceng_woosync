@@ -42,6 +42,7 @@ require_once DOL_DOCUMENT_ROOT . '/includes/OAuth/bootstrap.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
 require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php';
+require_once DOL_DOCUMENT_ROOT.'/core/class/html.formaccounting.class.php';
 dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
 dol_include_once('/ecommerceng/admin/class/gui/eCommerceMenu.class.php');
 dol_include_once('/ecommerceng/lib/eCommerce.lib.php');
@@ -49,13 +50,7 @@ dol_include_once('/ecommerceng/class/data/eCommercePaymentGateways.class.php');
 
 use OAuth\Common\Storage\DoliStorage;
 
-$langs->load('admin');
-$langs->load('companies');
-$langs->load('bills');
-$langs->load('banks');
-$langs->load("oauth");
-$langs->load('ecommerce@ecommerceng');
-$langs->load('woocommerce@ecommerceng');
+$langs->loadLangs(array("admin", "companies", "bills", "accountancy", "banks", "oauth", "ecommerce@ecommerceng", "woocommerce@ecommerceng"));
 
 $siteId = null;
 $errors = array();
@@ -73,6 +68,7 @@ if (!empty($error)) {
 $siteDb = new eCommerceSite($db);
 $form = new Form($db);
 $pay_gateways = new eCommercePaymentGateways($db);
+$formaccounting = new FormAccounting($db);
 
 $sites = $siteDb->listSites();
 $siteTypes = $siteDb->getSiteTypes();
@@ -95,6 +91,31 @@ if (empty($siteId)) $siteId = $site_form_select_site;
 
 if ($siteId > 0)
     $siteDb->fetch($siteId);
+
+$list_account = array();
+$list_account[] = '---Product---';
+$list_account[] = 'accounting_product_sold_account';
+if ($mysoc->isInEEC()) {
+	$list_account[] = 'accounting_product_sold_intra_account';
+}
+$list_account[] = 'accounting_product_sold_export_account';
+$list_account[] = 'accounting_product_buy_account';
+if ($mysoc->isInEEC()) {
+	$list_account[] = 'accounting_product_buy_intra_account';
+}
+$list_account[] = 'accounting_product_buy_export_account';
+$list_account[] = '---Service---';
+$list_account[] = 'accounting_service_sold_account';
+if ($mysoc->isInEEC()) {
+	$list_account[] = 'accounting_service_sold_intra_account';
+}
+$list_account[] = 'accounting_service_sold_export_account';
+$list_account[] = 'accounting_service_buy_account';
+if ($mysoc->isInEEC()) {
+	$list_account[] = 'accounting_service_buy_intra_account';
+}
+$list_account[] = 'accounting_service_buy_export_account';
+
 
 /*
  * Actions
@@ -302,6 +323,13 @@ if ($_POST['site_form_detail_action'] == 'save')
 			$ecommerceCreateInvoiceType = GETPOST('ecommerce_create_invoice_type', 'int');
 			if (empty($ecommerceCreateInvoiceType)) $ecommerceCreateInvoiceType = Facture::TYPE_STANDARD;
 
+			$ecommerceDefaultAccount = array();
+			foreach ($list_account as $key) {
+				if (!preg_match('/---(.*)---/', $key, $reg)) {
+					$ecommerceDefaultAccount[$key] = GETPOST($key, 'alpha');
+				}
+			}
+
 			$siteDb->parameters = array(
 				'shipping_service' => $_POST['ecommerce_fk_shipping_service'],
 				'discount_code_service' => $_POST['ecommerce_fk_discount_code_service'],
@@ -323,6 +351,7 @@ if ($_POST['site_form_detail_action'] == 'save')
 				'order_metadata_product_lines_to_description_etod' => GETPOSTISSET('ecommerce_order_metadata_product_lines_to_description_etod') ? (GETPOST('ecommerce_order_metadata_product_lines_to_description_etod', 'int') > 0 ? 1 : 0) : 0,
 				'order_filter_mode_metadata_product_lines_to_description_etod' => GETPOSTISSET('ecommerce_order_filter_mode_metadata_product_lines_to_description_etod') ? GETPOST('ecommerce_order_filter_mode_metadata_product_lines_to_description_etod', 'aZ09') : 'exclude',
 				'order_filter_keys_metadata_product_lines_to_description_etod' => GETPOST('ecommerce_order_filter_keys_metadata_product_lines_to_description_etod', 'alpha'),
+				'default_account' => $ecommerceDefaultAccount,
             );
             if ($conf->commande->enabled || $conf->facture->enabled || $conf->supplier_invoice->enabled) {
                 $siteDb->parameters['order_actions'] = $ecommerceOrderActions;
@@ -947,6 +976,7 @@ if ($ecommerceId > 0) {
 		$ecommerceOrderMetadataProductLinesToDescriptionEtod = isset($siteDb->parameters['order_metadata_product_lines_to_description_etod']) ? $siteDb->parameters['order_metadata_product_lines_to_description_etod'] : 0;
 		$ecommerceOrderFilterModeMetadataProductLinesToDescriptionEtod = isset($siteDb->parameters['order_filter_mode_metadata_product_lines_to_description_etod']) ? $siteDb->parameters['order_filter_mode_metadata_product_lines_to_description_etod'] : '';
 		$ecommerceOrderFilterKeysMetadataProductLinesToDescriptionEtod = isset($siteDb->parameters['order_filter_keys_metadata_product_lines_to_description_etod']) ? $siteDb->parameters['order_filter_keys_metadata_product_lines_to_description_etod'] : '';
+		$ecommerceDefaultAccount = isset($siteDb->parameters['default_account']) ? $siteDb->parameters['default_account'] : array();
     }
 }
 

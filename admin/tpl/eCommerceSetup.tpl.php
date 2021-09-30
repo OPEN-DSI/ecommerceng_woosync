@@ -591,6 +591,34 @@ if ($ecommerceType == 2)
 <?php } ?>
       </table>
 
+<?php
+if (!empty($conf->accounting->enabled)) {
+	print_titre($langs->trans("MenuDefaultAccounts"));
+?>
+	<table class="noborder centpercent">
+		<?php
+		foreach ($list_account as $key) {
+			$reg = array();
+			if (preg_match('/---(.*)---/', $key, $reg)) {
+				print '<tr class="liste_titre"><td>' . $langs->trans($reg[1]) . '</td><td></td></tr>';
+			} else {
+				print '<tr class="oddeven value">';
+				// Param
+				$label = $langs->trans('ECOMMERCE_' . strtoupper($key));
+				print '<td width="50%">' . $label . '</td>';
+				// Value
+				print '<td>'; // Do not force class=right, or it align also the content of the select box
+				print $formaccounting->select_account($ecommerceDefaultAccount[$key], $key, 1, '', 1, 1);
+				$const_name = strtoupper($key);
+				print ' ( ' . $langs->trans('DefaultValue') . ' : ' . (empty($conf->global->$const_name) || $conf->global->$const_name == -1 ? $langs->trans('NotDefined') : $conf->global->$const_name) . ' )';
+				print '</td>';
+				print '</tr>';
+			}
+		}
+		?>
+	</table>
+<?php } ?>
+
     <!--
       <script type="text/javascript" language="javascript">
           jQuery(document).ready(function () {

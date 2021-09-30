@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 4.0.86.0
+- Ajout dans la configuration des comptes comptables par défault à la création des produits/services synchronisés dans Dolibarr
+- Ajout de la compatibilité avec la gestion des produits composés (notion de ligne de produit parente)
+- Corrections diverses
+
 ## 4.0.85.0
 - Correction compatibilité multi-entités
 

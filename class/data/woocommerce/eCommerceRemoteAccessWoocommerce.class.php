@@ -1265,8 +1265,15 @@ class eCommerceRemoteAccessWoocommerce
 			$order_filter_mode_metadata_product_lines_to_description_etod = !empty($this->site->parameters['order_filter_mode_metadata_product_lines_to_description_etod']) ? $this->site->parameters['order_filter_mode_metadata_product_lines_to_description_etod'] : 'exclude';
 			$order_filter_keys_metadata_product_lines_to_description_etod = !empty($this->site->parameters['order_filter_keys_metadata_product_lines_to_description_etod']) ? array_filter(array_map('trim', explode(',', (string)$this->site->parameters['order_filter_keys_metadata_product_lines_to_description_etod'])), 'strlen') : array();
 
+			$parent_match = array();
 			foreach ($remote_data->line_items as $item) {
+				if (!empty($item->composite_children) && is_array($item->composite_children)) {
+					foreach ($item->composite_children as $child_id) {
+						$parent_match[$child_id] = $item->id;
+					}
+				}
 				$item_data = [
+					'parent_item_id' => isset($parent_match[$item->id]) ? $parent_match[$item->id] : 0,
 					'item_id' => $item->id,
 					'label' => $item->name,
 					'id_remote_product' => !empty($item->variation_id) ? (!$product_variation_mode_all_to_one ? $item->product_id . '|' . $item->variation_id : $item->product_id . '|%') : $item->product_id,
@@ -2661,7 +2668,7 @@ class eCommerceRemoteAccessWoocommerce
         ];
 
         try {
-            //$result = $this->client->put("customers/$remote_id", $companyData);
+			if (!self::$disable_put_post_to_api) $result = $this->client->put("customers/$remote_id", $companyData);
         } catch (HttpClientException $fault) {
             $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteSociete', $remote_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
             dol_syslog(__METHOD__ .
@@ -2735,7 +2742,7 @@ class eCommerceRemoteAccessWoocommerce
         if (isset($contactData)) {
             if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsCustomer) == 1) {
                 try {
-//                    $result = $this->client->put("customers/$idsCustomer[1]", $contactData);
+					if (!self::$disable_put_post_to_api) $result = $this->client->put("customers/$idsCustomer[1]", $contactData);
                 } catch (HttpClientException $fault) {
                     $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteSocpeople', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                     dol_syslog(__METHOD__ .
@@ -2817,7 +2824,7 @@ class eCommerceRemoteAccessWoocommerce
             }
 
             try {
-//                $result = $this->client->put("orders/$remote_id", $orderData);
+				if (!self::$disable_put_post_to_api) $result = $this->client->put("orders/$remote_id", $orderData);
             } catch (HttpClientException $fault) {
                 $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                 dol_syslog(__METHOD__ .
@@ -3844,7 +3851,7 @@ class eCommerceRemoteAccessWoocommerce
             ]
         ];
         try {
-//            $result = $this->client->put("orders/$order_remote_id", $commandeData);
+            if (!self::$disable_put_post_to_api) $result = $this->client->put("orders/$order_remote_id", $commandeData);
         } catch (HttpClientException $fault) {
             $this->errors[] = $langs->trans('ECommerceWoocommerceSendFileForCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
             dol_syslog(__METHOD__ .

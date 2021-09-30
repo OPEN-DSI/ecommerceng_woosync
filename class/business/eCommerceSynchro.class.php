@@ -3639,6 +3639,22 @@ class eCommerceSynchro
 							}
 							$product->note = $product->note_private;
 
+							if ($product->type == Product::TYPE_PRODUCT) {
+								$product->accountancy_code_sell = isset($this->eCommerceSite->parameters['default_account']['accounting_product_sold_account']) ? $this->eCommerceSite->parameters['default_account']['accounting_product_sold_account'] : $conf->global->ACCOUNTING_PRODUCT_SOLD_ACCOUNT;
+								$product->accountancy_code_sell_intra = isset($this->eCommerceSite->parameters['default_account']['accounting_product_sold_intra_account']) ? $this->eCommerceSite->parameters['default_account']['accounting_product_sold_intra_account'] : $conf->global->ACCOUNTING_PRODUCT_SOLD_INTRA_ACCOUNT;
+								$product->accountancy_code_sell_export = isset($this->eCommerceSite->parameters['default_account']['accounting_product_sold_export_account']) ? $this->eCommerceSite->parameters['default_account']['accounting_product_sold_export_account'] : $conf->global->ACCOUNTING_PRODUCT_SOLD_EXPORT_ACCOUNT;
+								$product->accountancy_code_buy = isset($this->eCommerceSite->parameters['default_account']['accounting_product_buy_account']) ? $this->eCommerceSite->parameters['default_account']['accounting_product_buy_account'] : $conf->global->ACCOUNTING_PRODUCT_BUY_ACCOUNT;
+								$product->accountancy_code_buy_intra = isset($this->eCommerceSite->parameters['default_account']['accounting_product_buy_intra_account']) ? $this->eCommerceSite->parameters['default_account']['accounting_product_buy_intra_account'] : $conf->global->ACCOUNTING_PRODUCT_BUY_INTRA_ACCOUNT;
+								$product->accountancy_code_buy_export = isset($this->eCommerceSite->parameters['default_account']['accounting_product_buy_export_account']) ? $this->eCommerceSite->parameters['default_account']['accounting_product_buy_export_account'] : $conf->global->ACCOUNTING_PRODUCT_BUY_EXPORT_ACCOUNT;
+							} elseif ($product->type == Product::TYPE_SERVICE) {
+								$product->accountancy_code_sell = isset($this->eCommerceSite->parameters['default_account']['accounting_service_sold_account']) ? $this->eCommerceSite->parameters['default_account']['accounting_service_sold_account'] : $conf->global->ACCOUNTING_SERVICE_SOLD_ACCOUNT;
+								$product->accountancy_code_sell_intra = isset($this->eCommerceSite->parameters['default_account']['accounting_service_sold_intra_account']) ? $this->eCommerceSite->parameters['default_account']['accounting_service_sold_intra_account'] : $conf->global->ACCOUNTING_SERVICE_SOLD_INTRA_ACCOUNT;
+								$product->accountancy_code_sell_export = isset($this->eCommerceSite->parameters['default_account']['accounting_service_sold_export_account']) ? $this->eCommerceSite->parameters['default_account']['accounting_service_sold_export_account'] : $conf->global->ACCOUNTING_SERVICE_SOLD_EXPORT_ACCOUNT;
+								$product->accountancy_code_buy = isset($this->eCommerceSite->parameters['default_account']['accounting_service_buy_account']) ? $this->eCommerceSite->parameters['default_account']['accounting_service_buy_account'] : $conf->global->ACCOUNTING_SERVICE_BUY_ACCOUNT;
+								$product->accountancy_code_buy_intra = isset($this->eCommerceSite->parameters['default_account']['accounting_service_buy_intra_account']) ? $this->eCommerceSite->parameters['default_account']['accounting_service_buy_intra_account'] : $conf->global->ACCOUNTING_SERVICE_BUY_INTRA_ACCOUNT;
+								$product->accountancy_code_buy_export = isset($this->eCommerceSite->parameters['default_account']['accounting_service_buy_export_account']) ? $this->eCommerceSite->parameters['default_account']['accounting_service_buy_export_account'] : $conf->global->ACCOUNTING_SERVICE_BUY_EXPORT_ACCOUNT;
+							}
+
 							$product->error = '';
 							$product->errors = array();
 							$result = $product->create($this->user);
@@ -4332,6 +4348,7 @@ class eCommerceSynchro
 
 										// Add product lines
 										if (!$error) {
+											$parent_match = array();
 											foreach ($order_data['items'] as $item) {
 												// Get product ID
 												$fk_product = 0;
@@ -4389,9 +4406,10 @@ class eCommerceSynchro
 														}
 													}
 
+													$fk_parent_line = isset($parent_match[$item['parent_item_id']]) ? $parent_match[$item['parent_item_id']] : 0;
 													$result = $order->addline($description, $price, $item['qty'], $item['tva_tx'], $item['local_tax1_tx'], $item['local_tax2_tx'],
 														$fk_product, $discount, 0, 0, 'HT', 0, '', '',
-														$product_type, -1, 0, 0, 0, $buy_price, $label, $array_options,
+														$product_type, -1, 0, $fk_parent_line, 0, $buy_price, $label, $array_options,
 														0, '', 0, 0);
 													if ($result <= 0) {
 														$this->errors[] = $this->langs->trans('ECommerceErrorOrderAddLine');
@@ -4400,6 +4418,7 @@ class eCommerceSynchro
 														$error++;
 														break;  // break on items
 													}
+													$parent_match[$item['item_id']] = $result;
 												}
 
 												unset($this->eCommerceProduct);
@@ -5070,6 +5089,9 @@ class eCommerceSynchro
 															}
 														}
 
+														$parent_line_match = array();
+														$fk_parent_line = 0;
+
 														foreach ($lines as $line) {
 															$label = (!empty($line->label) ? $line->label : '');
 															$desc = (!empty($line->desc) ? $line->desc : $line->libelle);
@@ -5125,6 +5147,8 @@ class eCommerceSynchro
 																// Reset fk_parent_line for no child products and special product
 																if (($line->product_type != 9 && empty($line->fk_parent_line)) || $line->product_type == 9) {
 																	$fk_parent_line = 0;
+																} else {
+																	$fk_parent_line = isset($parent_line_match[$line->fk_parent_line]) ? $parent_line_match[$line->fk_parent_line] : $fk_parent_line;
 																}
 
 																// Extrafields
@@ -5146,11 +5170,12 @@ class eCommerceSynchro
 																	$this->errors = array_merge($this->errors, $invoice->errors);
 																	$error++;
 																	break;
-																}
-
-																// Defined the new fk_parent_line
-																if ($result > 0 && $line->product_type == 9) {
-																	$fk_parent_line = $result;
+																} elseif ($result > 0) {
+																	$parent_line_match[$line->id] = $result;
+																	// Defined the new fk_parent_line
+																	if ($line->product_type == 9) {
+																		$fk_parent_line = $result;
+																	}
 																}
 															}
 														}
@@ -5300,6 +5325,7 @@ class eCommerceSynchro
 																}
 															}
 
+															$parent_match = array();
 															foreach ($order_data['items'] as $item) {
 																// Get product ID
 																$fk_product = 0;
@@ -5389,6 +5415,7 @@ class eCommerceSynchro
 																			}
 																		}
 
+																		$fk_parent_line = isset($parent_match[$item['parent_item_id']]) ? $parent_match[$item['parent_item_id']] : 0;
 																		$result = $invoice->addline($description, $price, $item['qty'], $item['tva_tx'], $item['local_tax1_tx'], $item['local_tax2_tx'],
 																			$fk_product, $discount, '', '', 0, 0, 0, 'HT',
 																			0, $product_type, -1, 0, '', 0, 0, 0, $buy_price,
@@ -5400,6 +5427,7 @@ class eCommerceSynchro
 																			$error++;
 																			break;  // break on items
 																		}
+																		$parent_match[$item['item_id']] = $result;
 																	}
 																}
 

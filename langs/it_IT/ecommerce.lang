@@ -320,6 +320,26 @@ ECommerceOrdersSyncSetup                                            = Synchronis
 ECommerceWoocommerceOrderFirstDateForECommerceToDolibarr            = Date de reprise
 ECommerceWoocommerceOrderFirstDateForECommerceToDolibarrDescription = Les commandes dont la date de creation est entérieur seront ignorées
 
+ECommerceWoocommerceOrderMetaDataInProductLineToDescriptionForECommerceToDolibarr                   =Méta-données sur ligne de produit
+ECommerceWoocommerceOrderMetaDataInProductLineToDescriptionForECommerceToDolibarrDescription        =Ajoute les méta-données des lignes de produit de la commandes WooCommerce dans la description des lignes de produit dans la commande Dolibarr<br>Les méta-données des lignes de produits des commandes WooCommerce doivent posséder les propriétées 'display_key' et 'display_value' pour que cette fonctionnalité fonctionne
+ECommerceWoocommerceOrderFilterMetaDataInProductLineToDescriptionForECommerceToDolibarr             =Méta-données sur ligne de produit
+ECommerceWoocommerceOrderFilterMetaDataInProductLineToDescriptionForECommerceToDolibarrDescription  =Liste des clés des méta-données à inclure ou non dans la description (séparés par des virgules)
+ECommerceExclude                                                                                    =Exclure
+ECommerceInclude                                                                                    =Inclure
+
+ECOMMERCE_ACCOUNTING_PRODUCT_BUY_ACCOUNT                = Compte comptable par défaut pour les produits achetés (utilisé si non défini dans la fiche produit ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_PRODUCT_BUY_INTRA_ACCOUNT          = Compte comptable par défaut pour les produits achetés dans la CEE (utilisé si non défini dans la fiche produit ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_PRODUCT_BUY_EXPORT_ACCOUNT         = Compte comptable par défaut pour les produits achetés et importés hors de la CEE (utilisé si non défini dans la fiche produit ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_PRODUCT_SOLD_ACCOUNT               = Compte comptable par défaut pour les produits vendus (utilisé si non défini dans la fiche produit ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_PRODUCT_SOLD_INTRA_ACCOUNT         = Compte comptable par défaut pour les produits vendus dans la CEE (utilisé si non défini dans la fiche produit ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_PRODUCT_SOLD_EXPORT_ACCOUNT        = Compte comptable par défaut pour les produits vendus et exportés hors de la CEE (utilisé si non défini dans la fiche produit ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_BUY_ACCOUNT                = Compte comptable par défaut pour les services achetés (utilisé si non défini dans la fiche service ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_BUY_INTRA_ACCOUNT          = Compte comptable par défaut pour les services achetés dans la CEE (utilisé si non défini dans la fiche service ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_BUY_EXPORT_ACCOUNT         = Compte comptable par défaut pour les services achetés et importés hors de la CEE (utilisé si non défini dans la fiche service ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_SOLD_ACCOUNT               = Compte comptable par défaut pour les services vendus (utilisé si non défini dans la fiche service ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_SOLD_INTRA_ACCOUNT         = Compte comptable par défaut pour les services vendus dans la CEE (utilisé si non défini dans la fiche service ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_SOLD_EXPORT_ACCOUNT        = Compte comptable par défaut pour les services vendus et exportés hors de la CEE (utilisé si non défini dans la fiche service ou dans dolibarr)
+
 ############################################################################################
 # Web Hooks
 ############################################################################################
@@ -477,6 +497,14 @@ ECommerceErrorWhenProcessPendingWebHooks            = Erreur lors de la synchron
 ECommerceErrorWebHooksStatusNotActivated            = Le crochet WEB (WebHook) "%s" (ID distant: %s) n'est pas activé (Infos complémentaires: %s)
 ECommerceErrorCheckWebHooksStatus                   = Erreur lors de la vérification des crochet WEB (WebHook) du site "%s" (ID: %s)
 ECommerceErrorWhenCheckingWebHooksStatus            = Erreur lors de la vérification des crochet WEB (WebHook)
+ECommerceErrorTooManyProductLinkToTheRemoteID                                                       =Trop de produits (IDs: %s) liés au même produit distant (ID distant: %s, Site ID : %s)
+ECommerceErrorDeleteProductLink                                                                     =Erreur lors de la suppression du lien avec produit distant (ID distant: %s)
+ECommerceErrorWhenGetProductToUnlink                                                                =Erreur lors de la récupération des produits à délier (Site: %s; Données: %s)
+ECommerceErrorWhenUnlinkProductByProductId                                                          =Erreur lors de la suppression du lien du produit (Site: %s; ID : %s)
+ECommerceErrorWhenUnlinkProductByRemoteId                                                           =Erreur lors de la suppression du lien du produit (Site: %s; ID distant: %s)
+ECommerceErrorWhenUnlinkProduct                                                                     =Erreur lors de la suppression du lien du produit (Site: %s; ID : %s; ID distant: %s)
+ECommerceErrorWhenUnlinkProductCategory                                                             =Erreur lors de la suppression de la catégorie sur le produit (Site: %s; ID : %s; Catégorie ID : %s)
+ECommerceErrorUpdateRefProduct                                                                      =Erreur lors de la modification de la référence du produit '%s' vers la nouvelle référence '%s' (elle existe déjà)
 
 ############################################################################################
 # Warnings

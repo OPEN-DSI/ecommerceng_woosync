@@ -348,6 +348,19 @@ ECommerceWoocommerceOrderFilterMetaDataInProductLineToDescriptionForECommerceToD
 ECommerceExclude                                                                                    =Exclure
 ECommerceInclude                                                                                    =Inclure
 
+ECOMMERCE_ACCOUNTING_PRODUCT_BUY_ACCOUNT                = Compte comptable par défaut pour les produits achetés (utilisé si non défini dans la fiche produit ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_PRODUCT_BUY_INTRA_ACCOUNT          = Compte comptable par défaut pour les produits achetés dans la CEE (utilisé si non défini dans la fiche produit ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_PRODUCT_BUY_EXPORT_ACCOUNT         = Compte comptable par défaut pour les produits achetés et importés hors de la CEE (utilisé si non défini dans la fiche produit ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_PRODUCT_SOLD_ACCOUNT               = Compte comptable par défaut pour les produits vendus (utilisé si non défini dans la fiche produit ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_PRODUCT_SOLD_INTRA_ACCOUNT         = Compte comptable par défaut pour les produits vendus dans la CEE (utilisé si non défini dans la fiche produit ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_PRODUCT_SOLD_EXPORT_ACCOUNT        = Compte comptable par défaut pour les produits vendus et exportés hors de la CEE (utilisé si non défini dans la fiche produit ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_BUY_ACCOUNT                = Compte comptable par défaut pour les services achetés (utilisé si non défini dans la fiche service ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_BUY_INTRA_ACCOUNT          = Compte comptable par défaut pour les services achetés dans la CEE (utilisé si non défini dans la fiche service ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_BUY_EXPORT_ACCOUNT         = Compte comptable par défaut pour les services achetés et importés hors de la CEE (utilisé si non défini dans la fiche service ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_SOLD_ACCOUNT               = Compte comptable par défaut pour les services vendus (utilisé si non défini dans la fiche service ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_SOLD_INTRA_ACCOUNT         = Compte comptable par défaut pour les services vendus dans la CEE (utilisé si non défini dans la fiche service ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_SOLD_EXPORT_ACCOUNT        = Compte comptable par défaut pour les services vendus et exportés hors de la CEE (utilisé si non défini dans la fiche service ou dans dolibarr)
+
 ############################################################################################
 # Web Hooks
 ############################################################################################
