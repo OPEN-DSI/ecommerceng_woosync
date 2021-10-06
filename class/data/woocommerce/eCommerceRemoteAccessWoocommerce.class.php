@@ -1630,6 +1630,11 @@ class eCommerceRemoteAccessWoocommerce
 			$billed = $this->site->parameters['order_status_etod'][$remote_data->status]['billed'];
 		// Note: with processing, billed can be 0 or 1, so we keep -1
 
+		// Dont synchro order
+		$synchronize = 1;
+		if (isset($this->site->parameters['order_status_etod'][$remote_data->status]))
+			$synchronize = $this->site->parameters['order_status_etod'][$remote_data->status]['synchronize'];
+
 		$orderStatus = '';
 		require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 		$efields = new ExtraFields($this->db);
@@ -1665,6 +1670,7 @@ class eCommerceRemoteAccessWoocommerce
 			'socpeopleLivraison' => $contactShipping,
 			'status' => $status,                         // dolibarr status
 			'billed' => $billed,
+			'synchronize' => !empty($synchronize),
 			'remote_state' => $remote_data->status,        // remote state, for information only (less accurate than status)
 			'remote_status' => $remote_data->status,      // remote status, for information only (more accurate than state)
 			'remote_order' => $remote_data,

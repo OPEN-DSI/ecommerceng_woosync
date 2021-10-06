@@ -228,10 +228,12 @@ if ($_POST['site_form_detail_action'] == 'save')
                     ) {
                         foreach ($efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options'] as $key => $value) {
                             if (($pos = strpos($key, '_')) > 0) $key = substr($key, $pos + 1);
-                            $billed = GETPOST('order_status_etod_billed_' . $key, 'alpha');
+							$billed = GETPOST('order_status_etod_billed_' . $key, 'alpha');
+							$synchronize = GETPOST('order_status_etod_synchronize_' . $key, 'alpha');
                             $ecommerceOrderStatusForECommerceToDolibarr[$key] = array(
                                 'selected' => GETPOST('order_status_etod_' . $key, 'alpha'),
-                                'billed' => empty($billed) ? 0 : 1,
+								'billed' => empty($billed) ? 0 : 1,
+								'synchronize' => empty($synchronize) ? 0 : 1,
                             );
                         }
                     }
@@ -833,13 +835,13 @@ if ($ecommerceId > 0) {
         $efields->fetch_name_optionals_label('commande', true);
         $ecommerceOrderStatusForECommerceToDolibarr = array();
         $defaultOrderStatusForECommerceToDolibarr = array(
-            "pending" => array('selected' => 's' . Commande::STATUS_DRAFT, 'billed' => 0),
-            "processing" => array('selected' => 's' . Commande::STATUS_VALIDATED, 'billed' => 0),
-            "on-hold" => array('selected' => 's' . Commande::STATUS_DRAFT, 'billed' => 0),
-            "completed" => array('selected' => 's' . Commande::STATUS_CLOSED, 'billed' => 1),
-            "cancelled" => array('selected' => 's' . Commande::STATUS_CANCELED, 'billed' => 0),
-            "refunded" => array('selected' => 's' . Commande::STATUS_CANCELED, 'billed' => 1),
-            "failed" => array('selected' => 's' . Commande::STATUS_CANCELED, 'billed' => 0),
+            "pending" => array('selected' => 's' . Commande::STATUS_DRAFT, 'billed' => 0, 'synchronize' => 1),
+            "processing" => array('selected' => 's' . Commande::STATUS_VALIDATED, 'billed' => 0, 'synchronize' => 1),
+            "on-hold" => array('selected' => 's' . Commande::STATUS_DRAFT, 'billed' => 0, 'synchronize' => 1),
+            "completed" => array('selected' => 's' . Commande::STATUS_CLOSED, 'billed' => 1, 'synchronize' => 1),
+            "cancelled" => array('selected' => 's' . Commande::STATUS_CANCELED, 'billed' => 0, 'synchronize' => 1),
+            "refunded" => array('selected' => 's' . Commande::STATUS_CANCELED, 'billed' => 1, 'synchronize' => 1),
+            "failed" => array('selected' => 's' . Commande::STATUS_CANCELED, 'billed' => 0, 'synchronize' => 1),
         );
 
         if (isset($efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options']) &&
@@ -848,9 +850,11 @@ if ($ecommerceId > 0) {
                 if (($pos = strpos($key , '_')) > 0) $key = substr($key, $pos + 1);
                 $selected = GETPOST('order_status_etod_' . $key, 'alpha');
                 $selected = $selected ? $selected : (isset($siteDb->parameters['order_status_etod'][$key]['selected']) ? $siteDb->parameters['order_status_etod'][$key]['selected'] : $defaultOrderStatusForECommerceToDolibarr[$key]['selected']);
-                $billed = isset($_POST['order_status_etod_billed_' . $key]) ? GETPOST('order_status_etod_billed_' . $key, 'alpha') :
-                    (isset($siteDb->parameters['order_status_etod'][$key]['billed']) ? $siteDb->parameters['order_status_etod'][$key]['billed'] : $defaultOrderStatusForECommerceToDolibarr[$key]['billed']);
-                $ecommerceOrderStatusForECommerceToDolibarr[$key] = array('label' => $value, 'selected' => $selected, 'billed' => $billed);
+				$billed = isset($_POST['order_status_etod_billed_' . $key]) ? GETPOST('order_status_etod_billed_' . $key, 'alpha') :
+					(isset($siteDb->parameters['order_status_etod'][$key]['billed']) ? $siteDb->parameters['order_status_etod'][$key]['billed'] : $defaultOrderStatusForECommerceToDolibarr[$key]['billed']);
+				$synchronize = isset($_POST['order_status_etod_synchronize_' . $key]) ? GETPOST('order_status_etod_synchronize_' . $key, 'alpha') :
+					(isset($siteDb->parameters['order_status_etod'][$key]['synchronize']) ? $siteDb->parameters['order_status_etod'][$key]['synchronize'] : $defaultOrderStatusForECommerceToDolibarr[$key]['synchronize']);
+                $ecommerceOrderStatusForECommerceToDolibarr[$key] = array('label' => $value, 'selected' => $selected, 'billed' => $billed, 'synchronize' => $synchronize);
             }
         }
 

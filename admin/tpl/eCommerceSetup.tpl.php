@@ -942,7 +942,11 @@ if ($ecommerceOrderStatus)
                   print $form->selectarray('order_status_etod_'.$key, $array_list, $value['selected']);
                   print '&nbsp;'.$langs->trans('Billed').'&nbsp;?&nbsp;:&nbsp;';
                 ?>
-                <input type="checkbox" name="order_status_etod_billed_<?php print $key ?>" value="1" <?php print $value['billed'] ? ' checked' : '' ?>>
+				  <input type="checkbox" name="order_status_etod_billed_<?php print $key ?>" value="1" <?php print $value['billed'] ? ' checked' : '' ?>>
+				  <?php
+				  print '&nbsp;'.$langs->trans('ECommerceSynchronize').'&nbsp;?&nbsp;:&nbsp;';
+				  ?>
+				  <input type="checkbox" name="order_status_etod_synchronize_<?php print $key ?>" value="1" <?php print $value['synchronize'] ? ' checked' : '' ?>>
               </td>
               <td><?php print $langs->trans('ECommerceOrderStatusSetupDescription') ?></td>
             </tr>

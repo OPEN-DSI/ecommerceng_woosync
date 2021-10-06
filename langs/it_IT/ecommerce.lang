@@ -327,6 +327,8 @@ ECommerceWoocommerceOrderFilterMetaDataInProductLineToDescriptionForECommerceToD
 ECommerceExclude                                                                                    =Exclure
 ECommerceInclude                                                                                    =Inclure
 
+ECommerceSynchronize                                                                                =Synchronize
+
 ECOMMERCE_ACCOUNTING_PRODUCT_BUY_ACCOUNT                = Compte comptable par défaut pour les produits achetés (utilisé si non défini dans la fiche produit ou dans dolibarr)
 ECOMMERCE_ACCOUNTING_PRODUCT_BUY_INTRA_ACCOUNT          = Compte comptable par défaut pour les produits achetés dans la CEE (utilisé si non défini dans la fiche produit ou dans dolibarr)
 ECOMMERCE_ACCOUNTING_PRODUCT_BUY_EXPORT_ACCOUNT         = Compte comptable par défaut pour les produits achetés et importés hors de la CEE (utilisé si non défini dans la fiche produit ou dans dolibarr)

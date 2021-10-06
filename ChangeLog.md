@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.87.0
+- Ajout dans la configuration d'une option sur les statuts pour synchronisation de la commande depuis WooCommerce. 
+
 ## 4.0.86.0
 - Ajout dans la configuration des comptes comptables par défault à la création des produits/services synchronisés dans Dolibarr
 - Ajout de la compatibilité avec la gestion des produits composés (notion de ligne de produit parente)

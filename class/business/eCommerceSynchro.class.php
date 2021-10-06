@@ -4191,7 +4191,7 @@ class eCommerceSynchro
 
 					// Need to synchronize ?
 					$bypass = (!empty($this->eCommerceCommande->last_update) && strtotime($order_data['last_update']) <= strtotime($this->eCommerceCommande->last_update)) ||
-						$order_data['create_date'] < $this->eCommerceSite->parameters['order_first_date_etod'];
+						$order_data['create_date'] < $this->eCommerceSite->parameters['order_first_date_etod'] || (!($this->eCommerceCommande->id > 0) && !$order_data['synchronize']);
 
 					// Bypass the synchronization ?
 					if (!$bypass) {
