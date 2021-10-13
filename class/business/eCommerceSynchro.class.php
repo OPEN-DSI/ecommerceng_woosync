@@ -31,6 +31,7 @@ dol_include_once('/ecommerceng/class/data/eCommerceSocpeople.class.php');
 dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
 dol_include_once('/ecommerceng/class/data/eCommerceCategory.class.php');
 dol_include_once('/ecommerceng/admin/class/data/eCommerceDict.class.php');
+dol_include_once('/ecommerceng/class/business/eCommerceUtils.class.php');
 
 require_once(DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php');
 require_once(DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php');
@@ -340,7 +341,7 @@ class eCommerceSynchro
     public function getNbCategoriesInDolibarr()
     {
         $sql="SELECT COUNT(rowid) as nb FROM ".MAIN_DB_PREFIX."categorie WHERE type = 0";
-		$sql .= " WHERE entity IN (" . getEntity('category') . ")";
+		$sql .= " AND entity IN (" . getEntity('category') . ")";
 		$resql=$this->db->query($sql);
         if ($resql)
         {
@@ -852,6 +853,8 @@ class eCommerceSynchro
     {
         $error=0;
 
+		$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - toNb: {$toNb}");
+
         try {
             $nbgoodsunchronize = 0;
             $categories=array();
@@ -1047,12 +1050,14 @@ class eCommerceSynchro
                         // TODO If we commit even if there was an error (to validate previous record ok), we must also remove 1 second the the higher
                         // date into table of links to be sure we will retry (during next synch) also record with same update_at than the last record ok.
 
-                        return $nbgoodsunchronize;
+						eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+						return $nbgoodsunchronize;
                     }
                     else
                     {
                         $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchCategorySuccess');
-                        return -1;
+						eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+						return -1;
                     }
                 }
                 else
@@ -1065,14 +1070,17 @@ class eCommerceSynchro
             {
                 $this->error = $this->langs->trans('ECommerceSynchCategoryNoImportRoot');
                 $this->errors[] = $this->error;
-                return -1;
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+				return -1;
             }
         } catch (Exception $e) {
             $this->errors[] = $this->langs->trans('ECommerceSynchCategoryConnectError').': '.$e->getMessage();
-            return -1;
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+			return -1;
         }
 
-        return -1;
+		eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+		return -1;
     }
 
 
@@ -1092,6 +1100,8 @@ class eCommerceSynchro
 		$this->error = '';
 		$this->errors = array();
 
+		$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - remote_ids: " . json_encode($remote_ids). ", toNb: {$toNb}");
+
 		try {
 			$from_date = isset($this->fromDate) ? $this->fromDate : $this->getSocieteLastUpdateDate();
 			$to_date = $this->toDate;
@@ -1099,12 +1109,14 @@ class eCommerceSynchro
 
 			$result = $this->synchronizeCustomers($from_date, $to_date, $remote_ids, $toNb);
 
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 			return $result;
 		} catch (Exception $e) {
 			$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeCustomers')), $this->errors);
 			$this->errors[] = $e->getMessage();
 		}
 
+		eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 		return -1;
 	}
 
@@ -1265,6 +1277,7 @@ class eCommerceSynchro
 		$this->error = '';
 		$this->errors = array();
 
+		$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - remote_ids: " . json_encode($remote_ids). ", toNb: {$toNb}");
 		try {
 			$from_date = isset($this->fromDate) ? $this->fromDate : $this->getProductLastUpdateDate();
 			$to_date = $this->toDate;
@@ -1272,12 +1285,14 @@ class eCommerceSynchro
 
 			$result = $this->synchronizeProducts($from_date, $to_date, $remote_ids, $toNb);
 
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 			return $result;
 		} catch (Exception $e) {
 			$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeProducts')), $this->errors);
 			$this->errors[] = $e->getMessage();
 		}
 
+		eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 		return -1;
 	}
 
@@ -1298,6 +1313,7 @@ class eCommerceSynchro
 		$this->error = '';
 		$this->errors = array();
 
+		$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - remote_ids: " . json_encode($remote_ids). ", toNb: {$toNb}");
 		try {
 			$from_date = isset($this->fromDate) ? $this->fromDate : $this->getCommandeLastUpdateDate();
 			$to_date = $this->toDate;
@@ -1305,12 +1321,14 @@ class eCommerceSynchro
 
 			$result = $this->synchronizeOrders($from_date, $to_date, $remote_ids, $toNb, true, $dont_synchronize_products);
 
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 			return $result;
 		} catch (Exception $e) {
 			$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeOrders')), $this->errors);
 			$this->errors[] = $e->getMessage();
 		}
 
+		eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 		return -1;
 	}
 
@@ -1837,6 +1855,7 @@ class eCommerceSynchro
         $nbgoodsunchronize = 0;
 
         dol_syslog("***** eCommerceSynchro synchDtoECategory");
+		$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - toNb: {$toNb}");
 
         $this->initECommerceCategory(); // Initialise 2 properties eCommerceCategory and eCommerceMotherCategory
 
@@ -1854,7 +1873,8 @@ class eCommerceSynchro
             $error_msg = $this->langs->trans('ECommerceErrorGetCategoryIdsAlreadyLinked', $this->eCommerceSite->name, $this->db->lasterror());
             $this->errors[] = $error_msg;
             dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
-            return -1;
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+			return -1;
         }
 
         $index = 0;
@@ -1907,7 +1927,8 @@ class eCommerceSynchro
             $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchCategorySuccess');
         }
 
-        if (!$error) {
+		eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+		if (!$error) {
             return $nbgoodsunchronize;
         } else {
             return -1;
@@ -1928,6 +1949,7 @@ class eCommerceSynchro
         $nbgoodsunchronize = 0;
 
         dol_syslog("***** eCommerceSynchro synchDtoEProduct");
+		$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - toNb: {$toNb}");
 
         $this->fetch_categories('product', $this->eCommerceSite->fk_cat_product);
         $cats_id = array_keys($this->cache_categories['product']);
@@ -2011,6 +2033,7 @@ class eCommerceSynchro
                 $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchProductSuccess');
             }
 
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
             if (!$error) {
                 return $nbgoodsunchronize;
             } else {
@@ -2018,6 +2041,7 @@ class eCommerceSynchro
             }
         } else {
             $this->error = $this->db->lasterror();
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
             return -1;
         }
     }
@@ -2095,6 +2119,8 @@ class eCommerceSynchro
     public function dropImportedAndSyncData($deletealsoindolibarr, $mode='')
     {
         dol_syslog("***** eCommerceSynchro dropImportedAndSyncData");
+
+		$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - mode: {$mode}");
 
         // Drop invoices
         if (empty($mode) || preg_match('/^invoices/', $mode))
@@ -2364,6 +2390,8 @@ class eCommerceSynchro
 
             $this->db->commit();
         }
+
+		eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
     }
 
 
@@ -3848,10 +3876,9 @@ class eCommerceSynchro
 										if (!preg_match('@woocommerce/assets/images@i', $image['url'])) {
 											$ret = ecommerceng_download_image($image, $product, $error_message);
 											if (!$ret) {
-												$error++;
-												$error_label = $this->langs->trans('ECommerceErrorDownloadProductImage', implode(',', $image), $product->id, $product_data['remote_id'], $this->eCommerceSite->name) . ': ' . $error_message;
-												$this->errors[] = $error_label;
-												dol_syslog($error_label, LOG_ERR);
+												$warning_label = $this->langs->trans('ECommerceErrorDownloadProductImage', implode(',', $image), $product->id, $product_data['remote_id'], $this->eCommerceSite->name) . ': ' . $error_message;
+												$this->warnings[] = $warning_label;
+												dol_syslog($warning_label, LOG_WARNING);
 											}
 										}
 									}
@@ -3860,10 +3887,9 @@ class eCommerceSynchro
 								// Remove obsolete image
 								$ret = ecommerceng_remove_obsolete_image($product, $product_data['images'], $error_message);
 								if (!$ret) {
-									$error++;
-									$error_label = $this->langs->trans('ECommerceErrorRemoveObsoleteProductImage', $product->id, $product_data['remote_id'], $this->eCommerceSite->name) . ': ' . $error_message;
-									$this->errors[] = $error_label;
-									dol_syslog($error_label, LOG_ERR);
+									$warning_label = $this->langs->trans('ECommerceErrorRemoveObsoleteProductImage', $product->id, $product_data['remote_id'], $this->eCommerceSite->name) . ': ' . $error_message;
+									$this->warnings[] = $warning_label;
+									dol_syslog($warning_label, LOG_WARNING);
 								}
 							}
 						}

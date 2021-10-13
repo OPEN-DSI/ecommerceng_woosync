@@ -1,5 +1,14 @@
 # ChangeLog
 
+## 4.0.89.0
+- La synchronization des images du produit n'est plus bloquante.
+
+## 4.0.88.0
+- Affichage de l'heure de la date du traitement sur la liste des WebHooks.
+- Ajout de log en LOG_ALERT (avec l'activation de la globale ECOMMERCENG_LOG_PROCESSING_TIMES) sur le temps d'execution du traitement global d'une synchronisation et d'un appel à l'API de WooCommerce
+- Suppression de l'appel à l'API pour tester la connexion dans la fonction connect()
+- Corrections diverses
+
 ## 4.0.87.0
 - Ajout dans la configuration d'une option sur les statuts pour synchronisation de la commande depuis WooCommerce. 
 

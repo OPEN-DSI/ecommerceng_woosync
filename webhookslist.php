@@ -563,7 +563,7 @@ if ($resql) {
 		// Date processed
 		if (!empty($arrayfields['epw.datep']['checked'])) {
 			print '<td class="nowrap center">';
-			print dol_print_date($db->jdate($obj->datep), 'day');
+			print dol_print_date($db->jdate($obj->datep), 'dayhour', 'tzuser');
 			print "</td>\n";
 			if (!$i) $totalarray['nbfield']++;
 		}

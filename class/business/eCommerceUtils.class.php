@@ -36,7 +36,12 @@ class eCommerceUtils
     public $user;
 
     //Data access
-    private $db;
+	public $db;
+
+	/**
+	 * @var array 	List of chronometer data
+	 */
+    protected static $chronometer = array();
 
 
     /**
@@ -121,5 +126,111 @@ class eCommerceUtils
 		else return 1;
     }
 
+	/**
+	 * Start stopwatch
+	 *
+	 * @param 	string		$log_label		Log label
+	 * @return	int							ID of the started stopwatch
+	 */
+	static public function startStopwatch($log_label)
+	{
+		$stopwatch_id = self::_getNextFreeStopwatchId();
+
+		self::$chronometer[$stopwatch_id] = array(
+			'start_time'	=> microtime(true),
+			'log_label'		=> $log_label,
+		);
+
+		return $stopwatch_id;
+	}
+
+	/**
+	 * Start stopwatch and log
+	 *
+	 * @param 	string		$log_label		Log label
+	 * @return	int							ID of the started stopwatch
+	 */
+	static public function startAndLogStopwatch($log_label)
+	{
+		global $conf;
+
+		$stopwatch_id = self::startStopwatch($log_label);
+		$data = self::$chronometer[$stopwatch_id];
+
+		if (!empty($conf->global->ECOMMERCENG_LOG_PROCESSING_TIMES)) {
+			dol_syslog("Stopwatch " . sprintf("%04d", $stopwatch_id) . " - " . $data['log_label'] . " - Start", LOG_ALERT);
+		}
+
+		return $stopwatch_id;
+	}
+
+	/**
+	 * Get next free stopwatch ID
+	 *
+	 * @return int				 The next free stopwatch ID
+	 */
+	static protected function _getNextFreeStopwatchId()
+	{
+		$stopwatch_id = 0;
+
+		if (!empty(self::$chronometer)) {
+			$stopwatch_id = max(array_keys(self::$chronometer)) + 1;
+		}
+
+		return $stopwatch_id;
+	}
+
+	/**
+	 * Stop stopwatch
+	 *
+	 * @param	int		$stopwatch_id		ID of the started stopwatch
+	 * @return	int							Elapsed time (in second), =-1 if stopwatch not exist
+	 */
+	static public function stopStopwatch($stopwatch_id)
+	{
+		if (isset(self::$chronometer[$stopwatch_id])) {
+			$elapsed_time = microtime(true) - self::$chronometer[$stopwatch_id]['start_time'];
+
+			unset(self::$chronometer[$stopwatch_id]);
+
+			return $elapsed_time;
+		}
+
+		return -1;
+	}
+
+	/**
+	 * Stop and log stopwatch
+	 *
+	 * @param	int		$stopwatch_id		ID of the started stopwatch
+	 * @return	void
+	 */
+	static public function stopAndLogStopwatch($stopwatch_id)
+	{
+		global $conf;
+
+		if (isset(self::$chronometer[$stopwatch_id]) && !empty($conf->global->ECOMMERCENG_LOG_PROCESSING_TIMES)) {
+			$data = self::$chronometer[$stopwatch_id];
+			$elapsed_time = microtime(true) - $data['start_time'];
+
+			dol_syslog("Stopwatch " . sprintf("%04d", $stopwatch_id) . " - " . $data['log_label'] . " - Elapsed time : " . self::microTimeToTime($elapsed_time), LOG_ALERT);
+
+			unset(self::$chronometer[$stopwatch_id]);
+		}
+	}
+
+	/**
+	 * Convert micro time to string time
+	 *
+	 * @param	int			$micro_time		Micro time
+	 * @return	string						Time formatted (Hours:Minutes:Seconds)
+	 */
+	public static function microTimeToTime($micro_time)
+	{
+		$hours = (int)($micro_time / 60 / 60);
+		$minutes = (int)(($micro_time / 60) - $hours * 60);
+		$seconds = $micro_time - $hours * 60 * 60 - $minutes * 60;
+		return sprintf("%02d:%02d:%09.6f", $hours, $minutes, $seconds);
+	}
 }
 

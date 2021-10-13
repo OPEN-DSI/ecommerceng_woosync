@@ -21,6 +21,7 @@ dol_include_once('/ecommerceng/class/data/eCommerceCategory.class.php');
 dol_include_once('/ecommerceng/class/data/eCommerceSociete.class.php');
 dol_include_once('/ecommerceng/class/data/eCommerceProduct.class.php');
 dol_include_once('/ecommerceng/class/data/eCommerceCommande.class.php');
+dol_include_once('/ecommerceng/class/business/eCommerceUtils.class.php');
 
 dol_include_once('/ecommerceng/includes/WooCommerce/Client.php');
 dol_include_once('/ecommerceng/includes/WooCommerce/HttpClient/BasicAuth.php');
@@ -213,6 +214,7 @@ class eCommerceRemoteAccessWoocommerce
 		$this->errors = array();
         $response_timeout = (empty($conf->global->MAIN_USE_RESPONSE_TIMEOUT) ? 30 : $conf->global->MAIN_USE_RESPONSE_TIMEOUT);    // Response timeout
 
+//		$stopwatch_id = -1;
         try {
             $this->client = new Client(
                 $this->site->webservice_address,
@@ -225,7 +227,10 @@ class eCommerceRemoteAccessWoocommerce
                     'query_string_auth' => !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_QUERY_STRING_AUTH),
                 ]
             );
-            $this->client->get('products/categories', [ 'page' => 1, 'per_page' => 1 ]);
+//            $filters = [ 'page' => 1, 'per_page' => 1 ];
+//			$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/categories (filters: " . json_encode($filters). ")");
+//            $this->client->get('products/categories', $filters);
+//			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 //
 //            $this->clientOld = new Client(
 //                $this->site->webservice_address,
@@ -240,6 +245,7 @@ class eCommerceRemoteAccessWoocommerce
 //            );
 //            $this->clientOld->get('products/categories', [ 'page' => 1, 'filter' => [ 'limit' => 1 ] ]);
         } catch (HttpClientException $fault) {
+//			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
             $this->errors[] = $langs->trans('ECommerceWoocommerceConnect', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
             dol_syslog(__METHOD__ .
                 ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConnect', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
@@ -289,18 +295,20 @@ class eCommerceRemoteAccessWoocommerce
 
         $no_more = false;
         while (true) {
+			$filters =  [
+				'page' => $idxPage++,
+				'per_page' => $per_page,
+				'orderby' => 'registered_date',
+				'order' => 'desc',
+				'role' => empty($this->site->parameters['customer_roles']) ? 'all' : $this->site->parameters['customer_roles'],
+			];
+			$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/categories (filters: " . json_encode($filters). ")");
             try {
-                $page = $this->client->get('customers',
-                    [
-                        'page' => $idxPage++,
-                        'per_page' => $per_page,
-                        'orderby' => 'registered_date',
-                        'order' => 'desc',
-                        'role' => empty($this->site->parameters['customer_roles']) ? 'all' : $this->site->parameters['customer_roles'],
-                    ]
-                );
+                $page = $this->client->get('customers', $filters);
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
             } catch (HttpClientException $fault) {
-                $this->errors[] = $langs->trans('ECommerceWoocommerceGetSocieteToUpdate', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+				$this->errors[] = $langs->trans('ECommerceWoocommerceGetSocieteToUpdate', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                 dol_syslog(__METHOD__ .
                     ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetSocieteToUpdate', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
                     ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
@@ -597,10 +605,14 @@ class eCommerceRemoteAccessWoocommerce
 		$idxPage = 1;
 		$nbTotalRecords = 0;
 		while (true) {
+			$filters['page'] = $idxPage++;
+			$stopwatch_id = -1;
 			try {
-				$filters['page'] = $idxPage++;
+				$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET customers (filters: " . json_encode($filters). ")");
 				$page = $this->client->get('customers', $filters);
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 			} catch (HttpClientException $fault) {
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 				$this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSociete', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
 				dol_syslog(__METHOD__ .
 					': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSociete', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
@@ -840,10 +852,13 @@ class eCommerceRemoteAccessWoocommerce
 		$idxPage = 1;
 		$nbTotalRecords = 0;
 		while (true) {
+			$filters['page'] = $idxPage++;
+			$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products (filters: " . json_encode($filters). ")");
 			try {
-				$filters['page'] = $idxPage++;
 				$page = $this->client->get('products', $filters);
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 			} catch (HttpClientException $fault) {
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 				$this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
 				dol_syslog(__METHOD__ .
 					': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
@@ -879,14 +894,16 @@ class eCommerceRemoteAccessWoocommerce
 					$requestGroupsVariations = $this->getRequestGroups($include_variation_ids[$product->id], $nb_max_by_request);
 					foreach ($requestGroupsVariations as $requestVariations) {
 						dol_syslog(__METHOD__ . ": Get " . count($requestVariations) . " products variations of remote product (ID:{$product->id}): " . implode(', ', $requestVariations), LOG_DEBUG);
+						$filters =  [
+							'per_page' => $nb_max_by_request,
+							'include' => implode(',', $requestVariations),
+						];
+						$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/{$product->id}/variations (filters: " . json_encode($filters). ")");
 						try {
-							$results = $this->client->get('products/' . $product->id . '/variations',
-								[
-									'per_page' => $nb_max_by_request,
-									'include' => implode(',', $requestVariations),
-								]
-							);
+							$results = $this->client->get('products/' . $product->id . '/variations', $filters);
+							eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 						} catch (HttpClientException $fault) {
+							eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 							$this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProductVariations', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
 							dol_syslog(__METHOD__ .
 								': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProductVariations', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
@@ -933,9 +950,12 @@ class eCommerceRemoteAccessWoocommerce
 		$isVariation = isset($parent_remote_data) || $remote_data->parent_id > 0;
 		$parent_id = isset($parent_remote_data) ? $parent_remote_data->id : ($remote_data->parent_id > 0 ? $remote_data->parent_id : 0);
 		if ($isVariation && empty($parent_remote_data) && !empty($parent_id)) {
+			$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/{$parent_id}");
 			try {
 				$parent_remote_data = $this->client->get('products/' . $parent_id);
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 			} catch (HttpClientException $fault) {
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 				$this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
 				dol_syslog(__METHOD__ .
 					': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
@@ -1214,10 +1234,13 @@ class eCommerceRemoteAccessWoocommerce
 		$idxPage = 1;
 		$nbTotalRecords = 0;
 		while (true) {
+			$filters['page'] = $idxPage++;
+			$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET orders (filters: " . json_encode($filters). ")");
 			try {
-				$filters['page'] = $idxPage++;
 				$page = $this->client->get('orders', $filters);
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 			} catch (HttpClientException $fault) {
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 				$this->errors[] = $langs->trans('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
 				dol_syslog(__METHOD__ .
 					': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceConvertRemoteObjectIntoDolibarrCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
@@ -1754,14 +1777,16 @@ class eCommerceRemoteAccessWoocommerce
         $per_page = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
 
         while (true) {
+        	$filters = [
+				'page' => $idxPage++,
+				'per_page' => $per_page,
+			];
+			$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/categories (filters: " . json_encode($filters). ")");
             try {
-                $results = $this->client->get('products/categories',
-                    [
-                        'page' => $idxPage++,
-                        'per_page' => $per_page,
-                    ]
-                );
+                $results = $this->client->get('products/categories', $filters);
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
             } catch (HttpClientException $fault) {
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
                 $this->errors[] = $langs->trans('ECommerceWoocommerceGetRemoteCategoryTree', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                 dol_syslog(__METHOD__ .
                     ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetRemoteCategoryTree', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
@@ -1837,9 +1862,12 @@ class eCommerceRemoteAccessWoocommerce
 		$this->errors = array();
 		$category = [];
 
+		$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/categories/{$category_id}");
         try {
             $result = $this->client->get('products/categories/' . $category_id);
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
         } catch (HttpClientException $fault) {
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
             $this->errors[] = $langs->trans('ECommerceWoocommerceGetCategoryData', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
             dol_syslog(__METHOD__ .
                 ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetCategoryData', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
@@ -1991,33 +2019,65 @@ class eCommerceRemoteAccessWoocommerce
         if ($productImageSynchDirection == 'dtoe' || $productImageSynchDirection == 'all') {
             // Get current images
             $current_images = [];
-            try {
-                if ($isProductVariation) { // Variations
-                    $results = $this->client->get("products/$remote_product_id/variations/$remote_product_variation_id");
-                } else {
-                    $results = $this->client->get("products/$remote_product_id");
-                }
+			if ($isProductVariation) { // Variations
+				foreach ($remote_product_variation_ids as $remote_product_variation_id) {
+					$stopwatch_id = -1;
+					try {
+						$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/{$remote_product_id}/variations/{$remote_product_variation_id}");
+						$results = $this->client->get("products/$remote_product_id/variations/$remote_product_variation_id");
+						eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 
-                if (!empty($results)) {
-                    if ($isProductVariation) {
-                        if (isset($results->image)) {
-                            $current_images[$results->image->name] = $results->image->id;
-                        }
-                    } else {
-                        if (is_array($results->images)) {
-                            foreach ($results->images as $image) {
-                                $current_images[$image->name] = $image->id;
-                            }
-                        }
-                    }
-                }
-            } catch (HttpClientException $fault) {
-               $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
-               dol_syslog(__METHOD__ .
-                   ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
-                   ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
-               return false;
-            }
+						if (!empty($results)) {
+							if ($isProductVariation) {
+								if (isset($results->image)) {
+									$current_images[$results->image->name] = $results->image->id;
+								}
+							} else {
+								if (is_array($results->images)) {
+									foreach ($results->images as $image) {
+										$current_images[$image->name] = $image->id;
+									}
+								}
+							}
+						}
+					} catch (HttpClientException $fault) {
+						eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+						$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+						dol_syslog(__METHOD__ .
+							': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+							' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+						return false;
+					}
+				}
+			} else {
+				$stopwatch_id = -1;
+				try {
+					$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/{$remote_product_id}");
+					$results = $this->client->get("products/$remote_product_id");
+					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+
+					if (!empty($results)) {
+						if ($isProductVariation) {
+							if (isset($results->image)) {
+								$current_images[$results->image->name] = $results->image->id;
+							}
+						} else {
+							if (is_array($results->images)) {
+								foreach ($results->images as $image) {
+									$current_images[$image->name] = $image->id;
+								}
+							}
+						}
+					}
+				} catch (HttpClientException $fault) {
+					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+					$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+					dol_syslog(__METHOD__ .
+						': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+						' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+					return false;
+				}
+			}
 
             // Product - Images properties
             $entity = isset($object->entity) ? $object->entity : $conf->entity;
@@ -2206,10 +2266,14 @@ class eCommerceRemoteAccessWoocommerce
             // 'status'  => $object->status ? 'publish' : 'pending',	// string		Product status (post status). Options: draft, pending, private and publish. Default is publish.
 
 			foreach ($remote_product_variation_ids as $remote_product_variation_id) {
+				$stopwatch_id = -1;
 				try {
+					$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - PUT products/{$remote_product_id}/variations/{$remote_product_variation_id}");
 					if (!self::$disable_put_post_to_api) $result = $this->client->put("products/$remote_product_id/variations/$remote_product_variation_id", $variationData);
+					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 					dol_syslog(__METHOD__ . " - Send PUT to API 'products/$remote_product_id/variations/$remote_product_variation_id' : Data: " . json_encode($variationData), LOG_NOTICE);
 				} catch (HttpClientException $fault) {
+					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 					$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
 					dol_syslog(__METHOD__ .
 						': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
@@ -2396,10 +2460,14 @@ class eCommerceRemoteAccessWoocommerce
                 }
             }
 
+			$stopwatch_id = -1;
             try {
+				$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - PUT products/{$remote_product_id}");
 				if (!self::$disable_put_post_to_api) $result = $this->client->put("products/$remote_product_id", $productData);
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 				dol_syslog(__METHOD__ . " - Send PUT to API 'products/$remote_product_id' : Data: " . json_encode($productData), LOG_NOTICE);
             } catch (HttpClientException $fault) {
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
                 $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProduct', $remote_product_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                 dol_syslog(__METHOD__ .
                     ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProduct', $remote_product_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
@@ -2415,9 +2483,13 @@ class eCommerceRemoteAccessWoocommerce
                 if (isset($variationData['description'])) unset($variationData['description']);
                 if (isset($variationData['short_description'])) unset($variationData['short_description']);
 				foreach ($remote_product_variation_ids as $remote_product_variation_id) {
+					$stopwatch_id = -1;
 					try {
+						$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/{$remote_product_variation_id}");
 						$result = $this->client->get("products/$remote_product_variation_id");
+						eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 					} catch (HttpClientException $fault) {
+						eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 						$this->errors[] = $langs->trans('ECommerceWoocommerceGetProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
 						dol_syslog(__METHOD__ .
 							': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
@@ -2426,19 +2498,27 @@ class eCommerceRemoteAccessWoocommerce
 					}
 					if (isset($result->translations)) {
 						foreach ((array)$result->translations as $product_id) {
+							$stopwatch_id = -1;
 							try {
+								$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/{$product_id}");
 								$result2 = $this->client->get("products/$product_id");
+								eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 							} catch (HttpClientException $fault) {
+								eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 								$this->errors[] = $langs->trans('ECommerceWoocommerceGetTranslatedProductVariation', $product_id, $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
 								dol_syslog(__METHOD__ .
 									': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetTranslatedProductVariation', $product_id, $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
 									' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
 								return false;
 							}
+							$stopwatch_id = -1;
 							try {
+								$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - PUT products/{$result2->parent_id}/variations/{$product_id}");
 								if (!self::$disable_put_post_to_api) $res = $this->client->put("products/{$result2->parent_id}/variations/$product_id", $variationData);
+								eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 								dol_syslog(__METHOD__ . " - Send PUT to API 'products/{$result2->parent_id}/variations/$product_id' : Data: " . json_encode($variationData), LOG_NOTICE);
 							} catch (HttpClientException $fault) {
+								eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 								$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteTranslatedProductVariation', $result2->parent_id . '|' . $product_id, $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
 								dol_syslog(__METHOD__ .
 									': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteTranslatedProductVariation', $result2->parent_id . '|' . $product_id, $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
@@ -2450,9 +2530,13 @@ class eCommerceRemoteAccessWoocommerce
 				}
             }
 			if (!$isProductVariation || $isProductVariationHasOne) {
+				$stopwatch_id = -1;
 				try {
+					$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/{$remote_product_id}");
 					$result = $this->client->get("products/$remote_product_id");
+					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 				} catch (HttpClientException $fault) {
+					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 					$this->errors[] = $langs->trans('ECommerceWoocommerceGetProduct', $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
 					dol_syslog(__METHOD__ .
 						': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetProduct', $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
@@ -2464,11 +2548,15 @@ class eCommerceRemoteAccessWoocommerce
                     if (isset($productData['description'])) unset($productData['description']);
                     if (isset($productData['short_description'])) unset($productData['short_description']);
                     foreach ((array)$result->translations as $product_id) {
-                        try {
+						$stopwatch_id = -1;
+						try {
+							$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - PUT products/{$product_id}");
 							if (!self::$disable_put_post_to_api) $res = $this->client->put("products/$product_id", $productData);
+							eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 							dol_syslog(__METHOD__ . " - Send PUT to API 'products/$product_id' : Data: " . json_encode($productData), LOG_NOTICE);
                         } catch (HttpClientException $fault) {
-                            $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteTranslatedProduct', $product_id, $remote_product_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+							eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+							$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteTranslatedProduct', $product_id, $remote_product_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                             dol_syslog(__METHOD__ .
                                 ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteTranslatedProduct', $product_id, $remote_product_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
                                 ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
@@ -2541,10 +2629,14 @@ class eCommerceRemoteAccessWoocommerce
             ];
 
 			foreach ($remote_product_variation_ids as $remote_product_variation_id) {
+				$stopwatch_id = -1;
 				try {
+					$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - PUT products/{$remote_product_id}/variations/{$remote_product_variation_id}");
 					if (!self::$disable_put_post_to_api) $result = $this->client->put("products/$remote_product_id/variations/$remote_product_variation_id", $variationData);
+					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 					dol_syslog(__METHOD__ . " - Send PUT to API 'products/$remote_product_id/variations/$remote_product_variation_id' : Data: " . json_encode($variationData), LOG_NOTICE);
 				} catch (HttpClientException $fault) {
+					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 					$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProductVariation', $stocks_label, $remote_product_variation_id, $remote_product_id, $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage();
 					dol_syslog(__METHOD__ .
 						': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteStockProductVariation', $stocks_label, $remote_product_variation_id, $remote_product_id, $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage()) .
@@ -2562,11 +2654,15 @@ class eCommerceRemoteAccessWoocommerce
                 //'backorders'        => '',                      // string       If managing stock, this controls if backorders are allowed. Options: no, notify and yes. Default is no.
             ];
 
-            try {
+			$stopwatch_id = -1;
+			try {
+				$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - PUT products/{$remote_product_id}");
 				if (!self::$disable_put_post_to_api) $result = $this->client->put("products/$remote_product_id", $productData);
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 				dol_syslog(__METHOD__ . " - Send PUT to API 'products/$remote_product_id' : Data: " . json_encode($productData), LOG_NOTICE);
             } catch (HttpClientException $fault) {
-                $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProduct', $stocks_label, $remote_product_id, $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage();
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+				$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProduct', $stocks_label, $remote_product_id, $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage();
                 dol_syslog(__METHOD__ .
                     ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteStockProduct', $stocks_label, $remote_product_id, $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage()) .
                                                             ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse(), LOG_ERR);
@@ -2578,9 +2674,13 @@ class eCommerceRemoteAccessWoocommerce
 		if (!empty($conf->global->ECOMMERCENG_WOOCOMMERCE_WPML_SUPPORT)) {
 			if ($isProductVariation || $isProductVariationHasOne) {
 				foreach ($remote_product_variation_ids as $remote_product_variation_id) {
+					$stopwatch_id = -1;
 					try {
+						$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/{$remote_product_variation_id}");
 						$result = $this->client->get("products/$remote_product_variation_id");
+						eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 					} catch (HttpClientException $fault) {
+						eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 						$this->errors[] = $langs->trans('ECommerceWoocommerceGetProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
 						dol_syslog(__METHOD__ .
 							': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
@@ -2589,19 +2689,27 @@ class eCommerceRemoteAccessWoocommerce
 					}
 					if (isset($result->translations)) {
 						foreach ((array)$result->translations as $product_id) {
+							$stopwatch_id = -1;
 							try {
+								$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/{$product_id}");
 								$result2 = $this->client->get("products/$product_id");
+								eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 							} catch (HttpClientException $fault) {
+								eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 								$this->errors[] = $langs->trans('ECommerceWoocommerceGetTranslatedProductVariation', $product_id, $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
 								dol_syslog(__METHOD__ .
 									': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetTranslatedProductVariation', $product_id, $remote_product_variation_id, $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
 									' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
 								return false;
 							}
+							$stopwatch_id = -1;
 							try {
+								$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - PUT products/{$result2->parent_id}/variations/{$product_id}");
 								if (!self::$disable_put_post_to_api) $res = $this->client->put("products/{$result2->parent_id}/variations/$product_id", $variationData);
+								eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 								dol_syslog(__METHOD__ . " - Send PUT to API 'products/{$result2->parent_id}/variations/$product_id' : Data: " . json_encode($variationData), LOG_NOTICE);
 							} catch (HttpClientException $fault) {
+								eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 								$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockTranslatedProductVariation', $stocks_label, $result2->parent_id . '|' . $product_id, $remote_product_variation_id, $remote_product_id) . ': ' . $this->site->name . ' - ' . $fault->getCode() . ': ' . $fault->getMessage();
 								dol_syslog(__METHOD__ .
 									': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteStockTranslatedProductVariation', $stocks_label, $result2->parent_id . '|' . $product_id, $remote_product_variation_id, $remote_product_id) . ': ' . $this->site->name . ' - ' . $fault->getCode() . ': ' . $fault->getMessage()) .
@@ -2613,9 +2721,13 @@ class eCommerceRemoteAccessWoocommerce
 				}
 			}
 			if (!$isProductVariation || $isProductVariationHasOne) {
+				$stopwatch_id = -1;
 				try {
+					$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/{$remote_product_id}");
 					$result = $this->client->get("products/$remote_product_id");
+					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 				} catch (HttpClientException $fault) {
+					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 					$this->errors[] = $langs->trans('ECommerceWoocommerceGetProduct', $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage();
 					dol_syslog(__METHOD__ .
 						': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetProduct', $remote_product_id, $this->site->name) . ': ' . $fault->getCode() . ': ' . $fault->getMessage() .
@@ -2624,10 +2736,14 @@ class eCommerceRemoteAccessWoocommerce
 				}
 				if (isset($result->translations)) {
 					foreach ((array)$result->translations as $product_id) {
+						$stopwatch_id = -1;
 						try {
+							$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - PUT products/{$product_id}");
 							if (!self::$disable_put_post_to_api) $res = $this->client->put("products/$product_id", $productData);
+							eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 							dol_syslog(__METHOD__ . " - Send PUT to API 'products/$product_id' : Data: " . json_encode($productData), LOG_NOTICE);
 						} catch (HttpClientException $fault) {
+							eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 							$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockTranslatedProduct', $stocks_label, $product_id, $remote_id, $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage();
 							dol_syslog(__METHOD__ .
 								': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteStockTranslatedProduct', $stocks_label, $product_id, $remote_id, $this->site->name) . ' ' . $fault->getCode() . ': ' . $fault->getMessage()) .
@@ -2673,10 +2789,14 @@ class eCommerceRemoteAccessWoocommerce
             //'meta_data'     => $meta_data,          // array    Meta data. See Customer - Meta data properties
         ];
 
+		$stopwatch_id = -1;
         try {
+			$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - PUT customers/{$remote_id}");
 			if (!self::$disable_put_post_to_api) $result = $this->client->put("customers/$remote_id", $companyData);
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
         } catch (HttpClientException $fault) {
-            $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteSociete', $remote_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+			$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteSociete', $remote_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
             dol_syslog(__METHOD__ .
                 ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteSociete', $remote_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
                 ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
@@ -2747,10 +2867,14 @@ class eCommerceRemoteAccessWoocommerce
 
         if (isset($contactData)) {
             if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsCustomer) == 1) {
-                try {
+				$stopwatch_id = -1;
+				try {
+					$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - PUT customers/{$idsCustomer[1]}");
 					if (!self::$disable_put_post_to_api) $result = $this->client->put("customers/$idsCustomer[1]", $contactData);
-                } catch (HttpClientException $fault) {
-                    $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteSocpeople', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+				} catch (HttpClientException $fault) {
+					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+					$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteSocpeople', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                     dol_syslog(__METHOD__ .
                         ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteSocpeople', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
                         ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
@@ -2829,10 +2953,14 @@ class eCommerceRemoteAccessWoocommerce
                 }
             }
 
-            try {
+			$stopwatch_id = -1;
+			try {
+				$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - PUT orders/{$remote_id}");
 				if (!self::$disable_put_post_to_api) $result = $this->client->put("orders/$remote_id", $orderData);
-            } catch (HttpClientException $fault) {
-                $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+			} catch (HttpClientException $fault) {
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+				$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                 dol_syslog(__METHOD__ .
                     ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
                     ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
@@ -2890,10 +3018,14 @@ class eCommerceRemoteAccessWoocommerce
         global $conf, $langs, $user;
 
 		$this->errors = array();
+		$filters = ['sku' => $object->ref];
+		$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products (filters: " . json_encode($filters). ")");
 		try {
-            $results = $this->client->get('products', ['sku' => $object->ref]);
-        } catch (HttpClientException $fault) {
-            $this->errors[] = $langs->trans('ECommerceWoocommerceCheckRemoteProductExist', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+            $results = $this->client->get('products', $filters);
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+		} catch (HttpClientException $fault) {
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+			$this->errors[] = $langs->trans('ECommerceWoocommerceCheckRemoteProductExist', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
             dol_syslog(__METHOD__ .
                 ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceCheckRemoteProductExist', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
                 ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
@@ -3192,12 +3324,16 @@ class eCommerceRemoteAccessWoocommerce
                 }
             }
 
-            try {
+			$stopwatch_id = -1;
+			try {
+				$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - POST products");
                 if (!self::$disable_put_post_to_api) $res = $this->client->post("products", $productData);
-                $remoteId = $res->id;
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+				$remoteId = $res->id;
 				dol_syslog(__METHOD__ . " - Send POST to API 'products' : Data: " . json_encode($productData) . "; Remote ID: $remoteId", LOG_NOTICE);
             } catch (HttpClientException $fault) {
-                $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+				$this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                 dol_syslog(__METHOD__ .
                     ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceCreateRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
                     ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
@@ -3283,11 +3419,15 @@ class eCommerceRemoteAccessWoocommerce
             foreach ($requestGroups as $request) {
                 $error = 0;
 
-                try {
+				$stopwatch_id = -1;
+				try {
+					$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - POST products/categories/batch");
 					if (!self::$disable_put_post_to_api) $results = $this->client->post("products/categories/batch", ['create' => $request]);
+					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 					dol_syslog(__METHOD__ . " - Send POST to API 'products/categories/batch' : Data: " . json_encode(['create' => $request]), LOG_NOTICE);
                 } catch (HttpClientException $fault) {
-                    $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteBatchCategories', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+					$this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteBatchCategories', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                     dol_syslog(__METHOD__ .
                         ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceCreateRemoteBatchCategories', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
                         ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
@@ -3405,12 +3545,16 @@ class eCommerceRemoteAccessWoocommerce
                 if ($productImageSynchDirection == 'dtoe' || $productImageSynchDirection == 'all') {
                     // Get current images
                     $current_images = [];
-                    try {
+					$stopwatch_id = -1;
+					try {
                         if ($isProductVariation) { // Variations
-                            $results = $this->client->get("products/$remote_product_id/variations/$remote_product_variation_id");
+							$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/{$remote_product_id}/variations/{$remote_product_variation_id}");
+							$results = $this->client->get("products/$remote_product_id/variations/$remote_product_variation_id");
                         } else {
-                            $results = $this->client->get("products/$remote_product_id");
+							$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/{$remote_product_id}");
+							$results = $this->client->get("products/$remote_product_id");
                         }
+						eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 
                         if (!empty($results)) {
                             if ($isProductVariation) {
@@ -3426,7 +3570,8 @@ class eCommerceRemoteAccessWoocommerce
                             }
                         }
                     } catch (HttpClientException $fault) {
-                       $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+						eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+						$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                        dol_syslog(__METHOD__ .
                            ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
                            ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
@@ -3717,11 +3862,15 @@ class eCommerceRemoteAccessWoocommerce
 
             $error = 0;
 
-            try {
+			$stopwatch_id = -1;
+			try {
+				$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - POST products/batch");
 				if (!self::$disable_put_post_to_api) $results = $this->client->post("products/batch", $batch_datas);
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 				dol_syslog(__METHOD__ . " - Send POST to API 'products/batch' : Data: " . json_encode($batch_datas), LOG_NOTICE);
             } catch (HttpClientException $fault) {
-                $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteBatchProducts', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+				$this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteBatchProducts', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                 dol_syslog(__METHOD__ .
                     ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceCreateRemoteBatchProducts', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
                     ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
@@ -3766,11 +3915,15 @@ class eCommerceRemoteAccessWoocommerce
 
                 $error = 0;
 
-                try {
+				$stopwatch_id = -1;
+				try {
+					$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - POST products/{$remote_product_id}/variations/batch");
 					if (!self::$disable_put_post_to_api) $results = $this->client->post("products/$remote_product_id/variations/batch", $batch_datas);
+					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 					dol_syslog(__METHOD__ . " - Send POST to API 'products/$remote_product_id/variations/batch' : Data: " . json_encode($batch_datas), LOG_NOTICE);
                 } catch (HttpClientException $fault) {
-                    $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteBatchProducts', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+					$this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteBatchProducts', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
                     dol_syslog(__METHOD__ .
                         ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceCreateRemoteBatchProducts', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
                         ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
@@ -3856,10 +4009,14 @@ class eCommerceRemoteAccessWoocommerce
                 ],
             ]
         ];
-        try {
+		$stopwatch_id = -1;
+		try {
+			$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - PUT orders/{$order_remote_id}");
             if (!self::$disable_put_post_to_api) $result = $this->client->put("orders/$order_remote_id", $commandeData);
-        } catch (HttpClientException $fault) {
-            $this->errors[] = $langs->trans('ECommerceWoocommerceSendFileForCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+		} catch (HttpClientException $fault) {
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+			$this->errors[] = $langs->trans('ECommerceWoocommerceSendFileForCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
             dol_syslog(__METHOD__ .
                 ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceSendFileForCommande', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
                 ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
@@ -4000,9 +4157,13 @@ class eCommerceRemoteAccessWoocommerce
 		dol_syslog(__METHOD__ . ": Retrieve all Woocommerce tax classes", LOG_DEBUG);
 		global $langs;
 
+		$stopwatch_id = -1;
 		try {
+			$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET taxes/classes");
 			$tax_classes = $this->client->get('taxes/classes');
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 		} catch (HttpClientException $fault) {
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 			$this->errors[] = $langs->trans('ECommerceWoocommerceGetAllWoocommerceTaxClass', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
 			dol_syslog(__METHOD__ .
 				': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetAllWoocommerceTaxClass', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
@@ -4036,14 +4197,18 @@ class eCommerceRemoteAccessWoocommerce
 		$idxPage = 0;
 		do {
 			$idxPage++;
+			$stopwatch_id = -1;
 			try {
+				$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET taxes");
 				$taxes = $this->client->get('taxes',
 					[
 						'page' => $idxPage,
 						'per_page' => $nb_max_by_request,
 					]
 				);
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 			} catch (HttpClientException $fault) {
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 				$this->errors[] = $langs->trans('ECommerceWoocommerceGetWoocommerceTaxes', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
 				dol_syslog(__METHOD__ .
 					': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetWoocommerceTaxes', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
@@ -4071,10 +4236,14 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Retrieve all Woocommerce payment gateways", LOG_DEBUG);
         global $langs;
 
-        try {
-            $payment_gateways = $this->client->get('payment_gateways');
-        } catch (HttpClientException $fault) {
-            $this->errors[] = $langs->trans('ECommerceWoocommerceGetAllWoocommercePaymentGateways', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+		$stopwatch_id = -1;
+		try {
+			$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET payment_gateways");
+			$payment_gateways = $this->client->get('payment_gateways');
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+		} catch (HttpClientException $fault) {
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+			$this->errors[] = $langs->trans('ECommerceWoocommerceGetAllWoocommercePaymentGateways', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
             dol_syslog(__METHOD__ .
                 ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetAllWoocommercePaymentGateways', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
                 ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
@@ -4113,14 +4282,18 @@ class eCommerceRemoteAccessWoocommerce
 		$idxPage = 0;
 		do {
 			$idxPage++;
+			$stopwatch_id = -1;
 			try {
+				$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET webhooks");
 				$webhooks = $this->client->get('webhooks',
 					[
 						'page' => $idxPage,
 						'per_page' => $nb_max_by_request,
 					]
 				);
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 			} catch (HttpClientException $fault) {
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 				$this->errors[] = $langs->trans('ECommerceWoocommerceErrorGetWoocommerceWebHooks', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
 				dol_syslog(__METHOD__ .
 					': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceErrorGetWoocommerceWebHooks', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .

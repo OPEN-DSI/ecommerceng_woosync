@@ -21,6 +21,7 @@
  * \brief
  */
 
+dol_include_once('/ecommerceng/class/business/eCommerceUtils.class.php');
 
 /**
  * Class eCommercePendingWebHook
@@ -577,6 +578,8 @@ class eCommercePendingWebHook
 					return -1;
 				}
 
+				$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__);
+
 				while ($obj = $this->db->fetch_object($resql)) {
 					$result = $this->synchronize($obj->site_id, $obj->webhook_topic, $obj->webhook_resource, $obj->webhook_event, json_decode($obj->webhook_data));
 					if ($result > 0) $result = $this->setStatusProcessed($obj->rowid);
@@ -593,6 +596,8 @@ class eCommercePendingWebHook
 					}
 				}
 				$this->db->free($resql);
+
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 
 				dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION', 0);
 
@@ -641,6 +646,8 @@ class eCommercePendingWebHook
 
 			if (empty($conf->global->ECOMMERCE_CHECK_WEBHOOKS_STATUS)) {
 				dolibarr_set_const($this->db, 'ECOMMERCE_CHECK_WEBHOOKS_STATUS', dol_print_date(dol_now(), 'dayhour'), 'chaine', 1, 'Token the processing of the check the webhooks status of the site', 0);
+
+				$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__);
 
 				dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
 				$eCommerceSite = new eCommerceSite($this->db);
@@ -697,6 +704,8 @@ class eCommercePendingWebHook
 						$output .= '<span style="color: orange;">' . $langs->trans('ECommerceWarningNotifyEmailErrorCheckWebHooksStatusNotDefined') . '</span>' . "<br>";
 					}
 				}
+
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 
 				dolibarr_del_const($this->db, 'ECOMMERCE_CHECK_WEBHOOKS_STATUS', 0);
 

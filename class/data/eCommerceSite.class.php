@@ -20,6 +20,7 @@
 
 
 dol_include_once('/ecommerceng/class/data/eCommerceSociete.class.php');
+dol_include_once('/ecommerceng/class/business/eCommerceUtils.class.php');
 
 class eCommerceSite // extends CommonObject
 {
@@ -75,6 +76,7 @@ class eCommerceSite // extends CommonObject
 	 */
 	function cleanOrphelins()
 	{
+		$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__);
 		// Clean orphelins entries to have a clean database (having such records should not happen)
 		/*$sql = "DELETE FROM ".MAIN_DB_PREFIX."ecommerce_category WHERE type = ".Categorie::TYPE_PRODUCT." AND fk_category NOT IN (select rowid from ".MAIN_DB_PREFIX."categorie)";
 		 $this->db->query($sql);
@@ -94,6 +96,7 @@ class eCommerceSite // extends CommonObject
 		$this->db->query($sql);
 		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_facture WHERE fk_facture NOT IN (select rowid from " . MAIN_DB_PREFIX . "facture)";
 		$this->db->query($sql);
+		eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 	}
 
 	/**
@@ -103,6 +106,7 @@ class eCommerceSite // extends CommonObject
 	 */
 	function cleanDuplicatesRemoteID()
 	{
+		$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__);
 		$ids = array();
 		$sql = "SELECT remote_id FROM " . MAIN_DB_PREFIX . "ecommerce_product GROUP BY remote_id HAVING COUNT(*) > 1";
 		$resql = $this->db->query($sql);
@@ -115,6 +119,7 @@ class eCommerceSite // extends CommonObject
 			$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_product WHERE remote_id IN (" . implode(',', $ids) . ")";
 			$this->db->query($sql);
 		}
+		eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 	}
 
     /**
