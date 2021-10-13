@@ -235,31 +235,48 @@ function ecommerceng_download_image($image, $product, &$error_message)
         return false;
     }
 
+    $error = 0;
+
     // Get file
     $timeout = !empty($conf->global->ECOMMERCE_DOWNLOAD_TIMEOUT) ? $conf->global->ECOMMERCE_DOWNLOAD_TIMEOUT : 30;
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $image['url']);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
-	$userAgent = 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; .NET CLR 1.1.4322)';
+	$userAgent = 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.0.3705; .NET CLR 1.1.4322)';
+	if (!empty($conf->global->ECOMMERCE_USER_AGENT)) $userAgent = $conf->global->ECOMMERCE_USER_AGENT;
 	curl_setopt($ch, CURLOPT_USERAGENT, $userAgent);
 	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-    $data = curl_exec($ch);
+
+	if (!empty($conf->global->ECOMMERCE_CURL_VERBOSE)) {
+		curl_setopt($ch, CURLOPT_VERBOSE, true);
+		$verbose = fopen(DOL_DATA_ROOT . '/curl_verbose.txt', 'w+');
+		curl_setopt($ch, CURLOPT_STDERR, $verbose);
+	}
+
+	$data = curl_exec($ch);
 	if (curl_errno($ch) || $data === false) {
         $error_message = "CURL - " . curl_error($ch);
         dol_syslog(__METHOD__.': '.$error_message, LOG_ERR);
-        return false;
+		$error++;
 	} else {
 		$code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		if ($code != 200) {
 			$error_message = "CURL - HTTP code: $code";
 			dol_syslog(__METHOD__.': '.$error_message, LOG_ERR);
-			return false;
+			$error++;
 		}
 	}
 	curl_close($ch);
+	if (!empty($conf->global->ECOMMERCE_CURL_VERBOSE) && isset($verbose)) {
+		@fclose($verbose);
+	}
+
+	if ($error) {
+		return false;
+	}
 
     // Get in temporary file name
     if (version_compare(phpversion(), '5.2.1', '<')) {

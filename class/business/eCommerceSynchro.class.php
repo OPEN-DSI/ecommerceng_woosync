@@ -3557,6 +3557,8 @@ class eCommerceSynchro
 							$this->errors = array_merge($this->errors, $product->errors);
 							$error++;
 						} elseif ($result > 0) {
+							$product_variation_mode_all_to_one = !empty($this->eCommerceSite->parameters['product_variation_mode']) && $this->eCommerceSite->parameters['product_variation_mode'] == 'all_to_one';
+
 							// Check if product already synchronized
 							$this->initECommerceProduct();
 							$result = $this->eCommerceProduct->fetchByProductId($product->id, $this->eCommerceSite->id);
@@ -3598,8 +3600,15 @@ class eCommerceSynchro
 
 								$this->initECommerceProduct();
 							} elseif ($result > 0 && $this->eCommerceProduct->remote_id !== $product_data['remote_id']) {
-								$this->errors[] = $this->langs->trans('ECommerceErrorProductAlreadyLinkedWithRemoteProduct', $product_ref, $this->eCommerceProduct->remote_id);
-								$error++;
+								$check = false;
+								// Check same parent if option 'all variations in one product' set
+								if ($product_variation_mode_all_to_one && preg_match('/^([^|]+)/', $this->eCommerceProduct->remote_id, $matches1) && preg_match('/^([^|]+)/', $product_data['remote_id'], $matches2)) {
+									$check = $matches1[1] == $matches2[1];
+								}
+								if (!$check) {
+									$this->errors[] = $this->langs->trans('ECommerceErrorProductAlreadyLinkedWithRemoteProduct', $product_ref, $this->eCommerceProduct->remote_id);
+									$error++;
+								}
 							}
 						}
 					}
@@ -3899,6 +3908,7 @@ class eCommerceSynchro
 						if (!$error && !empty($product_data['remote_id'])) {
 							$this->eCommerceProduct->last_update = $product_data['last_update'];
 							$this->eCommerceProduct->fk_product = $product->id > 0 ? $product->id : 0;
+							$this->eCommerceProduct->remote_id = $product_data['remote_id'];
 
 							// Update link
 							if ($this->eCommerceProduct->id > 0) {
@@ -3909,7 +3919,6 @@ class eCommerceSynchro
 							} // Create link
 							else {
 								$this->eCommerceProduct->fk_site = $this->eCommerceSite->id;
-								$this->eCommerceProduct->remote_id = $product_data['remote_id'];
 								$result = $this->eCommerceProduct->create($this->user);
 								if ($result < 0) {
 									$this->errors[] = $this->langs->trans('ECommerceErrorCreateProductLink');

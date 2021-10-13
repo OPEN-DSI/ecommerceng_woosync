@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 4.0.90.0
+- Correction du contrôle de l'id distant pour une même ref si l'option sur les variantes 'Tous => un' est choisi.
+- Ajout de la variable ECOMMERCE_USER_AGENT pour changer le 'user agent' utiliser dans la requete CURL pour récupérer les images des produits
+- Ajout de la variable ECOMMERCE_CURL_VERBOSE pour affiche le verbose de la requete CURL pour récupérer les images des produits dans le fichier curl_verbose.txt a la racine du dossier des documents dolibarr
+
 ## 4.0.89.0
 - La synchronization des images du produit n'est plus bloquante.
 
