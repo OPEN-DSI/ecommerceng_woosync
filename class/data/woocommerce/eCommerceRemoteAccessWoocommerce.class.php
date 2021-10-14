@@ -1407,12 +1407,12 @@ class eCommerceRemoteAccessWoocommerce
 		}
 
 		// Set discount code lines
-		if (!empty($remote_data->coupon_lines) && $this->site->parameters['discount_code_service'] > 0) {
-			$discount_code_service_id = $this->site->parameters['discount_code_service'];
-			if (!($discount_code_service_id > 0)) {
-				$this->errors[] = $langs->trans('ECommerceWooCommerceErrorDiscountCodeServiceNotConfigured', $this->site->name);
-				return false;
-			}
+		if (!empty($remote_data->coupon_lines)) {
+			$discount_code_service_id = $this->site->parameters['discount_code_service'] > 0 ? $this->site->parameters['discount_code_service'] : 0;
+//			if (!($discount_code_service_id > 0)) {
+//				$this->errors[] = $langs->trans('ECommerceWooCommerceErrorDiscountCodeServiceNotConfigured', $this->site->name);
+//				return false;
+//			}
 			foreach ($remote_data->coupon_lines as $item) {
 				$item_data = [
 					'item_id' => $item->id,
@@ -1467,12 +1467,11 @@ class eCommerceRemoteAccessWoocommerce
 
 		// Set gift card lines
 		if (!empty($remote_data->pw_gift_cards_redeemed)) {
-			$gift_cards_service_id = $this->site->parameters['pw_gift_cards_service'];
-			if (!($gift_cards_service_id > 0)) {
-				$this->errors[] = $langs->trans('ECommerceWooCommerceErrorPwGiftCardsServiceNotConfigured', $this->site->name);
-				return false;
-			}
-
+			$gift_cards_service_id = $this->site->parameters['pw_gift_cards_service'] > 0 ? $this->site->parameters['pw_gift_cards_service'] : 0;
+//			if (!($gift_cards_service_id > 0)) {
+//				$this->errors[] = $langs->trans('ECommerceWooCommerceErrorPwGiftCardsServiceNotConfigured', $this->site->name);
+//				return false;
+//			}
 			foreach ($remote_data->pw_gift_cards_redeemed as $gift_cards) {
 				$items[] = [
 					'product_type' => 'pw_gift_cards',

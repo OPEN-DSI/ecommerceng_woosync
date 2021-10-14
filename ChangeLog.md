@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.91.0
+- Les 'Code promo' et 'Cartes cadeaux' redecendent en lignes libres si aucuns services n'est définit dans la configuration du site.
+
 ## 4.0.90.0
 - Correction du contrôle de l'id distant pour une même ref si l'option sur les variantes 'Tous => un' est choisi.
 - Ajout de la variable ECOMMERCE_USER_AGENT pour changer le 'user agent' utiliser dans la requete CURL pour récupérer les images des produits
