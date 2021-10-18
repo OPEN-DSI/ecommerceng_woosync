@@ -49,6 +49,7 @@ class eCommerceSite // extends CommonObject
 	var $timeout;
 	var $magento_use_special_price;
     var $ecommerce_price_type;
+	var $entity;
 
 	var $oauth_id;
 	var $oauth_secret;
@@ -177,7 +178,8 @@ class eCommerceSite // extends CommonObject
 		$sql.= "ecommerce_price_type,";
 		$sql.= "oauth_id,";
 		$sql.= "oauth_secret,";
-        $sql.= "parameters";
+        $sql.= "parameters,";
+		$sql.= "entity";
         $sql.= ") VALUES (";
 		$sql.= " ".(! isset($this->name)?'NULL':"'".$this->db->escape($this->name)."'").",";
 		$sql.= " ".(! isset($this->type)?'NULL':"'".$this->type."'").",";
@@ -198,7 +200,8 @@ class eCommerceSite // extends CommonObject
 		$sql.= " ".(! isset($this->ecommerce_price_type)?'HT':"'".$this->ecommerce_price_type."'").",";
 		$sql.= " ".(! isset($this->oauth_id)?"NULL":"'".$this->db->escape($this->oauth_id)."'").",";
 		$sql.= " ".(! isset($this->oauth_secret)?"NULL":"'".$this->db->escape($this->oauth_secret)."'").",";
-        $sql.= " ".(! isset($this->parameters)?"NULL":"'".$this->db->escape(json_encode($this->parameters))."'")."";
+        $sql.= " ".(! isset($this->parameters)?"NULL":"'".$this->db->escape(json_encode($this->parameters))."'").",";
+		$sql.= " ".$conf->entity."";
 		$sql.= ")";
 
 		$this->db->begin();
@@ -272,7 +275,8 @@ class eCommerceSite // extends CommonObject
 		$sql.= " t.ecommerce_price_type,";
 		$sql.= " t.oauth_id,";
 		$sql.= " t.oauth_secret,";
-        $sql.= " t.parameters";
+		$sql.= " t.parameters,";
+		$sql.= " t.entity";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_site as t";
         $sql.= " WHERE t.rowid = ".$id;
 
@@ -303,6 +307,7 @@ class eCommerceSite // extends CommonObject
 				$this->timeout = $obj->timeout;
 				$this->magento_use_special_price = $obj->magento_use_special_price;
 				$this->ecommerce_price_type = $obj->ecommerce_price_type;
+				$this->entity = $obj->entity;
 
 				$this->oauth_id = $obj->oauth_id;
 				$this->oauth_secret = $obj->oauth_secret;
@@ -707,5 +712,77 @@ class eCommerceSite // extends CommonObject
 	    return $url;
 	}
 
+	/**
+	 *  Load setup values into conf object (read llx_const) for a specified entity
+	 *  Note that this->db->xxx, this->file->xxx and this->multicompany have been already loaded when setValues is called.
+	 *
+	 * @param	int		$entity		Entity to get
+	 * @return	int					< 0 if KO, >= 0 if OK
+	 */
+	function setEntityValues($entity)
+	{
+		global $conf;
+
+		if ($conf->entity != $entity) {
+			$conf->entity = $entity;
+
+			if (method_exists($conf, 'setEntityValues')) {
+				$conf->setEntityValues($this->db, $entity);
+			} else {
+				// Unset all old modules values
+				if (!empty($conf->modules)) {
+					foreach ($conf->modules as $m) {
+						if (isset($conf->$m)) unset($conf->$m);
+					}
+				}
+
+				// Properly declare multi-modules objects.
+				$conf->global = new stdClass();
+				$conf->multicompany = new stdClass();
+
+				// First level object
+				// TODO Remove this part.
+				$conf->expedition_bon = new stdClass();
+				$conf->livraison_bon = new stdClass();
+				$conf->fournisseur = new stdClass();
+				$conf->product = new stdClass();
+				$conf->service = new stdClass();
+				$conf->contrat = new stdClass();
+				$conf->actions = new stdClass();
+				$conf->commande = new stdClass();
+				$conf->propal = new stdClass();
+				$conf->facture = new stdClass();
+				$conf->contrat = new stdClass();
+				$conf->usergroup = new stdClass();
+				$conf->adherent = new stdClass();
+				$conf->bank = new stdClass();
+				$conf->notification = new stdClass();
+				$conf->mailing = new stdClass();
+				$conf->expensereport = new stdClass();
+				$conf->productbatch = new stdClass();
+				$conf->modules = array();;
+				$conf->modules_parts = array(
+					'css' => array(),
+					'js' => array(),
+					'tabs' => array(),
+					'triggers' => array(),
+					'login' => array(),
+					'substitutions' => array(),
+					'menus' => array(),
+					'theme' => array(),
+					'sms' => array(),
+					'tpl' => array(),
+					'barcode' => array(),
+					'models' => array(),
+					'societe' => array(),
+					'hooks' => array(),
+					'dir' => array(),
+					'syslog' => array(),
+				);
+
+				$conf->setValues($this->db);
+			}
+		}
+	}
 }
 

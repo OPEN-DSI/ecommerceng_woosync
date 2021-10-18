@@ -33,5 +33,6 @@ CREATE TABLE llx_ecommerce_site (
   last_update datetime DEFAULT NULL,
   timeout integer NOT NULL DEFAULT 300,
   magento_use_special_price INTEGER NOT NULL DEFAULT 0,
-  magento_price_type VARCHAR(3) NOT NULL DEFAULT 'HT'
+  magento_price_type VARCHAR(3) NOT NULL DEFAULT 'HT',
+  entity			integer       DEFAULT 1
 ) ENGINE=InnoDB;

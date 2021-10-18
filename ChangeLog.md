@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.92.0
+- Correction compatibilité multi-entités.
+
 ## 4.0.91.0
 - Les 'Code promo' et 'Cartes cadeaux' redecendent en lignes libres si aucuns services n'est définit dans la configuration du site.
 

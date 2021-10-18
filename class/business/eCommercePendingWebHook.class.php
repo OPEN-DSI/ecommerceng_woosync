@@ -467,7 +467,7 @@ class eCommercePendingWebHook
 	 */
 	public function synchronize($site_id = 0, $webhook_topic = '', $webhook_resource = '', $webhook_event = '', $data = array())
 	{
-		global $langs;
+		global $conf, $langs;
 		dol_syslog(__METHOD__ . " site_id=$site_id, webhook_topic=$webhook_topic, webhook_resource=$webhook_resource, webhook_event=$webhook_event, data=" . json_encode($data), LOG_DEBUG);
 
 		if (empty($site_id) && $this->site_id > 0) $site_id = $this->site_id;
@@ -480,10 +480,19 @@ class eCommercePendingWebHook
 		$this->errors = array();
 		$this->warnings = array();
 
+		$save_entity = $conf->entity;
+
 		$synchro = $this->getSynchro($site_id);
 		if (!is_object($synchro)) {
 			return -1;
 		}
+
+		$site = $this->getSite($site_id);
+		if (!is_object($site)) {
+			return -1;
+		}
+
+		$site->setEntityValues($site->entity);
 
 		if (empty($webhook_resource) || empty($webhook_event)) {
 			$tmp = explode('.', $webhook_topic);
@@ -499,12 +508,14 @@ class eCommercePendingWebHook
 				$result = $synchro->synchronizeProductFromData($data);
 				if ($result == 0 && !empty($synchro->warnings)) {
 					$this->warnings = array_merge($synchro->warnings, $this->warnings);
+					$site->setEntityValues($save_entity);
 					return -2;
 				}
 			} elseif ($webhook_event == 'deleted') {
 				$result = $synchro->deleteProductLink($data->id);
 				if ($result == 0 && !empty($synchro->warnings)) {
 					$this->warnings = array_merge($synchro->warnings, $this->warnings);
+					$site->setEntityValues($save_entity);
 					return -2;
 				}
 			}
@@ -516,10 +527,13 @@ class eCommercePendingWebHook
 				$result = $synchro->synchronizeOrderFromData($data);
 				if ($result == 0 && !empty($synchro->warnings)) {
 					$this->warnings = array_merge($synchro->warnings, $this->warnings);
+					$site->setEntityValues($save_entity);
 					return -2;
 				}
 			}
 		}
+
+		$site->setEntityValues($save_entity);
 
 		if ($result < 0) {
 			$this->error = $synchro->error;

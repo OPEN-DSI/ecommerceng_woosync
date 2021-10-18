@@ -129,6 +129,7 @@ class InterfaceECommerceng
 			}
 			$this->db->begin();
 
+			$save_entity = $conf->entity;
 			$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - Action {$action} (ID: {$object->id})");
 
 			if ($object->context['merge'] == 1) {
@@ -159,6 +160,9 @@ class InterfaceECommerceng
 							dol_syslog("Triggers disabled from the config of the module");
 							continue;
 						}
+
+						$site->setEntityValues($site->entity);
+
 						$eCommerceSociete = new eCommerceSociete($this->db);
 						$eCommerceSociete->fetchByFkSociete($object->id, $site->id); // TODO ne met a jour que le premier lié
 
@@ -223,6 +227,7 @@ class InterfaceECommerceng
 			}
 
 			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+			if (isset($site)) $site->setEntityValues($save_entity);
 
 			if ($error) {
 				$this->db->rollback();
@@ -242,6 +247,7 @@ class InterfaceECommerceng
 			}
 			$this->db->begin();
 
+			$save_entity = $conf->entity;
 			$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - Action {$action} (ID: {$object->id})");
 
 			$eCommerceSite = new eCommerceSite($this->db);
@@ -258,6 +264,8 @@ class InterfaceECommerceng
 						dol_syslog("Triggers disabled from the config of the module");
 						continue;
 					}
+
+					$site->setEntityValues($site->entity);
 
 					$eCommerceSocpeople = new eCommerceSocpeople($this->db);
 					$eCommerceSocpeople->fetchByFkSocpeople($object->id, $site->id);
@@ -310,6 +318,7 @@ class InterfaceECommerceng
 			}
 
 			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+			if (isset($site)) $site->setEntityValues($save_entity);
 
 			if ($error) {
 				$this->db->rollback();
@@ -329,6 +338,7 @@ class InterfaceECommerceng
 			}
 			$this->db->begin();
 
+			$save_entity = $conf->entity;
 			$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - Action {$action} (ID: {$object->id})");
 
 			// Get current categories and subcategories
@@ -369,6 +379,8 @@ class InterfaceECommerceng
 						dol_syslog("Triggers disabled from the config of the module");
 						continue;
 					}
+
+					$site->setEntityValues($site->entity);
 
 					$eCommerceProduct = new eCommerceProduct($this->db);
 					$eCommerceProduct->fetchByProductId($object->id, $site->id);
@@ -465,6 +477,7 @@ class InterfaceECommerceng
 			}
 
 			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+			if (isset($site)) $site->setEntityValues($save_entity);
 
 			if ($error) {
 				$this->db->rollback();
@@ -496,6 +509,7 @@ class InterfaceECommerceng
 
 			$this->db->begin();
 
+			$save_entity = $conf->entity;
 			$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - Action {$action} (ID: {$object->id})");
 
 			switch ($action) {
@@ -531,6 +545,8 @@ class InterfaceECommerceng
 				}
 
 				if (!$error) {
+					$site->setEntityValues($site->entity);
+
 					$eCommerceCommande = new eCommerceCommande($this->db);
 					$eCommerceCommande->fetchByCommandeId($obj->id, $site->id);
 
@@ -571,6 +587,7 @@ class InterfaceECommerceng
 			}
 
 			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+			if (isset($site)) $site->setEntityValues($save_entity);
 
 			if ($error) {
 				$this->db->rollback();
@@ -590,6 +607,7 @@ class InterfaceECommerceng
 			}
 			$this->db->begin();
 
+			$save_entity = $conf->entity;
 			$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - Action {$action} (ID: {$object->id})");
 
 			$eCommerceSite = new eCommerceSite($this->db);
@@ -606,6 +624,8 @@ class InterfaceECommerceng
 						dol_syslog("Triggers disabled from the config of the module");
 						continue;
 					}
+
+					$site->setEntityValues($site->entity);
 
 					$eCommerceFacture = new eCommerceFacture($this->db);
 					$eCommerceFacture->fetchByFactureId($object->id, $site->id);
@@ -647,6 +667,7 @@ class InterfaceECommerceng
 			}
 
 			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+			if (isset($site)) $site->setEntityValues($save_entity);
 
 			if ($error) {
 				$this->db->rollback();
@@ -836,6 +857,7 @@ class InterfaceECommerceng
 
 			$this->db->begin();
 
+			$save_entity = $conf->entity;
 			$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - Action {$action} (ID: {$object->id})");
 
 			$eCommerceSite = new eCommerceSite($this->db);
@@ -851,6 +873,8 @@ class InterfaceECommerceng
 					dol_syslog("Triggers disabled from the config of the module");
 					continue;
 				}
+
+				$site->setEntityValues($site->entity);
 
 				try {
 					//retrieve shipping id
@@ -918,6 +942,7 @@ class InterfaceECommerceng
 			}
 
 			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+			if (isset($site)) $site->setEntityValues($save_entity);
 
 			if ($error) {
 				$this->db->rollback();
@@ -941,6 +966,7 @@ class InterfaceECommerceng
 
 			$this->db->begin();
 
+			$save_entity = $conf->entity;
 			$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - Action {$action} (ID: {$object->id})");
 
 			$eCommerceSite = new eCommerceSite($this->db);
@@ -957,6 +983,8 @@ class InterfaceECommerceng
 
 					// Do we sync the stock ?
 					if (!$error && $site->stock_sync_direction == 'dolibarr2ecommerce' && in_array($object->entrepot_id, $supported_warehouses)) {
+						$site->setEntityValues($site->entity);
+
 						$eCommerceProduct = new eCommerceProduct($this->db);
 						$eCommerceProduct->fetchByProductId($object->product_id, $site->id);
 
@@ -1014,6 +1042,7 @@ class InterfaceECommerceng
 			}
 
 			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+			if (isset($site)) $site->setEntityValues($save_entity);
 
 			if ($error) {
 				$this->db->rollback();
