@@ -723,11 +723,13 @@ class eCommerceSite // extends CommonObject
 	{
 		global $conf;
 
+		$result = 0;
+
 		if ($conf->entity != $entity) {
 			$conf->entity = $entity;
 
 			if (method_exists($conf, 'setEntityValues')) {
-				$conf->setEntityValues($this->db, $entity);
+				$result = $conf->setEntityValues($this->db, $entity);
 			} else {
 				// Unset all old modules values
 				if (!empty($conf->modules)) {
@@ -780,9 +782,11 @@ class eCommerceSite // extends CommonObject
 					'syslog' => array(),
 				);
 
-				$conf->setValues($this->db);
+				$result = $conf->setValues($this->db);
 			}
 		}
+
+		return $result;
 	}
 }
 

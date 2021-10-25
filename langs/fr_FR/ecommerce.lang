@@ -233,7 +233,7 @@ ECommerceRealTimeSynchroDolibarrToECommerceSetupDescription                     
 ECommercePaymentCondition                                                                           =Conditions de règlement
 ECommercePaymentConditionDescription                                                                =Conditions de règlement par défaut lors de la récupération de la commande depuis le site ECommerce
 
-ECommerceCountToUpdateDtoE                                                                          =Nombre d'éléments à synchroniser (crée côté Dolibarr et non lié à ECommerce)
+ECommerceCountToUpdateDtoE                                                                          =Nombre d'éléments à synchroniser (Produit avec la catégorie du site et n'etant pas lié ou plus récent)
 SyncProductFirst                                                                                    =Synchroniser d'abord les produits
 
 ECommerceCreateRemoteCategoryLink                                                                   =Erreur de la création du lien de la catégorie 'id:%s' sur le site '%s': %s

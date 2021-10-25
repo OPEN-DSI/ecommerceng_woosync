@@ -39,7 +39,7 @@ class modECommerceNg extends DolibarrModules
 	 */
 	function __construct($db)
 	{
-	    global $conf, $langs;
+		global $conf, $langs;
 
 		$this->db = $db;
 
@@ -61,17 +61,17 @@ class modECommerceNg extends DolibarrModules
 		$this->editor_url = 'http://www.open-dsi.fr';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '4.0.92';
+		$this->version = '4.0.93';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
-		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
+		$this->const_name = 'MAIN_MODULE_' . strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
 		$this->special = 1;
 		// Name of image file used for this module.
 		// If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
 		// If file is in module/images directory, use this->picto=DOL_URL_ROOT.'/module/images/file.png'
-		$this->picto='eCommerce.png@ecommerceng';
+		$this->picto = 'eCommerce.png@ecommerceng';
 
-        // Defined all module parts (triggers, login, substitutions, menus, css, etc...)
+		// Defined all module parts (triggers, login, substitutions, menus, css, etc...)
 		// for default path (eg: /mymodule/core/xxxxx) (0=disable, 1=enable)
 		// for specific path of parts (eg: /mymodule/core/modules/barcode)
 		// for specific css file (eg: /mymodule/css/mymodule.css.php)
@@ -87,14 +87,14 @@ class modECommerceNg extends DolibarrModules
 		//							'workflow' => array('order' => array('WORKFLOW_ORDER_AUTOCREATE_INVOICE')) // Set here all workflow context managed by module
 		//                        );
 		$this->module_parts = array(
-            'triggers' => 1,
-			'hooks' => array('expeditioncard','invoicecard','productdocuments','productcard','thirdpartycard'),
+			'triggers' => 1,
+			'hooks' => array('expeditioncard', 'invoicecard', 'productdocuments', 'productcard', 'thirdpartycard'),
 		);
 
 		// Data directories to create when module is enabled.
 		// Example: this->dirs = array("/mymodule/temp");
 		$this->dirs = array();
-		$r=0;
+		$r = 0;
 
 		// Relative path to module style sheet if exists. Example: '/mymodule/mycss.css'.
 		$this->style_sheet = '';
@@ -103,22 +103,22 @@ class modECommerceNg extends DolibarrModules
 		$this->config_page_url = array('eCommerceSetup.php@ecommerceng');
 
 		// Dependencies
-		$this->depends = array("modSociete","modProduct","modCategorie","modWebServices");		// List of modules id that must be enabled if this module is enabled
-		$this->requiredby = array();	// List of modules id to disable if this one is disabled
-		$this->phpmin = array(5,3);					// Minimum version of PHP required by module
-		$this->need_dolibarr_version = array(3,9);	// Minimum version of Dolibarr required by module
+		$this->depends = array("modSociete", "modProduct", "modCategorie", "modWebServices");        // List of modules id that must be enabled if this module is enabled
+		$this->requiredby = array();    // List of modules id to disable if this one is disabled
+		$this->phpmin = array(5, 3);                    // Minimum version of PHP required by module
+		$this->need_dolibarr_version = array(3, 9);    // Minimum version of Dolibarr required by module
 		$this->langfiles = array("ecommerce@ecommerceng", "woocommerce@ecommerceng");
 
 		// Constants
 		// List of particular constants to add when module is enabled
 		$this->const = array(
-		    0=>array('ECOMMERCENG_SHOW_DEBUG_TOOLS', 'chaine', '1', 'Enable button to clean database for debug purpose', 1, 'allentities', 1),
-		    1=>array('ECOMMERCENG_DEBUG', 'chaine', '0', 'This is to enable ECommerceng log of web services requests', 1, 'allentities', 0),
-		    2=>array('ECOMMERCENG_MAXSIZE_MULTICALL', 'chaine', '400', 'Max size for multicall', 1, 'allentities', 0),
-			3=>array('ECOMMERCENG_MAXRECORD_PERSYNC', 'chaine', '2000', 'Max nb of record per synch', 1, 'allentities', 0),
-			4=>array('ECOMMERCENG_ENABLE_LOG_IN_NOTE', 'chaine', '0', 'Store into private note the last full response returned by web service', 1, 'allentities', 0),
-            5=>array('ECOMMERCENG_WOOCOMMERCE_ORDER_STATUS_LVL_CHECK', 'chaine', '1', '', 0, 'current', 0),
-			6=>array('ECOMMERCENG_NO_COUNT_UPDATE', 'chaine', '1', '', 0, 'allentities', 0),
+			0 => array('ECOMMERCENG_SHOW_DEBUG_TOOLS', 'chaine', '1', 'Enable button to clean database for debug purpose', 1, 'allentities', 1),
+			1 => array('ECOMMERCENG_DEBUG', 'chaine', '0', 'This is to enable ECommerceng log of web services requests', 1, 'allentities', 0),
+			2 => array('ECOMMERCENG_MAXSIZE_MULTICALL', 'chaine', '400', 'Max size for multicall', 1, 'allentities', 0),
+			3 => array('ECOMMERCENG_MAXRECORD_PERSYNC', 'chaine', '2000', 'Max nb of record per synch', 1, 'allentities', 0),
+			4 => array('ECOMMERCENG_ENABLE_LOG_IN_NOTE', 'chaine', '0', 'Store into private note the last full response returned by web service', 1, 'allentities', 0),
+			5 => array('ECOMMERCENG_WOOCOMMERCE_ORDER_STATUS_LVL_CHECK', 'chaine', '1', '', 0, 'current', 0),
+			6 => array('ECOMMERCENG_NO_COUNT_UPDATE', 'chaine', '1', '', 0, 'allentities', 0),
 		);
 
 		// Array to add new pages in new tabs
@@ -135,75 +135,74 @@ class modECommerceNg extends DolibarrModules
 		// 'member'           to add a tab in fundation member view
 		// 'contract'         to add a tab in contract view
 
-        if (! isset($conf->ecommerceng) || ! isset($conf->ecommerceng->enabled))
-        {
-            $conf->ecommerceng=new stdClass();
-            $conf->ecommerceng->enabled=0;
-        }
+		if (!isset($conf->ecommerceng) || !isset($conf->ecommerceng->enabled)) {
+			$conf->ecommerceng = new stdClass();
+			$conf->ecommerceng->enabled = 0;
+		}
 
-        $eCommerceSite = new eCommerceSite($this->db);
+		$eCommerceSite = new eCommerceSite($this->db);
 
-        // Dictionaries
-		$this->dictionaries=array(
-		    'langs'=>'woocommerce@ecommerceng',
-            'tabname'=>array(
-            	MAIN_DB_PREFIX."c_ecommerceng_tax_class",
-				MAIN_DB_PREFIX."c_ecommerceng_tax_rate"
+		// Dictionaries
+		$this->dictionaries = array(
+			'langs' => 'woocommerce@ecommerceng',
+			'tabname' => array(
+				MAIN_DB_PREFIX . "c_ecommerceng_tax_class",
+				MAIN_DB_PREFIX . "c_ecommerceng_tax_rate"
 			),
-            'tablib'=>array(
-            	"ECommercengWoocommerceDictTaxClass",
+			'tablib' => array(
+				"ECommercengWoocommerceDictTaxClass",
 				"ECommercengWoocommerceDictTaxRate"
 			),
-            'tabsql'=>array(
-            	'SELECT f.rowid as rowid, f.site_id, f.code, f.label, f.entity, f.active FROM '.MAIN_DB_PREFIX.'c_ecommerceng_tax_class as f WHERE f.entity='.$conf->entity,
-				'SELECT f.rowid as rowid, f.site_id, f.tax_id, f.tax_country, f.tax_state, f.tax_postcode, f.tax_city, f.tax_rate, f.tax_name, f.tax_priority, f.tax_compound, f.tax_shipping, f.tax_order, f.tax_class, f.entity, f.active FROM '.MAIN_DB_PREFIX.'c_ecommerceng_tax_rate as f WHERE f.entity='.$conf->entity
+			'tabsql' => array(
+				'SELECT f.rowid as rowid, f.site_id, f.code, f.label, f.entity, f.active FROM ' . MAIN_DB_PREFIX . 'c_ecommerceng_tax_class as f WHERE f.entity=' . $conf->entity,
+				'SELECT f.rowid as rowid, f.site_id, f.tax_id, f.tax_country, f.tax_state, f.tax_postcode, f.tax_city, f.tax_rate, f.tax_name, f.tax_priority, f.tax_compound, f.tax_shipping, f.tax_order, f.tax_class, f.entity, f.active FROM ' . MAIN_DB_PREFIX . 'c_ecommerceng_tax_rate as f WHERE f.entity=' . $conf->entity
 			),
-            'tabsqlsort'=>array(
+			'tabsqlsort' => array(
 				"site_id ASC, label ASC",
 				"site_id ASC, tax_id ASC"
 			),
-            'tabfield'=>array(
+			'tabfield' => array(
 				"code,label,site_id",
-            	"tax_id,tax_country,tax_state,tax_postcode,tax_city,tax_rate,tax_name,tax_priority,tax_compound,tax_shipping,tax_order,tax_class,site_id"
+				"tax_id,tax_country,tax_state,tax_postcode,tax_city,tax_rate,tax_name,tax_priority,tax_compound,tax_shipping,tax_order,tax_class,site_id"
 			),
-            'tabfieldvalue'=>array(
+			'tabfieldvalue' => array(
 				"code,label,site_id",
-            	"tax_id,tax_country,tax_state,tax_postcode,tax_city,tax_rate,tax_name,tax_priority,tax_compound,tax_shipping,tax_order,tax_class,site_id"
+				"tax_id,tax_country,tax_state,tax_postcode,tax_city,tax_rate,tax_name,tax_priority,tax_compound,tax_shipping,tax_order,tax_class,site_id"
 			),
-            'tabfieldinsert'=>array(
+			'tabfieldinsert' => array(
 				"code,label,site_id",
-            	"tax_id,tax_country,tax_state,tax_postcode,tax_city,tax_rate,tax_name,tax_priority,tax_compound,tax_shipping,tax_order,tax_class,site_id"
+				"tax_id,tax_country,tax_state,tax_postcode,tax_city,tax_rate,tax_name,tax_priority,tax_compound,tax_shipping,tax_order,tax_class,site_id"
 			),
-            'tabrowid'=>array(
+			'tabrowid' => array(
 				"rowid",
-            	"rowid"
+				"rowid"
 			),
-            'tabcond'=>array(
+			'tabcond' => array(
 				$conf->ecommerceng->enabled && $eCommerceSite->hasTypeSite(2),
 				$conf->ecommerceng->enabled && $eCommerceSite->hasTypeSite(2),
 			),
-        );
+		);
 
-        /* Example:
-        $this->dictionaries=array(
-            'langs'=>'mylangfile@mymodule',
-            'tabname'=>array(MAIN_DB_PREFIX."table1",MAIN_DB_PREFIX."table2",MAIN_DB_PREFIX."table3"),		// List of tables we want to see into dictonnary editor
-            'tablib'=>array("Table1","Table2","Table3"),													// Label of tables
-            'tabsql'=>array('SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table1 as f','SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table2 as f','SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table3 as f'),	// Request to select fields
-            'tabsqlsort'=>array("label ASC","label ASC","label ASC"),																					// Sort order
-            'tabfield'=>array("code,label","code,label","code,label"),																					// List of fields (result of select to show dictionary)
-            'tabfieldvalue'=>array("code,label","code,label","code,label"),																				// List of fields (list of fields to edit a record)
-            'tabfieldinsert'=>array("code,label","code,label","code,label"),																			// List of fields (list of fields for insert)
-            'tabrowid'=>array("rowid","rowid","rowid"),																									// Name of columns with primary key (try to always name it 'rowid')
-            'tabcond'=>array($conf->mymodule->enabled,$conf->mymodule->enabled,$conf->mymodule->enabled)												// Condition to show each dictionary
-        );
-        */
+		/* Example:
+		$this->dictionaries=array(
+			'langs'=>'mylangfile@mymodule',
+			'tabname'=>array(MAIN_DB_PREFIX."table1",MAIN_DB_PREFIX."table2",MAIN_DB_PREFIX."table3"),		// List of tables we want to see into dictonnary editor
+			'tablib'=>array("Table1","Table2","Table3"),													// Label of tables
+			'tabsql'=>array('SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table1 as f','SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table2 as f','SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table3 as f'),	// Request to select fields
+			'tabsqlsort'=>array("label ASC","label ASC","label ASC"),																					// Sort order
+			'tabfield'=>array("code,label","code,label","code,label"),																					// List of fields (result of select to show dictionary)
+			'tabfieldvalue'=>array("code,label","code,label","code,label"),																				// List of fields (list of fields to edit a record)
+			'tabfieldinsert'=>array("code,label","code,label","code,label"),																			// List of fields (list of fields for insert)
+			'tabrowid'=>array("rowid","rowid","rowid"),																									// Name of columns with primary key (try to always name it 'rowid')
+			'tabcond'=>array($conf->mymodule->enabled,$conf->mymodule->enabled,$conf->mymodule->enabled)												// Condition to show each dictionary
+		);
+		*/
 
 		// Boxes
 		$this->boxes = array(
 			0 => array('file' => 'box_ecommerce_webhooks@ecommerceng', 'note' => $langs->trans('ECommerceBoxWebHooks')),
-		);			// List of boxes
-		$r=0;
+		);            // List of boxes
+		$r = 0;
 
 		// Add here list of php file(s) stored in includes/boxes that contains class to show a box.
 		// Example:
@@ -215,15 +214,15 @@ class modECommerceNg extends DolibarrModules
 		// Cronjobs
 		//------------
 		$this->cronjobs = array(
-		//	0=>array('label'=>'AutoSyncEcommerceNg', 'jobtype'=>'method', 'class'=>'ecommerceng/class/business/eCommerceUtils.class.php', 'objectname'=>'eCommerceUtils', 'method'=>'synchAll', 'parameters'=>'100', 'comment'=>'Synchronize all data from eCommerce to Dolibarr. Parameter is max nb of record to do per synchronization run.', 'frequency'=>1, 'unitfrequency'=>86400, 'priority'=>90, 'status'=>0, 'test'=>true),
-			1=>array('label'=>'ECommerceProcessPendingWebHooks', 'jobtype'=>'method', 'class'=>'/ecommerceng/class/business/eCommercePendingWebHook.class.php', 'objectname'=>'eCommercePendingWebHook', 'method'=>'cronProcessPendingWebHooks', 'parameters'=>'', 'comment'=>'Process all pending WebHooks.', 'frequency'=>15, 'unitfrequency'=>60, 'priority'=>90, 'status'=>0, 'test'=>true),
-			2=>array('label'=>'ECommerceCheckWebHooksStatus', 'jobtype'=>'method', 'class'=>'/ecommerceng/class/business/eCommercePendingWebHook.class.php', 'objectname'=>'eCommercePendingWebHook', 'method'=>'cronCheckWebHooksStatus', 'parameters'=>'', 'comment'=>'Check WebHooks status.', 'frequency'=>15, 'unitfrequency'=>60, 'priority'=>80, 'status'=>0, 'test'=>true),
+			//	0=>array('label'=>'AutoSyncEcommerceNg', 'jobtype'=>'method', 'class'=>'ecommerceng/class/business/eCommerceUtils.class.php', 'objectname'=>'eCommerceUtils', 'method'=>'synchAll', 'parameters'=>'100', 'comment'=>'Synchronize all data from eCommerce to Dolibarr. Parameter is max nb of record to do per synchronization run.', 'frequency'=>1, 'unitfrequency'=>86400, 'priority'=>90, 'status'=>0, 'test'=>true),
+			1 => array('label' => 'ECommerceProcessPendingWebHooks', 'jobtype' => 'method', 'class' => '/ecommerceng/class/business/eCommercePendingWebHook.class.php', 'objectname' => 'eCommercePendingWebHook', 'method' => 'cronProcessPendingWebHooks', 'parameters' => '', 'comment' => 'Process all pending WebHooks.', 'frequency' => 15, 'unitfrequency' => 60, 'priority' => 90, 'status' => 0, 'test' => true),
+			2 => array('label' => 'ECommerceCheckWebHooksStatus', 'jobtype' => 'method', 'class' => '/ecommerceng/class/business/eCommercePendingWebHook.class.php', 'objectname' => 'eCommercePendingWebHook', 'method' => 'cronCheckWebHooksStatus', 'parameters' => '', 'comment' => 'Check WebHooks status.', 'frequency' => 15, 'unitfrequency' => 60, 'priority' => 80, 'status' => 0, 'test' => true),
 		);
 
 		// Permissions
-		$this->rights = array();		// Permission array used by this module
+		$this->rights = array();        // Permission array used by this module
 		$this->rights_class = 'ecommerceng';
-		$r=0;
+		$r = 0;
 
 		$r++;
 		$this->rights[$r][0] = 107101;
@@ -243,7 +242,7 @@ class modECommerceNg extends DolibarrModules
 		$this->rights[$r][3] = 0;
 		$this->rights[$r][4] = 'site';
 
-		$r=0;
+		$r = 0;
 
 		// Add here list of permission defined by an id, a label, a boolean and two constant strings.
 		// Example:
@@ -256,49 +255,113 @@ class modECommerceNg extends DolibarrModules
 
 
 		// Main menu entries
-		$this->menu = array();			// List of menus to add
-		$r=0;
+		$this->menu = array();            // List of menus to add
+		$r = 0;
+
+		//define main left menu
+		$this->menu[$r] = array(
+			'fk_menu' => 'fk_mainmenu=tools',
+			'type' => 'left',
+			'titre' => 'ECommerceMenuMain',
+			'leftmenu' => 'ecommerceng',
+			'url' => '/ecommerceng/index.php',
+			'langs' => 'ecommerce@ecommerceng',
+			'position' => 100,
+			'enabled' => '$conf->ecommerceng->enabled',
+			'perms' => '$user->rights->ecommerceng->read',
+			'target' => '',
+			'user' => 2
+		);
+		$r++;
+
+		//define left menu
+		$this->menu[$r] = array(
+			'fk_menu' => 'fk_mainmenu=tools,fk_leftmenu=ecommerceng',
+			'type' => 'left',
+			'titre' => 'ECommerceMenuSites',
+			'leftmenu' => 'ecommerceng_sites',
+			'url' => '/ecommerceng/index.php',
+			'langs' => 'ecommerce@ecommerceng',
+			'position' => 110,
+			'enabled' => '$conf->ecommerceng->enabled',
+			'perms' => '$user->rights->ecommerceng->read',
+			'target' => '',
+			'user' => 2
+		);
+		$r++;
+
+		//add link to configuration
+		$this->menu[$r] = array(
+			'fk_menu' => 'fk_mainmenu=tools,fk_leftmenu=ecommerceng',
+			'type' => 'left',
+			'titre' => 'ECommerceMenuSetup',
+			'leftmenu' => 'ecommerceng_setup',
+			'url' => '/ecommerceng/admin/eCommerceSetup.php',
+			'langs' => 'ecommerce@ecommerceng',
+			'position' => 120,
+			'enabled' => '$conf->ecommerceng->enabled',
+			'perms' => '$user->rights->ecommerceng->site',
+			'target' => '',
+			'user' => 2
+		);
+		$r++;
+
+		// Add links for webhooks
+		$this->menu[$r] = array(
+			'fk_menu' => 'fk_mainmenu=tools,fk_leftmenu=ecommerceng',
+			'type' => 'left',
+			'titre' => 'ECommerceMenuWebHooks',
+			'leftmenu' => 'ecommerceng_webhooks',
+			'url' => '/ecommerceng/webhookslist.php',
+			'langs' => 'ecommerce@ecommerceng',
+			'position' => 130,
+			'enabled' => '$conf->ecommerceng->enabled',
+			'perms' => '$user->rights->ecommerceng->read',
+			'target' => '',
+			'user' => 2
+		);
+		$r++;
 
 		// Add here entries to declare new menus
 		//if (! empty($conf->modules['ecommerceng']))     // Do not run this code if module is not yet enabled (tables does not exists yet)
 		//{
-    		$eCommerceMenu = new eCommerceMenu($this->db,null,$this);
-	        $this->menu = $eCommerceMenu->getMenu();
+//    		$eCommerceMenu = new eCommerceMenu($this->db,null,$this);
+//	        $this->menu = $eCommerceMenu->getMenu();
 		//}
 
-        // Exports
-        //--------
-        $langs->load('products');
-        $langs->load('bills');
-        $r=0;
+		// Exports
+		//--------
+		$langs->load('products');
+		$langs->load('bills');
+		$r = 0;
 
-        $r++;
-        $this->export_code[$r]=$this->rights_class.'_'.$r;
-        $this->export_label[$r]="ECommerceExportProductsPrices";
-        $this->export_permission[$r]=array(array("produit","export"));
-        $this->export_fields_array[$r]=array('p.ref'=>"Ref",'p.price_base_type'=>"PriceBase",'p.price_min'=>"MinPriceHT",'p.price'=>"UnitPriceHT",'p.price_min_ttc'=>"MinPriceTTC",'p.price_ttc'=>"UnitPriceTTC",'p.tva_tx'=>'VATRate');
-        $this->export_TypeFields_array[$r]=array('p.ref'=>"Text",'p.price_base_type'=>"Text",'p.price_min'=>"Numeric",'p.price'=>"Numeric",'p.price_min_ttc'=>"Numeric",'p.price_ttc'=>"Numeric",'p.tva_tx'=>'Numeric');
-        $this->export_entities_array[$r]=array();		// We define here only fields that use another icon that the one defined into import_icon
-        $this->export_sql_start[$r]='SELECT DISTINCT ';
-        $this->export_sql_end[$r]  =' FROM '.MAIN_DB_PREFIX.'product as p';
-        $this->export_sql_end[$r] .=' WHERE p.fk_product_type = 0 AND p.entity IN ('.getEntity('product').')';
+		$r++;
+		$this->export_code[$r] = $this->rights_class . '_' . $r;
+		$this->export_label[$r] = "ECommerceExportProductsPrices";
+		$this->export_permission[$r] = array(array("produit", "export"));
+		$this->export_fields_array[$r] = array('p.ref' => "Ref", 'p.price_base_type' => "PriceBase", 'p.price_min' => "MinPriceHT", 'p.price' => "UnitPriceHT", 'p.price_min_ttc' => "MinPriceTTC", 'p.price_ttc' => "UnitPriceTTC", 'p.tva_tx' => 'VATRate');
+		$this->export_TypeFields_array[$r] = array('p.ref' => "Text", 'p.price_base_type' => "Text", 'p.price_min' => "Numeric", 'p.price' => "Numeric", 'p.price_min_ttc' => "Numeric", 'p.price_ttc' => "Numeric", 'p.tva_tx' => 'Numeric');
+		$this->export_entities_array[$r] = array();        // We define here only fields that use another icon that the one defined into import_icon
+		$this->export_sql_start[$r] = 'SELECT DISTINCT ';
+		$this->export_sql_end[$r] = ' FROM ' . MAIN_DB_PREFIX . 'product as p';
+		$this->export_sql_end[$r] .= ' WHERE p.fk_product_type = 0 AND p.entity IN (' . getEntity('product') . ')';
 
-        // Imports
-        //--------
-        $r=0;
+		// Imports
+		//--------
+		$r = 0;
 
-        $r++;
-        $this->import_code[$r]=$this->rights_class.'_'.$r;
-        $this->import_label[$r]="ECommerceImportProductsPrices";	// Translation key
-        $this->import_icon[$r]=$this->picto;
-        $this->import_entities_array[$r]=array();		// We define here only fields that use another icon that the one defined into import_icon
-        $this->import_tables_array[$r]=array('p'=>MAIN_DB_PREFIX.'product');
-        $this->import_tables_creator_array[$r]=array('p'=>'fk_user_author');	// Fields to store import user id
-        $this->import_fields_array[$r]=array('p.ref'=>"Ref*",'p.price_base_type'=>"PriceBase*",'p.price_min'=>"MinPriceHT",'p.price'=>"UnitPriceHT",'p.price_min_ttc'=>"MinPriceTTC",'p.price_ttc'=>"UnitPriceTTC",'p.tva_tx'=>'VATRate');
-        $this->import_fieldshidden_array[$r]=array('p.tms'=>$this->db->idate(dol_now()));
-        $this->import_regex_array[$r]=array('p.ref'=>'[^ ]','p.price_base_type'=>'^HT|TTC$');
-        $this->import_examplevalues_array[$r]=array('p.ref'=>"PREF123456",'p.price_base_type'=>"HT or TTC",'p.price_min'=>"100",'p.price'=>"100",'p.price_min_ttc'=>"110",'p.price_ttc'=>"110",'p.tva_tx'=>'10');
-        $this->import_updatekeys_array[$r]=array('p.ref'=>'Ref');
+		$r++;
+		$this->import_code[$r] = $this->rights_class . '_' . $r;
+		$this->import_label[$r] = "ECommerceImportProductsPrices";    // Translation key
+		$this->import_icon[$r] = $this->picto;
+		$this->import_entities_array[$r] = array();        // We define here only fields that use another icon that the one defined into import_icon
+		$this->import_tables_array[$r] = array('p' => MAIN_DB_PREFIX . 'product');
+		$this->import_tables_creator_array[$r] = array('p' => 'fk_user_author');    // Fields to store import user id
+		$this->import_fields_array[$r] = array('p.ref' => "Ref*", 'p.price_base_type' => "PriceBase*", 'p.price_min' => "MinPriceHT", 'p.price' => "UnitPriceHT", 'p.price_min_ttc' => "MinPriceTTC", 'p.price_ttc' => "UnitPriceTTC", 'p.tva_tx' => 'VATRate');
+		$this->import_fieldshidden_array[$r] = array('p.tms' => $this->db->idate(dol_now()));
+		$this->import_regex_array[$r] = array('p.ref' => '[^ ]', 'p.price_base_type' => '^HT|TTC$');
+		$this->import_examplevalues_array[$r] = array('p.ref' => "PREF123456", 'p.price_base_type' => "HT or TTC", 'p.price_min' => "100", 'p.price' => "100", 'p.price_min_ttc' => "110", 'p.price_ttc' => "110", 'p.tva_tx' => '10');
+		$this->import_updatekeys_array[$r] = array('p.ref' => 'Ref');
 	}
 
 	/**

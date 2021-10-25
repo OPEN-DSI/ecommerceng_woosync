@@ -247,7 +247,7 @@ ECommerceProductStatusSyncDirectionDescription=Ce paramètre détermine le sens 
 ECommercePaymentCondition            = Condizioni di pagamento
 ECommercePaymentConditionDescription = Termini di pagamento predefiniti al momento dell'ordine dallo shop E-Commerce
 
-ECommerceCountToUpdateDtoE  = Numero di elementi da sincronizzare (creati sul lato Dolibarr e non collegati allo shop E-Commerce)
+ECommerceCountToUpdateDtoE  = Numero di elementi da sincronizzare (Prodotto con la categoria del sito e non collegato o più recente)
 SyncProductFirst            = Sincronizza prima i prodotti
 
 ECommerceCreateRemoteCategoryLink   = Errore durante la creazione del collegamento alla categoria 'id:%s' per lo shop '%s': %s

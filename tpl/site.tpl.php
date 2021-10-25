@@ -323,7 +323,6 @@ if (is_object($site)) {
 
 	print '</table>';
 
-
 	print '<br>' . "\n";
 	?>
 	<div class="div-table-responsive">
@@ -332,7 +331,7 @@ if (is_object($site)) {
 				<td><?php print $langs->trans('ECommerceObjectToUpdate') ?></td>
 				<td><?php print $langs->trans('NbInDolibarr') ?></td>
 				<td><?php print $langs->trans('NbInDolibarrLinkedToE') ?></td>
-				<?php if (empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) { ?><td><?php print $langs->trans('ECommerceCountToUpdateDtoE'); ?></td><?php } ?>
+				<td><?php print $langs->trans('ECommerceCountToUpdateDtoE'); ?></td>
 				<?php if ($synchRights == true) { ?>
 					<td>&nbsp;</td>
 				<?php } ?>
@@ -345,7 +344,7 @@ if (is_object($site)) {
 				<td><?php print $langs->trans('ECommerceCategoriesProducts') ?></td>
 				<td><?php print $nbCategoriesInDolibarr ?> *</td>
 				<td><?php print $nbCategoriesInDolibarrLinkedToE ?> *</td>
-				<?php if (empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) { ?><td><?php print $nbCategoriesToUpdateDToE ?></td><?php } ?>
+				<td><?php print $nbCategoriesToUpdateDToE ?></td>
 				<?php if ($synchRights == true) { ?>
 					<td>
 						<?php if ($nbCategoriesToUpdateDToE > 0) { ?>
@@ -364,7 +363,7 @@ if (is_object($site)) {
 				<td><?php print $langs->trans('ProductsOrServices') ?></td>
 				<td><?php print $nbProductInDolibarr ?> **</td>
 				<td><?php print $nbProductInDolibarrLinkedToE ?> **</td>
-				<?php if (empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) { ?><td><?php print $nbProductToUpdateDToE ?> ***</td><?php } ?>
+				<td><?php print $nbProductToUpdateDToE ?> ***</td>
 				<?php if ($synchRights == true) { ?>
 					<td>
 						<?php if ($nbProductToUpdateDToE > 0) { ?>

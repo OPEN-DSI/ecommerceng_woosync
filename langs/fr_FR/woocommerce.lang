@@ -130,3 +130,4 @@ ECommerceWoocommerceErrorAddDictTaxRate                              = Erreur lo
 ECommerceWooCommerceErrorTaxNotFound                                 = Erreur la taxe n'a pas été trouvée dans celles synchronisées (ID: %s)
 ECommerceWooCommerceErrorDontSupportMultiTaxes                       = Le module ne supporte pas actuellement le multi-taxe.
 ECommerceWoocommerceErrorGetWoocommerceWebHooks                      = Erreur de récupération des crochets web sur le site '%s': %s
+ECommerceWoocommerceErrorTaxClassNotFoundFromTaxRate                 = La taxe '%s' n'est pas trouver dans le dictionnaire de taxe du module WooSync pour le site '%s' pour le produit '%s'

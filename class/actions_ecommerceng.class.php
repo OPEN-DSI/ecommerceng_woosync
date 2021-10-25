@@ -66,7 +66,7 @@ class ActionsECommerceNg
                 }
 
                 // Delete all categories of the ecommerce
-                if (!$error) {
+                if (!$error && empty($conf->global->ECOMMERCE_DONT_UNSET_CATEGORIE_OF_PRODUCT_WHEN_DELINK)) {
                     $eCommerceSite = new eCommerceSite($object->db);
                     if ($eCommerceSite->fetch($site_id) > 0) {
                         require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';

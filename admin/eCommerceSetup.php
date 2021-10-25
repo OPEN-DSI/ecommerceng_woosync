@@ -623,8 +623,8 @@ if ($_POST['site_form_detail_action'] == 'save')
 
         if ($result > 0)
         {
-            $eCommerceMenu = new eCommerceMenu($db, $siteDb);
-            $eCommerceMenu->updateMenu();
+//            $eCommerceMenu = new eCommerceMenu($db, $siteDb);
+//            $eCommerceMenu->updateMenu();
             $db->commit();
 
 //            if ($siteDb->type == 2) { // Woocommerce
@@ -682,8 +682,8 @@ elseif ($_POST['site_form_detail_action'] == 'delete')
 
         $pay_gateways->delete_all($siteDb->id);
 
-        $eCommerceMenu = new eCommerceMenu($db, $siteDb);
-        $eCommerceMenu->updateMenu();
+//        $eCommerceMenu = new eCommerceMenu($db, $siteDb);
+//        $eCommerceMenu->updateMenu();
         $success[] = $langs->trans('ECommerceDeleteOk');
         $siteDb->id = null;
         unset($_POST);

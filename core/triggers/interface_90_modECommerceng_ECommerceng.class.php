@@ -97,6 +97,8 @@ class InterfaceECommerceng
      */
 	function runTrigger($action,$object,$user,$langs,$conf)
 	{
+		if (empty($conf->ecommerceng->enabled)) return 0;     // Module not active, we do nothing
+
 		$error = 0;
 
 		if ($action == 'CATEGORY_LINK') {
@@ -148,6 +150,7 @@ class InterfaceECommerceng
 			} else {
 				$eCommerceSite = new eCommerceSite($this->db);
 				$sites = $eCommerceSite->listSites('object');
+				$entities = explode(',', getEntity('societe'));
 
 				foreach ($sites as $site) {
 					if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id) {
@@ -158,6 +161,11 @@ class InterfaceECommerceng
 					if (!$error) {
 						if (empty($site->parameters['realtime_dtoe']['thridparty'])) {
 							dol_syslog("Triggers disabled from the config of the module");
+							continue;
+						}
+
+						if (!in_array($site->entity, $entities)) {
+							dol_syslog("Site '{$site->name}' not in the shared entities");
 							continue;
 						}
 
@@ -252,6 +260,7 @@ class InterfaceECommerceng
 
 			$eCommerceSite = new eCommerceSite($this->db);
 			$sites = $eCommerceSite->listSites('object');
+			$entities = explode(',', getEntity('socpeople'));
 
 			foreach ($sites as $site) {
 				if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id) {
@@ -262,6 +271,11 @@ class InterfaceECommerceng
 				if (!$error) {
 					if (empty($site->parameters['realtime_dtoe']['contact'])) {
 						dol_syslog("Triggers disabled from the config of the module");
+						continue;
+					}
+
+					if (!in_array($site->entity, $entities)) {
+						dol_syslog("Site '{$site->name}' not in the shared entities");
 						continue;
 					}
 
@@ -362,6 +376,8 @@ class InterfaceECommerceng
 
 			$eCommerceSite = new eCommerceSite($this->db);
 			$sites = $eCommerceSite->listSites('object');
+			$entities = explode(',', getEntity('product'));
+			$object->context['ec_price_entities'] = explode(',', getEntity('productprice'));
 
 			foreach ($sites as $site) {
 				if (!in_array($site->fk_cat_product, $categories)) {
@@ -371,6 +387,11 @@ class InterfaceECommerceng
 
 				if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id) {
 					dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
+					continue;
+				}
+
+				if (!in_array($site->entity, $entities)) {
+					dol_syslog("Site '{$site->name}' not in the shared entities");
 					continue;
 				}
 
@@ -532,6 +553,7 @@ class InterfaceECommerceng
 
 			$eCommerceSite = new eCommerceSite($this->db);
 			$sites = $eCommerceSite->listSites('object');
+			$entities = explode(',', getEntity('commande'));
 
 			foreach ($sites as $site) {
 				if ($obj->context['fromsyncofecommerceid'] && $obj->context['fromsyncofecommerceid'] == $site->id) {
@@ -541,6 +563,11 @@ class InterfaceECommerceng
 
 				if (empty($site->parameters['realtime_dtoe']['order'])) {
 					dol_syslog("Triggers disabled from the config of the module");
+					continue;
+				}
+
+				if (!in_array($site->entity, $entities)) {
+					dol_syslog("Site '{$site->name}' not in the shared entities");
 					continue;
 				}
 
@@ -612,6 +639,7 @@ class InterfaceECommerceng
 
 			$eCommerceSite = new eCommerceSite($this->db);
 			$sites = $eCommerceSite->listSites('object');
+			$entities = explode(',', getEntity('facture'));
 
 			foreach ($sites as $site) {
 				if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id) {
@@ -622,6 +650,11 @@ class InterfaceECommerceng
 				if (!$error) {
 					if (empty($site->parameters['realtime_dtoe']['order'])) {
 						dol_syslog("Triggers disabled from the config of the module");
+						continue;
+					}
+
+					if (!in_array($site->entity, $entities)) {
+						dol_syslog("Site '{$site->name}' not in the shared entities");
 						continue;
 					}
 
@@ -862,6 +895,7 @@ class InterfaceECommerceng
 
 			$eCommerceSite = new eCommerceSite($this->db);
 			$sites = $eCommerceSite->listSites('object');
+			$entities = explode(',', getEntity('expedition'));
 
 			foreach ($sites as $site) {
 				if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id) {
@@ -871,6 +905,11 @@ class InterfaceECommerceng
 
 				if (empty($site->parameters['realtime_dtoe']['order'])) {
 					dol_syslog("Triggers disabled from the config of the module");
+					continue;
+				}
+
+				if (!in_array($site->entity, $entities)) {
+					dol_syslog("Site '{$site->name}' not in the shared entities");
 					continue;
 				}
 
@@ -971,10 +1010,16 @@ class InterfaceECommerceng
 
 			$eCommerceSite = new eCommerceSite($this->db);
 			$sites = $eCommerceSite->listSites('object');
+			$entities = explode(',', getEntity('stock'));
 
 			foreach ($sites as $site) {
 				if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id) {
 					dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
+					continue;
+				}
+
+				if (!in_array($site->entity, $entities)) {
+					dol_syslog("Site '{$site->name}' not in the shared entities");
 					continue;
 				}
 

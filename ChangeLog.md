@@ -1,5 +1,11 @@
 # ChangeLog
 
+## 4.0.93.0
+- Correction compatibilité multi-entités et gestion des menus.
+- Correction remonter des produits (bouton de synchro de dolibarr vers le site).
+- Ajout de la global ECOMMERCE_INITIAL_DATA_PRODUCT pour forcer l'etat initial des données (description, stock, prix et tva).
+- Ajout de la global ECOMMERCE_DONT_UNSET_CATEGORIE_OF_PRODUCT_WHEN_DELINK pour ne pas supprime les catégorie lié a la boutique sur le produit si il est délier du site
+
 ## 4.0.92.0
 - Correction compatibilité multi-entités.
 

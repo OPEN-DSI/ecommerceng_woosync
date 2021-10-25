@@ -461,9 +461,9 @@ class eCommerceSynchro
         $cats_id = array_keys($this->cache_categories['product']);
         $sql="SELECT COUNT(DISTINCT p.rowid) as nb FROM ".MAIN_DB_PREFIX."product as p" .
             " INNER JOIN ".MAIN_DB_PREFIX."categorie_product as cp ON p.rowid = cp.fk_product AND cp.fk_categorie IN (".implode(',', $cats_id).")" .
-            " LEFT JOIN ".MAIN_DB_PREFIX."ecommerce_product as ep ON p.rowid = ep.fk_product AND ep.fk_site=".$this->eCommerceSite->id .
-            " WHERE ep.rowid IS NULL" .
-            " OR ep.last_update < p.tms" .
+			" LEFT JOIN ".MAIN_DB_PREFIX."ecommerce_product as ep ON p.rowid = ep.fk_product AND ep.fk_site=".$this->eCommerceSite->id .
+			" LEFT JOIN ".MAIN_DB_PREFIX."product_extrafields as pf ON pf.fk_object = p.rowid" .
+			" WHERE (ep.rowid IS NULL OR ep.last_update < p.tms OR (pf.tms IS NOT NULL AND ep.last_update < pf.tms))" .
 			" AND p.entity IN (" . getEntity('product') . ")";
         $resql=$this->db->query($sql);
         if ($resql)
@@ -1943,8 +1943,9 @@ class eCommerceSynchro
      */
     public function synchDtoEProduct($toNb=0)
     {
-        global $user;
+        global $langs, $user;
 
+		$langs->load('ecommerceng@ecommerceng');
         $error = 0;
         $nbgoodsunchronize = 0;
 
@@ -1954,82 +1955,80 @@ class eCommerceSynchro
         $this->fetch_categories('product', $this->eCommerceSite->fk_cat_product);
         $cats_id = array_keys($this->cache_categories['product']);
 
-        $sql = "SELECT DISTINCT p.rowid, IFNULL(ep.remote_id, 0) as remote_id FROM " . MAIN_DB_PREFIX . "product as p" .
+        $sql = "SELECT DISTINCT p.rowid, IFNULL(ep.remote_id, '') as remote_id FROM " . MAIN_DB_PREFIX . "product as p" .
             " INNER JOIN " . MAIN_DB_PREFIX . "categorie_product as cp ON p.rowid = cp.fk_product AND cp.fk_categorie IN (" . implode(',', $cats_id) . ")" .
             " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_product as ep ON p.rowid = ep.fk_product AND ep.fk_site=" . $this->eCommerceSite->id .
-            " WHERE ep.rowid IS NULL" .
-            " OR ep.last_update < p.tms" .
+			" LEFT JOIN ".MAIN_DB_PREFIX."product_extrafields as pf ON pf.fk_object = p.rowid" .
+			" WHERE (ep.rowid IS NULL OR ep.last_update < p.tms OR (pf.tms IS NOT NULL AND ep.last_update < pf.tms))" .
 			" AND p.entity IN (" . getEntity('product') . ")";
 		$resql = $this->db->query($sql);
         if ($resql) {
-            $index = 0;
-            $group = array();
-            while ($obj = $this->db->fetch_object($resql)) {
-                $index++;
-                $group[$obj->rowid] = !empty($obj->remote_id) ? [ 'type' => 'update', 'remote_id' => $obj->remote_id ] : [ 'type' => 'create' ];
-                if ($index == $toNb) {
-                    break;
-                }
-            }
+			require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
+			$product_static = new Product($this->db);
 
-            $prods_id_remote_id = $this->eCommerceRemoteAccess->batchUpdateRemoteProducts($group);
-            $now = dol_now();
-            if (!empty($this->errors)) {
-                $error++;
-            }
+			$ec_price_entities = explode(',', getEntity('productprice'));
 
-            if (isset($prods_id_remote_id['create']) && count($prods_id_remote_id['create'])) {
-                $this->initECommerceProduct();
-                foreach ($prods_id_remote_id['create'] as $product_id => $remote_id) {
-                    if ($this->eCommerceProduct->fetchByProductId($product_id, $this->eCommerceSite->id) > 0) {
-                        $this->eCommerceProduct->delete($user);
-                    }
+			$idx = 0;
+			while ($obj = $this->db->fetch_object($resql)) {
+				$idx++;
 
-                    // Create remote link
-                    $this->eCommerceProduct->fk_product = $product_id;
-                    $this->eCommerceProduct->fk_site = $this->eCommerceSite->id;
-                    $this->eCommerceProduct->remote_id = $remote_id;
-                    $this->eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
-                    $res = $this->eCommerceProduct->create($user);
-                    if ($res < 0) {
-                        $error++;
-                        $error_msg = $this->langs->trans('ECommerceCreateRemoteProductLink', $product_id, $this->eCommerceSite->name, $this->eCommerceProduct->error);
-                        $this->errors[] = $error_msg;
-                        dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
-                    } else {
-                        $nbgoodsunchronize++;
-                    }
-                }
-            }
+				if ($product_static->fetch($obj->rowid) > 0) {
+					$this->initECommerceProduct();
 
-            if (isset($prods_id_remote_id['update']) && count($prods_id_remote_id['update'])) {
-                $this->initECommerceProduct();
-                foreach ($prods_id_remote_id['update'] as $product_id => $remote_id) {
-                    $synchExist = $this->eCommerceProduct->fetchByProductId($product_id, $this->eCommerceSite->id);
+					$product_static->context['ec_price_entities'] = $ec_price_entities;
+					if (empty($obj->remote_id)) {
+						$result = $this->eCommerceRemoteAccess->createRemoteProduct($product_static);
+						$now = dol_now();
+						if (!$result) {
+							$error++;
+							$this->error = $this->eCommerceRemoteAccess->error;
+							$this->errors = $this->eCommerceRemoteAccess->errors;
+						} else {
+							// Create remote link
+							$this->eCommerceProduct->remote_id = $result;
+							$this->eCommerceProduct->fk_site = $this->eCommerceSite->id;
+							$this->eCommerceProduct->fk_product = $product_static->id;
+							$this->eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
+							if ($this->eCommerceProduct->create($user) < 0) {
+								$error++;
+								$error_msg = $langs->trans('ECommerceCreateRemoteProductLink', $product_static->id, $this->eCommerceSite->name, $this->eCommerceProduct->error);
+								$this->errors[] = $error_msg;
+								$this->errors = array_merge($this->errors, $this->eCommerceProduct->errors);
+								dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
+							}
+						}
+					} else {
+						$result = $this->eCommerceRemoteAccess->updateRemoteProduct($obj->remote_id, $product_static);
+						if (!$result) {
+							$error++;
+							$this->error = $this->eCommerceRemoteAccess->error;
+							$this->errors = $this->eCommerceRemoteAccess->errors;
+						} else {
+							//eCommerce update link
+							$now = dol_now();
+							$this->eCommerceProduct->fetchByRemoteId($obj->remote_id, $this->eCommerceSite->id);
+							$this->eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
+							if ($this->eCommerceProduct->update($user) < 0) {
+								$error++;
+								$error_msg = $langs->trans('ECommerceUpdateRemoteProductLink', $product_static->id, $this->eCommerceSite->name, $this->eCommerceProduct->error);
+								$this->errors[] = $error_msg;
+								$this->errors = array_merge($this->errors, $this->eCommerceProduct->errors);
+								dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
+							}
+						}
+					}
 
-                    // Create/Update remote link
-                    $this->eCommerceProduct->fk_product = $product_id;
-                    $this->eCommerceProduct->fk_site = $this->eCommerceSite->id;
-                    $this->eCommerceProduct->remote_id = $remote_id;
-                    $this->eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
-                    if ($synchExist > 0) {
-                        $res = $this->eCommerceProduct->update($user);
-                    } else {
-                        $res = $this->eCommerceProduct->create($user);
-                    }
+					if (!$error) {
+						$nbgoodsunchronize++;
+					}
+				}
 
-                    if ($res < 0) {
-                        $error++;
-                        $error_msg = $this->langs->trans($synchExist > 0 ? 'ECommerceUpdateRemoteProductLink' : 'ECommerceCreateRemoteProductLink', $product_id, $this->eCommerceSite->name, $this->eCommerceProduct->error);
-                        $this->errors[] = $error_msg;
-                        dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
-                    } else {
-                        $nbgoodsunchronize++;
-                    }
-                }
-            }
+				if ($idx == $toNb) {
+					break;
+				}
+			}
 
-            if ($nbgoodsunchronize > 0) {
+			if ($nbgoodsunchronize > 0) {
                 $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchProductSuccess');
             }
 
@@ -2118,6 +2117,7 @@ class eCommerceSynchro
      */
     public function dropImportedAndSyncData($deletealsoindolibarr, $mode='')
     {
+    	global $conf;
         dol_syslog("***** eCommerceSynchro dropImportedAndSyncData");
 
 		$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - mode: {$mode}");
@@ -2211,30 +2211,32 @@ class eCommerceSynchro
             $this->db->begin();
 
             // Remove all categories of the ecommerce on the products
-            require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
-            $c = new Categorie($this->db);
-            $all_cat_full_arbo = $c->get_full_arbo('product');
-            $cat_root = $this->eCommerceSite->fk_cat_product;
-            $error = 0;
-            $synchCategoriesDeleted = 0;
-            foreach($all_cat_full_arbo as $cat_infos) {
-                if (preg_match("/^{$cat_root}$/", $cat_infos['fullpath']) || preg_match("/^{$cat_root}_/", $cat_infos['fullpath']) ||
-                    preg_match("/_{$cat_root}_/", $cat_infos['fullpath']) || preg_match("/_{$cat_root}$/", $cat_infos['fullpath'])) {
-                    if ($c->fetch($cat_infos['id']) > 0) {
-                        $prods = $c->getObjectsInCateg("product");
-                        if (is_array($prods)) {
-                            foreach ($prods as $prod) {
-                                if ($c->del_type($prod, 'product') < 0) {
-                                    setEventMessages($c->error, $c->errors, 'errors');
-                                    $error++;
-                                } else {
-                                    $synchCategoriesDeleted++;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+			if (empty($conf->global->ECOMMERCE_DONT_UNSET_CATEGORIE_OF_PRODUCT_WHEN_DELINK)) {
+				require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+				$c = new Categorie($this->db);
+				$all_cat_full_arbo = $c->get_full_arbo('product');
+				$cat_root = $this->eCommerceSite->fk_cat_product;
+				$error = 0;
+				$synchCategoriesDeleted = 0;
+				foreach ($all_cat_full_arbo as $cat_infos) {
+					if (preg_match("/^{$cat_root}$/", $cat_infos['fullpath']) || preg_match("/^{$cat_root}_/", $cat_infos['fullpath']) ||
+						preg_match("/_{$cat_root}_/", $cat_infos['fullpath']) || preg_match("/_{$cat_root}$/", $cat_infos['fullpath'])) {
+						if ($c->fetch($cat_infos['id']) > 0) {
+							$prods = $c->getObjectsInCateg("product");
+							if (is_array($prods)) {
+								foreach ($prods as $prod) {
+									if ($c->del_type($prod, 'product') < 0) {
+										setEventMessages($c->error, $c->errors, 'errors');
+										$error++;
+									} else {
+										$synchCategoriesDeleted++;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 
             foreach ($arrayECommerceProductIds as $idProduct)
             {
@@ -3997,7 +3999,7 @@ class eCommerceSynchro
 		}
 
 		// Delete all categories of the ecommerce
-		if (!$error) {
+		if (!$error && empty($conf->global->ECOMMERCE_DONT_UNSET_CATEGORIE_OF_PRODUCT_WHEN_DELINK)) {
 			require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
 			$eCommerceSite = new eCommerceSite($this->db);
 			$product = new Product($this->db);

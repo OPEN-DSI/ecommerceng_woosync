@@ -241,7 +241,7 @@ ECommerceRealTimeSynchroDolibarrToECommerceSetupDescription = Synchronization of
 ECommercePaymentCondition            = Payment conditions
 ECommercePaymentConditionDescription = Default payment conditions when retrieving the order from the ECommerce site
 
-ECommerceCountToUpdateDtoE  = Number of elements to synchronize (create in Dolibarr and not linked to ECommerce)
+ECommerceCountToUpdateDtoE  = Number of elements to synchronize (Product with the category of the site and not linked or newer)
 SyncProductFirst            = Synchronize the products first
 
 ECommerceCreateRemoteCategoryLink   = Error creating the category link 'id:%s' on the site '%s': %s
