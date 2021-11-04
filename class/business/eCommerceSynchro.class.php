@@ -116,8 +116,8 @@ class eCommerceSynchro
 
     private $cache_categories;
 
-    private static $payment_gateways_cached;
-	private static $product_category_cached;
+	public $payment_gateways_cached;
+	public $product_category_cached;
 
 
 	/**
@@ -3852,7 +3852,7 @@ class eCommerceSynchro
 										if (is_array($product_category_ids)) {
 											$this->loadProductCategories();
 											foreach ($product_category_ids as $product_category_id) {
-												if (isset(self::$product_category_cached[$product_category_id])) {
+												if (isset($this->product_category_cached[$product_category_id])) {
 													$cat = new Categorie($this->db);
 													$cat->fetch($product_category_id);
 													$cat->del_type($product, 'product');
@@ -4480,8 +4480,8 @@ class eCommerceSynchro
 										if ($result < 0) {
 											$error++;
 										} else {
-											if (isset(self::$payment_gateways_cached[$order_data['payment_method_id']])) {
-												$selected_payment_gateways = self::$payment_gateways_cached[$order_data['payment_method_id']];
+											if (isset($this->payment_gateways_cached[$order_data['payment_method_id']])) {
+												$selected_payment_gateways = $this->payment_gateways_cached[$order_data['payment_method_id']];
 											} else {
 												$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysNotFound', $order_data['payment_method_id'], $order_data['payment_method']);
 												$error++;
@@ -5661,8 +5661,8 @@ class eCommerceSynchro
 											if ($result < 0) {
 												$error++;
 											} else {
-												if (isset(self::$payment_gateways_cached[$order_data['payment_method_id']])) {
-													$selected_payment_gateways = self::$payment_gateways_cached[$order_data['payment_method_id']];
+												if (isset($this->payment_gateways_cached[$order_data['payment_method_id']])) {
+													$selected_payment_gateways = $this->payment_gateways_cached[$order_data['payment_method_id']];
 												} else {
 													$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysNotFound', $order_data['payment_method_id'], $order_data['payment_method']);
 													$error++;
@@ -6811,7 +6811,7 @@ class eCommerceSynchro
 	 */
 	public function loadPaymentGateways()
 	{
-		if (!isset(self::$payment_gateways_cached)) {
+		if (!isset($this->payment_gateways_cached)) {
 			// Payment gateways correspondence
 			dol_include_once('/ecommerceng/class/data/eCommercePaymentGateways.class.php');
 			$pay_gateways = new eCommercePaymentGateways($this->db);
@@ -6823,7 +6823,7 @@ class eCommerceSynchro
 				return -1;
 			}
 
-			self::$payment_gateways_cached = $result;
+			$this->payment_gateways_cached = $result;
 		}
 
 		return 1;
@@ -6836,7 +6836,7 @@ class eCommerceSynchro
 	 */
 	public function loadProductCategories()
 	{
-		if (!isset(self::$product_category_cached)) {
+		if (!isset($this->product_category_cached)) {
 			require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 			$cat = new Categorie($this->db);
 			$result = $cat->get_full_arbo('product', $this->eCommerceSite->fk_cat_product, 1);
@@ -6847,7 +6847,7 @@ class eCommerceSynchro
 				return -1;
 			}
 
-			self::$product_category_cached = $result;
+			$this->product_category_cached = $result;
 		}
 
 		return 1;

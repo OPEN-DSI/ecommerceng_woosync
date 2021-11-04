@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.0.94.0
+- Ajout d'un script cli pour retraiter l'ajout des paiements des factures impayées liées à un site.
+- Correction mineures.
+
 ## 4.0.93.0
 - Correction compatibilité multi-entités et gestion des menus.
 - Correction remonter des produits (bouton de synchro de dolibarr vers le site).
