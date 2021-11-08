@@ -36,7 +36,7 @@ class eCommerceProduct // extends CommonObject
      *    Constructor
      *    @param      DoliDB			$db      	Database handler
      */
-    function eCommerceProduct($db)
+    function __construct($db)
     {
         $this->db = $db;
         return 1;

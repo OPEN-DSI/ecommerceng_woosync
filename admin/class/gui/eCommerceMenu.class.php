@@ -31,7 +31,7 @@ class eCommerceMenu
 	private $db;
 	private $siteDb;
 
-    function eCommerceMenu($db, $siteDb=null, $modECommerce=null)
+    function __construct($db, $siteDb=null, $modECommerce=null)
     {
     	$this->db = $db;
 

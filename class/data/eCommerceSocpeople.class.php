@@ -43,7 +43,7 @@ class eCommerceSocpeople // extends CommonObject
      *
      *    @param	DoliDB		$DB      Database handler
      */
-    function eCommerceSocpeople($DB)
+    function __construct($DB)
     {
         $this->db = $DB;
         return 1;

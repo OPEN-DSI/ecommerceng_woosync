@@ -165,7 +165,7 @@ class eCommerceRemoteAccessWoocommerce
      * @param   DoliDB          $db     Database handler
      * @param   eCommerceSite   $site   eCommerceSite object
      */
-    function eCommerceRemoteAccessWoocommerce($db, $site)
+    function __construct($db, $site)
     {
         global $langs;
 

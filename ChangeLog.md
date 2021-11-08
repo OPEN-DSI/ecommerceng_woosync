@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.95.0
+- Correction du nom du constructeur des classes d'origines du module
+
 ## 4.0.94.0
 - Ajout d'un script cli pour retraiter l'ajout des paiements des factures impayées liées à un site.
 - Correction mineures.

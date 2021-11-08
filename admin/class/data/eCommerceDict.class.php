@@ -26,7 +26,7 @@ class eCommerceDict
 	private $db;
 	private $table;
 
-    function eCommerceDict($db, $table)
+    function __construct($db, $table)
     {
     	$this->db = $db;
     	$this->table = $table;

@@ -36,7 +36,7 @@ class eCommerceSociete // extends CommonObject
      *    Database access to ecommerce_societe
      *    @param      DoliDB 		$db      Database handler
      */
-    function eCommerceSociete($db)
+    function __construct($db)
     {
         $this->db = $db;
         return 1;

@@ -54,7 +54,7 @@ class eCommerceCategory // extends CommonObject
      *
      *      @param      DoliDB  $DB      Database handler
      */
-    function eCommerceCategory($DB)
+    function __construct($DB)
     {
         $this->db = $DB;
 

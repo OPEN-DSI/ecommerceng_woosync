@@ -36,7 +36,7 @@ class eCommerceRemoteAccess
      * @param   Database            $db         Databse handler
      * @param   eCommerceSite       $site       eCommerceSite
      */
-    function eCommerceRemoteAccess($db, $site)
+    function __construct($db, $site)
     {
     	$this->db = $db;
         $this->site = $site;

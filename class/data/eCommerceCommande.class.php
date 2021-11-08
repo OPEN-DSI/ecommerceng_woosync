@@ -37,7 +37,7 @@ class eCommerceCommande
      *
      *    @param	DoliDB		$DB      Database handler
      */
-    function eCommerceCommande($DB)
+    function __construct($DB)
     {
         $this->db = $DB;
         return 1;
