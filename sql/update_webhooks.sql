@@ -18,3 +18,4 @@
 
 UPDATE llx_ecommerce_pending_webhooks SET datep = datee WHERE datee IS NOT NULL;
 ALTER TABLE llx_ecommerce_pending_webhooks DROP COLUMN datee;
+ALTER TABLE llx_ecommerce_pending_webhooks CHANGE COLUMN webhook_data webhook_data mediumtext NOT NULL;

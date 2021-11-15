@@ -25,7 +25,7 @@ create table llx_ecommerce_pending_webhooks
 	webhook_topic    	varchar(255)	NOT NULL,
 	webhook_resource 	varchar(255)	NOT NULL,
 	webhook_event	   	varchar(255)	NOT NULL,
-	webhook_data		text			NOT NULL,
+	webhook_data		mediumtext		NOT NULL,
 	webhook_signature	varchar(255)	NOT NULL,
 	webhook_source     	varchar(255)	NOT NULL,
 	error_msg			text			NULL,

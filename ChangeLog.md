@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.96.0
+- Augmente la taille de TEXT vers MEDIUMTEXT de la colonne webhook_data sur la table llx_ecommerce_pending_webhooks
+
 ## 4.0.95.0
 - Correction du nom du constructeur des classes d'origines du module
 
