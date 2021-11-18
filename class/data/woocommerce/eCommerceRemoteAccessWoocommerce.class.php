@@ -592,8 +592,8 @@ class eCommerceRemoteAccessWoocommerce
 		$this->errors = array();
 		$companies = [];
 		$nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
-		$from_date = isset($from_date) && !empty($from_date) ? dol_print_date($from_date, 'dayhourrfc') : null;
-		$to_date = isset($to_date) && !empty($to_date) ? dol_print_date($to_date, 'dayhourrfc') : null;
+		$from_date = isset($from_date) && !empty($from_date) ? dol_print_date($from_date, '%Y-%m-%dT%H:%M:%S') : null;
+		$to_date = isset($to_date) && !empty($to_date) ? dol_print_date($to_date, '%Y-%m-%dT%H:%M:%S') : null;
 
 		$filters = [
 			'per_page' => $nb_max_by_request,
@@ -825,8 +825,8 @@ class eCommerceRemoteAccessWoocommerce
 		$this->errors = array();
 		$products = [];
         $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
-		$from_date = isset($from_date) ? dol_print_date($from_date, 'dayhourrfc') : null;
-		$to_date = isset($to_date) ? dol_print_date($to_date, 'dayhourrfc') : null;
+		$from_date = isset($from_date) ? dol_print_date($from_date, '%Y-%m-%dT%H:%M:%S') : null;
+		$to_date = isset($to_date) ? dol_print_date($to_date, '%Y-%m-%dT%H:%M:%S') : null;
 		$product_variation_mode_all_to_one = !empty($this->site->parameters['product_variation_mode']) && $this->site->parameters['product_variation_mode'] == 'all_to_one';
 
 		$include_ids = [];
@@ -1222,8 +1222,8 @@ class eCommerceRemoteAccessWoocommerce
 		$this->errors = array();
 		$orders = [];
 		$nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
-		$from_date = isset($from_date) ? dol_print_date($from_date, 'dayhourrfc') : null;
-		$to_date = isset($to_date) ? dol_print_date($to_date, 'dayhourrfc') : null;
+		$from_date = isset($from_date) ? dol_print_date($from_date, '%Y-%m-%dT%H:%M:%S') : null;
+		$to_date = isset($to_date) ? dol_print_date($to_date, '%Y-%m-%dT%H:%M:%S') : null;
 
 		$filters = [
 			'per_page' => $nb_max_by_request,
@@ -2005,15 +2005,15 @@ class eCommerceRemoteAccessWoocommerce
         if (!empty($sale_price)) {
 			$date_on_sale_from = $object->array_options["options_ecommerceng_wc_date_on_sale_from_{$this->site->id}_{$conf->entity}"];
 			if (!empty($date_on_sale_from)) {
-				$date_on_sale_from = $this->getDateTimeToGMTDateTime(is_numeric($date_on_sale_from) ? dol_print_date($date_on_sale_from, 'dayhourrfc') : $date_on_sale_from);
-				$date_on_sale_from = isset($date_on_sale_from) ? dol_print_date($date_on_sale_from->getTimestamp(), 'dayhourrfc') : '';
+				$date_on_sale_from = $this->getDateTimeToGMTDateTime(is_numeric($date_on_sale_from) ? dol_print_date($date_on_sale_from, '%Y-%m-%dT%H:%M:%S') : $date_on_sale_from);
+				$date_on_sale_from = isset($date_on_sale_from) ? dol_print_date($date_on_sale_from->getTimestamp(), '%Y-%m-%dT%H:%M:%S') : '';
 			} else {
 				$date_on_sale_from = '';
 			}
 			$date_on_sale_to = $object->array_options["options_ecommerceng_wc_date_on_sale_to_{$this->site->id}_{$conf->entity}"];
 			if (!empty($date_on_sale_to)) {
-				$date_on_sale_to = $this->getDateTimeToGMTDateTime(is_numeric($date_on_sale_to) ? dol_print_date($date_on_sale_to, 'dayhourrfc') : $date_on_sale_to);
-				$date_on_sale_to = isset($date_on_sale_to) ? dol_print_date($date_on_sale_to->getTimestamp(), 'dayhourrfc') : '';
+				$date_on_sale_to = $this->getDateTimeToGMTDateTime(is_numeric($date_on_sale_to) ? dol_print_date($date_on_sale_to, '%Y-%m-%dT%H:%M:%S') : $date_on_sale_to);
+				$date_on_sale_to = isset($date_on_sale_to) ? dol_print_date($date_on_sale_to->getTimestamp(), '%Y-%m-%dT%H:%M:%S') : '';
 			} else {
 				$date_on_sale_to = '';
 			}
