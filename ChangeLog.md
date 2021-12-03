@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.97.0
+- Le test de droit de synchronisation de l'utilisateur utilisé pour lancer la tache CRON de traitement des webhooks a été retiré
+
 ## 4.0.96.0
 - Augmente la taille de TEXT vers MEDIUMTEXT de la colonne webhook_data sur la table llx_ecommerce_pending_webhooks
 
