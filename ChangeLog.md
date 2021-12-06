@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.98.0
+- Correction filtre par date
+
 ## 4.0.97.0
 - Le test de droit de synchronisation de l'utilisateur utilisé pour lancer la tache CRON de traitement des webhooks a été retiré
 
