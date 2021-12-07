@@ -1184,6 +1184,37 @@ class eCommerceRemoteAccessWoocommerce
 			}
 		}
 
+		// Synchronize attribute to extra fields
+		if (!empty($this->site->parameters['ef_crp_attribute'])) {
+			$attributes = array();
+			if (is_array($remote_data->attributes)) {
+				foreach ($remote_data->attributes as $attribute) {
+					$attributes[$attribute->name] = $attribute;
+				}
+			}
+			if ($isVariation && is_array($parent_remote_data->attributes)) {
+				foreach ($parent_remote_data->attributes as $attribute) {
+					if (!isset($attributes[$attribute->name])) {
+						$attributes[$attribute->name] = $attribute;
+					}
+				}
+			}
+
+			if (!empty($attributes)) {
+				$correspondences = array();
+				foreach ($this->site->parameters['ef_crp_attribute'] as $key => $options_saved) {
+					if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
+						$correspondences[$options_saved['correspondences']] = $key;
+					}
+				}
+				foreach ($attributes as $attribute) {
+					if (isset($correspondences[$attribute->name])) {
+						$product['extrafields'][$correspondences[$attribute->name]] = implode(',', $attribute->options);
+					}
+				}
+			}
+		}
+
 		return $product;
 	}
 
@@ -2113,43 +2144,89 @@ class eCommerceRemoteAccessWoocommerce
 					}
 				}
             }
-            $photos = $object->liste_photos($dir);
-            foreach ($photos as $index => $photo) {
-                $img = [];
+//            $photos = $object->liste_photos($dir);
+//            foreach ($photos as $index => $photo) {
+//                $img = [];
+//
+//                $filename = ecommerceng_wordpress_sanitize_file_name($photo['photo']);
+//                if (!isset($current_images[$filename])) {
+//                    $result = $this->worpressclient->postmedia("media", $dir . $photo['photo'], [
+//                        'slug' => $object->id . '_' . $filename,
+//                        'ping_status' => 'closed',
+//                        'comment_status' => 'closed',
+//                    ]);
+//
+//                    if ($result === null) {
+//                        $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductSendImage', $object->ref . ' - '  . $remote_id, $this->site->name, implode('; ', $this->worpressclient->errors));
+//                        dol_syslog(__METHOD__ . ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductSendImage',
+//                                $remote_id, $this->site->name, implode('; ', $this->worpressclient->errors)), LOG_ERR);
+//                        return $return_data;
+//                    } elseif (!empty($result['message'])) {
+//                        $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductSendImage', $object->ref . ' - '  . $remote_id, $this->site->name, $result['code'] . ' - ' . $result['message']);
+//                        dol_syslog(__METHOD__ . ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductSendImage',
+//                                $remote_id, $this->site->name, $result['code'] . ' - ' . $result['message']), LOG_ERR);
+//                        return $return_data;
+//                    }
+//
+//                    $img['id'] = $result['id'];
+//                } else {
+//                    $img['id'] = $current_images[$filename];
+//                }
+//
+//                $img['name'] = $filename;
+//                $img['position'] = $index;
+//                $images[] = $img;
+//
+//                if ($isProductVariation) { // Get only one image for variation
+//                    break;
+//                }
+//            }
 
-                $filename = ecommerceng_wordpress_sanitize_file_name($photo['photo']);
-                if (!isset($current_images[$filename])) {
-                    $result = $this->worpressclient->postmedia("media", $dir . $photo['photo'], [
-                        'slug' => $object->id . '_' . $filename,
-                        'ping_status' => 'closed',
-                        'comment_status' => 'closed',
-                    ]);
+//          Don't work because of the character ?
+//			https://github.com/woocommerce/woocommerce/issues/24484
+//
+			// Defined relative dir to DOL_DATA_ROOT
+			$relativedir = '';
+			if ($dir) {
+				$relativedir = preg_replace('/^'.preg_quote(DOL_DATA_ROOT, '/').'/', '', $dir);
+				$relativedir = preg_replace('/^[\\/]/', '', $relativedir);
+			}
 
-                    if ($result === null) {
-                        $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductSendImage', $object->ref . ' - '  . $remote_id, $this->site->name, implode('; ', $this->worpressclient->errors));
-                        dol_syslog(__METHOD__ . ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductSendImage',
-                                $remote_id, $this->site->name, implode('; ', $this->worpressclient->errors)), LOG_ERR);
-                        return $return_data;
-                    } elseif (!empty($result['message'])) {
-                        $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductSendImage', $object->ref . ' - '  . $remote_id, $this->site->name, $result['code'] . ' - ' . $result['message']);
-                        dol_syslog(__METHOD__ . ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductSendImage',
-                                $remote_id, $this->site->name, $result['code'] . ' - ' . $result['message']), LOG_ERR);
-                        return $return_data;
-                    }
+			// Build file list
+			$filearray = dol_dir_list($dir, "files", 0, '', '(\.meta|_preview.*\.png)$', 'position_name', SORT_ASC, 1);
+			if (!empty($conf->global->PRODUCT_USE_OLD_PATH_FOR_PHOTO)) {    // For backward compatiblity, we scan also old dirs
+				$filearrayold = dol_dir_list($dir, "files", 0, '', '(\.meta|_preview.*\.png)$', 'position_name', SORT_ASC, 1);
+				$filearray = array_merge($filearray, $filearrayold);
+			}
 
-                    $img['id'] = $result['id'];
-                } else {
-                    $img['id'] = $current_images[$filename];
-                }
+			// Get list of files stored into database for same relative directory
+			$relativedir = trim($relativedir, '/');
+			if ($relativedir) {
+				completeFileArrayWithDatabaseInfo($filearray, $relativedir);
+				$filearray = dol_sort_array($filearray, 'position_name', 'ASC');
+			}
 
-                $img['name'] = $filename;
-                $img['position'] = $index;
-                $images[] = $img;
+			$url_root = dol_buildpath('/ecommerceng/document', 2);
 
-                if ($isProductVariation) { // Get only one image for variation
-                    break;
-                }
-            }
+			foreach ($filearray as $key => $file) {
+				if (empty($file['share'])) continue;
+
+				$filename = ecommerceng_wordpress_sanitize_file_name($file['name']);
+
+				$img = [
+					'name' => $filename,
+					'src' => $url_root . '/' . $file['share']/* . '.jpg'*/,
+					'position' => $key,
+				];
+				if (isset($current_images[$filename])) {
+					$img['id'] = $current_images[$filename];
+				}
+				$images[] = $img;
+
+				if ($isProductVariation) { // Get only one image for variation
+					break;
+				}
+			}
         }
 
         // Product - Meta data properties
@@ -2293,19 +2370,29 @@ class eCommerceRemoteAccessWoocommerce
 				}
 			}
 
-            // Synch extrafields <=> metadatas
-            if (!empty($object->array_options)) {
-                foreach ($object->array_options as $key => $value) {
-                    $cr_key = substr($key, 8);
-                    if (preg_match('/^ecommerceng_/', $cr_key)) continue;
-                    $options_saved = $this->site->parameters['ef_crp']['product'][$cr_key];
-                    if ($options_saved['activated']) {
-                        $rm_key = $cr_key;
-                        if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
-                        $variationData['meta_data'][] = array('key' => $rm_key, 'value' => $value);
-                    }
-                }
-            }
+			// Synch extrafields <=> metadatas and attributes
+			if (!empty($object->array_options)) {
+				foreach ($object->array_options as $key => $value) {
+					$cr_key = substr($key, 8);
+					if (preg_match('/^ecommerceng_/', $cr_key)) continue;
+
+					// Synch extrafields <=> attributes
+					$options_saved = $this->site->parameters['ef_crp_attribute'][$cr_key];
+					if ($options_saved['activated']) {
+						$rm_key = $cr_key;
+						if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
+						$variationData['attributes'][] = array('name' => $rm_key, 'options' => explode(',', $value));
+					}
+
+					// Synch extrafields <=> metadatas
+					$options_saved = $this->site->parameters['ef_crp']['product'][$cr_key];
+					if ($options_saved['activated']) {
+						$rm_key = $cr_key;
+						if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
+						$variationData['meta_data'][] = array('key' => $rm_key, 'value' => $value);
+					}
+				}
+			}
 
             // Product
             // 'name'    => $object->label,			                    // string		Product name.
@@ -2518,12 +2605,22 @@ class eCommerceRemoteAccessWoocommerce
 				}
 			}
 
-            // Synch extrafields <=> metadatas
+            // Synch extrafields <=> metadatas and attributes
             if (!empty($object->array_options)) {
                 foreach ($object->array_options as $key => $value) {
                     $cr_key = substr($key, 8);
                     if (preg_match('/^ecommerceng_/', $cr_key)) continue;
-                    $options_saved = $this->site->parameters['ef_crp']['product'][$cr_key];
+
+					// Synch extrafields <=> attributes
+					$options_saved = $this->site->parameters['ef_crp_attribute'][$cr_key];
+					if ($options_saved['activated']) {
+						$rm_key = $cr_key;
+						if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
+						$productData['attributes'][] = array('name' => $rm_key, 'options' => explode(',', $value));
+					}
+
+					// Synch extrafields <=> metadatas
+					$options_saved = $this->site->parameters['ef_crp']['product'][$cr_key];
                     if ($options_saved['activated']) {
                         $rm_key = $cr_key;
                         if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
