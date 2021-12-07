@@ -2215,7 +2215,7 @@ class eCommerceRemoteAccessWoocommerce
 
 				$img = [
 					'name' => $filename,
-					'src' => $url_root . '/' . $file['share']/* . '.jpg'*/,
+					'src' => $url_root . '/' . $file['share'] . '.jpg',
 					'position' => $key,
 				];
 				if (isset($current_images[$filename])) {

@@ -1,5 +1,5 @@
 <IfModule mod_rewrite.c>
 RewriteEngine on
-RewriteRule (.*) ../../../document.php?hashp=$1 [NC]
+RewriteRule (.*)\.jpg ../../../document.php?hashp=$1 [NC]
 #RewriteRule (.*)\.jpg ../../../../document.php?hashp=$1 [NC]
 </IfModule>
