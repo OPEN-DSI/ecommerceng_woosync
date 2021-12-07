@@ -192,18 +192,28 @@ if ($_POST['site_form_detail_action'] == 'save')
             // fetch optionals attributes and labels
             if ($conf->product->enabled) {
                 $product_table_element = 'product';
-                $ecommerceExtrafieldsCorrespondence[$product_table_element] = array();
+				$ecommerceProductExtrafieldsCorrespondenceAttributes = array();
+				$ecommerceExtrafieldsCorrespondence[$product_table_element] = array();
 
                 $productExtrafields = $efields->fetch_name_optionals_label($product_table_element);
                 foreach ($productExtrafields as $key => $label) {
                     if (preg_match('/^ecommerceng_/', $key)) continue;
-                    $options_saved = $siteDb->parameters['ef_crp'][$product_table_element][$key];
-                    $activated = GETPOST('act_ef_crp_' . $product_table_element . '_' . $key, 'alpha');
-                    $correspondence = GETPOST('ef_crp_' . $product_table_element . '_' . $key, 'alpha');
-                    $ecommerceExtrafieldsCorrespondence[$product_table_element][$key] = array(
-                        'correspondences' => !empty($activated) ? $correspondence : (isset($options_saved['correspondences']) ? $options_saved['correspondences'] : $key),
-                        'activated' => !empty($activated) ? 1 : 0,
-                    );
+
+					$options_saved = $siteDb->parameters['ef_crp_attribute'][$key];
+					$activated = GETPOST('attribute_ef_crp_state_' . $key, 'alpha');
+					$correspondence = GETPOST('attribute_ef_crp_value_' . $key, 'alpha');
+					$ecommerceProductExtrafieldsCorrespondenceAttributes[$key] = array(
+						'correspondences' => !empty($activated) ? $correspondence : (isset($options_saved['correspondences']) ? $options_saved['correspondences'] : $key),
+						'activated' => !empty($activated) ? 1 : 0,
+					);
+
+					$options_saved = $siteDb->parameters['ef_crp'][$product_table_element][$key];
+					$activated = GETPOST('act_ef_crp_' . $product_table_element . '_' . $key, 'alpha');
+					$correspondence = GETPOST('ef_crp_' . $product_table_element . '_' . $key, 'alpha');
+					$ecommerceExtrafieldsCorrespondence[$product_table_element][$key] = array(
+						'correspondences' => !empty($activated) ? $correspondence : (isset($options_saved['correspondences']) ? $options_saved['correspondences'] : $key),
+						'activated' => !empty($activated) ? 1 : 0,
+					);
                 }
             }
 
@@ -340,7 +350,8 @@ if ($_POST['site_form_detail_action'] == 'save')
 				'order_status_etod' => $ecommerceOrderStatusForECommerceToDolibarr,
 				'order_status_dtoe' => $ecommerceOrderStatusForDolibarrToECommerce,
 				'order_first_date_etod' => $ecommerceOrderFirstDateForECommerceToDolibarr,
-                'ef_crp' => $ecommerceExtrafieldsCorrespondence,
+				'ef_crp_attribute' => $ecommerceProductExtrafieldsCorrespondenceAttributes,
+				'ef_crp' => $ecommerceExtrafieldsCorrespondence,
                 'payment_cond' => $_POST['ecommerce_payment_cond'],
 				'fk_warehouse_to_ecommerce' => GETPOST('ecommerce_fk_warehouse_to_ecommerce', 'array'),
                 'realtime_dtoe' => $ecommerceRealtimeDolibarrToECommerce,
@@ -918,17 +929,25 @@ if ($ecommerceId > 0) {
         if ($conf->product->enabled) {
             $product_table_element = 'product';
             $productExtrafields = array();
-            $ecommerceExtrafieldsCorrespondence[$product_table_element] = array();
+			$ecommerceProductExtrafieldsCorrespondenceAttributes = array();
+			$ecommerceExtrafieldsCorrespondence[$product_table_element] = array();
 
             $tempExtrafields = $extrafields->fetch_name_optionals_label($product_table_element);
             foreach ($tempExtrafields as $key => $label) {
                 if (preg_match('/^ecommerceng_/', $key)) continue;
-                $productExtrafields[$key] = $label;
-                $options_saved = $siteDb->parameters['ef_crp'][$product_table_element][$key];
-                $ecommerceExtrafieldsCorrespondence[$product_table_element][$key] = array(
+				$productExtrafields[$key] = $label;
+
+				$options_saved = $siteDb->parameters['ef_crp_attribute'][$key];
+				$ecommerceProductExtrafieldsCorrespondenceAttributes[$key] = array(
                     'correspondences' => (isset($options_saved['correspondences']) ? $options_saved['correspondences'] : $key),
-                    'activated' => (isset($options_saved['activated']) ? $options_saved['activated'] : $key),
+                    'activated' => (isset($options_saved['activated']) ? $options_saved['activated'] : 0),
                 );
+
+				$options_saved = $siteDb->parameters['ef_crp'][$product_table_element][$key];
+				$ecommerceExtrafieldsCorrespondence[$product_table_element][$key] = array(
+					'correspondences' => (isset($options_saved['correspondences']) ? $options_saved['correspondences'] : $key),
+					'activated' => (isset($options_saved['activated']) ? $options_saved['activated'] : 0),
+				);
             }
         }
         if ($conf->commande->enabled) {
@@ -943,7 +962,7 @@ if ($ecommerceId > 0) {
                 $options_saved = $siteDb->parameters['ef_crp'][$order_table_element][$key];
                 $ecommerceExtrafieldsCorrespondence[$order_table_element][$key] = array(
                     'correspondences' => (isset($options_saved['correspondences']) ? $options_saved['correspondences'] : $key),
-                    'activated' => (isset($options_saved['activated']) ? $options_saved['activated'] : $key),
+                    'activated' => (isset($options_saved['activated']) ? $options_saved['activated'] : 0),
                 );
             }
 
@@ -958,7 +977,7 @@ if ($ecommerceId > 0) {
                 $options_saved = $siteDb->parameters['ef_crp'][$order_line_table_element][$key];
                 $ecommerceExtrafieldsCorrespondence[$order_line_table_element][$key] = array(
                     'correspondences' => (isset($options_saved['correspondences']) ? $options_saved['correspondences'] : $key),
-                    'activated' => (isset($options_saved['activated']) ? $options_saved['activated'] : $key),
+                    'activated' => (isset($options_saved['activated']) ? $options_saved['activated'] : 0),
                 );
             }
 			$ecommerceOrderFirstDateForECommerceToDolibarr = isset($siteDb->parameters['order_first_date_etod']) ? $siteDb->parameters['order_first_date_etod'] : '';

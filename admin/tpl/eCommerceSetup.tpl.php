@@ -1005,323 +1005,324 @@ if ($ecommerceOrderStatus)
 
 
 <?php
-if ($ecommerceType == 2)
-{
+if ($ecommerceType == 2) {
+	if (!empty($productExtrafields) || !empty($orderExtrafields) || !empty($orderLinesExtrafields)) {
+		?>
+		<script type="text/javascript">
+			$(document).ready(function () {
+				var ef_crp_all = $('.ef_crp_all');
+
+				$.map(ef_crp_all, function (item) {
+					var table = $(item).closest('table');
+
+					act_ef_crp_update_all_checkbox(table);
+				});
+
+				$('.ef_crp_state').click(function () {
+					var _this = $(this);
+					var state = _this.is(':checked');
+					var table = _this.closest('table');
+					var tr_line = _this.closest('tr');
+
+					tr_line.find('.ef_crp_value').prop('disabled', !state);
+					act_ef_crp_update_all_checkbox(table);
+				});
+
+				ef_crp_all.click(function () {
+					var _this = $(this);
+					var table = _this.closest('table');
+					var state = _this.is(':checked');
+
+					table.find('.ef_crp_state').prop('checked', state);
+					table.find('.ef_crp_value').prop('disabled', !state);
+				});
+
+				function act_ef_crp_update_all_checkbox(table) {
+					var all_checkbox_checked = table.find('.ef_crp_state').length == table.find('.ef_crp_state:checked').length;
+
+					table.find('.ef_crp_all').prop('checked', all_checkbox_checked);
+				}
+			});
+		</script>
+	<?php
+	if (!empty($productExtrafields)) {
+	?>
+		<br>
+		<?php
+		print_titre($langs->trans("ECommercengWoocommerceProductExtrafieldsCorrespondenceAttribute"));
+		?>
+		<table class="noborder centpercent">
+			<tr class="liste_titre">
+				<td colspan="3"><?php print $langs->trans('ExtraFields') . ' : ' . $langs->trans('Products') ?></td>
+				<td width="5%" align="center"><?php print $langs->trans('Enabled') ?></td>
+			</tr>
+			<tr class="liste_titre">
+				<td width="20%"><?php print $langs->trans('Label') ?></td>
+				<td><?php print $langs->trans('Value') ?></td>
+				<td><?php print $langs->trans('Description') ?></td>
+				<td width="5%" align="center"><input type="checkbox" class="ef_crp_all" name="attribute_ef_crp_all"
+													 value="1"/></td>
+			</tr>
+			<?php
+			foreach ($productExtrafields as $key => $label) {
+				$var = !$var;
+				$options_saved = $ecommerceProductExtrafieldsCorrespondenceAttributes[$key];
+				?>
+				<tr class="oddeven">
+					<td><span><?php print $label ?></span></td>
+					<td>
+						<input type="text" class="ef_crp_value" name="attribute_ef_crp_value_<?php print $key ?>"
+							   value="<?php print dol_escape_htmltag(isset($options_saved['correspondences']) ? $options_saved['correspondences'] : '') ?>"<?php print empty($options_saved['activated']) ? ' disabled' : '' ?> />
+					</td>
+					<td><?php print $langs->trans('ECommercengWoocommerceProductExtrafieldsCorrespondenceAttributeSetupDescription', $key) ?></td>
+					<td width="5%" align="center"><input type="checkbox" class="ef_crp_state"
+														 name="attribute_ef_crp_state_<?php print $key ?>"
+														 value="1"<?php print !empty($options_saved['activated']) ? ' checked' : '' ?> />
+					</td>
+				</tr>
+				<?php
+			}
+			?>
+		</table>
+
+		<br>
+		<?php
+		print_titre($langs->trans("ECommercengWoocommerceExtrafieldsCorrespondence"));
+		?>
+		<table class="noborder centpercent">
+			<tr class="liste_titre">
+				<td colspan="3"><?php print $langs->trans('ExtraFields') . ' : ' . $langs->trans('Products') ?></td>
+				<td width="5%" align="center"><?php print $langs->trans('Enabled') ?></td>
+			</tr>
+			<tr class="liste_titre">
+				<td width="20%"><?php print $langs->trans('Label') ?></td>
+				<td><?php print $langs->trans('Value') ?></td>
+				<td><?php print $langs->trans('Description') ?></td>
+				<td width="5%" align="center"><input type="checkbox" class="ef_crp_all"
+													 name="act_all_ef_crp_<?php print $product_table_element ?>"
+													 value="1"/></td>
+			</tr>
+			<?php
+			foreach ($productExtrafields as $key => $label) {
+				$var = !$var;
+				$options_saved = $ecommerceExtrafieldsCorrespondence[$product_table_element][$key];
+				?>
+				<tr <?php print $bc[$var] ?>>
+					<td><span><?php print $label ?></span></td>
+					<td>
+						<input type="text" class="ef_crp_value"
+							   name="ef_crp_<?php print $product_table_element ?>_<?php print $key ?>"
+							   value="<?php print dol_escape_htmltag(isset($options_saved['correspondences']) ? $options_saved['correspondences'] : '') ?>"<?php print empty($options_saved['activated']) ? ' disabled' : '' ?> />
+					</td>
+					<td><?php print $langs->trans('ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription', $key) ?></td>
+					<td width="5%" align="center"><input type="checkbox" class="ef_crp_state"
+														 name="act_ef_crp_<?php print $product_table_element ?>_<?php print $key ?>"
+														 value="1"<?php print !empty($options_saved['activated']) ? ' checked' : '' ?> />
+					</td>
+				</tr>
+				<?php
+			}
+			?>
+		</table>
+	<?php
+	}
+
+	if (!empty($orderExtrafields)) {
+	?>
+		<table class="noborder centpercent">
+			<tr class="liste_titre">
+				<td colspan="3"><?php print $langs->trans('ExtraFields') . ' : ' . $langs->trans('Orders') ?></td>
+				<td width="5%" align="center"><?php print $langs->trans('Enabled') ?></td>
+			</tr>
+			<tr class="liste_titre">
+				<td width="20%"><?php print $langs->trans('Label') ?></td>
+				<td><?php print $langs->trans('Value') ?></td>
+				<td><?php print $langs->trans('Description') ?></td>
+				<td width="5%" align="center"><input type="checkbox" class="ef_crp_all"
+													 name="act_all_ef_crp_<?php print $order_table_element ?>"
+													 value="1"/></td>
+			</tr>
+			<?php
+			foreach ($orderExtrafields as $key => $label) {
+				$var = !$var;
+				$options_saved = $ecommerceExtrafieldsCorrespondence[$order_table_element][$key];
+				?>
+				<tr <?php print $bc[$var] ?>>
+					<td><span><?php print $label ?></span></td>
+					<td>
+						<input type="text" class="ef_crp_value"
+							   name="ef_crp_<?php print $order_table_element ?>_<?php print $key ?>"
+							   value="<?php print dol_escape_htmltag(isset($options_saved['correspondences']) ? $options_saved['correspondences'] : '') ?>"<?php print empty($options_saved['activated']) ? ' disabled' : '' ?> />
+					</td>
+					<td><?php print $langs->trans('ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription', $key) ?></td>
+					<td width="5%" align="center"><input type="checkbox" class="ef_crp_state"
+														 name="act_ef_crp_<?php print $order_table_element ?>_<?php print $key ?>"
+														 value="1"<?php print !empty($options_saved['activated']) ? ' checked' : '' ?> />
+					</td>
+				</tr>
+				<?php
+			}
+			?>
+		</table>
+	<?php
+	}
+
+	if (!empty($orderLinesExtrafields)) {
+	?>
+		<table class="noborder centpercent">
+			<tr class="liste_titre">
+				<td colspan="3"><?php print $langs->trans('ExtraFieldsLines') . ' : ' . $langs->trans('Orders') ?></td>
+				<td width="5%" align="center"><?php print $langs->trans('Enabled') ?></td>
+			</tr>
+			<tr class="liste_titre">
+				<td width="20%"><?php print $langs->trans('Label') ?></td>
+				<td><?php print $langs->trans('Value') ?></td>
+				<td><?php print $langs->trans('Description') ?></td>
+				<td width="5%" align="center"><input type="checkbox" class="ef_crp_all"
+													 name="act_all_ef_crp_<?php print $order_line_table_element ?>"
+													 value="1"/></td>
+			</tr>
+			<?php
+			foreach ($orderLinesExtrafields as $key => $label) {
+				$var = !$var;
+				$options_saved = $ecommerceExtrafieldsCorrespondence[$order_line_table_element][$key];
+				?>
+				<tr <?php print $bc[$var] ?>>
+					<td><span><?php print $label ?></span></td>
+					<td>
+						<input type="text" class="ef_crp_value"
+							   name="ef_crp_<?php print $order_line_table_element ?>_<?php print $key ?>"
+							   value="<?php print dol_escape_htmltag(isset($options_saved['correspondences']) ? $options_saved['correspondences'] : '') ?>"<?php print empty($options_saved['activated']) ? ' disabled' : '' ?> />
+					</td>
+					<td><?php print $langs->trans('ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription', $key) ?></td>
+					<td width="5%" align="center"><input type="checkbox" class="ef_crp_state"
+														 name="act_ef_crp_<?php print $order_line_table_element ?>_<?php print $key ?>"
+														 value="1"<?php print !empty($options_saved['activated']) ? ' checked' : '' ?> />
+					</td>
+				</tr>
+				<?php
+			}
+			?>
+		</table>
+	<?php
+	}
+}
+
+
+if (!empty($ecommerceOrderActions['create_order']) || !empty($ecommerceOrderActions['create_invoice']) || !empty($ecommerceOrderActions['create_supplier_invoice'])) {
 ?>
-         <br>
-<?php
-   print_titre($langs->trans("ECommercengWoocommerceExtrafieldsCorrespondence"));
-?>
-          <table class="noborder" width="100%">
+<br>
+	<?php
+	print_titre($langs->trans("ECommercePaymentGatewaysCorrespondence"));
+	?>
+	<table class="noborder" width="100%">
+		<tr class="liste_titre">
+			<td width="20%"><?php print $langs->trans('ECommercePaymentGatewayLabel') ?></td>
+			<?php
+			if (!empty($ecommerceOrderActions['create_order']) || !empty($ecommerceOrderActions['create_invoice']) || !empty($ecommerceOrderActions['create_supplier_invoice'])) {
+				?>
+				<td><?php print $langs->trans('PaymentMode') ?></td>
+				<?php
+			}
+			if (!empty($ecommerceOrderActions['create_invoice']) || !empty($ecommerceOrderActions['create_supplier_invoice'])) {
+				?>
+				<td><?php print $langs->trans('BankAccount') ?></td>
+				<?php
+			}
+			if (!empty($ecommerceOrderActions['create_invoice'])) {
+				?>
+				<td><?php print $langs->trans('ECommerceCreateAssociatePaymentForInvoice') ?></td>
+				<?php
+				if (!empty($ecommerceOrderActions['send_invoice_by_mail'])) {
+					?>
+					<td><?php print $langs->trans('ECommerceSelectMailModelForSendInvoice') ?></td>
+					<?php
+				}
+			}
+			if (!empty($ecommerceOrderActions['create_supplier_invoice'])) {
+				?>
+				<td><?php print $langs->trans('Supplier') ?></td>
+				<td><?php print $langs->trans('ECommerceProductForFee') ?></td>
+				<td><?php print $langs->trans('ECommerceCreateAssociatePaymentForSupplierInvoice') ?></td>
+				<?php
+			}
+			?>
+		</tr>
+		<?php
+		require_once DOL_DOCUMENT_ROOT . '/core/class/html.formmail.class.php';
+		$formmail = new FormMail($db);
+		$type_template = 'facture_send';
+		$modelmail_array = array();
+		$result = $formmail->fetchAllEMailTemplate($type_template, $user, $langs);
+		if ($result < 0) {
+			setEventMessages($formmail->error, $formmail->errors, 'errors');
+		}
+		foreach ($formmail->lines_model as $line) {
+			if (preg_match('/\((.*)\)/', $line->label, $reg)) {
+				$modelmail_array[$line->id] = $langs->trans($reg[1]);        // langs->trans when label is __(xxx)__
+			} else {
+				$modelmail_array[$line->id] = $line->label;
+			}
+			if ($line->lang) $modelmail_array[$line->id] .= ' (' . $line->lang . ')';
+			if ($line->private) $modelmail_array[$line->id] .= ' - ' . $langs->trans("Private");
+		}
 
-<?php
-  if ($conf->product->enabled)
-  {
-    $var = true;
-?>
-            <script type="text/javascript">
-               $(document).ready(function() {
-                  var act_ef_crp_product_name = "act_ef_crp_<?php print $product_table_element ?>";
-                  var act_ef_crp_product_all = $('input[name="act_all_ef_crp_<?php print $product_table_element ?>"]');
-                  var act_ef_crp_product = $('input[name^="act_ef_crp_<?php print $product_table_element ?>"]');
-
-                  act_ef_crp_product.click(function () {
-                    var _this = $(this);
-                    var name = _this.attr('name').substr(act_ef_crp_product_name.length);
-                    var checked = _this.is(':checked');
-                    $('input[name="ef_crp_<?php print $product_table_element ?>'+name+'"]').prop('disabled', !checked);
-                    update_act_ef_crp_product_all();
-                  });
-
-                  update_act_ef_crp_product_all();
-                  act_ef_crp_product_all.click(function () {
-                    var _this = $(this);
-                    var checked = _this.is(':checked');
-                    $('input[name^="ef_crp_<?php print $product_table_element ?>"]').prop('disabled', !checked);
-                    $('input[name^="act_ef_crp_<?php print $product_table_element ?>"]').prop('checked', checked);
-                  });
-
-                  function update_act_ef_crp_product_all() {
-                    var nbElem = 0;
-                    var nbElemChecked = 0;
-                    $('input[name^="act_ef_crp_<?php print $product_table_element ?>"]').map(function (index, elem) {
-                      nbElem++;
-                      if ($(elem).is(':checked')) nbElemChecked++;
-                    });
-
-                    act_ef_crp_product_all.prop('checked', nbElem == nbElemChecked && nbElem > 0);
-                  }
-               });
-            </script>
-            <tr class="liste_titre">
-              <td colspan="3"><?php print $langs->trans('ExtraFields') . ' : ' . $langs->trans('Products') ?></td>
-              <td width="5%" align="center"><?php print $langs->trans('Enabled') ?></td>
-            </tr>
-
-            <tr class="liste_titre">
-              <td width="20%"><?php print $langs->trans('Label') ?></td>
-              <td><?php print $langs->trans('Value') ?></td>
-              <td><?php print $langs->trans('Description') ?></td>
-              <td width="5%" align="center"><input type="checkbox" name="act_all_ef_crp_<?php print $product_table_element ?>" value="1" /></td>
-            </tr>
-<?php
-   foreach ($productExtrafields as $key => $label) {
-     $var = !$var;
-     $options_saved = $ecommerceExtrafieldsCorrespondence[$product_table_element][$key];
-?>
-           <tr <?php print $bc[$var] ?>>
-             <td><span><?php print $label ?></span></td>
-             <td>
-               <input type="text" name="ef_crp_<?php print $product_table_element ?>_<?php print $key ?>" value="<?php print dol_escape_htmltag(isset($options_saved['correspondences']) ? $options_saved['correspondences'] : '') ?>"<?php print empty($options_saved['activated']) ? ' disabled' : '' ?> />
-             </td>
-             <td><?php print $langs->trans('ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription', $key) ?></td>
-             <td width="5%" align="center"><input type="checkbox" name="act_ef_crp_<?php print $product_table_element ?>_<?php print $key ?>" value="1"<?php print !empty($options_saved['activated']) ? ' checked' : '' ?> /></td>
-           </tr>
-<?php
-    }
-  }
-?>
-
-<?php
-  if ($conf->commande->enabled)
-  {
-    $var = true;
-?>
-          <script type="text/javascript">
-             $(document).ready(function() {
-                var act_ef_crp_order_name = "act_ef_crp_<?php print $order_table_element ?>";
-                var act_ef_crp_order_all = $('input[name="act_all_ef_crp_<?php print $order_table_element ?>"]');
-                var act_ef_crp_order = $('input[name^="act_ef_crp_<?php print $order_table_element ?>"]');
-
-                act_ef_crp_order.click(function () {
-                  var _this = $(this);
-                  var name = _this.attr('name').substr(act_ef_crp_order_name.length);
-                  var checked = _this.is(':checked');
-                  $('input[name="ef_crp_<?php print $order_table_element ?>'+name+'"]').prop('disabled', !checked);
-                  update_act_ef_crp_order_all();
-                });
-
-                update_act_ef_crp_order_all();
-                act_ef_crp_order_all.click(function () {
-                  var _this = $(this);
-                  var checked = _this.is(':checked');
-                  $('input[name^="ef_crp_<?php print $order_table_element ?>"]').prop('disabled', !checked);
-                  $('input[name^="act_ef_crp_<?php print $order_table_element ?>"]').prop('checked', checked);
-                });
-
-                function update_act_ef_crp_order_all() {
-                  var nbElem = 0;
-                  var nbElemChecked = 0;
-                  $('input[name^="act_ef_crp_<?php print $order_table_element ?>"]').map(function (index, elem) {
-                    nbElem++;
-                    if ($(elem).is(':checked')) nbElemChecked++;
-                  });
-
-                  act_ef_crp_order_all.prop('checked', nbElem == nbElemChecked && nbElem > 0);
-                }
-             });
-          </script>
-          <tr class="liste_titre">
-            <td colspan="3"><?php print $langs->trans('ExtraFields') . ' : ' . $langs->trans('Orders') ?></td>
-            <td width="5%" align="center"><?php print $langs->trans('Enabled') ?></td>
-          </tr>
-
-          <tr class="liste_titre">
-            <td width="20%"><?php print $langs->trans('Label') ?></td>
-            <td><?php print $langs->trans('Value') ?></td>
-            <td><?php print $langs->trans('Description') ?></td>
-            <td width="5%" align="center"><input type="checkbox" name="act_all_ef_crp_<?php print $order_table_element ?>" value="1" /></td>
-          </tr>
-<?php
-     foreach ($orderExtrafields as $key => $label) {
-       $var = !$var;
-       $options_saved = $ecommerceExtrafieldsCorrespondence[$order_table_element][$key];
-?>
-           <tr <?php print $bc[$var] ?>>
-             <td><span><?php print $label ?></span></td>
-             <td>
-               <input type="text" name="ef_crp_<?php print $order_table_element ?>_<?php print $key ?>" value="<?php print dol_escape_htmltag(isset($options_saved['correspondences']) ? $options_saved['correspondences'] : '') ?>"<?php print empty($options_saved['activated']) ? ' disabled' : '' ?> />
-             </td>
-             <td><?php print $langs->trans('ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription', $key) ?></td>
-             <td width="5%" align="center"><input type="checkbox" name="act_ef_crp_<?php print $order_table_element ?>_<?php print $key ?>" value="1"<?php print !empty($options_saved['activated']) ? ' checked' : '' ?> /></td>
-           </tr>
-<?php
-    }
-    $var = true;
-?>
-      <script type="text/javascript">
-         $(document).ready(function() {
-            var act_ef_crp_order_name = "act_ef_crp_<?php print $order_line_table_element ?>";
-            var act_ef_crp_order_all = $('input[name="act_all_ef_crp_<?php print $order_line_table_element ?>"]');
-            var act_ef_crp_order = $('input[name^="act_ef_crp_<?php print $order_line_table_element ?>"]');
-
-            act_ef_crp_order.click(function () {
-              var _this = $(this);
-              var name = _this.attr('name').substr(act_ef_crp_order_name.length);
-              var checked = _this.is(':checked');
-              $('input[name="ef_crp_<?php print $order_line_table_element ?>'+name+'"]').prop('disabled', !checked);
-              update_act_ef_crp_order_all();
-            });
-
-            update_act_ef_crp_order_all();
-            act_ef_crp_order_all.click(function () {
-              var _this = $(this);
-              var checked = _this.is(':checked');
-              $('input[name^="ef_crp_<?php print $order_line_table_element ?>"]').prop('disabled', !checked);
-              $('input[name^="act_ef_crp_<?php print $order_line_table_element ?>"]').prop('checked', checked);
-            });
-
-            function update_act_ef_crp_order_all() {
-              var nbElem = 0;
-              var nbElemChecked = 0;
-              $('input[name^="act_ef_crp_<?php print $order_line_table_element ?>"]').map(function (index, elem) {
-                nbElem++;
-                if ($(elem).is(':checked')) nbElemChecked++;
-              });
-
-              act_ef_crp_order_all.prop('checked', nbElem == nbElemChecked && nbElem > 0);
-            }
-         });
-      </script>
-      <tr class="liste_titre">
-        <td colspan="3"><?php print $langs->trans('ExtraFieldsLines') . ' : ' . $langs->trans('Orders') ?></td>
-        <td width="5%" align="center"><?php print $langs->trans('Enabled') ?></td>
-      </tr>
-
-      <tr class="liste_titre">
-        <td width="20%"><?php print $langs->trans('Label') ?></td>
-        <td><?php print $langs->trans('Value') ?></td>
-        <td><?php print $langs->trans('Description') ?></td>
-        <td width="5%" align="center"><input type="checkbox" name="act_all_ef_crp_<?php print $order_line_table_element ?>" value="1" /></td>
-      </tr>
-<?php
-    foreach ($orderLinesExtrafields as $key => $label) {
-     $var = !$var;
-     $options_saved = $ecommerceExtrafieldsCorrespondence[$order_line_table_element][$key];
-?>
-       <tr <?php print $bc[$var] ?>>
-         <td><span><?php print $label ?></span></td>
-         <td>
-           <input type="text" name="ef_crp_<?php print $order_line_table_element ?>_<?php print $key ?>" value="<?php print dol_escape_htmltag(isset($options_saved['correspondences']) ? $options_saved['correspondences'] : '') ?>"<?php print empty($options_saved['activated']) ? ' disabled' : '' ?> />
-         </td>
-         <td><?php print $langs->trans('ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription', $key) ?></td>
-         <td width="5%" align="center"><input type="checkbox" name="act_ef_crp_<?php print $order_line_table_element ?>_<?php print $key ?>" value="1"<?php print !empty($options_saved['activated']) ? ' checked' : '' ?> /></td>
-       </tr>
-<?php
-    }
-  }
-?>
-    </table>
-<?php
-    if (!empty($ecommerceOrderActions['create_order']) || !empty($ecommerceOrderActions['create_invoice']) || !empty($ecommerceOrderActions['create_supplier_invoice'])) {
-?>
-    <br>
-<?php
-    print_titre($langs->trans("ECommercePaymentGatewaysCorrespondence"));
-?>
-    <table class="noborder" width="100%">
-        <tr class="liste_titre">
-            <td width="20%"><?php print $langs->trans('ECommercePaymentGatewayLabel') ?></td>
-        <?php
-        if (!empty($ecommerceOrderActions['create_order']) || !empty($ecommerceOrderActions['create_invoice']) || !empty($ecommerceOrderActions['create_supplier_invoice'])) {
-        ?>
-            <td><?php print $langs->trans('PaymentMode') ?></td>
-        <?php
-        }
-        if (!empty($ecommerceOrderActions['create_invoice']) || !empty($ecommerceOrderActions['create_supplier_invoice'])) {
-            ?>
-            <td><?php print $langs->trans('BankAccount') ?></td>
-        <?php
-        }
-        if (!empty($ecommerceOrderActions['create_invoice'])) {
-            ?>
-            <td><?php print $langs->trans('ECommerceCreateAssociatePaymentForInvoice') ?></td>
-            <?php
-            if (!empty($ecommerceOrderActions['send_invoice_by_mail'])) {
-                ?>
-                <td><?php print $langs->trans('ECommerceSelectMailModelForSendInvoice') ?></td>
-                <?php
-            }
-        }
-        if (!empty($ecommerceOrderActions['create_supplier_invoice'])) {
-        ?>
-            <td><?php print $langs->trans('Supplier') ?></td>
-            <td><?php print $langs->trans('ECommerceProductForFee') ?></td>
-            <td><?php print $langs->trans('ECommerceCreateAssociatePaymentForSupplierInvoice') ?></td>
-        <?php
-        }
-        ?>
-        </tr>
-<?php
-    require_once DOL_DOCUMENT_ROOT . '/core/class/html.formmail.class.php';
-    $formmail = new FormMail($db);
-    $type_template = 'facture_send';
-    $modelmail_array = array();
-    $result = $formmail->fetchAllEMailTemplate($type_template, $user, $langs);
-    if ($result < 0) {
-        setEventMessages($formmail->error, $formmail->errors, 'errors');
-    }
-    foreach ($formmail->lines_model as $line) {
-        if (preg_match('/\((.*)\)/', $line->label, $reg)) {
-            $modelmail_array[$line->id] = $langs->trans($reg[1]);        // langs->trans when label is __(xxx)__
-        } else {
-            $modelmail_array[$line->id] = $line->label;
-        }
-        if ($line->lang) $modelmail_array[$line->id] .= ' (' . $line->lang . ')';
-        if ($line->private) $modelmail_array[$line->id] .= ' - ' . $langs->trans("Private");
-    }
-
-    foreach ($ecommercePaymentGateways as $key => $infos) {
-        $var = !$var;
-?>
-        <tr <?php print $bc[$var] ?>>
-            <td><?php print $infos['payment_gateway_label'] ?></td>
-        <?php
-        if (!empty($ecommerceOrderActions['create_order']) || !empty($ecommerceOrderActions['create_invoice']) || !empty($ecommerceOrderActions['create_supplier_invoice'])) {
-        ?>
-            <td><?php print $form->select_types_paiements($infos['payment_mode_id'], 'payment_mode_id_'.$key) ?></td>
-        <?php
-        }
-        if (!empty($ecommerceOrderActions['create_invoice']) || !empty($ecommerceOrderActions['create_supplier_invoice']) && $conf->banque->enabled) {
-        ?>
-            <td><?php $form->select_comptes($infos['bank_account_id'], 'bank_account_id_'.$key, 0, '', 1) ?></td>
-            <?php
-        }
-        if (!empty($ecommerceOrderActions['create_invoice'])) {
-            ?>
-            <td><input type="checkbox" id="<?php print 'create_invoice_payment_'.$key ?>" name="<?php print 'create_invoice_payment_'.$key ?>" value="1" <?php print !empty($infos['create_invoice_payment']) ? ' checked' : '' ?>></td>
-            <?php
-            if (!empty($ecommerceOrderActions['send_invoice_by_mail'])) {
-            ?>
-            <td>
-            <?php
-                // Zone to select email template
-                if (count($modelmail_array) > 0) {
-                    print $form->selectarray('mail_model_for_send_invoice_'.$key, $modelmail_array, $infos['mail_model_for_send_invoice'], 1, 0, 0, '', 0, 0, 0, '', 'minwidth100');
-                } else {
-                    print '<select name="mail_model_for_send_invoice_' . $key . '" disabled="disabled"><option value="none">' . $langs->trans("NoTemplateDefined") . '</option></select>';    // Do not put 'disabled' on 'option' tag, it is already on 'select' and it makes chrome crazy.
-                }
-                if ($user->admin) print info_admin($langs->trans("YouCanChangeValuesForThisListFrom", $langs->transnoentitiesnoconv('Setup') . ' - ' . $langs->transnoentitiesnoconv('EMails')), 1);
-            }
-            ?>
-            </td>
-        <?php
-        }
-        if (!empty($ecommerceOrderActions['create_supplier_invoice'])) {
-        ?>
-            <td><?php print $form->select_company($infos['supplier_id'], 'supplier_id_'.$key, 's.fournisseur=1 AND status=1', 'SelectThirdParty', 0, 0, null, 0, 'minwidth300') ?></td>
-            <td><?php $form->select_produits($infos['product_id_for_fee'], 'product_id_for_fee_'.$key, '', $conf->product->limit_size, 0, -1, 2, '', 0, array(), 0, '1', 0, 'maxwidth300') ?></td>
-            <td><input type="checkbox" id="<?php print 'create_supplier_invoice_payment_'.$key ?>" name="<?php print 'create_supplier_invoice_payment_'.$key ?>" value="1" <?php print !empty($infos['create_supplier_invoice_payment']) ? ' checked' : '' ?>></td>
-            <?php
-        }
-        ?>
-        </tr>
-<?php
-        }
-?>
-    </table>
-<?php
-    }
+		foreach ($ecommercePaymentGateways as $key => $infos) {
+			$var = !$var;
+			?>
+			<tr <?php print $bc[$var] ?>>
+				<td><?php print $infos['payment_gateway_label'] ?></td>
+				<?php
+				if (!empty($ecommerceOrderActions['create_order']) || !empty($ecommerceOrderActions['create_invoice']) || !empty($ecommerceOrderActions['create_supplier_invoice'])) {
+					?>
+					<td><?php print $form->select_types_paiements($infos['payment_mode_id'], 'payment_mode_id_' . $key) ?></td>
+					<?php
+				}
+				if (!empty($ecommerceOrderActions['create_invoice']) || !empty($ecommerceOrderActions['create_supplier_invoice']) && $conf->banque->enabled) {
+					?>
+					<td><?php $form->select_comptes($infos['bank_account_id'], 'bank_account_id_' . $key, 0, '', 1) ?></td>
+					<?php
+				}
+				if (!empty($ecommerceOrderActions['create_invoice'])) {
+					?>
+					<td><input type="checkbox" id="<?php print 'create_invoice_payment_' . $key ?>"
+							   name="<?php print 'create_invoice_payment_' . $key ?>"
+							   value="1" <?php print !empty($infos['create_invoice_payment']) ? ' checked' : '' ?>></td>
+					<?php
+					if (!empty($ecommerceOrderActions['send_invoice_by_mail'])) {
+						?>
+						<td>
+						<?php
+						// Zone to select email template
+						if (count($modelmail_array) > 0) {
+							print $form->selectarray('mail_model_for_send_invoice_' . $key, $modelmail_array, $infos['mail_model_for_send_invoice'], 1, 0, 0, '', 0, 0, 0, '', 'minwidth100');
+						} else {
+							print '<select name="mail_model_for_send_invoice_' . $key . '" disabled="disabled"><option value="none">' . $langs->trans("NoTemplateDefined") . '</option></select>';    // Do not put 'disabled' on 'option' tag, it is already on 'select' and it makes chrome crazy.
+						}
+						if ($user->admin) print info_admin($langs->trans("YouCanChangeValuesForThisListFrom", $langs->transnoentitiesnoconv('Setup') . ' - ' . $langs->transnoentitiesnoconv('EMails')), 1);
+					}
+					?>
+					</td>
+					<?php
+				}
+				if (!empty($ecommerceOrderActions['create_supplier_invoice'])) {
+					?>
+					<td><?php print $form->select_company($infos['supplier_id'], 'supplier_id_' . $key, 's.fournisseur=1 AND status=1', 'SelectThirdParty', 0, 0, null, 0, 'minwidth300') ?></td>
+					<td><?php $form->select_produits($infos['product_id_for_fee'], 'product_id_for_fee_' . $key, '', $conf->product->limit_size, 0, -1, 2, '', 0, array(), 0, '1', 0, 'maxwidth300') ?></td>
+					<td><input type="checkbox" id="<?php print 'create_supplier_invoice_payment_' . $key ?>"
+							   name="<?php print 'create_supplier_invoice_payment_' . $key ?>"
+							   value="1" <?php print !empty($infos['create_supplier_invoice_payment']) ? ' checked' : '' ?>>
+					</td>
+					<?php
+				}
+				?>
+			</tr>
+			<?php
+		}
+		?>
+	</table>
+	<?php
+}
 }
 ?>
 

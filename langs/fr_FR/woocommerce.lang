@@ -76,6 +76,9 @@ ECommercengWoocommerceOrderStatusTrash                               =Corbeille
 
 ECommercengWoocommerceOrderLink                                      =Lien vers la commande du site [%s]
 
+ECommercengWoocommerceProductExtrafieldsCorrespondenceAttribute                 = Correspondance des attributs supplémentaires avec les attributs de Woocommerce
+ECommercengWoocommerceProductExtrafieldsCorrespondenceAttributeSetupDescription = Renseigner le nom de l'attribut correspondant à cet attribut supplémentaire : %s
+
 ECommercengWoocommerceExtrafieldsCorrespondence                      = Correspondance des attributs supplémentaires avec les méta-données de Woocommerce
 ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription      = Renseigner le nom de la méta-donnée correspondant à cet attribut supplémentaire : %s
 

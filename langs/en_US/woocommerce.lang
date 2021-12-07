@@ -76,6 +76,9 @@ ECommercengWoocommerceOrderStatusTrash=Trash
 
 ECommercengWoocommerceOrderLink=Link to the site order [%s]
 
+ECommercengWoocommerceProductExtrafieldsCorrespondenceAttribute                 = Match of additional attributes with Woocommerce attribute
+ECommercengWoocommerceProductExtrafieldsCorrespondenceAttributeSetupDescription = Enter the name of the attribute corresponding to this additional attribute: %s
+
 ECommercengWoocommerceExtrafieldsCorrespondence                 = Match of additional attributes with Woocommerce metadata
 ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription = Enter the name of the metadata corresponding to this additional attribute: %s
 
