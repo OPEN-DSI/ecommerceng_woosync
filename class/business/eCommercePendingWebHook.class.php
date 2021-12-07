@@ -558,14 +558,6 @@ class eCommercePendingWebHook
 		$output = '';
 
 		try {
-			if (!$user->rights->ecommerceng->write) {
-				$langs->load('errors');
-				$this->error = $langs->trans('ErrorForbidden');
-				$this->errors = array();
-				dol_syslog(__METHOD__ . " Error: " . $this->error, LOG_ERR);
-				return -1;
-			}
-
 			$error = 0;
 
 			if (empty($conf->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION)) {

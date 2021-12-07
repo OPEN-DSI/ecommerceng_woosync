@@ -143,8 +143,9 @@ class eCommerceSynchro
             $this->eCommerceRemoteAccess = new eCommerceRemoteAccess($this->db, $this->eCommerceSite);
 
 			$this->fromDate = is_numeric($fromDate) ? $fromDate : null;
-			if (empty($toDate)) $this->toDate = (dol_now() - 10);      // Set date to use as last update date (we remove 10 second to be sure we don't have pb with not sync date)
-			else $this->toDate = $toDate;
+            $this->toDate = is_numeric($toDate) ? $toDate : null;
+//			if (empty($toDate)) $this->toDate = (dol_now() - 10);      // Set date to use as last update date (we remove 10 second to be sure we don't have pb with not sync date)
+//			else $this->toDate = $toDate;
         }
         catch (Exception $e)
         {
