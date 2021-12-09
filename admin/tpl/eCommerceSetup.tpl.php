@@ -1057,8 +1057,8 @@ if ($ecommerceType == 2) {
 				<td width="5%" align="center"><?php print $langs->trans('Enabled') ?></td>
 			</tr>
 			<tr class="liste_titre">
-				<td width="20%"><?php print $langs->trans('Label') ?></td>
-				<td><?php print $langs->trans('Value') ?></td>
+				<td width="20%"><?php print $langs->trans('ExtraFields') ?></td>
+				<td><?php print $langs->trans('ECommercengWoocommerceProductAttribute') ?></td>
 				<td><?php print $langs->trans('Description') ?></td>
 				<td width="5%" align="center"><input type="checkbox" class="ef_crp_all" name="attribute_ef_crp_all"
 													 value="1"/></td>
