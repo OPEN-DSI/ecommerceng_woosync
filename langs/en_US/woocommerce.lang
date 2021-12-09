@@ -61,6 +61,10 @@ ECommerceWoocommerceErrorDisableDictTaxClass=Error of deactivation of a VAT rate
 ECommerceWoocommerceErrorAddDictTaxClass=Error adding a VAT rate, ID:"%s", erreur:"%s"
 ECommerceWoocommerceErrorUpdateDictTaxClass=Error updating a VAT rate, ID:"%s", error:"%s"
 
+ECommerceWoocommerceErrorDisableDictAttribute                        =Erreur de désactivation d'un attribut, slug:"%s", erreur:"%s"
+ECommerceWoocommerceErrorAddDictAttribute                            =Erreur d'ajout d'un attribut, slug:"%s", nom:"%s", erreur:"%s"
+ECommerceWoocommerceErrorUpdateDictAttribute                         =Erreur de mise a jour d'un attribut, slug:"%s", erreur:"%s"
+
 ECommercengWoocommerceStatusDraft=Draft
 ECommercengWoocommerceStatusPending=Awaiting review
 ECommercengWoocommerceStatusPrivate=Private
@@ -81,9 +85,14 @@ ECommercengWoocommerceOrderStatusTrash=Trash
 
 ECommercengWoocommerceOrderLink=Link to the site order [%s]
 
+ECommercengWoocommerceProductExtrafieldsCorrespondenceAttribute                 = Correspondance des attributs supplémentaires avec les attributs de Woocommerce
+ECommercengWoocommerceProductAttribute                                          = Attribut WooCommerce
+ECommercengWoocommerceProductExtrafieldsCorrespondenceAttributeSetupDescription = Code champ dolibarr : %s. Les valeurs du champs complémentaire Dolibarr doit être sous la forme "Nom,Nom" exemple: "Jaune,Jaune"
+
 ECommercengWoocommerceProductExtrafieldsCorrespondenceAttribute                 = Match of additional attributes with Woocommerce attribute
 ECommercengWoocommerceProductExtrafieldsCorrespondenceAttributeSetupDescription = Enter the name of the attribute corresponding to this additional attribute: %s
 
+ECommerceWoocommerceCreateRemoteCategoryParentNotCreated             = Erreur pour le site '%s' lors de la recherche de l'ID parent da la catégorie '%s' (slug: '%s')
 ECommercengWoocommerceExtrafieldsCorrespondence                 = Match of additional attributes with Woocommerce metadata
 ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription = Enter the name of the metadata corresponding to this additional attribute: %s
 
