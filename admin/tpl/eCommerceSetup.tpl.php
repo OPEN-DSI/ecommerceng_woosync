@@ -1071,8 +1071,10 @@ if ($ecommerceType == 2) {
 				<tr class="oddeven">
 					<td><span><?php print $label ?></span></td>
 					<td>
-						<input type="text" class="ef_crp_value" name="attribute_ef_crp_value_<?php print $key ?>"
-							   value="<?php print dol_escape_htmltag(isset($options_saved['correspondences']) ? $options_saved['correspondences'] : '') ?>"<?php print empty($options_saved['activated']) ? ' disabled' : '' ?> />
+						<?php
+						$value = isset($attributes_array[$options_saved['correspondences']]) ? $options_saved['correspondences'] : (isset($attributes_name_array[$label]) ? $attributes_name_array[$label] : '');
+						print $form->selectarray('attribute_ef_crp_value_'.$key, $attributes_array, $value, 1, 0, 0, '', 0, 0, empty($options_saved['activated']) ? 1 : 0, '', 'ef_crp_value minwidth300');
+						?>
 					</td>
 					<td><?php print $langs->trans('ECommercengWoocommerceProductExtrafieldsCorrespondenceAttributeSetupDescription', $key) ?></td>
 					<td width="5%" align="center"><input type="checkbox" class="ef_crp_state"
@@ -1337,8 +1339,9 @@ if ($siteDb->id)
 if ($siteDb->type == 2)
 {
 ?>
+	<a class="butAction" href='javascript:eCommerceConfirmWoocommerceUpdateAttributes("site_form_detail", "<?php print $langs->trans('ECommerceWoocommerceConfirmUpdateDictAttributes') ?>")'><?php print $langs->trans('ECommerceWoocommerceUpdateDictAttributes') ?></a>
     <a class="butAction" href='javascript:eCommerceConfirmWoocommerceUpdateDictTaxClass("site_form_detail", "<?php print $langs->trans('ECommerceWoocommerceConfirmUpdateDictTaxClasses') ?>")'><?php print $langs->trans('ECommerceWoocommerceUpdateDictTaxClasses') ?></a>
-    <a class="butAction" href='javascript:eCommerceConfirmUpdatePaymentGateways("site_form_detail", "<?php print $langs->trans('ECommerceConfirmUpdatePaymentGateways') ?>")'><?php print $langs->trans('ECommerceUpdatePaymentGateways') ?></a>
+	<a class="butAction" href='javascript:eCommerceConfirmUpdatePaymentGateways("site_form_detail", "<?php print $langs->trans('ECommerceConfirmUpdatePaymentGateways') ?>")'><?php print $langs->trans('ECommerceUpdatePaymentGateways') ?></a>
 <?php
 }
 ?>

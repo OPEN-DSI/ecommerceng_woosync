@@ -702,11 +702,17 @@ elseif ($_POST['site_form_detail_action'] == 'delete')
         exit;
     }
 }
+// Update dictionary for attribute of woocommerce
+elseif ($_POST['site_form_detail_action'] == 'update_woocommerce_attribute') {
+	if (ecommerceng_update_woocommerce_attribute($db, $siteDb)) {
+		setEventMessage($langs->trans('ECommercengWoocommerceDictAttributesUpdated'));
+	}
+}
 // Update dictionary for tax class of woocommerce
 elseif ($_POST['site_form_detail_action'] == 'update_woocommerce_tax_class') {
-    if (ecommerceng_update_woocommerce_dict_tax($db, $siteDb)) {
-        setEventMessage($langs->trans('ECommercengWoocommerceDictTaxClassUpdated'));
-    }
+	if (ecommerceng_update_woocommerce_dict_tax($db, $siteDb)) {
+		setEventMessage($langs->trans('ECommercengWoocommerceDictTaxClassUpdated'));
+	}
 }
 // Update payment gateways
 elseif ($_POST['site_form_detail_action'] == 'update_payment_gateways') {
@@ -925,7 +931,17 @@ if ($ecommerceId > 0) {
         require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
         $extrafields = new ExtraFields($db);
 
-        // fetch optionals attributes and labels
+		// Get all attributes in dictionary for this entity and site
+		dol_include_once('/ecommerceng/admin/class/data/eCommerceDict.class.php');
+		$eCommerceDict = new eCommerceDict($db, MAIN_DB_PREFIX.'c_ecommerceng_attribute');
+		$dict_attributes = $eCommerceDict->search(['entity'=>['value'=>$conf->entity],'site_id'=>['value'=>$siteDb->id]]);
+		$attributes_array = array();
+		foreach ($dict_attributes as $attribute) {
+			$attributes_array[$attribute['attribute_id']] = $attribute['attribute_name'];
+			$attributes_name_array[$attribute['attribute_name']] = $attribute['attribute_id'];
+		}
+
+		// fetch optionals attributes and labels
         if ($conf->product->enabled) {
             $product_table_element = 'product';
             $productExtrafields = array();

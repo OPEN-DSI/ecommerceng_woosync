@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.99.0
+- Correction de synchronisation des attributs d'un produit Woocommerce sur des champs complémentaires d'un produit Dolibarr
+
 ## 4.0.98.0
 - Ajout du support de synchronisation entre les attributs d'un produit Woocommerce et les champs complémentaires d'un produit Dolibarr
 - Modification de la synchronisation des images de Dolibarr vers WooCommerce sans passé par l'api Wordpress (nécéssitera peut etre la modification du fichier ecommerceng/document/.htaccess)
