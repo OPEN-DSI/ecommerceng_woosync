@@ -1208,8 +1208,8 @@ class eCommerceRemoteAccessWoocommerce
 					}
 				}
 				foreach ($attributes as $attribute) {
-					if (isset($correspondences[$attribute->name])) {
-						$product['extrafields'][$correspondences[$attribute->name]] = implode(',', $attribute->options);
+					if (isset($correspondences[$attribute->id])) {
+						$product['extrafields'][$correspondences[$attribute->id]] = implode(',', $attribute->options);
 					}
 				}
 			}
@@ -2028,7 +2028,7 @@ class eCommerceRemoteAccessWoocommerce
             $error_msg = $langs->trans('ECommerceWoocommerceErrorBaseTypeOfProductWithSiteParameter', $object->ref, $this->site->ecommerce_price_type, $this->site->name);
             $this->errors[] = $error_msg;
             dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_ERR);
-            return $return_data;
+            return array();
         }
         $regular_price = $object->array_options["options_ecommerceng_wc_regular_price_{$this->site->id}_{$conf->entity}"];
 
@@ -2087,7 +2087,7 @@ class eCommerceRemoteAccessWoocommerce
 							dol_syslog(__METHOD__ .
 								': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
 								' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
-							return $return_data;
+							return array();
 						}
 					}
 				} else {
@@ -2116,7 +2116,7 @@ class eCommerceRemoteAccessWoocommerce
 						dol_syslog(__METHOD__ .
 							': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
 							' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
-						return $return_data;
+						return array();
 					}
 				}
 			}
@@ -2160,12 +2160,12 @@ class eCommerceRemoteAccessWoocommerce
 //                        $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductSendImage', $object->ref . ' - '  . $remote_id, $this->site->name, implode('; ', $this->worpressclient->errors));
 //                        dol_syslog(__METHOD__ . ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductSendImage',
 //                                $remote_id, $this->site->name, implode('; ', $this->worpressclient->errors)), LOG_ERR);
-//                        return $return_data;
+//                        return array();
 //                    } elseif (!empty($result['message'])) {
 //                        $this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductSendImage', $object->ref . ' - '  . $remote_id, $this->site->name, $result['code'] . ' - ' . $result['message']);
 //                        dol_syslog(__METHOD__ . ': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceUpdateRemoteProductSendImage',
 //                                $remote_id, $this->site->name, $result['code'] . ' - ' . $result['message']), LOG_ERR);
-//                        return $return_data;
+//                        return array();
 //                    }
 //
 //                    $img['id'] = $result['id'];
@@ -2347,7 +2347,7 @@ class eCommerceRemoteAccessWoocommerce
 						$object->array_options["options_ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"] = $tax_class;
 					} else {
 						$this->errors[] = $langs->trans('ECommerceWoocommerceErrorTaxClassNotFoundFromTaxRate', $object->tva_tx, $this->site->name, $object->ref . ' - '  . $remote_id);
-						return $return_data;
+						return array();
 					}
 				}
             }
@@ -2378,10 +2378,9 @@ class eCommerceRemoteAccessWoocommerce
 
 					// Synch extrafields <=> attributes
 					$options_saved = $this->site->parameters['ef_crp_attribute'][$cr_key];
-					if ($options_saved['activated']) {
-						$rm_key = $cr_key;
-						if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
-						$variationData['attributes'][] = array('name' => $rm_key, 'options' => explode(',', $value));
+					if ($options_saved['activated'] && !empty($value)) {
+						$rm_key = isset($options_saved['correspondences']) ? $options_saved['correspondences'] : '';
+						$variationData['attributes'][] = array('id' => $rm_key, 'options' => explode(',', $value));
 					}
 
 					// Synch extrafields <=> metadatas
@@ -2394,7 +2393,7 @@ class eCommerceRemoteAccessWoocommerce
 				}
 			}
 
-            // Product
+			// Product
             // 'name'    => $object->label,			                    // string		Product name.
             // 'status'  => $object->status ? 'publish' : 'pending',	// string		Product status (post status). Options: draft, pending, private and publish. Default is publish.
 
@@ -2578,7 +2577,7 @@ class eCommerceRemoteAccessWoocommerce
 						$object->array_options["options_ecommerceng_tax_class_{$this->site->id}_{$conf->entity}"] = $tax_class;
 					} else {
 						$this->errors[] = $langs->trans('ECommerceWoocommerceErrorTaxClassNotFoundFromTaxRate', $object->tva_tx, $this->site->name, $object->ref . ' - '  . $remote_id);
-						return $return_data;
+						return array();
 					}
 				}
             }
@@ -2607,16 +2606,15 @@ class eCommerceRemoteAccessWoocommerce
 
             // Synch extrafields <=> metadatas and attributes
             if (!empty($object->array_options)) {
-                foreach ($object->array_options as $key => $value) {
+				foreach ($object->array_options as $key => $value) {
                     $cr_key = substr($key, 8);
                     if (preg_match('/^ecommerceng_/', $cr_key)) continue;
 
 					// Synch extrafields <=> attributes
 					$options_saved = $this->site->parameters['ef_crp_attribute'][$cr_key];
-					if ($options_saved['activated']) {
-						$rm_key = $cr_key;
-						if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
-						$productData['attributes'][] = array('name' => $rm_key, 'options' => explode(',', $value));
+					if ($options_saved['activated'] && !empty($value)) {
+						$rm_key = isset($options_saved['correspondences']) ? $options_saved['correspondences'] : '';
+						$productData['attributes'][] = array('id' => $rm_key, 'options' => explode(',', $value));
 					}
 
 					// Synch extrafields <=> metadatas
@@ -4299,6 +4297,95 @@ class eCommerceRemoteAccessWoocommerce
 				}
 			}
 		}
+	}
+
+	/**
+	 * Get all woocommerce attributes
+	 *
+	 * @return array|false    List of woocommerce attributes or false if error
+	 */
+	public function getAllWoocommerceAttributes()
+	{
+		dol_syslog(__METHOD__ . ": Retrieve all Woocommerce attributes", LOG_DEBUG);
+		global $conf, $langs;
+
+		$nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
+
+		$attributes_list = [];
+		$idxPage = 0;
+		do {
+			$idxPage++;
+			$stopwatch_id = -1;
+			try {
+				$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/attributes");
+				$attributes = $this->client->get('products/attributes',
+					[
+						'page' => $idxPage,
+						'per_page' => $nb_max_by_request,
+					]
+				);
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+			} catch (HttpClientException $fault) {
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+				$this->errors[] = $langs->trans('ECommerceWoocommerceGetAllWoocommerceAttributes', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+				dol_syslog(__METHOD__ .
+					': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetAllWoocommerceAttributes', $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+					' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+				return false;
+			}
+
+			foreach ($attributes as $attribute) {
+				$attributes_list[$attribute->id] = $attribute;
+			}
+		} while (!empty($attibutes));
+
+		dol_syslog(__METHOD__ . ": end, return: ".json_encode($attributes_list), LOG_DEBUG);
+		return $attributes_list;
+	}
+
+	/**
+	 * Get all woocommerce terms of a attribute
+	 *
+	 * @param	int				$attribute_id	Attribute ID
+	 * @return	array|false    					List of woocommerce terms of a attribute or false if error
+	 */
+	public function getAllWoocommerceAttributeTerms($attribute_id)
+	{
+		dol_syslog(__METHOD__ . ": Retrieve all Woocommerce terms of a attribute", LOG_DEBUG);
+		global $conf, $langs;
+
+		$nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
+
+		$terms_list = [];
+		$idxPage = 0;
+		do {
+			$idxPage++;
+			$stopwatch_id = -1;
+			try {
+				$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products/attributes/$attribute_id/terms");
+				$terms = $this->client->get('products/attributes/' . $attribute_id . '/terms',
+					[
+						'page' => $idxPage,
+						'per_page' => $nb_max_by_request,
+					]
+				);
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+			} catch (HttpClientException $fault) {
+				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+				$this->errors[] = $langs->trans('ECommerceWoocommerceGetAllWoocommerceAttributeTerms', $attribute_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+				dol_syslog(__METHOD__ .
+					': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceGetAllWoocommerceAttributeTerms', $attribute_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+					' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+				return false;
+			}
+
+			foreach ($terms as $term) {
+				$terms_list[$term->id] = $term;
+			}
+		} while (!empty($terms));
+
+		dol_syslog(__METHOD__ . ": end, return: ".json_encode($terms_list), LOG_DEBUG);
+		return $terms_list;
 	}
 
 	/**

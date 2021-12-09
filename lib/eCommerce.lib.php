@@ -454,20 +454,99 @@ function ecommerceng_add_extrafields($db, $langs, $extrafields, &$error) {
     return $result;
 }
 
-function ecommerceng_update_woocommerce_dict_tax($db, $site)
+function ecommerceng_update_woocommerce_attribute($db, $site)
 {
-    global $conf, $langs;
-    $langs->load('woocommerce@ecommerceng');
+	global $conf, $langs;
+	$langs->load('woocommerce@ecommerceng');
 
 	$db->begin();
 
-    $eCommerceRemoteAccessWoocommerce = new eCommerceRemoteAccessWoocommerce($db, $site);
+	$eCommerceRemoteAccessWoocommerce = new eCommerceRemoteAccessWoocommerce($db, $site);
 
-    if (!$eCommerceRemoteAccessWoocommerce->connect()) {
-        setEventMessages('', $eCommerceRemoteAccessWoocommerce->errors, 'errors');
+	if (!$eCommerceRemoteAccessWoocommerce->connect()) {
+		setEventMessages('', $eCommerceRemoteAccessWoocommerce->errors, 'errors');
 		$db->rollback();
 		return false;
-    }
+	}
+
+	$attributes = $eCommerceRemoteAccessWoocommerce->getAllWoocommerceAttributes();
+	if ($attributes === false) {
+		setEventMessages('', $eCommerceRemoteAccessWoocommerce->errors, 'errors');
+		$db->rollback();
+		return false;
+	}
+
+	$eCommerceDict = new eCommerceDict($db, MAIN_DB_PREFIX.'c_ecommerceng_attribute');
+
+	// Get all attributes in dictionary for this entity and site
+	$dict_attributes = $eCommerceDict->search(['entity'=>['value'=>$conf->entity],'site_id'=>['value'=>$site->id]]);
+
+	// Disable attribute not found in woocommerce
+	foreach ($dict_attributes as $line) {
+		if (!isset($attributes[$line['attribute_id']])) {
+			// Disable attribute
+			$result = $eCommerceDict->update(['active' => ['value' => 0]], ['rowid' => ['value' => $line['rowid']]]);
+			if ($result == false) {
+				setEventMessage($langs->trans('ECommerceWoocommerceErrorDisableDictAttribute', $line['attribute_slug'], $db->error()), 'errors');
+				$db->rollback();
+				return false;
+			}
+		} else {
+			$attribute = $attributes[$line['attribute_id']];
+			$result = $eCommerceDict->update([
+				'attribute_name' => ['value'=>$attribute->name,'type'=>'string'],
+				'attribute_slug' => ['value'=>$attribute->slug,'type'=>'string'],
+				'attribute_type' => ['value'=>$attribute->type,'type'=>'string'],
+				'attribute_order_by' => ['value'=>$attribute->order_by,'type'=>'string'],
+				'attribute_has_archives' => ['value'=>$attribute->has_archives?1:0],
+			], ['rowid' => ['value' => $line['rowid']]]);
+			if ($result == false) {
+				setEventMessage($langs->trans('ECommerceWoocommerceErrorUpdateDictAttribute', $line['attribute_slug'], $db->error()), 'errors');
+				$db->rollback();
+				return false;
+			}
+			$attributes[$line['attribute_id']]->founded = true;
+		}
+	}
+
+	// Add new attribute from woocommerce
+	foreach ($attributes as $attribute) {
+		if (!isset($attribute->founded)) {
+			// Add new attribute
+			$result = $eCommerceDict->insert(['site_id','attribute_id','attribute_name','attribute_slug','attribute_type','attribute_order_by','attribute_has_archives','entity','active'], ['site_id'=>['value'=>$site->id],
+				'attribute_id'=>['value'=>$attribute->id],
+				'attribute_name'=>['value'=>$attribute->name,'type'=>'string'],
+				'attribute_slug'=>['value'=>$attribute->slug,'type'=>'string'],
+				'attribute_type'=>['value'=>$attribute->type,'type'=>'string'],
+				'attribute_order_by'=>['value'=>$attribute->order_by,'type'=>'string'],
+				'attribute_has_archives'=>['value'=>$attribute->has_archives?1:0],
+				'entity'=>['value'=>$conf->entity],'active'=>['value'=>1]]);
+			if ($result == false) {
+				setEventMessage($langs->trans('ECommerceWoocommerceErrorAddDictAttribute', $attribute->slug, $attribute->name, $db->error()), 'errors');
+				$db->rollback();
+				return false;
+			}
+		}
+	}
+
+	$db->commit();
+	return true;
+}
+
+function ecommerceng_update_woocommerce_dict_tax($db, $site)
+{
+	global $conf, $langs;
+	$langs->load('woocommerce@ecommerceng');
+
+	$db->begin();
+
+	$eCommerceRemoteAccessWoocommerce = new eCommerceRemoteAccessWoocommerce($db, $site);
+
+	if (!$eCommerceRemoteAccessWoocommerce->connect()) {
+		setEventMessages('', $eCommerceRemoteAccessWoocommerce->errors, 'errors');
+		$db->rollback();
+		return false;
+	}
 
 	$taxClasses = $eCommerceRemoteAccessWoocommerce->getAllWoocommerceTaxClass();
 	if ($taxClasses === false) {

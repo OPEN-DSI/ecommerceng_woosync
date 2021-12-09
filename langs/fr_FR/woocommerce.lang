@@ -29,6 +29,7 @@ ECommerceWoocommerceUpdateRemoteStockProduct                         =Erreur de 
 ECommerceWoocommerceUpdateRemoteStockTranslatedProduct               =Erreur de mise à jour des stocks (%s) de la traduction 'id:%s' du produit distant 'id:%s' sur le site '%s':
 ECommerceWoocommerceUpdateRemoteStockProductVariation                =Erreur de mise à jour des stocks (%s) de la variation 'id:%s' du produit distant 'id:%s' sur le site '%s':
 ECommerceWoocommerceUpdateRemoteStockTranslatedProductVariation      =Erreur de mise à jour des stocks (%s) de la traduction 'id:%s' de la variation 'id:%s' du produit distant 'id:%s' sur le site
+ECommerceWoocommerceGetAllWoocommerceAttributes                      =Erreur de récupération des données des attributs sur le site '%s': %s
 ECommerceWoocommerceGetAllWoocommerceTaxClass                        =Erreur de récupération des données des classes de taxes sur le site '%s': %s
 ECommerceWoocommerceGetWoocommerceTaxes                              =Erreur de récupération des données des taxes sur le site '%s': %s
 ECommerceWoocommerceCreateRemoteProductSendImage                     =Erreur de l'envoi d'une image pour le produit 'ref:%s' dans les média de Wordpress sur le site '%s': %s
@@ -43,6 +44,10 @@ ECommercengWoocommerceTaxClass                                       =Classe de 
 ECommercengWoocommerceManageStock                                    =Gestion du stock pour le site [%s]
 ECommercengWoocommerceDontUpdateStock                                =Ne pas mettre à jour le stock avec le site [%s]
 
+ECommercengWoocommerceDictAttribute                                  =Liste des attributs sur Woocommerce
+ECommercengWoocommerceDictAttributesUpdated                          =Dictionnaire des attributs depuis Woocommerce mise à jour.
+ECommerceWoocommerceConfirmUpdateDictAttributes                      =Confirmer la mise à jour du dictionnaire des attributs pour ce site ?
+ECommerceWoocommerceUpdateDictAttributes                             =Mise à jour du dictionnaire des attributs
 ECommercengWoocommerceDictTaxClass                                   =Liste des classes de TVA sur Woocommerce
 ECommercengWoocommerceDictTaxClassUpdated                            =Dictionnaire des classes de TVA depuis Woocommerce mise à jour.
 ECommerceWoocommerceConfirmUpdateDictTaxClasses                      =Confirmer la mise à jour du dictionnaire des classes de TVA pour ce site ?
@@ -52,9 +57,13 @@ ECommerceWoocommerceErrorAddDictTaxClass                             =Erreur d'a
 ECommerceWoocommerceErrorUpdateDictTaxClass                          =Erreur de mise a jour d'une classe de TVA, code:"%s", erreur:"%s"
 
 ECommercengWoocommerceDictTaxRate                                    =Liste des taux de TVA sur Woocommerce
-ECommerceWoocommerceErrorDisableDictTaxClass                         =Erreur de désactivation d'un taux de TVA, ID:"%s", erreur:"%s"
-ECommerceWoocommerceErrorAddDictTaxClass                             =Erreur d'ajout d'un taux de TVA, ID:"%s", erreur:"%s"
-ECommerceWoocommerceErrorUpdateDictTaxClass                          =Erreur de mise a jour d'un taux de TVA, ID:"%s", erreur:"%s"
+ECommerceWoocommerceErrorDisableDictTaxRate                          =Erreur de désactivation d'un taux de TVA, ID:"%s", erreur:"%s"
+ECommerceWoocommerceErrorAddDictTaxRate                              =Erreur d'ajout d'un taux de TVA, ID:"%s", erreur:"%s"
+ECommerceWoocommerceErrorUpdateDictTaxRate                           =Erreur de mise a jour d'un taux de TVA, ID:"%s", erreur:"%s"
+
+ECommerceWoocommerceErrorDisableDictAttribute                        =Erreur de désactivation d'un attribut, slug:"%s", erreur:"%s"
+ECommerceWoocommerceErrorAddDictAttribute                            =Erreur d'ajout d'un attribut, slug:"%s", nom:"%s", erreur:"%s"
+ECommerceWoocommerceErrorUpdateDictAttribute                         =Erreur de mise a jour d'un attribut, slug:"%s", erreur:"%s"
 
 ECommercengWoocommerceStatusDraft                                    =Brouillon
 ECommercengWoocommerceStatusPending                                  =En attente de relecture
@@ -77,7 +86,8 @@ ECommercengWoocommerceOrderStatusTrash                               =Corbeille
 ECommercengWoocommerceOrderLink                                      =Lien vers la commande du site [%s]
 
 ECommercengWoocommerceProductExtrafieldsCorrespondenceAttribute                 = Correspondance des attributs supplémentaires avec les attributs de Woocommerce
-ECommercengWoocommerceProductExtrafieldsCorrespondenceAttributeSetupDescription = Renseigner le nom de l'attribut correspondant à cet attribut supplémentaire : %s
+ECommercengWoocommerceProductAttribute                                          = Attribut WooCommerce
+ECommercengWoocommerceProductExtrafieldsCorrespondenceAttributeSetupDescription = Code champ dolibarr : %s. Les valeurs du champs complémentaire Dolibarr doit être sous la forme "Nom,Nom" exemple: "Jaune,Jaune"
 
 ECommercengWoocommerceExtrafieldsCorrespondence                      = Correspondance des attributs supplémentaires avec les méta-données de Woocommerce
 ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription      = Renseigner le nom de la méta-donnée correspondant à cet attribut supplémentaire : %s

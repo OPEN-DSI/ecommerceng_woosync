@@ -29,6 +29,7 @@ ECommerceWoocommerceUpdateRemoteStockProduct=Error updating inventory (%s) of th
 ECommerceWoocommerceUpdateRemoteStockTranslatedProduct=Error updating inventory (%s) of the translation 'id:%s' of the remote product 'id:%s' on the site '%s':
 ECommerceWoocommerceUpdateRemoteStockProductVariation=Error updating inventory (%s) of the variant 'id:%s' of the remote product 'id:%s' on the site '%s':
 ECommerceWoocommerceUpdateRemoteStockTranslatedProductVariation=Error updating inventory (%s) of the translation 'id:%s' of the variant 'id:%s' of the remote product 'id:%s' on the site
+ECommerceWoocommerceGetAllWoocommerceAttributes                      =Erreur de récupération des données des attributs sur le site '%s': %s
 ECommerceWoocommerceGetAllWoocommerceTaxClass=Error retrieving tax class data from the site '%s': %s
 ECommerceWoocommerceGetWoocommerceTaxes=Erreur retrieving tax data from the site '%s': %s
 ECommerceWoocommerceCreateRemoteProductSendImage=Error sending an image for the prodcut 'ref:%s' in the Wordpress media on the site '%s': %s
@@ -43,6 +44,10 @@ ECommercengWoocommerceTaxClass=VAT class for the site [%s]
 ECommercengWoocommerceManageStock=Stock management for the site [%s]
 ECommercengWoocommerceDontUpdateStock=Do not update the stock with the site [%s]
 
+ECommercengWoocommerceDictAttribute=List of attributes on WooCommerce
+ECommercengWoocommerceDictAttributesUpdated=Dictionary of attributes from WooCommerce updated
+ECommerceWoocommerceConfirmUpdateDictAttributes=Confirm the update of attributes dictionary for this site ?
+ECommerceWoocommerceUpdateDictAttributes=Update of attributes dictionary
 ECommercengWoocommerceDictTaxClass=List of VAT classes on WooCommerce
 ECommercengWoocommerceDictTaxClassUpdated=Dictionary of VAT classes from WooCommerce updated
 ECommerceWoocommerceConfirmUpdateDictTaxClasses=Confirm the update of the VAT class dictionary for this site ?
@@ -55,6 +60,10 @@ ECommercengWoocommerceDictTaxRate=List of VAT rates on Woocommerce
 ECommerceWoocommerceErrorDisableDictTaxClass=Error of deactivation of a VAT rate, ID:"%s", error:"%s"
 ECommerceWoocommerceErrorAddDictTaxClass=Error adding a VAT rate, ID:"%s", erreur:"%s"
 ECommerceWoocommerceErrorUpdateDictTaxClass=Error updating a VAT rate, ID:"%s", error:"%s"
+
+ECommerceWoocommerceErrorDisableDictAttribute                        =Erreur de désactivation d'un attribut, slug:"%s", erreur:"%s"
+ECommerceWoocommerceErrorAddDictAttribute                            =Erreur d'ajout d'un attribut, slug:"%s", nom:"%s", erreur:"%s"
+ECommerceWoocommerceErrorUpdateDictAttribute                         =Erreur de mise a jour d'un attribut, slug:"%s", erreur:"%s"
 
 ECommercengWoocommerceStatusDraft=Draft
 ECommercengWoocommerceStatusPending=Awaiting review
@@ -76,9 +85,14 @@ ECommercengWoocommerceOrderStatusTrash=Trash
 
 ECommercengWoocommerceOrderLink=Link to the site order [%s]
 
+ECommercengWoocommerceProductExtrafieldsCorrespondenceAttribute                 = Correspondance des attributs supplémentaires avec les attributs de Woocommerce
+ECommercengWoocommerceProductAttribute                                          = Attribut WooCommerce
+ECommercengWoocommerceProductExtrafieldsCorrespondenceAttributeSetupDescription = Code champ dolibarr : %s. Les valeurs du champs complémentaire Dolibarr doit être sous la forme "Nom,Nom" exemple: "Jaune,Jaune"
+
 ECommercengWoocommerceProductExtrafieldsCorrespondenceAttribute                 = Match of additional attributes with Woocommerce attribute
 ECommercengWoocommerceProductExtrafieldsCorrespondenceAttributeSetupDescription = Enter the name of the attribute corresponding to this additional attribute: %s
 
+ECommerceWoocommerceCreateRemoteCategoryParentNotCreated             = Erreur pour le site '%s' lors de la recherche de l'ID parent da la catégorie '%s' (slug: '%s')
 ECommercengWoocommerceExtrafieldsCorrespondence                 = Match of additional attributes with Woocommerce metadata
 ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription = Enter the name of the metadata corresponding to this additional attribute: %s
 

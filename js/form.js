@@ -12,6 +12,15 @@ function eCommerceConfirmDelete(id_form, confirmation)
   }
 }
 
+function eCommerceConfirmWoocommerceUpdateAttributes(id_form, confirmation)
+{
+  if (confirm(confirmation))
+  {
+    document.getElementById(id_form+'_action').value = 'update_woocommerce_attribute';
+    eCommerceSubmitForm(id_form);
+  }
+}
+
 function eCommerceConfirmWoocommerceUpdateDictTaxClass(id_form, confirmation)
 {
   if (confirm(confirmation))
