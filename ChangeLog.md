@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.100.0
+- Ajout du triggers sur la creation du lien d'une commande
+
 ## 4.0.99.0
 - Correction de synchronisation des attributs d'un produit Woocommerce sur des champs complémentaires d'un produit Dolibarr
 

@@ -92,17 +92,13 @@ class eCommerceCommande
         {
             $this->id = $this->db->last_insert_id(MAIN_DB_PREFIX."ecommerce_commande");
 
-			if (! $notrigger)
-			{
-	            // Uncomment this and change MYOBJECT to your own tag if you
-	            // want this action call a trigger.
-
-	            //// Call triggers
-	            //include_once(DOL_DOCUMENT_ROOT . "/core/interfaces.class.php");
-	            //$interface=new Interfaces($this->db);
-	            //$result=$interface->run_triggers('MYOBJECT_CREATE',$this,$user,$langs,$conf);
-	            //if ($result < 0) { $error++; $this->errors=$interface->errors; }
-	            //// End call triggers
+			if (! $notrigger) {
+				//// Call triggers
+				include_once DOL_DOCUMENT_ROOT . '/core/class/interfaces.class.php';
+				$interface = new Interfaces($this->db);
+				$result = $interface->run_triggers('ECOMMERCECOMMANDE_CREATE', $this, $user, $langs, $conf);
+				if ($result < 0) { $error++; $this->errors = $interface->errors; }
+				//// End call triggers
 			}
         }
 
