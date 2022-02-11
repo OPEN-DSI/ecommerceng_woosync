@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.100.0
+- Correction de synchronisation de la classe de TVA du produit du site vers Dolibarr
+
 ## 4.0.99.0
 - Correction de synchronisation des attributs d'un produit Woocommerce sur des champs complémentaires d'un produit Dolibarr
 

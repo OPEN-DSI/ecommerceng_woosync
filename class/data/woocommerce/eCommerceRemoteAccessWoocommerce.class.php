@@ -4201,7 +4201,6 @@ class eCommerceRemoteAccessWoocommerce
 		global $conf;
 
 		$tax_rate = 0;
-		$tax_class = '';
 
 		// $tax_status => Tax status. Options: taxable, shipping and none. Default is taxable
 		if ($tax_status != 'none') {
