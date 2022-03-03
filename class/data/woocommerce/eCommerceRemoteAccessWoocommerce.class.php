@@ -1698,9 +1698,13 @@ class eCommerceRemoteAccessWoocommerce
 		require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 		$efields = new ExtraFields($this->db);
 		$efields->fetch_name_optionals_label('commande', true);
-		if (isset($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options']) &&
-			is_array($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options'])) {
-			foreach ($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options'] as $key => $value) {
+		if (version_compare(DOL_VERSION, "13.0.0") >= 0) {
+			$options_list = isset($efields->attributes['commande']['param']["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options']) ? $efields->attributes['commande']['param']["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options'] : null;
+		} else {
+			$options_list = isset($efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options']) ? $efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options'] : null;
+		}
+		if (is_array($options_list)) {
+			foreach ($options_list as $key => $value) {
 				$key_test = ($pos = strpos($key, '_')) > 0 ? substr($key, $pos + 1) : $key;
 				if ($key_test == $remote_data->status) {
 					$orderStatus = $key;
@@ -3107,10 +3111,14 @@ class eCommerceRemoteAccessWoocommerce
             require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
             $efields = new ExtraFields($this->db);
             $efields->fetch_name_optionals_label('commande', true);
+			if (version_compare(DOL_VERSION, "13.0.0") >= 0) {
+				$options_list = isset($efields->attributes['commande']['param']["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options']) ? $efields->attributes['commande']['param']["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options'] : null;
+			} else {
+				$options_list = isset($efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options']) ? $efields->attribute_param["ecommerceng_wc_status_{$siteDb->id}_{$conf->entity}"]['options'] : null;
+			}
             $order_status = array();
-            if (isset($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options']) &&
-               is_array($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options'])) {
-                foreach ($efields->attribute_param["ecommerceng_wc_status_{$this->site->id}_{$conf->entity}"]['options'] as $key => $value) {
+            if (is_array($options_list)) {
+                foreach ($options_list as $key => $value) {
                     $status_lvl = 0;
                     if (($pos = strpos($key , '_')) > 0) {
                         $status_key = substr($key, $pos + 1);

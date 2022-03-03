@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.0.101.0
+- Compatibilité v13+ pour la gestion des champs complémentaires
+- Ajout du triggers sur la creation du lien d'une commande
+
 ## 4.0.100.0
 - Correction de synchronisation de la classe de TVA du produit du site vers Dolibarr
 
