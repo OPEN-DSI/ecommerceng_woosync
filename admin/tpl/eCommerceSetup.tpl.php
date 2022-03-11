@@ -559,6 +559,28 @@ if ($ecommerceType == 2)
 			  </td>
 			  <td><?php print $langs->trans('ECommerceProductWeightUnitsDescription') ?></td>
 		  </tr>
+		  <tr <?php print $bc[$var] ?>>
+			  <td><span><?php print $langs->trans('ECommerceProductDimensionSyncDirection') ?></span></td>
+			  <td>
+				  <?php
+				  print $form->selectarray('ecommerce_product_dimension_synch_direction', $sync_direction_array, $ecommerceProductDimensionSynchDirection);
+				  ?>
+			  </td>
+			  <td><?php print $langs->trans('ECommerceProductDimensionSyncDirectionDescription') ?></td>
+		  </tr>
+		  <tr <?php print $bc[$var] ?>>
+			  <td><span><?php print $langs->trans('ECommerceProductDimensionUnits') ?></span></td>
+			  <td>
+				  <?php
+				  if (version_compare(DOL_VERSION, "10.0.0") < 0) {
+					  print $formproduct->select_measuring_units("ecommerce_product_dimension_units", "size", $ecommerceProductDimensionUnits);
+				  } else {
+					  print $formproduct->selectMeasuringUnits("ecommerce_product_dimension_units", "size", $ecommerceProductDimensionUnits, 0, 2);
+				  }
+				  ?>
+			  </td>
+			  <td><?php print $langs->trans('ECommerceProductDimensionUnitsDescription') ?></td>
+		  </tr>
         <tr <?php print $bc[$var] ?>>
           <td><span><?php print $langs->trans('ECommerceProductTaxSyncDirection') ?></span></td>
           <td>

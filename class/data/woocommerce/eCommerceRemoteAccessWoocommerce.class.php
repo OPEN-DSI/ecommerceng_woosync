@@ -985,9 +985,11 @@ class eCommerceRemoteAccessWoocommerce
 		$productDescriptionSynchDirection = isset($this->site->parameters['product_synch_direction']['description']) ? $this->site->parameters['product_synch_direction']['description'] : '';
 		$productShortDescriptionSynchDirection = isset($this->site->parameters['product_synch_direction']['short_description']) ? $this->site->parameters['product_synch_direction']['short_description'] : '';
 		$productWeightSynchDirection = isset($this->site->parameters['product_synch_direction']['weight']) ? $this->site->parameters['product_synch_direction']['weight'] : '';
+		$productDimensionSynchDirection = isset($this->site->parameters['product_synch_direction']['dimension']) ? $this->site->parameters['product_synch_direction']['dimension'] : '';
 		$productTaxSynchDirection = isset($this->site->parameters['product_synch_direction']['tax']) ? $this->site->parameters['product_synch_direction']['tax'] : '';
 		$productStatusSynchDirection = isset($this->site->parameters['product_synch_direction']['status']) ? $this->site->parameters['product_synch_direction']['status'] : '';
 		$productWeightUnits = isset($this->site->parameters['product_weight_units']) ? $this->site->parameters['product_weight_units'] : (empty($conf->global->MAIN_WEIGHT_DEFAULT_UNIT)?0:$conf->global->MAIN_WEIGHT_DEFAULT_UNIT);
+		$productDimensionUnits = isset($this->site->parameters['product_dimension_units']) ? $this->site->parameters['product_dimension_units'] : -2; // -2 = cm
 		$product_variation_mode_all_to_one = !empty($this->site->parameters['product_variation_mode']) && $this->site->parameters['product_variation_mode'] == 'all_to_one';
 
 		// Categories
@@ -1114,6 +1116,15 @@ class eCommerceRemoteAccessWoocommerce
 		if ($productWeightSynchDirection == 'etod' || $productWeightSynchDirection == 'all') {
 			$product['weight'] = empty($remote_data->weight) ? $parent_remote_data->weight : $remote_data->weight;
 			$product['weight_units'] = $productWeightUnits;
+		}
+		// Synchronize weight
+		if ($productDimensionSynchDirection == 'etod' || $productDimensionSynchDirection == 'all') {
+			$product['width'] = empty($remote_data->dimensions->width) ? $parent_remote_data->dimensions->width : $remote_data->dimensions->width;
+			$product['width_units'] = $productDimensionUnits;
+			$product['height'] = empty($remote_data->dimensions->height) ? $parent_remote_data->dimensions->height : $remote_data->dimensions->height;
+			$product['height_units'] = $productDimensionUnits;
+			$product['length'] = empty($remote_data->dimensions->length) ? $parent_remote_data->dimensions->length : $remote_data->dimensions->length;
+			$product['length_units'] = $productDimensionUnits;
 		}
 		// Synchronize tax
 		$tax_info = $this->getTaxInfoFromTaxClass(empty($remote_data->tax_class) ? $parent_remote_data->tax_class : $remote_data->tax_class, empty($remote_data->tax_status) ? $parent_remote_data->tax_status : $remote_data->tax_status);
@@ -1977,7 +1988,8 @@ class eCommerceRemoteAccessWoocommerce
         $productRefSynchDirection = isset($this->site->parameters['product_synch_direction']['ref']) ? $this->site->parameters['product_synch_direction']['ref'] : '';
         $productDescriptionSynchDirection = isset($this->site->parameters['product_synch_direction']['description']) ? $this->site->parameters['product_synch_direction']['description'] : '';
         $productShortDescriptionSynchDirection = isset($this->site->parameters['product_synch_direction']['short_description']) ? $this->site->parameters['product_synch_direction']['short_description'] : '';
-        $productWeightSynchDirection = isset($this->site->parameters['product_synch_direction']['weight']) ? $this->site->parameters['product_synch_direction']['weight'] : '';
+		$productWeightSynchDirection = isset($this->site->parameters['product_synch_direction']['weight']) ? $this->site->parameters['product_synch_direction']['weight'] : '';
+		$productDimensionSynchDirection = isset($this->site->parameters['product_synch_direction']['dimension']) ? $this->site->parameters['product_synch_direction']['dimension'] : '';
         $productTaxSynchDirection = isset($this->site->parameters['product_synch_direction']['tax']) ? $this->site->parameters['product_synch_direction']['tax'] : '';
         $productStatusSynchDirection = isset($this->site->parameters['product_synch_direction']['status']) ? $this->site->parameters['product_synch_direction']['status'] : '';
 		$product_variation_mode_all_to_one = !empty($this->site->parameters['product_variation_mode']) && $this->site->parameters['product_variation_mode'] == 'all_to_one';
@@ -1991,10 +2003,19 @@ class eCommerceRemoteAccessWoocommerce
 			}
 		}
 
-        // Convert Weight
+		// Convert Weight
 		$from_unit = $object->weight_units;
 		$to_unit = isset($this->site->parameters['product_weight_units']) ? $this->site->parameters['product_weight_units'] : (empty($conf->global->MAIN_WEIGHT_DEFAULT_UNIT)?0:$conf->global->MAIN_WEIGHT_DEFAULT_UNIT);
 		$totalWeight = weight_convert($object->weight, $from_unit, $to_unit);
+
+		// Convert Dimension
+		$from_unit = $object->width_units;
+		$to_unit = isset($this->site->parameters['product_direction_units']) ? $this->site->parameters['product_direction_units'] : -2; // -2 = cm
+		$totalWidth = weight_convert($object->width, $from_unit, $to_unit);
+		$from_unit = $object->height_units;
+		$totalHeight = weight_convert($object->height, $from_unit, $to_unit);
+		$from_unit = $object->length_units;
+		$totalLength = weight_convert($object->length, $from_unit, $to_unit);
 
         // Price
         $error_price = 0;
@@ -2215,11 +2236,13 @@ class eCommerceRemoteAccessWoocommerce
 			foreach ($filearray as $key => $file) {
 				if (empty($file['share'])) continue;
 
-				$filename = ecommerceng_wordpress_sanitize_file_name($file['name']);
+				$filename = pathinfo($file['name'], PATHINFO_FILENAME);
+				$filename = ecommerceng_wordpress_sanitize_file_name($filename);
 
 				$img = [
 					'name' => $filename,
-					'src' => $url_root . '/' . $file['share'] . '.jpg',
+					'alt' => $filename,
+					'src' => $url_root . '/' . $file['share'] . '/' . $file['name'],
 					'position' => $key,
 				];
 				if (isset($current_images[$filename])) {
@@ -2326,16 +2349,23 @@ class eCommerceRemoteAccessWoocommerce
                 $variationData['sku'] = $object->ref;
             }
             if ($productDescriptionSynchDirection == 'dtoe' || $productDescriptionSynchDirection == 'all') {
-                $variationData['description'] = nl2br($object->array_options["options_ecommerceng_description_{$conf->entity}"]);
+                $variationData['description'] = dol_textishtml($object->array_options["options_ecommerceng_description_{$conf->entity}"]) ? $object->array_options["options_ecommerceng_description_{$conf->entity}"] : nl2br($object->array_options["options_ecommerceng_description_{$conf->entity}"]);
 
 				if (empty($variationData['description']) || $initial_data) {
-					$variationData['description'] = nl2br($object->description);
+					$variationData['description'] = dol_textishtml($object->description) ? $object->description : nl2br($object->description);
 					$object->array_options["options_ecommerceng_description_{$conf->entity}"] = $variationData['description'];
 				}
 			}
             if ($productWeightSynchDirection == 'dtoe' || $productWeightSynchDirection == 'all') {
                 $variationData['weight'] = (!empty($totalWeight) ? $totalWeight : '');
             }
+			if ($productDimensionSynchDirection == 'dtoe' || $productDimensionSynchDirection == 'all') {
+				$variationData['dimensions'] = array(
+					'length'    => (string)(!empty($totalLength) ? $totalLength : ''),
+					'width'     => (string)(!empty($totalWidth) ? $totalWidth : ''),
+					'height'    => (string)(!empty($totalHeight) ? $totalHeight : ''),
+				);
+			}
             if ($productTaxSynchDirection == 'dtoe' || $productTaxSynchDirection == 'all') {
                 $variationData['tax_status'] = 'none';
 
@@ -2553,19 +2583,26 @@ class eCommerceRemoteAccessWoocommerce
                 $productData['sku'] = $object->ref;
             }
             if ($productDescriptionSynchDirection == 'dtoe' || $productDescriptionSynchDirection == 'all') {
-                $productData['description'] = nl2br($object->array_options["options_ecommerceng_description_{$conf->entity}"]);
+                $productData['description'] = dol_textishtml($object->array_options["options_ecommerceng_description_{$conf->entity}"]) ? $object->array_options["options_ecommerceng_description_{$conf->entity}"] : nl2br($object->array_options["options_ecommerceng_description_{$conf->entity}"]);
 
 				if (empty($productData['description']) || $initial_data) {
-					$productData['description'] = nl2br($object->description);
+					$productData['description'] =  dol_textishtml($object->description) ? $object->description : nl2br($object->description);
 					$object->array_options["options_ecommerceng_description_{$conf->entity}"] = $productData['description'];
 				}
             }
             if ($productShortDescriptionSynchDirection == 'dtoe' || $productShortDescriptionSynchDirection == 'all') {
-                $productData['short_description'] = nl2br($object->array_options["options_ecommerceng_short_description_{$conf->entity}"]);
+                $productData['short_description'] = dol_textishtml($object->array_options["options_ecommerceng_short_description_{$conf->entity}"]) ? $object->array_options["options_ecommerceng_short_description_{$conf->entity}"] : nl2br($object->array_options["options_ecommerceng_short_description_{$conf->entity}"]);
             }
             if ($productWeightSynchDirection == 'dtoe' || $productWeightSynchDirection == 'all') {
                 $productData['weight'] = (!empty($totalWeight) ? $totalWeight : '');
             }
+			if ($productDimensionSynchDirection == 'dtoe' || $productDimensionSynchDirection == 'all') {
+				$productData['dimensions'] = array(
+					'length'    => (string)(!empty($totalLength) ? $totalLength : ''),
+					'width'     => (string)(!empty($totalWidth) ? $totalWidth : ''),
+					'height'    => (string)(!empty($totalHeight) ? $totalHeight : ''),
+				);
+			}
             if ($productTaxSynchDirection == 'dtoe' || $productTaxSynchDirection == 'all') {
                 $productData['tax_status'] = 'none';
 
@@ -3396,6 +3433,7 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Create batch products from Dolibarr products IDs: '{$ids}' for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
+        return array(); // Todo to remake
 		$this->errors = array();
 
 		require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';

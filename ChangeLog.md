@@ -1,5 +1,14 @@
 # ChangeLog
 
+## 4.0.103.0
+- Le lien de l'image fournt a woocommerce comptient le nom reel de l'image
+- Le nom de l'image sans son extension est fournit comme nom et nom alternatif a woocommerce
+- Ajout de la synchronisation de la hauteur, largeur et profondeur du produit avec woocommerce
+- Correction de l'envoi de la description du produit vers woocommerce 
+
+## 4.0.102.0
+- Ajout d'un script executant l'action du bouton de synchro des produits de Dolibarr vers le site
+
 ## 4.0.101.0
 - Compatibilité v13+ pour la gestion des champs complémentaires
 - Ajout du triggers sur la creation du lien d'une commande

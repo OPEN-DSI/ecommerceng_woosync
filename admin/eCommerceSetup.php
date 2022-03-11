@@ -331,6 +331,7 @@ if ($_POST['site_form_detail_action'] == 'save')
                 'description' => isset($_POST['ecommerce_product_description_synch_direction']) ? GETPOST('ecommerce_product_description_synch_direction', 'alpha') : 'etod',
                 'short_description' => isset($_POST['ecommerce_product_short_description_synch_direction']) ? GETPOST('ecommerce_product_short_description_synch_direction', 'alpha') : 'etod',
                 'weight' => isset($_POST['ecommerce_product_weight_synch_direction']) ? GETPOST('ecommerce_product_weight_synch_direction', 'alpha') : 'etod',
+				'dimension' => isset($_POST['ecommerce_product_dimension_synch_direction']) ? GETPOST('ecommerce_product_dimension_synch_direction', 'alpha') : 'etod',
                 'tax' => isset($_POST['ecommerce_product_tax_synch_direction']) ? GETPOST('ecommerce_product_tax_synch_direction', 'alpha') : 'etod',
                 'status' => isset($_POST['ecommerce_product_status_synch_direction']) ? GETPOST('ecommerce_product_status_synch_direction', 'alpha') : 'etod',
             );
@@ -361,6 +362,7 @@ if ($_POST['site_form_detail_action'] == 'save')
                 'product_synch_direction' => $ecommerceProductSynchDirection,
                 'product_synch_price' => $ecommerceProductSynchPrice,
 				'product_weight_units' => $_POST['ecommerce_product_weight_units'],
+				'product_dimension_units' => $_POST['ecommerce_product_dimension_units'],
 				'product_variation_mode' => GETPOSTISSET('ecommerce_product_variation_mode') ? GETPOST('ecommerce_product_variation_mode', 'aZ09') : 'one_to_one',
                 'customer_roles' => $ecommerceWoocommerceCustomerRoles,
 				'create_invoice_type' => $ecommerceCreateInvoiceType,
@@ -1007,13 +1009,15 @@ if ($ecommerceId > 0) {
         }
 
 		$ecommerceProductWeightUnits = (isset($siteDb->parameters['product_weight_units']) ? $siteDb->parameters['product_weight_units'] : (empty($conf->global->MAIN_WEIGHT_DEFAULT_UNIT)?0:$conf->global->MAIN_WEIGHT_DEFAULT_UNIT));
+		$ecommerceProductDimensionUnits = (isset($siteDb->parameters['product_dimension_units']) ? $siteDb->parameters['product_dimension_units'] : -2); // -2 = cm
 
         $ecommerceProductSynchPrice = isset($siteDb->parameters['product_synch_price']) ? $siteDb->parameters['product_synch_price'] : 'regular';
         $ecommerceProductImageSynchDirection = isset($siteDb->parameters['product_synch_direction']['image']) ? $siteDb->parameters['product_synch_direction']['image'] : 'etod';
         $ecommerceProductRefSynchDirection = isset($siteDb->parameters['product_synch_direction']['ref']) ? $siteDb->parameters['product_synch_direction']['ref'] : 'etod';
         $ecommerceProductDescriptionSynchDirection = isset($siteDb->parameters['product_synch_direction']['description']) ? $siteDb->parameters['product_synch_direction']['description'] : 'etod';
         $ecommerceProductShortDescriptionSynchDirection = isset($siteDb->parameters['product_synch_direction']['short_description']) ? $siteDb->parameters['product_synch_direction']['short_description'] : 'etod';
-        $ecommerceProductWeightSynchDirection = isset($siteDb->parameters['product_synch_direction']['weight']) ? $siteDb->parameters['product_synch_direction']['weight'] : 'etod';
+		$ecommerceProductWeightSynchDirection = isset($siteDb->parameters['product_synch_direction']['weight']) ? $siteDb->parameters['product_synch_direction']['weight'] : 'etod';
+		$ecommerceProductDimensionSynchDirection = isset($siteDb->parameters['product_synch_direction']['dimension']) ? $siteDb->parameters['product_synch_direction']['dimension'] : 'etod';
         $ecommerceProductTaxSynchDirection = isset($siteDb->parameters['product_synch_direction']['tax']) ? $siteDb->parameters['product_synch_direction']['tax'] : 'etod';
         $ecommerceProductStatusSynchDirection = isset($siteDb->parameters['product_synch_direction']['status']) ? $siteDb->parameters['product_synch_direction']['status'] : 'etod';
 		$ecommerceProductVariationMode = isset($siteDb->parameters['product_variation_mode']) ? $siteDb->parameters['product_variation_mode'] : 'one_to_one';

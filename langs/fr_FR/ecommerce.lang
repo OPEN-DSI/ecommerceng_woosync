@@ -252,6 +252,8 @@ ECommerceProductShortDescriptionSyncDirection                                   
 ECommerceProductShortDescriptionSyncDirectionDescription                                            =Ce paramètre détermine le sens de mise à jour de la description courte
 ECommerceProductWeightSyncDirection                                                                 =Synchronisation du poids du produit
 ECommerceProductWeightSyncDirectionDescription                                                      =Ce paramètre détermine le sens de mise à jour du poids du produit
+ECommerceProductDimensionSyncDirection                                                              =Synchronisation des dimensions du produit
+ECommerceProductDimensionSyncDirectionDescription                                                   =Ce paramètre détermine le sens de mise à jour des dimensions du produit
 ECommerceProductTaxSyncDirection                                                                    =Synchronisation de la classes de TVA sur la boutique
 ECommerceProductTaxSyncDirectionDescription                                                         =Ce paramètre détermine le sens de mise à jour de la classes de TVA sur la boutique
 ECommerceProductStatusSyncDirection                                                                 =Synchronisation du statut sur la boutique
@@ -259,6 +261,8 @@ ECommerceProductStatusSyncDirectionDescription                                  
 
 ECommerceProductWeightUnits                                                                         =Unité de poids sur la boutique
 ECommerceProductWeightUnitsDescription                                                              =Ce paramètre détermine l'unité de poids sur la boutique
+ECommerceProductDimensionUnits                                                                      =Unité des dimensions sur la boutique
+ECommerceProductDimensionUnitsDescription                                                           =Ce paramètre détermine l'unité des dimensions sur la boutique
 
 ECommerceExportProductsPrices                                                                       =Export des prix des produits (WooSync)
 ECommerceImportProductsPrices                                                                       =Import des prix des produits (WooSync) (Ne supporte pas l'ajout de nouveaux produits, la mise à jour n'est supportée que par un fichier CSV)

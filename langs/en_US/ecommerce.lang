@@ -260,6 +260,8 @@ ECommerceProductShortDescriptionSyncDirection=Short description synchronization
 ECommerceProductShortDescriptionSyncDirectionDescription=This parameter determines the direction in which the short description is updated
 ECommerceProductWeightSyncDirection=Product weight synchronization
 ECommerceProductWeightSyncDirectionDescription=This parameter determines the direction in which the product weight is updated
+ECommerceProductDimensionSyncDirection                                                              =Synchronisation des dimensions du produit
+ECommerceProductDimensionSyncDirectionDescription                                                   =Ce paramètre détermine le sens de mise à jour des dimensions du produit
 ECommerceProductTaxSyncDirection=VAT classes of the store synchronization
 ECommerceProductTaxSyncDirectionDescription=This parameter determines the direction in which the VAT classes of the store are updated
 ECommerceProductStatusSyncDirection=Status on the store synchronization
@@ -267,6 +269,8 @@ ECommerceProductStatusSyncDirectionDescription=This parameter determines the dir
 
 ECommerceProductWeightUnits=Unit of weight in the store
 ECommerceProductWeightUnitsDescription=This parameter determines the unit of weight in the store
+ECommerceProductDimensionUnits                                                                      =Unité des dimensions sur la boutique
+ECommerceProductDimensionUnitsDescription                                                           =Ce paramètre détermine l'unité des dimensions sur la boutique
 
 ECommerceExportProductsPrices=Export of product prices (WooSync)
 ECommerceImportProductsPrices=Import of product prices (WooSync) (Does not support the addition of new products, the update is only supported by the CSV)

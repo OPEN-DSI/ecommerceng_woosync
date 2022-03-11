@@ -1,5 +1,5 @@
 <IfModule mod_rewrite.c>
 RewriteEngine on
-RewriteRule (.*)\.jpg ../../../document.php?hashp=$1 [NC]
-#RewriteRule (.*)\.jpg ../../../../document.php?hashp=$1 [NC]
+RewriteRule (.*)/.* ../../../document.php?hashp=$1 [NC]
+#RewriteRule (.*)/.* ../../document.php?hashp=$1 [NC] # if the module is installed in the htdocs and not in custom
 </IfModule>

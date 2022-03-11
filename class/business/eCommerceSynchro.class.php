@@ -114,7 +114,7 @@ class eCommerceSynchro
     private $commandeToUpdate;
     private $factureToUpdate;
 
-    private $cache_categories;
+	public $cache_categories;
 
 	public $payment_gateways_cached;
 	public $product_category_cached;
@@ -3630,6 +3630,12 @@ class eCommerceSynchro
 						$product->description = isset($product_data['description']) ? $product_data['description'] : $product->description;
 						$product->weight = isset($product_data['weight']) ? $product_data['weight'] : $product->weight;
 						$product->weight_units = isset($product_data['weight_units']) ? $product_data['weight_units'] : $product->weight_units;
+						$product->width = isset($product_data['width']) ? $product_data['width'] : $product->width;
+						$product->width_units = isset($product_data['width_units']) ? $product_data['width_units'] : $product->width_units;
+						$product->height = isset($product_data['height']) ? $product_data['height'] : $product->height;
+						$product->height_units = isset($product_data['height_units']) ? $product_data['height_units'] : $product->height_units;
+						$product->length = isset($product_data['length']) ? $product_data['length'] : $product->length;
+						$product->length_units = isset($product_data['length_units']) ? $product_data['length_units'] : $product->length_units;
 						$product->type = $product_data['fk_product_type'];
 						$product->finished = $product_data['finished'];
 						$product->status = $product_data['envente'];
