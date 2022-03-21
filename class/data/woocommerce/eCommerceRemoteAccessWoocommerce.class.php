@@ -3315,7 +3315,7 @@ class eCommerceRemoteAccessWoocommerce
         }
 
         dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
-        return array('remote_id' => $remote_id, 'url' => $remote_url);
+        return array('remote_id' => $remote_id, 'remote_url' => $remote_url);
     }
 
     /**
