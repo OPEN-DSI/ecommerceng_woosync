@@ -465,6 +465,7 @@ class InterfaceECommerceng
 						if (!$error) {
 							$remote_id = $result['remote_id'];
 							$object->url = $result['remote_url'];
+							$object->context['fromsyncofecommerceid'] = $site->id;
 							$result = $object->update($object->id, $user);
 							if ($result < 0) {
 								$error++;

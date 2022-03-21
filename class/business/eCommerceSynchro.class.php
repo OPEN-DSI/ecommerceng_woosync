@@ -1988,6 +1988,7 @@ class eCommerceSynchro
 							$remote_id = $result['remote_id'];
 
 							$product_static->url = $result['remote_url'];
+							$product_static->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
 							$result = $product_static->update($obj->rowid, $user);
 							if ($result < 0) {
 								$error++;
