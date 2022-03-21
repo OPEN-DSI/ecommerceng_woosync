@@ -1985,17 +1985,31 @@ class eCommerceSynchro
 							$this->error = $this->eCommerceRemoteAccess->error;
 							$this->errors = $this->eCommerceRemoteAccess->errors;
 						} else {
-							// Create remote link
-							$this->eCommerceProduct->remote_id = $result;
-							$this->eCommerceProduct->fk_site = $this->eCommerceSite->id;
-							$this->eCommerceProduct->fk_product = $product_static->id;
-							$this->eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
-							if ($this->eCommerceProduct->create($user) < 0) {
+							$remote_id = $result['remote_id'];
+
+							$product_static->url = $result['remote_url'];
+							$result = $product_static->update($obj->rowid, $user);
+							if ($result < 0) {
 								$error++;
-								$error_msg = $langs->trans('ECommerceCreateRemoteProductLink', $product_static->id, $this->eCommerceSite->name, $this->eCommerceProduct->error);
+								$error_msg = $langs->trans('ECommerceUpdateProduct');
 								$this->errors[] = $error_msg;
-								$this->errors = array_merge($this->errors, $this->eCommerceProduct->errors);
+								$this->errors = array_merge($this->errors, $product_static->errors);
 								dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
+							}
+
+							// Create remote link
+							if (!$error) {
+								$this->eCommerceProduct->remote_id = $remote_id;
+								$this->eCommerceProduct->fk_site = $this->eCommerceSite->id;
+								$this->eCommerceProduct->fk_product = $product_static->id;
+								$this->eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
+								if ($this->eCommerceProduct->create($user) < 0) {
+									$error++;
+									$error_msg = $langs->trans('ECommerceCreateRemoteProductLink', $product_static->id, $this->eCommerceSite->name, $this->eCommerceProduct->error);
+									$this->errors[] = $error_msg;
+									$this->errors = array_merge($this->errors, $this->eCommerceProduct->errors);
+									dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
+								}
 							}
 						}
 					} else {

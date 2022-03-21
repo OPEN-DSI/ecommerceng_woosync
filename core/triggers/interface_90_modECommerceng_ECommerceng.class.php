@@ -463,11 +463,24 @@ class InterfaceECommerceng
 						}
 
 						if (!$error) {
+							$remote_id = $result['remote_id'];
+							$object->url = $result['remote_url'];
+							$result = $object->update($object->id, $user);
+							if ($result < 0) {
+								$error++;
+								$error_msg = $langs->trans('ECommerceUpdateProduct');
+								$this->errors[] = $error_msg;
+								$this->errors = array_merge($this->errors, $object->errors);
+								dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
+							}
+						}
+
+						if (!$error) {
 							// Create remote link
 							$eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
 							$eCommerceProduct->fk_product = $object->id;
 							$eCommerceProduct->fk_site = $site->id;
-							$eCommerceProduct->remote_id = $result;
+							$eCommerceProduct->remote_id = $remote_id;
 							$res = $eCommerceProduct->create($user);
 							if ($res < 0) {
 								$error++;

@@ -1,5 +1,11 @@
 # ChangeLog
 
+## 4.0.105.0
+- Enregistrement de l'url du produit de la boutique dans le produit dolibarr lors qu'il est creer et synchronisé depuis dolibarr
+
+## 4.0.104.0
+- Correction de l'import des prix
+
 ## 4.0.103.0
 - Le lien de l'image fournt a woocommerce comptient le nom reel de l'image
 - Le nom de l'image sans son extension est fournit comme nom et nom alternatif a woocommerce

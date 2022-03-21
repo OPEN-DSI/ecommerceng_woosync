@@ -3251,7 +3251,7 @@ class eCommerceRemoteAccessWoocommerce
      *
      * @param   Product     $object     Object product
      *
-     * @return  boolean|int             False of Id of remote product created
+     * @return  boolean|array             False or data (Id, url, ...) of remote product created
      */
     public function createRemoteProduct($object)
     {
@@ -3274,9 +3274,12 @@ class eCommerceRemoteAccessWoocommerce
         }
         $results = isset($results->products) ? $results->products : is_array($results) ? $results : [];
 
+		$remote_id = '';
+		$remote_url = '';
         if (is_array($results) && count($results) > 0) {
 			$remote_id = $results[0]->id;
-            if (!$this->updateRemoteProduct($remote_id, $object))
+			$remote_url = $results[0]->permalink;
+           if (!$this->updateRemoteProduct($remote_id, $object))
                 return false;
         } else {
 			$datas = $this->convertObjectIntoProductData('', $object);
@@ -3298,6 +3301,7 @@ class eCommerceRemoteAccessWoocommerce
 					if (!self::$disable_put_post_to_api) $res = $this->client->post("products", $remote_data);
 					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 					$remote_id = $res->id;
+					$remote_url = $res->permalink;
 					dol_syslog(__METHOD__ . " - Send POST to API 'products' : Data: " . json_encode($remote_data) . "; Remote ID: $remote_id", LOG_NOTICE);
 				} catch (HttpClientException $fault) {
 					eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
@@ -3311,7 +3315,7 @@ class eCommerceRemoteAccessWoocommerce
         }
 
         dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
-        return $remote_id;
+        return array('remote_id' => $remote_id, 'url' => $remote_url);
     }
 
     /**

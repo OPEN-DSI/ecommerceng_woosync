@@ -61,7 +61,7 @@ class modECommerceNg extends DolibarrModules
 		$this->editor_url = 'http://www.open-dsi.fr';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '4.0.103';
+		$this->version = '4.0.105';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_' . strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
@@ -367,7 +367,6 @@ class modECommerceNg extends DolibarrModules
 		$this->import_tables_array[$r] = array('p' => MAIN_DB_PREFIX . 'product');
 		$this->import_tables_creator_array[$r] = array('p' => 'fk_user_author');    // Fields to store import user id
 		$this->import_fields_array[$r] = array('p.ref' => "Ref*", 'p.price_base_type' => "PriceBase*", 'p.price_min' => "MinPriceHT", 'p.price' => "UnitPriceHT", 'p.price_min_ttc' => "MinPriceTTC", 'p.price_ttc' => "UnitPriceTTC", 'p.tva_tx' => 'VATRate');
-		$this->import_fieldshidden_array[$r] = array('p.tms' => $this->db->idate(dol_now()));
 		$this->import_regex_array[$r] = array('p.ref' => '[^ ]', 'p.price_base_type' => '^HT|TTC$');
 		$this->import_examplevalues_array[$r] = array('p.ref' => "PREF123456", 'p.price_base_type' => "HT or TTC", 'p.price_min' => "100", 'p.price' => "100", 'p.price_min_ttc' => "110", 'p.price_ttc' => "110", 'p.tva_tx' => '10');
 		$this->import_updatekeys_array[$r] = array('p.ref' => 'Ref');

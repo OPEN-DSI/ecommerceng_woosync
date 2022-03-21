@@ -159,7 +159,17 @@ if ($max_sites > 0) {
 							print "\nError: Create product (ID: {$obj->product_id}): " . errorsToString($eCommerceSynchro->eCommerceRemoteAccess) . ".\n";
 							$error++;
 						} else {
-							$remote_id = $result;
+							$remote_id = $result['remote_id'];
+
+							$object->url = $result['remote_url'];
+							$result = $object->update($object->id, $user);
+							if ($result < 0) {
+								$error++;
+								$error_msg = $langs->trans('ECommerceUpdateProduct');
+								$this->errors[] = $error_msg;
+								$this->errors = array_merge($this->errors, $object->errors);
+								dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
+							}
 						}
 					} else {
 						// Update remote product
