@@ -1328,6 +1328,14 @@ class eCommerceRemoteAccessWoocommerce
 
 		$this->errors = array();
 
+		// Get provided taxes info
+		$tax_list = array();
+		if (!empty($remote_data->tax_lines)) {
+			foreach ($remote_data->tax_lines as $tax) {
+				if (!empty($tax->rate_percent)) $tax_list[$tax->rate_id] = price2num($tax->rate_percent);
+			}
+		}
+
 		// Set product lines
 		$items = [];
 		if (!empty($remote_data->line_items)) {
@@ -1359,7 +1367,7 @@ class eCommerceRemoteAccessWoocommerce
 				];
 
 				// Taxes
-				$taxes = $this->getTaxesInfoFromRemoteData($item->taxes);
+				$taxes = $this->getTaxesInfoFromRemoteData($item->taxes, $tax_list);
 				if ($taxes === false) return false;
 				$item_data['tva_tx'] = $taxes['tva_tx'];
 				$item_data['local_tax1_tx'] = $taxes['local_tax1_tx'];
@@ -1424,7 +1432,7 @@ class eCommerceRemoteAccessWoocommerce
 				];
 
 				// Taxes
-				$taxes = $this->getTaxesInfoFromRemoteData($item->taxes);
+				$taxes = $this->getTaxesInfoFromRemoteData($item->taxes, $tax_list);
 				if ($taxes === false) return false;
 				$item_data['tva_tx'] = $taxes['tva_tx'];
 				$item_data['local_tax1_tx'] = $taxes['local_tax1_tx'];
@@ -1554,7 +1562,7 @@ class eCommerceRemoteAccessWoocommerce
 				];
 
 				// Taxes
-				$taxes = $this->getTaxesInfoFromRemoteData($fee_line->taxes);
+				$taxes = $this->getTaxesInfoFromRemoteData($fee_line->taxes, $tax_list);
 				if ($taxes === false) return false;
 				$line['tva_tx'] = $taxes['tva_tx'];
 				$line['local_tax1_tx'] = $taxes['local_tax1_tx'];
@@ -4199,9 +4207,10 @@ class eCommerceRemoteAccessWoocommerce
 	 * Retrieve Dolibarr taxes info from remote data
 	 *
 	 * @param 	array		$taxes_data		Info of the taxes
+	 * @param 	array		$tax_list		Taxes list provided by the order
 	 * @return  array|bool					Dolibarr taxes info
 	 */
-	private function getTaxesInfoFromRemoteData($taxes_data)
+	private function getTaxesInfoFromRemoteData($taxes_data, $tax_list = array())
 	{
 		global $langs;
 		$tva_tx = 0;
@@ -4214,13 +4223,16 @@ class eCommerceRemoteAccessWoocommerce
 			$count++;
 			if ($count > 1) break;
 
-			$taxes_data = array_values($taxes_data);
-			$tax_id = $taxes_data[0]->id;
-			if (isset(self::$taxes_rates_cached[$tax_id])) {
-				$tva_tx = self::$taxes_rates_cached[$tax_id]['rate'];
+			$tax_id = $data->id;
+			if (isset($tax_list[$tax_id])) {
+				$tva_tx = $tax_list[$tax_id];
 			} else {
-				$this->errors[] = $langs->trans('ECommerceWooCommerceErrorTaxNotFound', $tax_id);
-				return false;
+				if (isset(self::$taxes_rates_cached[$tax_id])) {
+					$tva_tx = self::$taxes_rates_cached[$tax_id]['rate'];
+				} else {
+					$this->errors[] = $langs->trans('ECommerceWooCommerceErrorTaxNotFound', $tax_id);
+					return false;
+				}
 			}
 		}
 

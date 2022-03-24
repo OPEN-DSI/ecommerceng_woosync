@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.107.0
+- Recupere les information du taux de tva depuis la commande si fournit, sinon utilise les données de tva synchronisé
+
 ## 4.0.106.0
 - Ne supprime plus les anciens modes de paiements synchronisés lors de la synchronisation des modes de paiements du site
 
