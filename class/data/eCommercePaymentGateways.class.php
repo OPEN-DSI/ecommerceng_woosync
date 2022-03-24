@@ -83,10 +83,10 @@ class eCommercePaymentGateways
         $this->db->begin();
 
         // Delete all line for the site
-        $result = $this->delete_all($site_id);
-        if ($result < 0) {
-            $errors++;
-        }
+//        $result = $this->delete_all($site_id);
+//        if ($result < 0) {
+//            $errors++;
+//        }
 
         if (!$errors) {
             // Insert values
@@ -105,7 +105,7 @@ class eCommercePaymentGateways
                 $sql .= ', ' . $conf->entity;
                 $sql .= ')';
                 $resql = $this->db->query($sql);
-                if (!$resql) {
+                if (!$resql && $this->db->errno() != 'DB_ERROR_RECORD_ALREADY_EXISTS') {
                     dol_syslog(__METHOD__ . ' SQL: ' . $sql . '; Errors: ' . $this->db->lasterror(), LOG_ERR);
                     $this->errors[] = $this->db->lasterror();
                     $errors++;

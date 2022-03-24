@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.106.0
+- Ne supprime plus les anciens modes de paiements synchronisés lors de la synchronisation des modes de paiements du site
+
 ## 4.0.105.0
 - Enregistrement de l'url du produit de la boutique dans le produit dolibarr lors qu'il est creer et synchronisé depuis dolibarr
 
