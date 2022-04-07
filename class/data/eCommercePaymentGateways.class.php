@@ -82,37 +82,53 @@ class eCommercePaymentGateways
 
         $this->db->begin();
 
-        // Delete all line for the site
-//        $result = $this->delete_all($site_id);
-//        if ($result < 0) {
-//            $errors++;
-//        }
-
         if (!$errors) {
-            // Insert values
-            foreach ($payment_gateways as $payment_gateway_id => $infos) {
-                $sql = 'INSERT INTO ' . MAIN_DB_PREFIX . $this->table_element . '(site_id, payment_gateway_id, payment_gateway_label, payment_mode_id, bank_account_id, create_invoice_payment, mail_model_for_send_invoice, supplier_id, product_id_for_fee, create_supplier_invoice_payment, entity) VALUES (';
-                $sql .= $site_id;
-                $sql .= ", '" . $this->db->escape($payment_gateway_id) . "'";
-                $sql .= ", '" . $this->db->escape($infos['payment_gateway_label']) . "'";
-                $sql .= ', ' . ($infos['payment_mode_id'] > 0 ? $infos['payment_mode_id'] : 'NULL');
-                $sql .= ', ' . ($infos['bank_account_id'] > 0 ? $infos['bank_account_id'] : 'NULL');
-                $sql .= ', ' . (!empty($infos['create_invoice_payment']) ? 1 : 'NULL');
-                $sql .= ', ' . ($infos['mail_model_for_send_invoice'] > 0 ? $infos['mail_model_for_send_invoice'] : 'NULL');
-                $sql .= ', ' . ($infos['supplier_id'] > 0 ? $infos['supplier_id'] : 'NULL');
-                $sql .= ', ' . ($infos['product_id_for_fee'] > 0 ? $infos['product_id_for_fee'] : 'NULL');
-                $sql .= ', ' . (!empty($infos['create_supplier_invoice_payment']) ? 1 : 'NULL');
-                $sql .= ', ' . $conf->entity;
-                $sql .= ')';
-                $resql = $this->db->query($sql);
-                if (!$resql && $this->db->errno() != 'DB_ERROR_RECORD_ALREADY_EXISTS') {
-                    dol_syslog(__METHOD__ . ' SQL: ' . $sql . '; Errors: ' . $this->db->lasterror(), LOG_ERR);
-                    $this->errors[] = $this->db->lasterror();
-                    $errors++;
-                    break;
-                }
-            }
-        }
+			// Insert values
+			foreach ($payment_gateways as $payment_gateway_id => $infos) {
+				$sql = 'INSERT INTO ' . MAIN_DB_PREFIX . $this->table_element . '(site_id, payment_gateway_id, payment_gateway_label, payment_mode_id, bank_account_id, create_invoice_payment, mail_model_for_send_invoice, supplier_id, product_id_for_fee, create_supplier_invoice_payment, entity) VALUES (';
+				$sql .= $site_id;
+				$sql .= ", '" . $this->db->escape($payment_gateway_id) . "'";
+				$sql .= ", '" . $this->db->escape($infos['payment_gateway_label']) . "'";
+				$sql .= ', ' . ($infos['payment_mode_id'] > 0 ? $infos['payment_mode_id'] : 'NULL');
+				$sql .= ', ' . ($infos['bank_account_id'] > 0 ? $infos['bank_account_id'] : 'NULL');
+				$sql .= ', ' . (!empty($infos['create_invoice_payment']) ? 1 : 'NULL');
+				$sql .= ', ' . ($infos['mail_model_for_send_invoice'] > 0 ? $infos['mail_model_for_send_invoice'] : 'NULL');
+				$sql .= ', ' . ($infos['supplier_id'] > 0 ? $infos['supplier_id'] : 'NULL');
+				$sql .= ', ' . ($infos['product_id_for_fee'] > 0 ? $infos['product_id_for_fee'] : 'NULL');
+				$sql .= ', ' . (!empty($infos['create_supplier_invoice_payment']) ? 1 : 'NULL');
+				$sql .= ', ' . $conf->entity;
+				$sql .= ')';
+				$resql = $this->db->query($sql);
+				if (!$resql) {
+					if ($this->db->errno() == 'DB_ERROR_RECORD_ALREADY_EXISTS') {
+						$sql = 'UPDATE ' . MAIN_DB_PREFIX . $this->table_element . ' SET';
+						$sql .= "  payment_gateway_label = '" . $this->db->escape($infos['payment_gateway_label']) . "'";
+						$sql .= ', payment_mode_id = ' . ($infos['payment_mode_id'] > 0 ? $infos['payment_mode_id'] : 'NULL');
+						$sql .= ', bank_account_id = ' . ($infos['bank_account_id'] > 0 ? $infos['bank_account_id'] : 'NULL');
+						$sql .= ', create_invoice_payment = ' . (!empty($infos['create_invoice_payment']) ? 1 : 'NULL');
+						$sql .= ', mail_model_for_send_invoice = ' . ($infos['mail_model_for_send_invoice'] > 0 ? $infos['mail_model_for_send_invoice'] : 'NULL');
+						$sql .= ', supplier_id = ' . ($infos['supplier_id'] > 0 ? $infos['supplier_id'] : 'NULL');
+						$sql .= ', product_id_for_fee = ' . ($infos['product_id_for_fee'] > 0 ? $infos['product_id_for_fee'] : 'NULL');
+						$sql .= ', create_supplier_invoice_payment = ' . (!empty($infos['create_supplier_invoice_payment']) ? 1 : 'NULL');
+						$sql .= ' WHERE site_id = ' . $site_id;
+						$sql .= " AND payment_gateway_id = '" . $this->db->escape($payment_gateway_id) . "'";
+						$sql .= ' AND entity = ' . $conf->entity;
+						$resql = $this->db->query($sql);
+						if (!$resql) {
+							dol_syslog(__METHOD__ . ' SQL: ' . $sql . '; Errors: ' . $this->db->lasterror(), LOG_ERR);
+							$this->errors[] = $this->db->lasterror();
+							$errors++;
+							break;
+						}
+					} else {
+						dol_syslog(__METHOD__ . ' SQL: ' . $sql . '; Errors: ' . $this->db->lasterror(), LOG_ERR);
+						$this->errors[] = $this->db->lasterror();
+						$errors++;
+						break;
+					}
+				}
+			}
+		}
 
         if ($errors) {
             $this->db->rollback();

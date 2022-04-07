@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.0.108.0
+- Correction de l'enregistrement des options sur les modes de paiements
+
 ## 4.0.107.0
 - Recupere les information du taux de tva depuis la commande si fournit, sinon utilise les données de tva synchronisé
 
