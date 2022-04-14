@@ -540,6 +540,9 @@ ECommerceErrorWhenUnlinkProductByRemoteId           = Error when deleting the pr
 ECommerceErrorWhenUnlinkProduct                     = Error when deleting the product link (Site: %s; ID: %s; remote ID: %s)
 ECommerceErrorWhenUnlinkProductCategory             = Error when deleting the category on the product (Site: %s; ID: %s; Category ID: %s)
 ECommerceErrorUpdateRefProduct                      = Error when modify the product reference '%s' to new reference '%s' (already exist)
+ECommerceErrorFetchProductByRef                     = Erreur lors du chargement du produit par sa reference (Ref: %s)
+ECommerceErrorProductNotFoundByRef                  = Le produit n'as pas été trouvé par sa reference (Ref: %s)
+ECommerceErrorProductRefMandatory2                  = Le produit "%s" n'as de reference sur le site
 
 ############################################################################################
 # Warnings

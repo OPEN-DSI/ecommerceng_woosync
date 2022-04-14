@@ -4279,23 +4279,15 @@ class eCommerceSynchro
 										$third_party_id = $this->eCommerceSociete->fk_societe;
 									} else {
 										// Customer not supported (eg. order created by admin so we don't need it)
-										$third_party_id = 0;
+										$third_party_id = null;
 									}
 								}
-							}
-						} else {
-							// This is an guest customer.
-							if ($this->eCommerceSite->fk_anonymous_thirdparty > 0) {
-								$third_party_id = $this->eCommerceSite->fk_anonymous_thirdparty;
-							} else {
-								$this->errors[] = $this->langs->trans('ECommerceErrorAnonymousThirdPartyNotConfigured', $this->eCommerceSite->id);
-								$error++;
 							}
 						}
 
 						// Create the order only if the third party ID is found (otherwise it's bypassed)
 						if (!$error) {
-							if ($third_party_id > 0) {
+							if (isset($third_party_id)) {
 								// Fetch order
 								if (!$error) {
 									if (!($order_id > 0)) {
@@ -4379,29 +4371,211 @@ class eCommerceSynchro
 										$error++;
 									}
 
-									// Add product line if new created
-									if (!$error && $new_order && count($order_data['items'])) {
-										// Get products to synchronize
-										$remote_id_to_synchronize = array();
-										foreach ($order_data['items'] as $item) {
-//											$this->initECommerceProduct();
-//											$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
-//											if ($result < 0 && !empty($this->eCommerceProduct->error)) {
-//												$this->error = $this->eCommerceProduct->error;
-//												$this->errors = array_merge($this->errors, $this->eCommerceProduct->errors);
-//												$error++;
-//											} elseif ($result <= 0) {
-											if (!empty($item['id_remote_product']))
-												$remote_id_to_synchronize[] = str_replace('|%', '', $item['id_remote_product']);
-//											}
-										}
-
-										// Synchronize the product to synchronize
-										if (!empty($remote_id_to_synchronize) && !$dont_synchronize_products) {
-											// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
-											$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, count($remote_id_to_synchronize), false, $order);
+									// Add / update contacts
+									if (!$error) {
+										// Search or create the third party for customer contact
+										$contact_data = $order_data['socpeopleCommande'];
+										$result = $this->getContactInfosFromData($contact_data, $order->socid);
+										if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
+										if (!is_array($result)) {
+											$error++;
+										} elseif (!empty($result) && $result['company_id'] > 0) {
+											$order_data['socpeopleCommande']['fk_soc'] = $result['company_id'];
+										} else {
+											if (empty($contact_data['company'])) {
+												if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
+													$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
+												} elseif (!empty($contact_data['firstname'])) {
+													$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
+												} else {
+													$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
+												}
+											} else {
+												$third_party_name = $contact_data['company'];
+											}
+											$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
 											if ($result < 0) {
 												$error++;
+											} elseif ($result > 0) {
+												$order_data['socpeopleCommande']['fk_soc'] = $result;
+											} else {
+												$result = $this->createThirdParty($order_data['ref_client'],
+													$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
+													$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
+												if ($result < 0) {
+													$error++;
+												} elseif ($result > 0) {
+													$order_data['socpeopleCommande']['fk_soc'] = $result;
+												}
+											}
+										}
+
+										// Add / Update customer contact
+										if (!$error) {
+											$result = $this->synchSocpeople($order_data['socpeopleCommande']);
+											if ($result > 0) {
+												$result = $this->addUpdateContact($order, $new_order, $result, 'CUSTOMER');
+												if ($result < 0) {
+													$error++;
+												} else {
+													// Update thirdparty of the order
+													if ($order_data['socpeopleCommande']['fk_soc'] > 0 && $third_party_id != $order_data['socpeopleCommande']['fk_soc']) {
+														$order->socid = $order_data['socpeopleCommande']['fk_soc'];
+														$result = $order->update($this->user);
+														if ($result < 0) {
+															if (!empty($order->error)) $this->errors[] = $order->error;
+															$this->errors = array_merge($this->errors, $order->errors);
+															if (empty($order->error) && empty($order->errors)) $this->errors[] = $this->db->lasterror();
+															$error++;
+														}
+													}
+												}
+											} else {
+												$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
+												$error++;
+											}
+										}
+
+										// Search or create the third party for billing contact
+										if (!$error) {
+											$contact_data = $order_data['socpeopleFacture'];
+											$result = $this->getContactInfosFromData($contact_data, $order->socid);
+											if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
+											if (!is_array($result)) {
+												$error++;
+											} elseif (!empty($result) && $result['company_id'] > 0) {
+												$order_data['socpeopleFacture']['fk_soc'] = $result['company_id'];
+											} else {
+												if (empty($contact_data['company'])) {
+													if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
+														$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
+													} elseif (!empty($contact_data['firstname'])) {
+														$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
+													} else {
+														$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
+													}
+												} else {
+													$third_party_name = $contact_data['company'];
+												}
+												$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
+												if ($result < 0) {
+													$error++;
+												} elseif ($result > 0) {
+													$order_data['socpeopleFacture']['fk_soc'] = $result;
+												} else {
+													$result = $this->createThirdParty($order_data['ref_client'],
+														$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
+														$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
+													if ($result < 0) {
+														$error++;
+													} elseif ($result > 0) {
+														$order_data['socpeopleFacture']['fk_soc'] = $result;
+													}
+												}
+											}
+										}
+
+										// Add / Update billing contact
+										if (!$error) {
+											$result = $this->synchSocpeople($order_data['socpeopleFacture']);
+											if ($result > 0) {
+												$result = $this->addUpdateContact($order, $new_order, $result, 'BILLING');
+												if ($result < 0) {
+													$error++;
+												}
+											} else {
+												$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
+												$error++;
+											}
+										}
+
+										// Search or create the third party for shipping contact
+										if (!$error) {
+											$contact_data = $order_data['socpeopleLivraison'];
+											$result = $this->getContactInfosFromData($contact_data, $order->socid);
+											if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
+											if (!is_array($result)) {
+												$error++;
+											} elseif (!empty($result) && $result['company_id'] > 0) {
+												$order_data['socpeopleLivraison']['fk_soc'] = $result['company_id'];
+											} else {
+												if (empty($contact_data['company'])) {
+													if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
+														$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
+													} elseif (!empty($contact_data['firstname'])) {
+														$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
+													} else {
+														$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
+													}
+												} else {
+													$third_party_name = $contact_data['company'];
+												}
+												$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
+												if ($result < 0) {
+													$error++;
+												} elseif ($result > 0) {
+													$order_data['socpeopleLivraison']['fk_soc'] = $result;
+												} else {
+													$result = $this->createThirdParty($order_data['ref_client'],
+														$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
+														$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
+													if ($result < 0) {
+														$error++;
+													} elseif ($result > 0) {
+														$order_data['socpeopleLivraison']['fk_soc'] = $result;
+													}
+												}
+											}
+										}
+
+										// Add / Update shipping contact
+										if (!$error) {
+											$result = $this->synchSocpeople($order_data['socpeopleLivraison']);
+											if ($result > 0) {
+												$result = $this->addUpdateContact($order, $new_order, $result, 'SHIPPING');
+												if ($result < 0) {
+													$error++;
+												}
+											} else {
+												$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
+												$error++;
+											}
+										}
+
+										// Add sales contact
+										if (!$error && $this->eCommerceSite->parameters['default_sales_representative_follow'] > 0 && $new_order) { // Todo update this contact when update order ?
+											$result = $this->addUpdateContact($order, $new_order, $this->eCommerceSite->parameters['default_sales_representative_follow'], 'SALESREPFOLL', 'internal');
+											if ($result < 0) {
+												$error++;
+											}
+										}
+									}
+
+									// Add product line if new created
+									if (!$error && $new_order && count($order_data['items'])) {
+										if (empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD)) {
+											// Get products to synchronize
+											$remote_id_to_synchronize = array();
+											foreach ($order_data['items'] as $item) {
+//												$this->initECommerceProduct();
+//												$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
+//												if ($result < 0 && !empty($this->eCommerceProduct->error)) {
+//													$this->error = $this->eCommerceProduct->error;
+//													$this->errors = array_merge($this->errors, $this->eCommerceProduct->errors);
+//													$error++;
+//												} elseif ($result <= 0) {
+												if (!empty($item['id_remote_product']))
+													$remote_id_to_synchronize[] = str_replace('|%', '', $item['id_remote_product']);
+//												}
+											}
+
+											// Synchronize the product to synchronize
+											if (!empty($remote_id_to_synchronize) && !$dont_synchronize_products) {
+												// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
+												$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, count($remote_id_to_synchronize), false, $order);
+												if ($result < 0) {
+													$error++;
+												}
 											}
 										}
 
@@ -4412,15 +4586,38 @@ class eCommerceSynchro
 												// Get product ID
 												$fk_product = 0;
 												if (!empty($item['id_remote_product'])) {
-													$this->initECommerceProduct();
-													$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
-													if ($result < 0 && !empty($this->eCommerceProduct->error)) {
-														$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $item['id_remote_product'], $this->eCommerceSite->id);
-														$this->errors[] = $this->eCommerceProduct->error;
-														$error++;
-														break;  // break on items
-													} elseif ($result > 0) {
-														$fk_product = $this->eCommerceProduct->fk_product;
+													if (empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD)) {
+														$this->initECommerceProduct();
+														$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
+														if ($result < 0 && !empty($this->eCommerceProduct->error)) {
+															$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $item['id_remote_product'], $this->eCommerceSite->id);
+															$this->errors[] = $this->eCommerceProduct->error;
+															$error++;
+															break;  // break on items
+														} elseif ($result > 0) {
+															$fk_product = $this->eCommerceProduct->fk_product;
+														}
+													} else {
+														$product_ref = trim($item['ref']);
+														if (!empty($product_ref)) {
+															$product = new Product($this->db);
+															$result = $product->fetch(0, $product_ref);
+															if ($result < 0) {
+																$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductByRef', $product_ref);
+																$this->errors[] = $product->errorsToString();
+																$error++;
+																break;  // break on items
+															} elseif ($result == 0) {
+																$this->errors[] = $this->langs->trans('ECommerceErrorProductNotFoundByRef', $product_ref);
+																$error++;
+																break;  // break on items
+															}
+															$fk_product = $product->id;
+														} elseif (!empty($conf->global->ECOMMERCENG_PRODUCT_REF_MANDATORY)) {
+															$this->errors[] = $this->langs->trans('ECommerceErrorProductRefMandatory2', $item['label']);
+															$error++;
+															break;  // break on items
+														}
 													}
 												} elseif (!empty($item['id_product'])) {
 													$fk_product = $item['id_product'];
@@ -4626,174 +4823,6 @@ class eCommerceSynchro
 											$error++;
 										}
 									}
-
-									// Add / update contacts
-									if (!$error) {
-										// Search or create the third party for customer contact
-										$contact_data = $order_data['socpeopleCommande'];
-										$result = $this->getContactInfosFromData($contact_data, $order->socid);
-										if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
-										if (!is_array($result)) {
-											$error++;
-										} elseif (!empty($result) && $result['company_id'] > 0) {
-											$order_data['socpeopleCommande']['fk_soc'] = $result['company_id'];
-										} else {
-											if (empty($contact_data['company'])) {
-												if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
-													$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
-												} elseif (!empty($contact_data['firstname'])) {
-													$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
-												} else {
-													$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
-												}
-											} else {
-												$third_party_name = $contact_data['company'];
-											}
-											$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
-											if ($result < 0) {
-												$error++;
-											} elseif ($result > 0) {
-												$order_data['socpeopleCommande']['fk_soc'] = $result;
-											} else {
-												$result = $this->createThirdParty($order_data['ref_client'],
-													$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
-													$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
-												if ($result < 0) {
-													$error++;
-												} elseif ($result > 0) {
-													$order_data['socpeopleCommande']['fk_soc'] = $result;
-												}
-											}
-										}
-
-										// Add / Update customer contact
-										if (!$error) {
-											$result = $this->synchSocpeople($order_data['socpeopleCommande']);
-											if ($result > 0) {
-												$result = $this->addUpdateContact($order, $new_order, $result, 'CUSTOMER');
-												if ($result < 0) {
-													$error++;
-												}
-											} else {
-												$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
-												$error++;
-											}
-										}
-
-										// Search or create the third party for billing contact
-										if (!$error) {
-											$contact_data = $order_data['socpeopleFacture'];
-											$result = $this->getContactInfosFromData($contact_data, $order->socid);
-											if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
-											if (!is_array($result)) {
-												$error++;
-											} elseif (!empty($result) && $result['company_id'] > 0) {
-												$order_data['socpeopleFacture']['fk_soc'] = $result['company_id'];
-											} else {
-												if (empty($contact_data['company'])) {
-													if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
-														$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
-													} elseif (!empty($contact_data['firstname'])) {
-														$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
-													} else {
-														$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
-													}
-												} else {
-													$third_party_name = $contact_data['company'];
-												}
-												$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
-												if ($result < 0) {
-													$error++;
-												} elseif ($result > 0) {
-													$order_data['socpeopleFacture']['fk_soc'] = $result;
-												} else {
-													$result = $this->createThirdParty($order_data['ref_client'],
-														$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
-														$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
-													if ($result < 0) {
-														$error++;
-													} elseif ($result > 0) {
-														$order_data['socpeopleFacture']['fk_soc'] = $result;
-													}
-												}
-											}
-										}
-
-										// Add / Update billing contact
-										if (!$error) {
-											$result = $this->synchSocpeople($order_data['socpeopleFacture']);
-											if ($result > 0) {
-												$result = $this->addUpdateContact($order, $new_order, $result, 'BILLING');
-												if ($result < 0) {
-													$error++;
-												}
-											} else {
-												$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
-												$error++;
-											}
-										}
-
-										// Search or create the third party for shipping contact
-										if (!$error) {
-											$contact_data = $order_data['socpeopleLivraison'];
-											$result = $this->getContactInfosFromData($contact_data, $order->socid);
-											if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
-											if (!is_array($result)) {
-												$error++;
-											} elseif (!empty($result) && $result['company_id'] > 0) {
-												$order_data['socpeopleLivraison']['fk_soc'] = $result['company_id'];
-											} else {
-												if (empty($contact_data['company'])) {
-													if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
-														$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
-													} elseif (!empty($contact_data['firstname'])) {
-														$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
-													} else {
-														$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
-													}
-												} else {
-													$third_party_name = $contact_data['company'];
-												}
-												$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
-												if ($result < 0) {
-													$error++;
-												} elseif ($result > 0) {
-													$order_data['socpeopleLivraison']['fk_soc'] = $result;
-												} else {
-													$result = $this->createThirdParty($order_data['ref_client'],
-														$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
-														$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
-													if ($result < 0) {
-														$error++;
-													} elseif ($result > 0) {
-														$order_data['socpeopleLivraison']['fk_soc'] = $result;
-													}
-												}
-											}
-										}
-
-										// Add / Update shipping contact
-										if (!$error) {
-											$result = $this->synchSocpeople($order_data['socpeopleLivraison']);
-											if ($result > 0) {
-												$result = $this->addUpdateContact($order, $new_order, $result, 'SHIPPING');
-												if ($result < 0) {
-													$error++;
-												}
-											} else {
-												$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
-												$error++;
-											}
-										}
-
-										// Add sales contact
-										if (!$error && $this->eCommerceSite->parameters['default_sales_representative_follow'] > 0 && $new_order) { // Todo update this contact when update order ?
-											$result = $this->addUpdateContact($order, $new_order, $this->eCommerceSite->parameters['default_sales_representative_follow'], 'SALESREPFOLL', 'internal');
-											if ($result < 0) {
-												$error++;
-											}
-										}
-									}
 								}
 							} else {
 								$this->warnings[] = $this->langs->trans('ECommerceWarningOrderThirdPartyNotSupported', $order_data['remote_id'], $order_data['remote_id_societe']);
@@ -4987,24 +5016,16 @@ class eCommerceSynchro
 													$third_party_id = $this->eCommerceSociete->fk_societe;
 												} else {
 													// Customer not supported (eg. order created by admin so we don't need it)
-													$third_party_id = 0;
+													$third_party_id = null;
 												}
 											}
-										}
-									} else {
-										// This is an guest customer.
-										if ($this->eCommerceSite->fk_anonymous_thirdparty > 0) {
-											$third_party_id = $this->eCommerceSite->fk_anonymous_thirdparty;
-										} else {
-											$this->errors[] = $this->langs->trans('ECommerceErrorAnonymousThirdPartyNotConfigured', $this->eCommerceSite->id);
-											$error++;
 										}
 									}
 								}
 
 								// Create the invoice only if the third party ID is found (otherwise it's bypassed)
 								if (!$error) {
-									if ($third_party_id > 0) {
+									if (isset($third_party_id)) {
 										$isDepositType = isset($this->eCommerceSite->parameters['create_invoice_type']) && $this->eCommerceSite->parameters['create_invoice_type'] == Facture::TYPE_DEPOSIT;
 										$typeAmount = isset($this->eCommerceSite->parameters['order_actions']['create_invoice_deposit_type']) ? $this->eCommerceSite->parameters['order_actions']['create_invoice_deposit_type'] : '';
 										$valueDeposit = isset($this->eCommerceSite->parameters['order_actions']['create_invoice_deposit_value']) ? $this->eCommerceSite->parameters['order_actions']['create_invoice_deposit_value'] : 0;
@@ -5350,27 +5371,29 @@ class eCommerceSynchro
 												} else {
 													// Add product lines
 													if (!$error && is_array($order_data['items']) && count($order_data['items']) > 0) {
-														// Get products to synchronize
-														$remote_id_to_synchronize = array();
-														foreach ($order_data['items'] as $item) {
-//													$this->initECommerceProduct();
-//													$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
-//													if ($result < 0 && !empty($this->eCommerceProduct->error)) {
-//														$this->error = $this->eCommerceProduct->error;
-//														$this->errors = array_merge($this->errors, $this->eCommerceProduct->errors);
-//														$error++;
-//													} elseif ($result <= 0) {
-															if (!empty($item['id_remote_product']))
-																$remote_id_to_synchronize[] = str_replace('|%', '', $item['id_remote_product']);
-//													}
-														}
+														if (empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD)) {
+															// Get products to synchronize
+															$remote_id_to_synchronize = array();
+															foreach ($order_data['items'] as $item) {
+//																$this->initECommerceProduct();
+//																$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
+//																if ($result < 0 && !empty($this->eCommerceProduct->error)) {
+//																	$this->error = $this->eCommerceProduct->error;
+//																	$this->errors = array_merge($this->errors, $this->eCommerceProduct->errors);
+//																	$error++;
+//																} elseif ($result <= 0) {
+																if (!empty($item['id_remote_product']))
+																	$remote_id_to_synchronize[] = str_replace('|%', '', $item['id_remote_product']);
+//																}
+															}
 
-														// Synchronize the product to synchronize
-														if (!empty($remote_id_to_synchronize) && !$dont_synchronize_products) {
-															// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
-															$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, count($remote_id_to_synchronize), false, $invoice);
-															if ($result < 0) {
-																$error++;
+															// Synchronize the product to synchronize
+															if (!empty($remote_id_to_synchronize) && !$dont_synchronize_products) {
+																// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
+																$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, count($remote_id_to_synchronize), false, $invoice);
+																if ($result < 0) {
+																	$error++;
+																}
 															}
 														}
 
@@ -5389,15 +5412,38 @@ class eCommerceSynchro
 																// Get product ID
 																$fk_product = 0;
 																if (!empty($item['id_remote_product'])) {
-																	$this->initECommerceProduct();
-																	$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
-																	if ($result < 0 && !empty($this->eCommerceProduct->error)) {
-																		$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $item['id_remote_product'], $this->eCommerceSite->id);
-																		$this->errors[] = $this->eCommerceProduct->error;
-																		$error++;
-																		break;  // break on items
-																	} elseif ($result > 0) {
-																		$fk_product = $this->eCommerceProduct->fk_product;
+																	if (empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD)) {
+																		$this->initECommerceProduct();
+																		$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
+																		if ($result < 0 && !empty($this->eCommerceProduct->error)) {
+																			$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $item['id_remote_product'], $this->eCommerceSite->id);
+																			$this->errors[] = $this->eCommerceProduct->error;
+																			$error++;
+																			break;  // break on items
+																		} elseif ($result > 0) {
+																			$fk_product = $this->eCommerceProduct->fk_product;
+																		}
+																	} else {
+																		$product_ref = trim($item['ref']);
+																		if (!empty($product_ref)) {
+																			$product = new Product($this->db);
+																			$result = $product->fetch(0, $product_ref);
+																			if ($result < 0) {
+																				$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductByRef', $product_ref);
+																				$this->errors[] = $product->errorsToString();
+																				$error++;
+																				break;  // break on items
+																			} elseif ($result == 0) {
+																				$this->errors[] = $this->langs->trans('ECommerceErrorProductNotFoundByRef', $product_ref);
+																				$error++;
+																				break;  // break on items
+																			}
+																			$fk_product = $product->id;
+																		} elseif (!empty($conf->global->ECOMMERCENG_PRODUCT_REF_MANDATORY)) {
+																			$this->errors[] = $this->langs->trans('ECommerceErrorProductRefMandatory2', $item['label']);
+																			$error++;
+																			break;  // break on items
+																		}
 																	}
 																} elseif (!empty($item['id_product'])) {
 																	$fk_product = $item['id_product'];
@@ -5553,6 +5599,18 @@ class eCommerceSynchro
 															$result = $this->addUpdateContact($invoice, true, $result, 'CUSTOMER');
 															if ($result < 0) {
 																$error++;
+															} else {
+																// Update thirdparty of the order
+																if ($order_data['socpeopleCommande']['fk_soc'] > 0 && $third_party_id != $order_data['socpeopleCommande']['fk_soc']) {
+																	$invoice->socid = $order_data['socpeopleCommande']['fk_soc'];
+																	$result = $invoice->update($this->user);
+																	if ($result < 0) {
+																		$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceUpdate');
+																		if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+																		$this->errors = array_merge($this->errors, $invoice->errors);
+																		$error++;
+																	}
+																}
 															}
 														} else {
 															$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);

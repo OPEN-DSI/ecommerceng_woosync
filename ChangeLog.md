@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.0.109.0
+- Ajout de 2 variables globales ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD et ECOMMERCENG_PRODUCT_REF_MANDATORY pour permettre de synchroniser les commandes sans avoir à synchroniser les produits/categories
+- Rattache la commande au bon tiers si la commande est anonyme et que le tiers de facturation a été trouvé
+
 ## 4.0.108.0
 - Correction de l'enregistrement des options sur les modes de paiements
 
