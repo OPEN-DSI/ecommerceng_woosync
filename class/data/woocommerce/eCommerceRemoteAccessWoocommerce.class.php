@@ -822,6 +822,10 @@ class eCommerceRemoteAccessWoocommerce
         dol_syslog(__METHOD__ . ": Get " . count($remoteObject) . " remote products ID: " . implode(', ', $remoteObject) . " for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
 
+        if (!empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD)) {
+        	return [];
+		}
+
 		$this->errors = array();
 		$products = [];
         $nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
@@ -1354,6 +1358,7 @@ class eCommerceRemoteAccessWoocommerce
 				$item_data = [
 					'parent_item_id' => isset($parent_match[$item->id]) ? $parent_match[$item->id] : 0,
 					'item_id' => $item->id,
+					'ref' => $item->sku,
 					'label' => $item->name,
 					'id_remote_product' => !empty($item->variation_id) ? (!$product_variation_mode_all_to_one ? $item->product_id . '|' . $item->variation_id : $item->product_id . '|%') : $item->product_id,
 					'product_type' => 'simple',
@@ -1829,6 +1834,10 @@ class eCommerceRemoteAccessWoocommerce
     {
         dol_syslog(__METHOD__ . ": Get remote category tree for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs;
+
+		if (!empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD)) {
+			return [];
+		}
 
 		$this->errors = array();
 		$categories = [];

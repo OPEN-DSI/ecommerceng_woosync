@@ -499,14 +499,17 @@ ECommerceErrorWhenProcessPendingWebHooks            = Erreur lors de la synchron
 ECommerceErrorWebHooksStatusNotActivated            = Le crochet WEB (WebHook) "%s" (ID distant: %s) n'est pas activé (Infos complémentaires: %s)
 ECommerceErrorCheckWebHooksStatus                   = Erreur lors de la vérification des crochet WEB (WebHook) du site "%s" (ID: %s)
 ECommerceErrorWhenCheckingWebHooksStatus            = Erreur lors de la vérification des crochet WEB (WebHook)
-ECommerceErrorTooManyProductLinkToTheRemoteID                                                       =Trop de produits (IDs: %s) liés au même produit distant (ID distant: %s, Site ID : %s)
-ECommerceErrorDeleteProductLink                                                                     =Erreur lors de la suppression du lien avec produit distant (ID distant: %s)
-ECommerceErrorWhenGetProductToUnlink                                                                =Erreur lors de la récupération des produits à délier (Site: %s; Données: %s)
-ECommerceErrorWhenUnlinkProductByProductId                                                          =Erreur lors de la suppression du lien du produit (Site: %s; ID : %s)
-ECommerceErrorWhenUnlinkProductByRemoteId                                                           =Erreur lors de la suppression du lien du produit (Site: %s; ID distant: %s)
-ECommerceErrorWhenUnlinkProduct                                                                     =Erreur lors de la suppression du lien du produit (Site: %s; ID : %s; ID distant: %s)
-ECommerceErrorWhenUnlinkProductCategory                                                             =Erreur lors de la suppression de la catégorie sur le produit (Site: %s; ID : %s; Catégorie ID : %s)
-ECommerceErrorUpdateRefProduct                                                                      =Erreur lors de la modification de la référence du produit '%s' vers la nouvelle référence '%s' (elle existe déjà)
+ECommerceErrorTooManyProductLinkToTheRemoteID       = Trop de produits (IDs: %s) liés au même produit distant (ID distant: %s, Site ID : %s)
+ECommerceErrorDeleteProductLink                     = Erreur lors de la suppression du lien avec produit distant (ID distant: %s)
+ECommerceErrorWhenGetProductToUnlink                = Erreur lors de la récupération des produits à délier (Site: %s; Données: %s)
+ECommerceErrorWhenUnlinkProductByProductId          = Erreur lors de la suppression du lien du produit (Site: %s; ID : %s)
+ECommerceErrorWhenUnlinkProductByRemoteId           = Erreur lors de la suppression du lien du produit (Site: %s; ID distant: %s)
+ECommerceErrorWhenUnlinkProduct                     = Erreur lors de la suppression du lien du produit (Site: %s; ID : %s; ID distant: %s)
+ECommerceErrorWhenUnlinkProductCategory             = Erreur lors de la suppression de la catégorie sur le produit (Site: %s; ID : %s; Catégorie ID : %s)
+ECommerceErrorUpdateRefProduct                      = Erreur lors de la modification de la référence du produit '%s' vers la nouvelle référence '%s' (elle existe déjà)
+ECommerceErrorFetchProductByRef                     = Erreur lors du chargement du produit par sa reference (Ref: %s)
+ECommerceErrorProductNotFoundByRef                  = Le produit n'as pas été trouvé par sa reference (Ref: %s)
+ECommerceErrorProductRefMandatory2                  = Le produit "%s" n'as de reference sur le site
 
 ############################################################################################
 # Warnings
