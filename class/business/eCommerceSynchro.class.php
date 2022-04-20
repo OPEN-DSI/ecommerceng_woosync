@@ -4283,6 +4283,14 @@ class eCommerceSynchro
 									}
 								}
 							}
+						} else {
+							// This is an guest customer.
+							if ($this->eCommerceSite->fk_anonymous_thirdparty > 0) {
+								$third_party_id = $this->eCommerceSite->fk_anonymous_thirdparty;
+							} else {
+								$this->errors[] = $this->langs->trans('ECommerceErrorAnonymousThirdPartyNotConfigured', $this->eCommerceSite->id);
+								$error++;
+							}
 						}
 
 						// Create the order only if the third party ID is found (otherwise it's bypassed)

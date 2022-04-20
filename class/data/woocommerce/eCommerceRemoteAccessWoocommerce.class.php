@@ -2374,7 +2374,7 @@ class eCommerceRemoteAccessWoocommerce
 				}
 			}
             if ($productWeightSynchDirection == 'dtoe' || $productWeightSynchDirection == 'all') {
-                $variationData['weight'] = (!empty($totalWeight) ? $totalWeight : '');
+                $variationData['weight'] = (string)(!empty($totalWeight) ? $totalWeight : '');
             }
 			if ($productDimensionSynchDirection == 'dtoe' || $productDimensionSynchDirection == 'all') {
 				$variationData['dimensions'] = array(
@@ -2611,7 +2611,7 @@ class eCommerceRemoteAccessWoocommerce
                 $productData['short_description'] = dol_textishtml($object->array_options["options_ecommerceng_short_description_{$conf->entity}"]) ? $object->array_options["options_ecommerceng_short_description_{$conf->entity}"] : nl2br($object->array_options["options_ecommerceng_short_description_{$conf->entity}"]);
             }
             if ($productWeightSynchDirection == 'dtoe' || $productWeightSynchDirection == 'all') {
-                $productData['weight'] = (!empty($totalWeight) ? $totalWeight : '');
+                $productData['weight'] = (string)(!empty($totalWeight) ? $totalWeight : '');
             }
 			if ($productDimensionSynchDirection == 'dtoe' || $productDimensionSynchDirection == 'all') {
 				$productData['dimensions'] = array(
