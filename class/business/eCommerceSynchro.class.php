@@ -5028,6 +5028,8 @@ class eCommerceSynchro
 												}
 											}
 										}
+									} elseif ($this->eCommerceSite->fk_anonymous_thirdparty > 0) {
+										$third_party_id = $this->eCommerceSite->fk_anonymous_thirdparty;
 									}
 								}
 
