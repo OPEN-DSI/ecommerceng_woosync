@@ -19,6 +19,7 @@ if (is_object($site)) {
 	$disabled = $synchRights != true && empty($conf->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION);
 
 	print '<form name="form_count" id="form_count" action="' . $_SERVER['PHP_SELF'] . '?id=' . $site->id . '" method="post">';
+	print '<input type="hidden" name="token" value="' . newToken() . '">';
 	//print '<input type="hidden" name="id" value="'.$site->id.'">';
 	if (GETPOST('test_with_no_categ_count', 'alpha')) print '<input type="hidden" name="test_with_no_categ_count" value="' . GETPOST('test_with_no_categ_count', 'alpha') . '">';
 	if (GETPOST('test_with_no_product_count', 'alpha')) print '<input type="hidden" name="test_with_no_product_count" value="' . GETPOST('test_with_no_product_count', 'alpha') . '">';
@@ -304,6 +305,7 @@ if (is_object($site)) {
 	print $langs->trans("SyncIsAutomaticInRealTime", $site->name) . "\n";
 
 	print '<form name="form_count" id="form_count" action="' . $_SERVER['PHP_SELF'] . '?id=' . $site->id . '" method="post">';
+	print '<input type="hidden" name="token" value="' . newToken() . '">';
 	//print '<input type="hidden" name="id" value="'.$site->id.'">';
 
 	print '<table class="centpercent nobordernopadding">';
