@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.1.0
+- Correction de la reference client de la commande
+
 ## 4.1.0.0
 - Correction synchronisation d'une commande d'un invité
 - Correction de la modification du poids d'un produit

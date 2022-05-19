@@ -1520,14 +1520,14 @@ class eCommerceSynchro
                             $settlementTermsId = $this->getSettlementTermsId($factureArray['code_cond_reglement']);
 
                             // First, we check object does not alreay exists. If not, we create it, if it exists, do nothing.
-                            $result = $dBFacture->fetch(0, '', $this->eCommerceSite->name.'-'.$factureArray['ref_client']);
+                            $result = $dBFacture->fetch(0, '', $this->eCommerceSite->name.'-'.$factureArray['remote_id']);
                             if ($result == 0)
                             {
                                 $origin = 'commande';
                                 $originid = $dBCommande->id;
 
                                 $dBFacture->ref_client = $factureArray['ref_client'];
-                                $dBFacture->ref_ext = $this->eCommerceSite->name.'-'.$factureArray['ref_client'];
+                                $dBFacture->ref_ext = $this->eCommerceSite->name.'-'.$factureArray['remote_id'];
                                 $dBFacture->date = strtotime($factureArray['date']);
                                 $dBFacture->socid = $this->eCommerceSociete->fk_societe;
                                 $dBFacture->cond_reglement_id = $settlementTermsId;
@@ -4225,7 +4225,7 @@ class eCommerceSynchro
 		}
 
 		if (!$error) {
-			$order_ref_ext = $this->eCommerceSite->name . '-' . $order_data['ref_client'];
+			$order_ref_ext = $this->eCommerceSite->name . '-' . $order_data['remote_id'];
 			$order_id = 0;
 			$third_party_id = 0;
 			$selected_payment_gateways = null;
@@ -4933,8 +4933,8 @@ class eCommerceSynchro
 		}
 
 		if (!$error && !empty($order_data)) {
-			$order_ref_ext = $this->eCommerceSite->name . '-' . $order_data['ref_client'];
-			$invoice_ref_ext = 'eCommerce-' . $this->eCommerceSite->id . '-' . $order_data['ref_client'];
+			$order_ref_ext = $this->eCommerceSite->name . '-' . $order_data['remote_id'];
+			$invoice_ref_ext = 'eCommerce-' . $this->eCommerceSite->id . '-' . $order_data['remote_id'];
 			$order_id = 0;
 			$third_party_id = 0;
 			$selected_payment_gateways = null;
