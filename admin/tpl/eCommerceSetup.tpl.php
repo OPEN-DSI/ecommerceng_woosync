@@ -33,6 +33,7 @@ print_fiche_titre($langs->trans("ECommerceSetup"),$linkback,'setup');
 	<script type="text/javascript" src="<?php print dol_buildpath('/ecommerceng/js/form.js',1); ?>"></script>
 	<br>
 	<form id="site_form_select" name="site_form_select" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
+		<input type="hidden" name="token" value="<?php print newToken(); ?>" />
 		<select class="flat" id="site_form_select_site" name="site_form_select_site" onchange="eCommerceSubmitForm('site_form_select')">
 			<option value="-1"><?php print $langs->trans('ECommerceAddNewSite') ?></option>
 <?php
@@ -53,7 +54,7 @@ if (count($sites))
 	<?php print_titre($langs->trans("MainSyncSetup")); ?>
 
 	<form name="site_form_detail" id="site_form_detail" action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
-			<input type="hidden" name="token" value="<?php print $_SESSION['newtoken'] ?>">
+			<input type="hidden" name="token" value="<?php print newToken(); ?>">
 			<input id="site_form_detail_action" type="hidden" name="site_form_detail_action" value="save">
 			<input type="hidden" name="ecommerce_id" value="<?php print $ecommerceId ?>">
 			<input type="hidden" name="ecommerce_last_update" value="<?php print $ecommerceLastUpdate ?>">
