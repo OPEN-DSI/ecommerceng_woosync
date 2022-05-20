@@ -3090,7 +3090,7 @@ class eCommerceSynchro
 		if ($error) {
 			$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeCustomers')), $this->errors);
 			if ($success_log && $nb_synchronized) $this->success[] = $this->langs->trans('ECommerceSynchronizeCustomersSuccess', $nb_synchronized);
-			return -1;
+			return -1 - $nb_synchronized;
 		} else {
 			if ($success_log) $this->success[] = $this->langs->trans('ECommerceSynchronizeCustomersSuccess', $nb_synchronized);
 			return $nb_synchronized;
@@ -3470,7 +3470,7 @@ class eCommerceSynchro
 		if ($error) {
 			$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeProducts')), $this->errors);
 			if ($success_log && $nb_synchronized) $this->success[] = $this->langs->trans('ECommerceSynchronizeProductsSuccess', $nb_synchronized, $nb_updated);
-			return -1;
+			return -1 - $nb_synchronized;
 		} else {
 			if ($success_log) $this->success[] = $this->langs->trans('ECommerceSynchronizeProductsSuccess', $nb_synchronized, $nb_updated);
 			return $nb_synchronized;
@@ -4118,7 +4118,7 @@ class eCommerceSynchro
 		if ($error) {
 			$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeOrders')), $this->errors);
 			if ($success_log && $nb_synchronized) $this->success[] = $this->langs->trans('ECommerceSynchronizeOrdersSuccess', $nb_synchronized);
-			return -1;
+			return -1 - $nb_synchronized;
 		} else {
 			if ($success_log) $this->success[] = $this->langs->trans('ECommerceSynchronizeOrdersSuccess', $nb_synchronized);
 			return $nb_synchronized;
