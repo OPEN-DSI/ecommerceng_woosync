@@ -2,6 +2,10 @@
 
 ## 4.1.2.0
 - Ajout d'un script CLI de synchronisation des categories, produits, tiers, commandes du site vers dolibarr dans une plage d'ID
+- FIX: handle CSRF token by marc-dll
+- FIX: when creating standlone invoice, use anonymous thirdparty if none provided by marc-dll
+- FIX: oauth: bad token redirection by marc-dll
+- Corrections
 
 ## 4.1.1.0
 - Correction de la reference client de la commande
