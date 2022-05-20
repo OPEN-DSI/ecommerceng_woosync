@@ -834,7 +834,7 @@ if ($ecommerceId > 0) {
         } catch(Exception $e) {}
         $ecommerceOAuthGenerateToken = (!empty($ecommerceOAuthId) && !empty($ecommerceOAuthSecret) || is_object($ecommerceOAuthTokenObj));
 
-        $ecommerceOAuthBackToUri = urlencode(dol_buildpath('/ecommerceng/admin/eCommerceSetup.php', 2).'?ecommerce_id='.$ecommerceId);
+        $ecommerceOAuthBackToUri = urlencode(dol_buildpath('/ecommerceng/admin/eCommerceSetup.php', 1).'?ecommerce_id='.$ecommerceId);
 
         if (is_object($ecommerceOAuthTokenObj)) {
             $ecommerceOAuthTokenExpired = ($ecommerceOAuthTokenObj->getEndOfLife() !== $ecommerceOAuthTokenObj::EOL_NEVER_EXPIRES && $ecommerceOAuthTokenObj->getEndOfLife() !== $ecommerceOAuthTokenObj::EOL_UNKNOWN && time() > ($ecommerceOAuthTokenObj->getEndOfLife() - 30));
