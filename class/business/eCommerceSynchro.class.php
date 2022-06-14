@@ -3850,7 +3850,7 @@ class eCommerceSynchro
 								require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 
 								$this->initECommerceCategory();
-								$category_ids = $this->eCommerceCategory->getDolibarrCategoryFromRemoteIds($product_data['categories']);     // Return array of dolibarr category ids found into link table
+								$category_ids = $this->eCommerceCategory->getDolibarrCategoryFromRemoteIds($product_data['categories'], $this->eCommerceSite->id);     // Return array of dolibarr category ids found into link table
 								if (is_array($category_ids)) {
 									if (count($category_ids) != count($product_data['categories'])) {
 										$result = $this->synchCategory();
@@ -3858,7 +3858,7 @@ class eCommerceSynchro
 											$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeCategories')), $this->errors);
 											$error++;
 										} else {
-											$category_ids = $this->eCommerceCategory->getDolibarrCategoryFromRemoteIds($product_data['categories']);     // Return array of dolibarr category ids found into link table
+											$category_ids = $this->eCommerceCategory->getDolibarrCategoryFromRemoteIds($product_data['categories'], $this->eCommerceSite->id);     // Return array of dolibarr category ids found into link table
 										}
 									}
 								}

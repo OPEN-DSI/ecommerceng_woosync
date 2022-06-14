@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.3.0
+- Correction de la récupération des catégories filtrées par site
+
 ## 4.1.2.0
 - Ajout d'un script CLI de synchronisation des categories, produits, tiers, commandes du site vers dolibarr dans une plage d'ID
 - FIX: handle CSRF token by marc-dll

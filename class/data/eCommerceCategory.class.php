@@ -586,9 +586,10 @@ class eCommerceCategory // extends CommonObject
      * 		Function to return list of id of Dolibarr categories from a list of remoteCategoriesIds
      *
      * 		@param		array	$ids        Array of remote ids
+	 *      @param      int     $siteId     eCommerceSite Id
      * 		@return		array	            Array of categories' ids
      */
-    public function getDolibarrCategoryFromRemoteIds($ids)
+    public function getDolibarrCategoryFromRemoteIds($ids, $siteId)
     {
         if (count($ids))
         {
@@ -597,7 +598,8 @@ class eCommerceCategory // extends CommonObject
             $ii = 0;
 
             $sql = "SELECT fk_category FROM " . MAIN_DB_PREFIX . $this->table_element;
-            $sql .= " WHERE remote_id IN(";
+			$sql .= " WHERE t.fk_site = " . $siteId;
+            $sql .= " AND remote_id IN(";
             foreach ($ids as $remoteId)
             {
                 $ii++;
