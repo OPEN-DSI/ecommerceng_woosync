@@ -598,7 +598,7 @@ class eCommerceCategory // extends CommonObject
             $ii = 0;
 
             $sql = "SELECT fk_category FROM " . MAIN_DB_PREFIX . $this->table_element;
-			$sql .= " WHERE t.fk_site = " . $siteId;
+			$sql .= " WHERE fk_site = " . $siteId;
             $sql .= " AND remote_id IN(";
             foreach ($ids as $remoteId)
             {
