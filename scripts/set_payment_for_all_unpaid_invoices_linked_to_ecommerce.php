@@ -56,6 +56,7 @@ require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php';
 require_once DOL_DOCUMENT_ROOT . '/compta/paiement/class/paiement.class.php';
 dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
 dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
+dol_include_once('/ecommerceng/lib/eCommerce.lib.php');
 
 // Global variables
 $version=DOL_VERSION;
@@ -126,6 +127,13 @@ if (!empty($remote_invoices)) {
 			print "\nWarning: Fetch to site (ID: $site_id) fails: " . errorsToString($site) . ".\n";
 			continue;
 		}
+
+		$result = confSetEntityValues($db,$conf, $site->entity);
+		if ($result < 0) {
+			print "Error set entity to {$site->entity} : " . $db->lasterror() . "\n";
+			continue;
+		}
+		$user->getrights();
 
 		$eCommerceSynchro = new eCommerceSynchro($db, $site);
 		$eCommerceSynchro->connect();

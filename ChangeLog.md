@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.4.0
+- Correction des scripts pour supporter le multi-entités
+
 ## 4.1.3.0
 - Correction de la récupération des catégories filtrées par site
 

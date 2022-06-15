@@ -738,3 +738,90 @@ function get_company_by_email($db, $email, $site=0)
 
 	return $result;
 }
+
+/**
+ * Load setup values into conf object (read llx_const) for a specified entity
+ * Note that this->db->xxx, this->file->xxx and this->multicompany have been already loaded when setEntityValues is called.
+ *
+ * @param	DoliDB	$db			Database handler
+ * @param	Conf	$conf		Conf handler
+ * @param	int		$entity		Entity to get
+ * @return	int					< 0 if KO, >= 0 if OK
+ */
+function confSetEntityValues($db, &$conf, $entity)
+{
+	if (method_exists($conf, 'setEntityValues')) {
+		return $conf->setEntityValues($db, $entity);
+	} else {
+		if ($conf->entity != $entity) {
+			// If we ask to reload setup for a new entity
+			$conf->entity = $entity;
+
+			// Unset all old modules values
+			if (!empty($conf->modules)) {
+				foreach ($conf->modules as $m) {
+					if (isset($conf->$m)) unset($conf->$m);
+				}
+			}
+
+			// Common objects that are not modules
+			$conf->mycompany	= new stdClass();
+			$conf->admin		= new stdClass();
+			$conf->medias		= new stdClass();
+			$conf->global		= new stdClass();
+
+			// Common objects that are not modules and set by the main and not into the this->setValues()
+			//$conf->browser = new stdClass();	// This is set by main and not into this setValues(), so we keep it intact.
+
+			// First level object
+			// TODO Remove this part.
+			$conf->syslog			= new stdClass();
+			$conf->expedition_bon	= new stdClass();
+			$conf->delivery_note	= new stdClass();
+			$conf->fournisseur		= new stdClass();
+			$conf->product			= new stdClass();
+			$conf->service			= new stdClass();
+			$conf->contrat			= new stdClass();
+			$conf->actions			= new stdClass();
+			$conf->agenda			= new stdClass();
+			$conf->commande			= new stdClass();
+			$conf->propal			= new stdClass();
+			$conf->facture			= new stdClass();
+			$conf->contrat			= new stdClass();
+			$conf->user				= new stdClass();
+			$conf->usergroup		= new stdClass();
+			$conf->adherent			= new stdClass();
+			$conf->bank				= new stdClass();
+			$conf->notification		= new stdClass();
+			$conf->mailing			= new stdClass();
+			$conf->expensereport	= new stdClass();
+			$conf->productbatch		= new stdClass();
+
+			// Common arrays
+			$conf->cache = array();
+			$conf->modules = array();;
+			$conf->modules_parts = array(
+				'css' => array(),
+				'js' => array(),
+				'tabs' => array(),
+				'triggers' => array(),
+				'login' => array(),
+				'substitutions' => array(),
+				'menus' => array(),
+				'theme' => array(),
+				'sms' => array(),
+				'tpl' => array(),
+				'barcode' => array(),
+				'models' => array(),
+				'societe' => array(),
+				'hooks' => array(),
+				'dir' => array(),
+				'syslog' => array(),
+			);
+
+			return $conf->setValues($db);
+		}
+
+		return 0;
+	}
+}

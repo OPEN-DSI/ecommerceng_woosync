@@ -57,6 +57,7 @@ if (! $res && file_exists("../../../main.inc.php")) $res=@include '../../../main
 if (! $res) die("Include of main fails");
 dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
 dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
+dol_include_once('/ecommerceng/lib/eCommerce.lib.php');
 
 // Global variables
 $version=DOL_VERSION;
@@ -74,27 +75,36 @@ $nb_by_request = 100;
 print "***** ".$script_file." (".$version.") pid=".dol_getmypid()." ***** userlogin=" . $userlogin . " ***** " . $now . " *****\n";
 print "\n";
 
-$user = new User($db);
-$res = $user->fetch('', $userlogin);
-if ($res == 0) {
-    print "Error user (Login: $userlogin) not found\n";
+$site = new eCommerceSite($db);
+$result = $site->fetch($site_id);
+if ($result < 0) {
+	print "Error fetch site (ID: $site_id) : " . dol_htmlentitiesbr_decode(errorsToString($site)) . "\n";
 	$error++;
-} elseif ($res < 0) {
-    print "Error fetch user (Login: $userlogin) : " . dol_htmlentitiesbr_decode($user->errorsToString()) . "\n";
+} elseif ($result == 0) {
+	print "Error fetch site (ID: $site_id) not found\n";
 	$error++;
-} else {
-	$user->getrights();
+}
+
+
+if (!$error) {
+	$result = confSetEntityValues($db,$conf, $site->entity);
+	if ($result < 0) {
+		print "Error set entity to {$site->entity} : " . $db->lasterror() . "\n";
+		$error++;
+	}
 }
 
 if (!$error) {
-	$site = new eCommerceSite($db);
-	$result = $site->fetch($site_id);
-	if ($result < 0) {
-		print "Error fetch site (ID: $site_id) : " . dol_htmlentitiesbr_decode(errorsToString($site)) . "\n";
+	$user = new User($db);
+	$res = $user->fetch('', $userlogin);
+	if ($res == 0) {
+		print "Error user (Login: $userlogin) not found\n";
 		$error++;
-	} elseif ($result == 0) {
-		print "Error fetch site (ID: $site_id) not found\n";
+	} elseif ($res < 0) {
+		print "Error fetch user (Login: $userlogin) : " . dol_htmlentitiesbr_decode($user->errorsToString()) . "\n";
 		$error++;
+	} else {
+		$user->getrights();
 	}
 }
 

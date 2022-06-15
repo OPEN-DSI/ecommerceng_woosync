@@ -57,6 +57,7 @@ require_once DOL_DOCUMENT_ROOT . '/product/stock/class/mouvementstock.class.php'
 dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
 dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
 dol_include_once('/ecommerceng/class/data/eCommerceProduct.class.php');
+dol_include_once('/ecommerceng/lib/eCommerce.lib.php');
 
 // Global variables
 $version=DOL_VERSION;
@@ -103,6 +104,13 @@ if ($max_sites > 0) {
 		$num_sites++;
 		$max_jobs = 0;
 		$num_jobs = 0;
+
+		$result = confSetEntityValues($db,$conf, $site->entity);
+		if ($result < 0) {
+			print "Error set entity to {$site->entity} : " . $db->lasterror() . "\n";
+			continue;
+		}
+		$user->getrights();
 
 		print "Connect to the site.\n";
 		$eCommerceSynchro = new eCommerceSynchro($db, $site);
