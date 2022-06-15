@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.5.0
+- Correction synchronisation du champ complémentaire status sur le site dans une commande
+
 ## 4.1.4.0
 - Correction des scripts pour supporter le multi-entités
 
