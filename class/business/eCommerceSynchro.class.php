@@ -6597,6 +6597,19 @@ class eCommerceSynchro
 			return -1;
 		}
 
+		// Set category
+		//------------------------------------------
+		if ($this->eCommerceSite->fk_cat_societe > 0) {
+			require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+			$cat = new Categorie($this->db);
+			$cat->fetch($this->eCommerceSite->fk_cat_societe);
+			$cat->add_type($third_party, 'customer');
+		} else {
+			$this->errors[] = $this->langs->trans('ECommerceErrorCreateThirdParty') . ' - Name: ' . $company . ' -  First name: ' . $firstname . ' -  Last name: ' . $lastname . ' -  Email: ' . $email;
+			$this->errors[] = $this->langs->trans('ECommerceErrorThirdPartyCategoryNotConfigured', $this->eCommerceSite->id);
+			return -1;
+		}
+
 		if (!empty($order_customer_ref)) $third_party->update_note("Site: '{$this->eCommerceSite->name}' - Order: {$order_customer_ref}", '_private');
 
 		return $third_party->id;

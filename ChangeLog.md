@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.6.0
+- Correction d'ajout de la categorie de la boutique sur le tiers lors que celui-ci est créer a partir d'une commande depuis un client anonyme
+
 ## 4.1.5.0
 - Correction synchronisation du champ complémentaire status sur le site dans une commande
 
