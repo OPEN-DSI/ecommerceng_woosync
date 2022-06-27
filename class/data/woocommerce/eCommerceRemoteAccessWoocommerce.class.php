@@ -4228,7 +4228,7 @@ class eCommerceRemoteAccessWoocommerce
 		$this->loadTaxes();
 
 		foreach ($taxes_data as $data) {
-			if (empty($data->total)) continue;
+			if (empty($data->subtotal)) continue;
 			$count++;
 			if ($count > 1) break;
 
