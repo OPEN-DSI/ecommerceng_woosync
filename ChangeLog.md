@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.7.0
+- Mouvement de stock à la validation d'une commande synchronisée si la synchro des stocks est paramètré dolibarr vers WooCommerce et qu'il n'y a qu'un entrepot de selectionné
+
 ## 4.1.6.0
 - Correction d'ajout de la categorie de la boutique sur le tiers lors que celui-ci est créer a partir d'une commande depuis un client anonyme
 

@@ -4756,8 +4756,13 @@ class eCommerceSynchro
 									// Update the order status
 									if (!$error && ($new_order || ($order->statut != $order_data['status']))) {        // Always when creating
 										// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
-										// $warehouse_id = $this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr' ? $this->eCommerceSite->fk_warehouse : 0;
 										$warehouse_id = 0;
+										if ($this->eCommerceSite->stock_sync_direction == 'dolibarr2ecommerce') {
+											$supported_warehouses = is_array($this->eCommerceSite->parameters['fk_warehouse_to_ecommerce']) ? $this->eCommerceSite->parameters['fk_warehouse_to_ecommerce'] : array();
+											if (count($supported_warehouses) == 1) {
+												$warehouse_id = array_values($supported_warehouses)[0];
+											}
+										}
 
 										// Valid the order if the distant order is not at the draft status but the order is draft. For set the order ref.
 										if ($order_data['status'] != Commande::STATUS_DRAFT && $order->statut == Commande::STATUS_DRAFT) {
