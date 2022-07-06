@@ -4688,6 +4688,8 @@ class eCommerceSynchro
 												unset($this->eCommerceProduct);
 											}
 										}
+										if (method_exists($order, 'fetch_lines')) $order->fetch_lines();
+										elseif (method_exists($order, 'getLinesArray')) $order->getLinesArray();
 									}
 
 									// Set amount paid warning
@@ -5282,6 +5284,8 @@ class eCommerceSynchro
 														}
 													}
 												}
+												if (method_exists($invoice, 'fetch_lines')) $invoice->fetch_lines();
+												elseif (method_exists($invoice, 'getLinesArray')) $invoice->getLinesArray();
 
 												// Get order internal contacts
 												$internal_contact_list = $order->liste_contact(-1, 'internal');
