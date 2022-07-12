@@ -177,10 +177,12 @@ if ($_POST['site_form_detail_action'] == 'save')
 				$ecommerceOrderActions['send_invoice_by_mail'] = GETPOST('ecommerce_send_invoice_by_mail', 'int') ? 1 : 0;
 				$ecommerceOrderActions['create_invoice_deposit_type'] = GETPOST('ecommerce_create_invoice_deposit_type', 'aZ09');
 				$ecommerceOrderActions['create_invoice_deposit_value'] = GETPOST('ecommerce_create_invoice_deposit_value', 'int');
+				$ecommerceOrderActions['create_invoice_if_amount_0'] = GETPOST('ecommerce_create_invoice_if_amount_0', 'int') ? 1 : 0;
                 if (empty($ecommerceOrderActions['create_invoice'])) {
 					$ecommerceOrderActions['send_invoice_by_mail'] = 0;
 					$ecommerceOrderActions['create_invoice_deposit_type'] = '';
 					$ecommerceOrderActions['create_invoice_deposit_value'] = 0;
+					$ecommerceOrderActions['create_invoice_if_amount_0'] = 0;
 				}
             }
             if ($conf->supplier_invoice->enabled && !empty($ecommerceOrderActions['create_invoice'])) {

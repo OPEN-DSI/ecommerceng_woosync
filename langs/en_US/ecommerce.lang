@@ -297,6 +297,7 @@ ECommerceCreateInvoice                      = Create the bill
 ECommerceCreateSupplierInvoiceFromFee       = Create the supplier bill from the charges
 ECommerceSendInvoiceByMail                  = Send the bill by email
 ECommerceCreateOrderDescription             = Related actions when retrieving WooCommerce orders (Enter the payment methods associated with WooCommerce)
+ECommerceCreateInvoiceIfAmount0                                                                     =Créer la facture même si le montant est égale à 0
 
 ECommercePaymentGatewaysCorrespondence              = Correspondence of the payment methods with the site
 ECommercePaymentGatewayLabel                        = Payment method on the site

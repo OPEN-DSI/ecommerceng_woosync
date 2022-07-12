@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.8.0
+- Ajout d'une option pour creer la facture meme si le montant est egale a 0
+
 ## 4.1.7.0
 - Mouvement de stock à la validation d'une commande synchronisée si la synchro des stocks est paramètré dolibarr vers WooCommerce et qu'il n'y a qu'un entrepot de selectionné
 

@@ -289,6 +289,7 @@ ECommerceCreateInvoice                                                          
 ECommerceCreateSupplierInvoiceFromFee                                                               =Créer la facture fournisseur à partir des frais
 ECommerceSendInvoiceByMail                                                                          =Envoyer la facture par mail
 ECommerceCreateOrderDescription                                                                     =Actions associées lors de la récupération des commandes WooCommerce (Renseigner les modes de paiements associés à WooCommerce)
+ECommerceCreateInvoiceIfAmount0                                                                     =Créer la facture même si le montant est égale à 0
 
 ECommercePaymentGatewaysCorrespondence                                                              =Correspondance des modes de paiements avec le site
 ECommercePaymentGatewayLabel                                                                        =Mode de paiement sur le site

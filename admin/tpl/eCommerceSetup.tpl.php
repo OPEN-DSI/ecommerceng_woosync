@@ -388,6 +388,8 @@ if (!empty($conf->commande->enabled)) {
 					}
 				});
 			</script>
+			<br>
+			<input type="checkbox" id="ecommerce_create_invoice_if_amount_0" name="ecommerce_create_invoice_if_amount_0" value="1" <?php print !empty($ecommerceOrderActions['create_invoice_if_amount_0']) ? ' checked' : '' ?>>&nbsp;<label for="ecommerce_create_invoice_if_amount_0"><?php print $langs->trans('ECommerceCreateInvoiceIfAmount0') ?></label>&nbsp;
 			<?php
 				}
 			}
