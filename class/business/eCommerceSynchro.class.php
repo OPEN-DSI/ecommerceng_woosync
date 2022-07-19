@@ -4958,7 +4958,7 @@ class eCommerceSynchro
 					$this->errors = array_merge($this->errors, $invoice->errors);
 					$error++;
 				} elseif (!empty($this->eCommerceSite->parameters['order_actions']['create_invoice']) && !empty($order_data['billed']) &&
-					(empty($this->eCommerceSite->parameters['order_actions']['create_invoice_if_amount_0']) || price2num($order_data['payment_amount_ttc']) != 0)
+					(!empty($this->eCommerceSite->parameters['order_actions']['create_invoice_if_amount_0']) || price2num($order_data['payment_amount_ttc']) != 0)
 				) {
 					// Check if order / invoice already synchronized
 					$this->initECommerceCommande();

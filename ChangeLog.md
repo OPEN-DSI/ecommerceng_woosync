@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.9.0
+- Correction de l'option de creation de la facture meme si le montant est egale a 0
+
 ## 4.1.8.0
 - Ajout d'une option pour creer la facture meme si le montant est egale a 0
 
