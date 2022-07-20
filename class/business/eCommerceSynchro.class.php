@@ -4249,11 +4249,12 @@ class eCommerceSynchro
 					}
 
 					// Need to synchronize ?
-					$bypass = (!empty($this->eCommerceCommande->last_update) && strtotime($order_data['last_update']) <= strtotime($this->eCommerceCommande->last_update)) ||
-						$order_data['create_date'] < $this->eCommerceSite->parameters['order_first_date_etod'] || (!($this->eCommerceCommande->id > 0) && !$order_data['synchronize']);
+					$bypass = $order_data['create_date'] < $this->eCommerceSite->parameters['order_first_date_etod'] ||
+						(!($this->eCommerceCommande->id > 0) && empty($order_data['synchronize'])) ||
+						($this->eCommerceCommande->id > 0 && !empty($this->eCommerceCommande->last_update) && strtotime($order_data['last_update']) <= strtotime($this->eCommerceCommande->last_update));
 
 					// Bypass the synchronization ?
-					if (!$bypass) {
+					if (!$error && !$bypass) {
 						// Check if third party already synchronized
 						if ($order_data['remote_id_societe'] > 0) {
 							$this->initECommerceSociete();
