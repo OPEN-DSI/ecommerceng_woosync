@@ -573,7 +573,7 @@ class eCommercePendingWebHook
 				$sql = "SELECT rowid, site_id, webhook_topic, webhook_resource, webhook_event, webhook_data";
 				$sql .= " FROM " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks";
 				$sql .= " WHERE status IN (" . self::STATUS_NOT_PROCESSED . ")";
-				$sql .= " ORDER BY webhook_topic ASC, rowid ASC";
+				$sql .= " ORDER BY webhook_topic DESC, rowid DESC";
 
 				$resql = $this->db->query($sql);
 				if (!$resql) {
