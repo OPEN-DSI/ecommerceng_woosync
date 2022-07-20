@@ -18,4 +18,5 @@
 ALTER TABLE `llx_ecommerce_product`  ADD INDEX `idx_ecommerce_product_fk_product` ( `fk_product` );
 ALTER TABLE `llx_ecommerce_product`  ADD INDEX `idx_ecommerce_product_fk_site` ( `fk_site` );
 ALTER TABLE `llx_ecommerce_product`  ADD UNIQUE KEY `uk_ecommerce_product_fk_site_fk_product` ( `fk_site` ,`fk_product` );
+ALTER TABLE `llx_ecommerce_product`  ADD UNIQUE KEY `uk_ecommerce_product_fk_site_remote_id` ( `fk_site` ,`remote_id` );
 --ALTER TABLE `llx_ecommerce_product`  ADD CONSTRAINT `fk_ecommerce_product_fk_product` FOREIGN KEY (`fk_product`) REFERENCES `llx_product`(`rowid`);

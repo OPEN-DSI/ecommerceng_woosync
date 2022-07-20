@@ -18,4 +18,5 @@
 ALTER TABLE llx_ecommerce_category  ADD INDEX idx_ecommerce_category_fk_category ( fk_category );
 ALTER TABLE llx_ecommerce_category  ADD INDEX idx_ecommerce_category_fk_site ( fk_site );
 ALTER TABLE llx_ecommerce_category  ADD UNIQUE INDEX uk_ecommerce_category_fk_site_fk_category ( fk_site, fk_category );
+ALTER TABLE llx_ecommerce_category  ADD UNIQUE INDEX uk_ecommerce_category_fk_site_remote_id ( fk_site, remote_id );
 --ALTER TABLE llx_ecommerce_category  ADD CONSTRAINT fk_ecommerce_category_fk_category FOREIGN KEY (fk_category) REFERENCES llx_category(rowid);

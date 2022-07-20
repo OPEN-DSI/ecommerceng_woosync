@@ -18,4 +18,5 @@
 ALTER TABLE llx_ecommerce_commande  ADD INDEX idx_ecommerce_commande_fk_commande ( fk_commande );
 ALTER TABLE llx_ecommerce_commande  ADD INDEX idx_ecommerce_commande_fk_site ( fk_site );
 ALTER TABLE llx_ecommerce_commande  ADD UNIQUE KEY uk_ecommerce_commande_fk_site_fk_commande ( fk_site ,fk_commande );
+ALTER TABLE llx_ecommerce_commande  ADD UNIQUE KEY uk_ecommerce_commande_fk_site_remote_id ( fk_site ,remote_id );
 --ALTER TABLE llx_ecommerce_commande  ADD CONSTRAINT fk_ecommerce_commande_fk_commande FOREIGN KEY (fk_commande) REFERENCES llx_commande(rowid);
