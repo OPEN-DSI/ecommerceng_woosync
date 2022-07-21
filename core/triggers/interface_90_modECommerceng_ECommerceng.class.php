@@ -1105,6 +1105,7 @@ class InterfaceECommerceng
 			if (isset($site)) $site->setEntityValues($save_entity);
 
 			if ($error) {
+				$this->errors[] = 'Product ID: ' . $object->product_id;
 				$this->db->rollback();
 				return -1;
 			} else {
