@@ -188,8 +188,8 @@ class InterfaceECommerceng
 								$now = dol_now();
 								if (!$result) {
 									$error++;
-									$this->error = $eCommerceSynchro->eCommerceRemoteAccess->error;
-									$this->errors = $eCommerceSynchro->eCommerceRemoteAccess->errors;
+									$this->errors[] = $eCommerceSynchro->eCommerceRemoteAccess->error;
+									$this->errors = array_merge($this->errors, $eCommerceSynchro->eCommerceRemoteAccess->errors);
 								}
 							}
 
@@ -298,8 +298,8 @@ class InterfaceECommerceng
 							$now = dol_now();
 							if (!$result) {
 								$error++;
-								$this->error = $eCommerceSynchro->eCommerceRemoteAccess->error;
-								$this->errors = $eCommerceSynchro->eCommerceRemoteAccess->errors;
+								$this->errors[] = $eCommerceSynchro->eCommerceRemoteAccess->error;
+								$this->errors = array_merge($this->errors, $eCommerceSynchro->eCommerceRemoteAccess->errors);
 							}
 						}
 
@@ -423,8 +423,8 @@ class InterfaceECommerceng
 							$now = dol_now();
 							if (!$result) {
 								$error++;
-								$this->error = $eCommerceSynchro->eCommerceRemoteAccess->error;
-								$this->errors = $eCommerceSynchro->eCommerceRemoteAccess->errors;
+								$this->errors[] = $eCommerceSynchro->eCommerceRemoteAccess->error;
+								$this->errors = array_merge($this->errors, $eCommerceSynchro->eCommerceRemoteAccess->errors);
 							}
 						}
 
@@ -458,8 +458,8 @@ class InterfaceECommerceng
 						$now = dol_now();
 						if (!$result) {
 							$error++;
-							$this->error = $eCommerceSynchro->eCommerceRemoteAccess->error;
-							$this->errors = $eCommerceSynchro->eCommerceRemoteAccess->errors;
+							$this->errors[] = $eCommerceSynchro->eCommerceRemoteAccess->error;
+							$this->errors = array_merge($this->errors, $eCommerceSynchro->eCommerceRemoteAccess->errors);
 						}
 
 						if (!$error) {
@@ -605,8 +605,8 @@ class InterfaceECommerceng
 							$now = dol_now();
 							if (!$result) {
 								$error++;
-								$this->error = $eCommerceSynchro->eCommerceRemoteAccess->error;
-								$this->errors = $eCommerceSynchro->eCommerceRemoteAccess->errors;
+								$this->errors[] = $eCommerceSynchro->eCommerceRemoteAccess->error;
+								$this->errors = array_merge($this->errors, $eCommerceSynchro->eCommerceRemoteAccess->errors);
 							}
 						}
 
@@ -691,8 +691,8 @@ class InterfaceECommerceng
 							$now = dol_now();
 							if (!$result) {
 								$error++;
-								$this->error = $eCommerceSynchro->eCommerceRemoteAccess->error;
-								$this->errors = $eCommerceSynchro->eCommerceRemoteAccess->errors;
+								$this->errors[] = $eCommerceSynchro->eCommerceRemoteAccess->error;
+								$this->errors = array_merge($this->errors, $eCommerceSynchro->eCommerceRemoteAccess->errors);
 							}
 						}
 
@@ -787,14 +787,14 @@ class InterfaceECommerceng
 			$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_socpeople WHERE fk_socpeople IN (SELECT rowid FROM " . MAIN_DB_PREFIX . "socpeople WHERE fk_soc = '" . $this->db->escape($object->id) . "')";
 			$resql = $this->db->query($sql);
 			if (!$resql) {
-				$this->error = $this->db->lasterror();
+				$this->errors[] = $this->db->lasterror();
 				$error++;
 			}
 
 			$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_societe WHERE fk_societe ='" . $this->db->escape($object->id) . "'";
 			$resql = $this->db->query($sql);
 			if (!$resql) {
-				$this->error = $this->db->lasterror();
+				$this->errors[] = $this->db->lasterror();
 				$error++;
 			}
 
@@ -819,7 +819,7 @@ class InterfaceECommerceng
 			$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_socpeople WHERE fk_socpeople = '" . $this->db->escape($object->id) . "'";
 			$resql = $this->db->query($sql);
 			if (!$resql) {
-				$this->error = $this->db->lasterror();
+				$this->errors[] = $this->db->lasterror();
 				$error++;
 			}
 
@@ -844,7 +844,7 @@ class InterfaceECommerceng
 			$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_commande WHERE fk_commande = '" . $this->db->escape($object->id) . "'";
 			$resql = $this->db->query($sql);
 			if (!$resql) {
-				$this->error = $this->db->lasterror();
+				$this->errors[] = $this->db->lasterror();
 				$error++;
 			}
 
@@ -869,7 +869,7 @@ class InterfaceECommerceng
 			$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_facture WHERE fk_facture = '" . $this->db->escape($object->id) . "'";
 			$resql = $this->db->query($sql);
 			if (!$resql) {
-				$this->error = $this->db->lasterror();
+				$this->errors[] = $this->db->lasterror();
 				$error++;
 			}
 
@@ -877,7 +877,7 @@ class InterfaceECommerceng
 				$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_commande WHERE fk_commande = '" . $this->db->escape(-$object->id) . "'";
 				$resql = $this->db->query($sql);
 				if (!$resql) {
-					$this->error = $this->db->lasterror();
+					$this->errors[] = $this->db->lasterror();
 					$error++;
 				}
 			}
@@ -957,8 +957,8 @@ class InterfaceECommerceng
 							$now = dol_now();
 							if (!$result) {
 								$error++;
-								$this->error = $eCommerceSynchro->eCommerceRemoteAccess->error;
-								$this->errors = $eCommerceSynchro->eCommerceRemoteAccess->errors;
+								$this->errors[] = $eCommerceSynchro->eCommerceRemoteAccess->error;
+								$this->errors = array_merge($this->errors, $eCommerceSynchro->eCommerceRemoteAccess->errors);
 							} else {
 								// $result is id of shipment created in magento, we update ref_customer with it.
 								if ($result === true) $result = $eCommerceCommande->remote_id;
@@ -1072,8 +1072,8 @@ class InterfaceECommerceng
 								$now = dol_now();
 								if (!$result) {
 									$error++;
-									$this->error = $eCommerceSynchro->eCommerceRemoteAccess->error;
-									$this->errors = $eCommerceSynchro->eCommerceRemoteAccess->errors;
+									$this->errors[] = $eCommerceSynchro->eCommerceRemoteAccess->error;
+									$this->errors = array_merge($this->errors, $eCommerceSynchro->eCommerceRemoteAccess->errors);
 								}
 							}
 
