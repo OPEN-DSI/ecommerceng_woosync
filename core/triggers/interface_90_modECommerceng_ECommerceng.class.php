@@ -1064,6 +1064,7 @@ class InterfaceECommerceng
 							$eCommerceSynchro->connect();
 							if (count($eCommerceSynchro->errors)) {
 								$error++;
+								$object->errors[] = $eCommerceSynchro->errorsToString();
 								setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
 							}
 
@@ -1073,7 +1074,7 @@ class InterfaceECommerceng
 								if (!$result) {
 									$error++;
 									$this->errors[] = $eCommerceSynchro->eCommerceRemoteAccess->error;
-									$this->errors = array_merge($this->errors, $eCommerceSynchro->eCommerceRemoteAccess->errors);
+									$object->errors = array_merge($this->errors, $eCommerceSynchro->eCommerceRemoteAccess->errors);
 								}
 							}
 
@@ -1084,7 +1085,7 @@ class InterfaceECommerceng
 									$error++;
 									$error_msg = $langs->trans('ECommerceUpdateRemoteProductLink', $object->id, $site->name, $eCommerceProduct->error);
 									$this->errors[] = $error_msg;
-									$this->errors = array_merge($this->errors, $eCommerceProduct->errors);
+									$object->errors = array_merge($this->errors, $eCommerceProduct->errors);
 									dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
 								}
 							}
@@ -1094,7 +1095,7 @@ class InterfaceECommerceng
 					}
 				} catch (Exception $e) {
 					$error++;
-					$this->errors[] = 'Trigger exception : ' . $e->getMessage();
+					$object->errors[] = 'Trigger exception : ' . $e->getMessage();
 					dol_syslog("Trigger '" . $this->name . "' for action '$action' launched by " . __FILE__ . ". id=" . $object->id . " " . 'Trigger exception : ' . $e->getMessage());
 					break;
 				}
