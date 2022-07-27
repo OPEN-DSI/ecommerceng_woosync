@@ -1746,6 +1746,7 @@ class eCommerceRemoteAccessWoocommerce
 			'remote_id_societe' => $remote_data->customer_id,
 			'ref_client' => $remote_data->number,
 			'date_commande' => $remote_data->date_created,
+			'date_payment' => $remote_data->date_paid,
 			'date_livraison' => $remote_data->date_completed,
 			'total_ht' => $remote_data->total - $remote_data->total_tax,
 			'total_tva' => $remote_data->total_tax,

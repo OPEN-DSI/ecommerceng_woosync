@@ -105,7 +105,7 @@ if ($max_sites > 0) {
 		$max_jobs = 0;
 		$num_jobs = 0;
 
-		$result = confSetEntityValues($db,$conf, $site->entity);
+		$result = $site->setEntityValues($site->entity);
 		if ($result < 0) {
 			print "Error set entity to {$site->entity} : " . $db->lasterror() . "\n";
 			continue;

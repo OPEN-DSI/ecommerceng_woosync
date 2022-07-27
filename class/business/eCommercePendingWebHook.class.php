@@ -570,10 +570,12 @@ class eCommercePendingWebHook
 					return -1;
 				}
 
-				$sql = "SELECT rowid, site_id, webhook_topic, webhook_resource, webhook_event, webhook_data";
-				$sql .= " FROM " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks";
-				$sql .= " WHERE status IN (" . self::STATUS_NOT_PROCESSED . ")";
-				$sql .= " ORDER BY webhook_topic DESC, rowid DESC";
+				$sql = "SELECT epw.rowid, epw.site_id, epw.webhook_topic, epw.webhook_resource, epw.webhook_event, epw.webhook_data";
+				$sql .= " FROM " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks AS epw";
+				$sql .= " LEFT JOIN ".MAIN_DB_PREFIX."ecommerce_site AS es ON es.rowid = epw.site_id";
+				$sql .= " WHERE epw.status IN (" . self::STATUS_NOT_PROCESSED . ")";
+				$sql .= " AND es.entity IN (" . getEntity('ecommerceng') . ")";
+				$sql .= " ORDER BY epw.webhook_topic DESC, epw.rowid DESC";
 
 				$resql = $this->db->query($sql);
 				if (!$resql) {
@@ -913,12 +915,14 @@ class eCommercePendingWebHook
 		$period = !empty($conf->global->ECOMMERCE_PROCESSING_WEBHOOK_LOGS_BEFORE_X_DAYS) ? abs($conf->global->ECOMMERCE_PROCESSING_WEBHOOK_LOGS_BEFORE_X_DAYS) : 7;
 		$log_before_date = dol_time_plus_duree(dol_now(), -$period, 'd');
 
-		$sql = "SELECT rowid, datec, site_id, delivery_id, webhook_id, webhook_topic, webhook_resource" .
-			", webhook_event, webhook_data, webhook_signature, webhook_source, status, datep, error_msg" .
-			" FROM " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks" .
-			" WHERE status IN (" . self::STATUS_PROCESSED . ")" .
-			" AND datep < '" . $this->db->idate($log_before_date) . "'" .
-			" ORDER BY datep ASC";
+		$sql = "SELECT epw.rowid, epw.datec, epw.site_id, epw.delivery_id, epw.webhook_id, epw.webhook_topic, epw.webhook_resource" .
+			", epw.webhook_event, epw.webhook_data, epw.webhook_signature, epw.webhook_source, epw.status, epw.datep, epw.error_msg" .
+			" FROM " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks AS epw" .
+			" LEFT JOIN ".MAIN_DB_PREFIX."ecommerce_site AS es ON es.rowid = epw.site_id" .
+			" WHERE epw.status IN (" . self::STATUS_PROCESSED . ")" .
+			" AND es.entity IN (" . getEntity('ecommerceng') . ")" .
+			" AND epw.datep < '" . $this->db->idate($log_before_date) . "'" .
+			" ORDER BY epw.datep ASC";
 
 		$resql = $this->db->query($sql);
 		if (!$resql) {
@@ -927,8 +931,8 @@ class eCommercePendingWebHook
 			$this->errors = array();
 			dol_syslog(__METHOD__ . " SQL: " . $sql . "; Error: " . $this->db->lasterror(), LOG_ERR);
 		} elseif ($this->db->num_rows($resql) > 0) {
-			if (empty($conf->global->SYSLOG_FILE)) $logfile = DOL_DATA_ROOT . '/woosync_webhooks.v2.log';
-			else $logfile = dirname(str_replace('DOL_DATA_ROOT', DOL_DATA_ROOT, $conf->global->SYSLOG_FILE)) . "/woosync_webhooks.v2.log";
+			if (empty($conf->global->SYSLOG_FILE)) $logfile = DOL_DATA_ROOT . '/woosync_webhooks_' . $conf->entity . '.v2.log';
+			else $logfile = dirname(str_replace('DOL_DATA_ROOT', DOL_DATA_ROOT, $conf->global->SYSLOG_FILE)) . "/woosync_webhooks_" . $conf->entity . ".v2.log";
 
 			// Open/create log file
 			$filefd = @fopen($logfile, 'a+');

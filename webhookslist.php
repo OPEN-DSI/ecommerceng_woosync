@@ -207,7 +207,7 @@ $reshook=$hookmanager->executeHooks('printFieldListSelect', $parameters);    // 
 $sqlselect.=$hookmanager->resPrint;
 $sql= ' FROM '.MAIN_DB_PREFIX.'ecommerce_pending_webhooks AS epw';
 $sql.= " LEFT JOIN ".MAIN_DB_PREFIX."ecommerce_site AS es on es.rowid = epw.site_id";
-$sql.= ' WHERE 1 = 1';
+$sql.= " WHERE es.entity IN (" . getEntity('ecommerceng') . ")";
 if ($search_technical_id)           $sql .= " AND epw.rowid IN (".$db->escape($search_technical_id).')';
 if ($search_site)       			$sql .= natural_search('es.name', $search_site);
 if ($search_delivery_id)            $sql .= natural_search('epw.delivery_id', $search_delivery_id);

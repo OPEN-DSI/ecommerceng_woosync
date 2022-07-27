@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 4.1.11.0
+- Correction de la date de la facture qui est maintenant egale à la date de paiement (le cas echeant celle de la commande)
+- Correction compatibilité multi-entité
+- Correction recherche sur l'id distant (requetes SQL)
+
 ## 4.1.10.0
 - Correction synchronisation des commandes
 - Correction ordre de synchronisation des webhook du plus recent au plus ancien

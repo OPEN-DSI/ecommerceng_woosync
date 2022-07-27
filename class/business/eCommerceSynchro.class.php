@@ -2447,7 +2447,6 @@ class eCommerceSynchro
 		$zip = (empty($contact->zip) ? '' : $contact->zip);
 		$town = (empty($contact->town) ? '' : $contact->town);
 		$country_id = ($contact->country_id > 0 ? $contact->country_id : $contact->country_id);
-		$entity = ((isset($contact->entity) && is_numeric($contact->entity)) ? $contact->entity : $conf->entity);
 
 		$sql = 'SELECT rowid FROM ' . MAIN_DB_PREFIX . 'socpeople';
 		$sql .= ' WHERE lastname LIKE "' . $this->db->escape($lastname) . '"';
@@ -2461,7 +2460,7 @@ class eCommerceSynchro
 		if (isset($contact->fax)) $sql .= ' AND fax LIKE "' . $this->db->escape($fax) . '"';
 		if ($socid > 0) $sql .= ' AND fk_soc = "' . $this->db->escape($socid) . '"';
 		else if ($socid == -1) $sql .= " AND fk_soc IS NULL";
-		$sql .= ' AND entity = ' . $entity;
+		$sql .= ' AND entity IN ('.getEntity('socpeople').')';
 
 		$resql = $this->db->query($sql);
 		if ($resql) {
@@ -5059,7 +5058,7 @@ class eCommerceSynchro
 										// Set the invoice
 										$invoice->socid = $third_party_id;
 										$invoice->type = isset($this->eCommerceSite->parameters['create_invoice_type']) ? $this->eCommerceSite->parameters['create_invoice_type'] : Facture::TYPE_STANDARD;
-										$invoice->date = $order->id > 0 ? $order->date : strtotime($order_data['date_commande']);
+										$invoice->date = isset($order_data['date_payment']) && $order_data['date_payment'] !== '' ? strtotime($order_data['date_payment']) : ($order->id > 0 ? $order->date_commande : strtotime($order_data['date_commande']));
 										$invoice->ref_client = $order->id > 0 ? $order->ref_client : $order_data['ref_client'];
 										$invoice->ref_ext = $invoice_ref_ext;
 										$invoice->modelpdf = $conf->global->FACTURE_ADDON_PDF;
@@ -6512,7 +6511,6 @@ class eCommerceSynchro
 		$email = trim($contact_data['email']);
 		$phone_pro = trim(dol_trunc($contact_data['phone'], 30, 'right', 'UTF-8', 1));
 		$fax = trim(dol_trunc($contact_data['fax'], 30, 'right', 'UTF-8', 1));
-		$entity = $conf->entity;
 
 		$sql = 'SELECT rowid, fk_soc FROM ' . MAIN_DB_PREFIX . 'socpeople';
 		$sql .= ' WHERE lastname LIKE "' . $this->db->escape($lastname) . '"';
@@ -6530,7 +6528,7 @@ class eCommerceSynchro
 			if ($socid > 0) $sql .= ' AND fk_soc = ' . $this->db->escape($socid);
 			else if ($socid == -1) $sql .= " AND fk_soc IS NULL";
 		}
-		$sql .= ' AND entity = ' . $entity;
+		$sql .= ' AND entity IN ('.getEntity('socpeople').')';
 
 		$resql = $this->db->query($sql);
 		if ($resql) {

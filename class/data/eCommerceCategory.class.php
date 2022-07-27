@@ -381,7 +381,7 @@ class eCommerceCategory // extends CommonObject
         $updateRequired = 0;  // If any error occurs, category won't appears in update array
 
         $sql = "SELECT t.last_update as lastdate, t.remote_parent_id as parentid, t.fk_category FROM " . MAIN_DB_PREFIX . $this->table_element . " as t";
-        $sql.= " WHERE t.remote_id=" . $remoteCatToCheck['category_id'] . " AND t.fk_site = " . $siteId;
+        $sql.= " WHERE t.remote_id='" . $this->db->escape($remoteCatToCheck['category_id']) . "' AND t.fk_site = " . $siteId;
 
         $resql = $this->db->query($sql);
         if ($resql)
@@ -445,7 +445,7 @@ class eCommerceCategory // extends CommonObject
         $sql.= "t.last_update";
         $sql.= " FROM " . MAIN_DB_PREFIX . $this->table_element . " as t";
         $sql.= " WHERE t.fk_site = " . $siteId;
-        $sql.= " AND t.remote_id = " . $remoteId;
+        $sql.= " AND t.remote_id = '" . $this->db->escape($remoteId) . "'";
 
         dol_syslog(get_class($this) . "::fetchByRemoteId sql=" . $sql, LOG_DEBUG);
         $resql = $this->db->query($sql);
@@ -603,7 +603,7 @@ class eCommerceCategory // extends CommonObject
             foreach ($ids as $remoteId)
             {
                 $ii++;
-                $sql .= $remoteId . ($ii == $idsCount ? ")" : ",");
+                $sql .= "'".$this->db->escape($remoteId)."'" . ($ii == $idsCount ? ")" : ",");
             }
 
             dol_syslog(get_class($this) . "::getDolibarrCategoryFromRemoteIds sql=" . $sql, LOG_DEBUG);

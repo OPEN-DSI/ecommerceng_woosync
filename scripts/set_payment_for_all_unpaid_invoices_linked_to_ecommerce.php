@@ -128,7 +128,7 @@ if (!empty($remote_invoices)) {
 			continue;
 		}
 
-		$result = confSetEntityValues($db,$conf, $site->entity);
+		$result = $site->setEntityValues($site->entity);
 		if ($result < 0) {
 			print "Error set entity to {$site->entity} : " . $db->lasterror() . "\n";
 			continue;

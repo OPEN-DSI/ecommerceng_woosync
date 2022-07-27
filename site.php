@@ -85,6 +85,10 @@ if ($id) {
 	try {
 		$site = new eCommerceSite($db);
 		$site->fetch($id);
+		// Protection if access to another entity
+		if ($site->entity != $conf->entity) {
+			accessforbidden();
+		}
 
 		$site->cleanOrphelins();
 		$site->cleanDuplicatesRemoteID();

@@ -87,7 +87,7 @@ if ($result < 0) {
 
 
 if (!$error) {
-	$result = confSetEntityValues($db,$conf, $site->entity);
+	$result = $site->setEntityValues($site->entity);
 	if ($result < 0) {
 		print "Error set entity to {$site->entity} : " . $db->lasterror() . "\n";
 		$error++;

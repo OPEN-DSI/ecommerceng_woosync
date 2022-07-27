@@ -346,7 +346,7 @@ class eCommerceFacture // extends CommonObject
 		$sql.= " t.last_update";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_facture as t";
         $sql.= " WHERE t.fk_site = ".$siteId;
-        $sql.= " AND t.remote_id = ".$remoteId;
+        $sql.= " AND t.remote_id = '".$this->db->escape($remoteId)."'";
     	dol_syslog(get_class($this)."::fetchByRemoteId sql=".$sql, LOG_DEBUG);
         $resql=$this->db->query($sql);
         if ($resql)
