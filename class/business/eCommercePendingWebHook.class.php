@@ -572,9 +572,9 @@ class eCommercePendingWebHook
 
 				$sql = "SELECT epw.rowid, epw.site_id, epw.webhook_topic, epw.webhook_resource, epw.webhook_event, epw.webhook_data";
 				$sql .= " FROM " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks AS epw";
-				$sql .= " LEFT JOIN ".MAIN_DB_PREFIX."ecommerce_site AS es ON es.rowid = epw.site_id";
+//				$sql .= " LEFT JOIN ".MAIN_DB_PREFIX."ecommerce_site AS es ON es.rowid = epw.site_id";
 				$sql .= " WHERE epw.status IN (" . self::STATUS_NOT_PROCESSED . ")";
-				$sql .= " AND es.entity IN (" . getEntity('ecommerceng') . ")";
+//				$sql .= " AND es.entity IN (" . getEntity('ecommerceng') . ")";
 				$sql .= " ORDER BY epw.webhook_topic DESC, epw.rowid DESC";
 
 				$resql = $this->db->query($sql);
@@ -918,9 +918,9 @@ class eCommercePendingWebHook
 		$sql = "SELECT epw.rowid, epw.datec, epw.site_id, epw.delivery_id, epw.webhook_id, epw.webhook_topic, epw.webhook_resource" .
 			", epw.webhook_event, epw.webhook_data, epw.webhook_signature, epw.webhook_source, epw.status, epw.datep, epw.error_msg" .
 			" FROM " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks AS epw" .
-			" LEFT JOIN ".MAIN_DB_PREFIX."ecommerce_site AS es ON es.rowid = epw.site_id" .
+//			" LEFT JOIN ".MAIN_DB_PREFIX."ecommerce_site AS es ON es.rowid = epw.site_id" .
 			" WHERE epw.status IN (" . self::STATUS_PROCESSED . ")" .
-			" AND es.entity IN (" . getEntity('ecommerceng') . ")" .
+//			" AND es.entity IN (" . getEntity('ecommerceng') . ")" .
 			" AND epw.datep < '" . $this->db->idate($log_before_date) . "'" .
 			" ORDER BY epw.datep ASC";
 
