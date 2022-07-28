@@ -645,87 +645,78 @@ class eCommercePendingWebHook
 	{
 		global $conf, $user, $langs;
 
-		require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 		$langs->load('ecommerceng@ecommerceng');
 		$output = '';
 
 		try {
 			$error = 0;
 
-			if (empty($conf->global->ECOMMERCE_CHECK_WEBHOOKS_STATUS)) {
-				dolibarr_set_const($this->db, 'ECOMMERCE_CHECK_WEBHOOKS_STATUS', dol_print_date(dol_now(), 'dayhour'), 'chaine', 1, 'Token the processing of the check the webhooks status of the site', 0);
+			$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__);
 
-				$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__);
+			dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
+			$eCommerceSite = new eCommerceSite($this->db);
+			$sites = $eCommerceSite->listSites();
 
-				dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
-				$eCommerceSite = new eCommerceSite($this->db);
-				$sites = $eCommerceSite->listSites();
+			foreach ($sites as $site) {
+				$error_site = 0;
+				$error_msg_site = '';
 
-				foreach ($sites as $site) {
-					$error_site = 0;
-					$error_msg_site = '';
+				$synchro = $this->getSynchro($site['id']);
+				if (!is_object($synchro)) {
+					$error_msg_site .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $this->errorsToString('<br>') . '</span>' . "<br>";
+					$error_site++;
+				}
 
-					$synchro = $this->getSynchro($site['id']);
-					if (!is_object($synchro)) {
-						$error_msg_site .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $this->errorsToString('<br>') . '</span>' . "<br>";
+				if (!$error_site) {
+					$webhooks = $synchro->getAllWebHooks();
+					if ($webhooks === false) {
+						$error_msg_site .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $synchro->errorsToString('<br>') . '</span>' . "<br>";
 						$error_site++;
-					}
-
-					if (!$error_site) {
-						$webhooks = $synchro->getAllWebHooks();
-						if ($webhooks === false) {
-							$error_msg_site .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $synchro->errorsToString('<br>') . '</span>' . "<br>";
-							$error_site++;
-						} elseif (is_array($webhooks)) {
-							foreach ($webhooks as $webhook) {
-								if (!$webhook['status']) {
-									$error_msg_site .= '<span style="color: red;">' . $langs->trans('ECommerceErrorWebHooksStatusNotActivated', $webhook['name'], $webhook['remote_id'], $webhook['infos']) . '</span>' . "<br>";
-									$error_site++;
-								}
+					} elseif (is_array($webhooks)) {
+						foreach ($webhooks as $webhook) {
+							if (!$webhook['status']) {
+								$error_msg_site .= '<span style="color: red;">' . $langs->trans('ECommerceErrorWebHooksStatusNotActivated', $webhook['name'], $webhook['remote_id'], $webhook['infos']) . '</span>' . "<br>";
+								$error_site++;
 							}
 						}
 					}
-
-					if ($error_site) {
-						$output .= $langs->trans('ECommerceErrorCheckWebHooksStatus', $site['name'], $site['id']) . ":<br>" . $error_msg_site . "<br>";
-						$error++;
-					} else {
-						$output .= $langs->trans('ECommerceSuccessCheckWebHooksStatus', count($webhooks), $site['name'], $site['id']) . "<br><br>";
-					}
 				}
 
-				if ($error) {
-					if (!empty($conf->global->ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_STATUS)) {
-						$output2 = $langs->trans('ECommerceSendEmailErrorCheckWebHooksStatus') . ":<br>";
-						$subject = $langs->transnoentitiesnoconv('ECommerceNotifyEmailCheckWebHooksStatusErrorSubject');
-						$send_to = $conf->global->ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_STATUS;
-						$from = $conf->global->MAIN_MAIL_EMAIL_FROM;
-						$body = $output;
-						$result = $this->_sendEmail($subject, $send_to, $from, $body);
-						if (is_numeric($result) && $result < 0) {
-							$output2 .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $this->errorsToString('<br>') . '</span>' . "<br>";
-						} else {
-							$output2 .= '<pre>' . $result . '</pre>';
-						}
-						$output .= $output2;
-					} else {
-						$output .= '<span style="color: orange;">' . $langs->trans('ECommerceWarningNotifyEmailErrorCheckWebHooksStatusNotDefined') . '</span>' . "<br>";
-					}
-				}
-
-				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
-
-				dolibarr_del_const($this->db, 'ECOMMERCE_CHECK_WEBHOOKS_STATUS', 0);
-
-				if ($error) {
-					$this->error = $output;
-					$this->errors = array();
-					return -1;
+				if ($error_site) {
+					$output .= $langs->trans('ECommerceErrorCheckWebHooksStatus', $site['name'], $site['id']) . ":<br>" . $error_msg_site . "<br>";
+					$error++;
 				} else {
-					$output .= $langs->trans('ECommerceCheckWebHooksStatusSuccess');
+					$output .= $langs->trans('ECommerceSuccessCheckWebHooksStatus', count($webhooks), $site['name'], $site['id']) . "<br><br>";
 				}
+			}
+
+			if ($error) {
+				if (!empty($conf->global->ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_STATUS)) {
+					$output2 = $langs->trans('ECommerceSendEmailErrorCheckWebHooksStatus') . ":<br>";
+					$subject = $langs->transnoentitiesnoconv('ECommerceNotifyEmailCheckWebHooksStatusErrorSubject');
+					$send_to = $conf->global->ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_STATUS;
+					$from = $conf->global->MAIN_MAIL_EMAIL_FROM;
+					$body = $output;
+					$result = $this->_sendEmail($subject, $send_to, $from, $body);
+					if (is_numeric($result) && $result < 0) {
+						$output2 .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $this->errorsToString('<br>') . '</span>' . "<br>";
+					} else {
+						$output2 .= '<pre>' . $result . '</pre>';
+					}
+					$output .= $output2;
+				} else {
+					$output .= '<span style="color: orange;">' . $langs->trans('ECommerceWarningNotifyEmailErrorCheckWebHooksStatusNotDefined') . '</span>' . "<br>";
+				}
+			}
+
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+
+			if ($error) {
+				$this->error = $output;
+				$this->errors = array();
+				return -1;
 			} else {
-				$output .= $langs->trans('ECommerceAlreadyCheckingWebHooksStatus') . ' (' . $langs->trans('ECommerceSince') . ' : ' . $conf->global->ECOMMERCE_CHECK_WEBHOOKS_STATUS . ')';
+				$output .= $langs->trans('ECommerceCheckWebHooksStatusSuccess');
 			}
 
 			$this->error = "";
@@ -735,13 +726,88 @@ class eCommercePendingWebHook
 
 			return 0;
 		} catch (Exception $e) {
-			dolibarr_del_const($this->db, 'ECOMMERCE_CHECK_WEBHOOKS_STATUS', 0);
 			$output .= $langs->trans('ECommerceErrorWhenCheckingWebHooksStatus') . ":<br>";
 			$output .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $e->getMessage() . '</span>' . "<br>";
 			$this->error = $output;
 			$this->errors = array();
 			return -1;
 		}
+	}
+
+	/**
+	 *  Check webhooks volumetry (cron)
+	 *
+	 *  @return	int				0 if OK, < 0 if KO (this function is used also by cron so only 0 is OK)
+	 */
+	public function cronCheckWebHooksVolumetry()
+	{
+		global $conf, $user, $langs;
+
+		$langs->load('ecommerceng@ecommerceng');
+		$output = '';
+
+		$error = 0;
+
+		dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
+		$eCommerceSite = new eCommerceSite($this->db);
+		$sites = $eCommerceSite->listSites('object');
+
+		foreach ($sites as $site) {
+			$volumetry_alert = $site->parameters['web_hooks_volumetry_alert'] > 0 ? $site->parameters['web_hooks_volumetry_alert'] : 0;
+			if ($volumetry_alert > 0) {
+				$sql = "SELECT COUNT(*) AS nb FROM " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks WHERE status = " . self::STATUS_NOT_PROCESSED . " AND site_id = " . $site->id;
+
+				$resql = $this->db->query($sql);
+				if ($resql) {
+					$nb = 0;
+					if ($obj = $this->db->fetch_object($resql)) {
+						$nb = $obj->nb > 0 ? $obj->nb : 0;
+					}
+
+					if ($nb > $volumetry_alert) {
+						$output .= '<span style="color: red;">' . $langs->trans('ECommerceErrorCheckWebHooksVolumetry', $site->name, $site->id, $nb, $volumetry_alert) . '</span>' . "<br>";
+						$error++;
+					}
+				} else {
+					$output .= '<span style="color: red;">' . $langs->trans('Error') . ' SQL : ' . $this->db->lasterror() . '</span>' . "<br>";
+					$error++;
+				}
+			}
+		}
+
+		if ($error) {
+			if (!empty($conf->global->ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_VOLUMETRY)) {
+				$output2 = $langs->trans('ECommerceSendEmailErrorCheckWebHooksVolumetry') . ":<br>";
+				$subject = $langs->transnoentitiesnoconv('ECommerceSendEmailErrorCheckWebHooksVolumetryErrorSubject');
+				$send_to = $conf->global->ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_VOLUMETRY;
+				$from = $conf->global->MAIN_MAIL_EMAIL_FROM;
+				$body = $output;
+				$result = $this->_sendEmail($subject, $send_to, $from, $body);
+				if (is_numeric($result) && $result < 0) {
+					$output2 .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $this->errorsToString('<br>') . '</span>' . "<br>";
+				} else {
+					$output2 .= '<pre>' . $result . '</pre>';
+				}
+				$output .= $output2;
+			} else {
+				$output .= '<span style="color: orange;">' . $langs->trans('ECommerceWarningNotifyEmailErrorCheckWebHooksVolumetryNotDefined') . '</span>' . "<br>";
+			}
+		}
+
+		if ($error) {
+			$this->error = $output;
+			$this->errors = array();
+			return -1;
+		} else {
+			$output .= $langs->trans('ECommerceCheckWebHooksVolumetrySuccess');
+		}
+
+		$this->error = "";
+		$this->errors = array();
+		$this->output = $output;
+		$this->result = array("commandbackuplastdone" => "", "commandbackuptorun" => "");
+
+		return 0;
 	}
 
 	/**

@@ -419,7 +419,12 @@ ECommerceSuccessCheckWebHooksStatus                 = The %s WebHooks of the sit
 ECommerceSendEmailErrorCheckWebHooksStatus          = Sending of error notification mails
 ECommerceNotifyEmailCheckWebHooksStatusErrorSubject = [WooSync] Error while checking the status of the WebHooks
 ECommerceCheckWebHooksStatusSuccess                 = The verification of the status of the WebHooks has been successfully completed
-ECommerceAlreadyCheckingWebHooksStatus              = The verification of the status of the WebHooks is already being processed
+
+ECommerceCheckWebHooksVolumetry                                                                     =Vérification de la volumétrie des crochet Web (WebHooks)
+ECommerceErrorCheckWebHooksVolumetry                                                                =Le nombre de crochet WEB (WebHook) en attentes de traitements du site "%s" (ID : %s) a dépassé la volumétrie (%s / %s)
+ECommerceSendEmailErrorCheckWebHooksVolumetry                                                       =Envoie du mails de notification des dépassements de volumétrie des crochet Web (WebHooks)
+ECommerceSendEmailErrorCheckWebHooksVolumetryErrorSubject                                           =[WooSync] Erreur lors de la vérification de la volumétrie des crochet Web (WebHooks)
+ECommerceCheckWebHooksVolumetrySuccess                                                              =La vérification de la volumétrie des crochet Web (WebHooks) s'est terminé avec succes
 
 ############################################################################################
 # Errors
@@ -553,3 +558,4 @@ ECommerceWarningOrderThirdPartyNotSupported                     = Attention!! Th
 ECommerceWarningSynchronizeWebHook                              = Attention!! When synchronizing the line in the queue (ID: %s, Topic: %s)
 ECommerceWarningUpdateOrderNotSynchronized                      = Attention!! Attempt to update an unsynchronized order
 ECommerceWarningNotifyEmailErrorCheckWebHooksStatusNotDefined   = Attention!! The global variable ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_STATUS containing the email adresses separated by commas has not been defined
+ECommerceWarningNotifyEmailErrorCheckWebHooksVolumetryNotDefined  =Attention !! La variable globale ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_VOLUMETRY contenant les adresses emails séparées par des virgules n'a pas été activée

@@ -1,5 +1,11 @@
 # ChangeLog
 
+## 4.1.12.0
+- Ajout d'un nouveau parametre dans la configuration du site et une nouvelle tache planifié pour la gestion des depassement de volumétrie de webhooks en attentes de traitement
+- Les emails notifies doivent etre renseignés dans la variable globale ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_VOLUMETRY
+- Suppression de la variable globale ECOMMERCE_CHECK_WEBHOOKS_STATUS
+- Ajout d'un script pour activé le partage des images des produits en masses 'scripts/activate_sharing_product_images.php'
+
 ## 4.1.11.0
 - Correction de la date de la facture qui est maintenant egale à la date de paiement (le cas echeant celle de la commande)
 - Correction compatibilité multi-entité

@@ -315,6 +315,8 @@ ECommerceSiteWebHooksUrl                                                        
 ECommerceSiteWebHooksUrlDescription                                                                 =URL sur laquelle la connexion du crochet Web est délivrée
 ECommerceSiteWebHooksSecret                                                                         =Secret
 ECommerceSiteWebHooksSecretDescription                                                              =La clé secrète est utilisée pour générer un hachage du crochet Web livré et indiqué dans les en-têtes de requête
+ECommerceSiteWebHooksVolumetryAlert                                                                 =Alerte volumétrie
+ECommerceSiteWebHooksVolumetryAlertDescription                                                      =Envoie un email grace a une tache planifié si le nombre de hooks en attente de traitement depasse cette valeur (0 signifie qu'il n'y a pas de verification)
 ECommerceShippingService                                                                            =Frais de port
 ECommerceShippingServiceDescription                                                                 =Service utilisé pour la gestion des frais de port
 ECommerceDiscountCodeService                                                                        =Code promo
@@ -411,7 +413,12 @@ ECommerceSuccessCheckWebHooksStatus                                             
 ECommerceSendEmailErrorCheckWebHooksStatus                                                          =Envoie du mails de notification des erreurs
 ECommerceNotifyEmailCheckWebHooksStatusErrorSubject                                                 =[WooSync] Erreur lors de la vérification du statut des crochet Web (WebHooks)
 ECommerceCheckWebHooksStatusSuccess                                                                 =La vérification du statut des crochet Web (WebHooks) s'est terminé avec succes
-ECommerceAlreadyCheckingWebHooksStatus                                                              =La vérification du statut des crochet Web (WebHooks) est déjà en cours de traitement
+
+ECommerceCheckWebHooksVolumetry                                                                     =Vérification de la volumétrie des crochet Web (WebHooks)
+ECommerceErrorCheckWebHooksVolumetry                                                                =Le nombre de crochet WEB (WebHook) en attentes de traitements du site "%s" (ID : %s) a dépassé la volumétrie (%s / %s)
+ECommerceSendEmailErrorCheckWebHooksVolumetry                                                       =Envoie du mails de notification des dépassements de volumétrie des crochet Web (WebHooks)
+ECommerceSendEmailErrorCheckWebHooksVolumetryErrorSubject                                           =[WooSync] Erreur lors de la vérification de la volumétrie des crochet Web (WebHooks)
+ECommerceCheckWebHooksVolumetrySuccess                                                              =La vérification de la volumétrie des crochet Web (WebHooks) s'est terminé avec succes
 
 ############################################################################################
 # Errors
@@ -545,3 +552,4 @@ ECommerceWarningOrderThirdPartyNotSupported                                     
 ECommerceWarningSynchronizeWebHook                                                                  =Attention !! Lors de la synchronisation de la ligne de la file d'attente (ID : %s, Topic: %s)
 ECommerceWarningUpdateOrderNotSynchronized                                                          =Attention !! Tentative de mise à jour d'une commande non synchronisée
 ECommerceWarningNotifyEmailErrorCheckWebHooksStatusNotDefined                                       =Attention !! La variable globale ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_STATUS contenant les adresses emails séparées par des virgules n'a pas été activée
+ECommerceWarningNotifyEmailErrorCheckWebHooksVolumetryNotDefined                                    =Attention !! La variable globale ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_VOLUMETRY contenant les adresses emails séparées par des virgules n'a pas été activée

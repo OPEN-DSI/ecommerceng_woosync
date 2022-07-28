@@ -353,6 +353,7 @@ if ($_POST['site_form_detail_action'] == 'save')
 				'discount_code_service' => $_POST['ecommerce_fk_discount_code_service'],
 				'pw_gift_cards_service' => $_POST['ecommerce_fk_pw_gift_cards_service'],
                 'web_hooks_secret' => $_POST['ecommerce_web_hooks_secret'],
+				'web_hooks_volumetry_alert' => $_POST['ecommerce_web_hooks_volumetry_alert'],
 				'order_status_etod' => $ecommerceOrderStatusForECommerceToDolibarr,
 				'order_status_dtoe' => $ecommerceOrderStatusForDolibarrToECommerce,
 				'order_first_date_etod' => $ecommerceOrderFirstDateForECommerceToDolibarr,
@@ -810,6 +811,7 @@ if ($ecommerceId > 0) {
 		$currentUri = $uriFactory->createFromAbsolute(dol_buildpath('/ecommerceng/webhooks.php', 2) . '?ecommerce_id=' . $siteId);
 		$eCommerceSiteWebHooksUrl = $currentUri->getAbsoluteUri();
 		$eCommerceSiteWebHooksSecret = (!empty($_POST['ecommerce_web_hooks_secret']) ? $_POST['ecommerce_web_hooks_secret'] : (!empty($siteDb->parameters['web_hooks_secret']) ? $siteDb->parameters['web_hooks_secret'] : ''));
+		$eCommerceSiteWebHooksVolumetryAlert = (!empty($_POST['ecommerce_web_hooks_volumetry_alert']) ? $_POST['ecommerce_web_hooks_volumetry_alert'] : (!empty($siteDb->parameters['web_hooks_volumetry_alert']) ? $siteDb->parameters['web_hooks_volumetry_alert'] : ''));
 
 		$ecommerceFkShippingService = (!empty($_POST['ecommerce_fk_shipping_service']) ? $_POST['ecommerce_fk_shipping_service'] : (!empty($siteDb->parameters['shipping_service']) ? $siteDb->parameters['shipping_service'] : ''));
 		$ecommerceFkDiscountCodeService = (!empty($_POST['ecommerce_fk_discount_code_service']) ? $_POST['ecommerce_fk_discount_code_service'] : (!empty($siteDb->parameters['discount_code_service']) ? $siteDb->parameters['discount_code_service'] : ''));

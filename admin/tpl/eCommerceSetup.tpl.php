@@ -472,6 +472,14 @@ if ($ecommerceType == 2)
 			?></td>
 			<td><?php print $langs->trans('ECommerceSiteWebHooksSecretDescription') ?></td>
 		</tr>
+		<?php
+		$var = !$var;
+		?>
+		<tr <?php print $bc[$var] ?>>
+			<td><span><?php print $langs->trans('ECommerceSiteWebHooksVolumetryAlert') ?></span></td>
+			<td><input type="number" class="flat" id="ecommerce_web_hooks_volumetry_alert" name="ecommerce_web_hooks_volumetry_alert" value="<?php print $eCommerceSiteWebHooksVolumetryAlert ?>" size="20"></td>
+			<td><?php print $langs->trans('ECommerceSiteWebHooksVolumetryAlertDescription') ?></td>
+		</tr>
 	</table>
 	<?php
 }
