@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.13.0
+- Suppression du test pour que les prix des produits dolibarr soit dans le meme type (HT ou TTC) que le site lors de la maj de dolibarr vers le site, il envoie le prix attendu dans le type du site
+
 ## 4.1.12.0
 - Ajout d'un nouveau parametre dans la configuration du site et une nouvelle tache planifié pour la gestion des depassement de volumétrie de webhooks en attentes de traitement
 - Les emails notifies doivent etre renseignés dans la variable globale ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_VOLUMETRY

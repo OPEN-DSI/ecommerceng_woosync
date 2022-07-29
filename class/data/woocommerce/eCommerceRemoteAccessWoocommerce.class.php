@@ -2036,43 +2036,43 @@ class eCommerceRemoteAccessWoocommerce
 		$totalLength = weight_convert($object->length, $from_unit, $to_unit);
 
         // Price
-        $error_price = 0;
+//        $error_price = 0;
         if (!empty($conf->global->PRODUIT_MULTIPRICES)) {
             $price_level = !empty($this->site->price_level) ? $this->site->price_level : 1;
             if ($this->site->ecommerce_price_type == 'TTC') {
-                if ($object->multiprices_base_type[$price_level] == 'TTC' || $object->multiprices_ttc[$price_level] == 0) {
+//                if ($object->multiprices_base_type[$price_level] == 'TTC' || $object->multiprices_ttc[$price_level] == 0) {
                     $price = $object->multiprices_ttc[$price_level];
-                } else {
-                    $error_price++;
-                }
+//                } else {
+//                    $error_price++;
+//                }
             } else {
-                if ($object->multiprices_base_type[$price_level] == 'TTC' && $object->multiprices[$price_level] != 0) {
-                    $error_price++;
-                } else {
+//                if ($object->multiprices_base_type[$price_level] == 'TTC' && $object->multiprices[$price_level] != 0) {
+//                    $error_price++;
+//                } else {
                     $price = $object->multiprices[$price_level];
-                }
+//                }
             }
         } else {
             if ($this->site->ecommerce_price_type == 'TTC') {
-                if ($object->price_base_type == 'TTC' || $object->price_ttc == 0) {
+//                if ($object->price_base_type == 'TTC' || $object->price_ttc == 0) {
                     $price = $object->price_ttc;
-                } else {
-                    $error_price++;
-                }
+//                } else {
+//                    $error_price++;
+//                }
             } else {
-                if ($object->price_base_type == 'TTC' && $object->price != 0) {
-                    $error_price++;
-                } else {
+//                if ($object->price_base_type == 'TTC' && $object->price != 0) {
+//                    $error_price++;
+//                } else {
                     $price = $object->price;
-                }
+//                }
             }
         }
-        if ($error_price) {
-            $error_msg = $langs->trans('ECommerceWoocommerceErrorBaseTypeOfProductWithSiteParameter', $object->ref, $this->site->ecommerce_price_type, $this->site->name);
-            $this->errors[] = $error_msg;
-            dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_ERR);
-            return array();
-        }
+//        if ($error_price) {
+//            $error_msg = $langs->trans('ECommerceWoocommerceErrorBaseTypeOfProductWithSiteParameter', $object->ref, $this->site->ecommerce_price_type, $this->site->name);
+//            $this->errors[] = $error_msg;
+//            dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_ERR);
+//            return array();
+//        }
         $regular_price = $object->array_options["options_ecommerceng_wc_regular_price_{$this->site->id}_{$conf->entity}"];
 
         $sale_price = price2num($object->array_options["options_ecommerceng_wc_sale_price_{$this->site->id}_{$conf->entity}"]);
