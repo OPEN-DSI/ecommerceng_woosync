@@ -82,7 +82,7 @@ class box_ecommerce_webhooks extends ModeleBoxes
 		if ($user->rights->ecommerceng->read) {
 			$sql = "SELECT epw.status, count(*) AS nb";
 			$sql .= " FROM " . MAIN_DB_PREFIX . "ecommerce_pending_webhooks AS epw";
-			$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_sites AS es ON es.rowid = epw.site_id";
+			$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_site AS es ON es.rowid = epw.site_id";
 			$sql .= " WHERE es.entity IN (" . getEntity('ecommerceng') . ")";
 			$sql .= " GROUP BY epw.status";
 			$sql .= " ORDER BY epw.status";
