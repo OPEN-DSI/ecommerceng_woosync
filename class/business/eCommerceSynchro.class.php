@@ -4995,6 +4995,20 @@ class eCommerceSynchro
 						}
 					}
 
+					// Fetch linked invoice of the order
+					if (!$error && !($invoice->id > 0) && $order->id > 0) {
+						$result = $order->fetchObjectLinked();
+						if ($result < 0) {
+							$this->errors[] = $this->langs->trans('ECommerceErrorFetchObjectLinked');
+							$this->errors[] = $order->errorsToString();
+							$error++;
+						}
+						if (!empty($order->linkedObjects['facture'])) {
+							$invoice_linked = array_values($order->linkedObjects['facture']);
+							$invoice = $invoice_linked[0];
+						}
+					}
+
 					if (!$error) {
 						// Recreate the link to the order if not exist
 						if ($invoice->id > 0) {
@@ -6579,14 +6593,6 @@ class eCommerceSynchro
 			} else {
 				$third_party->name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
 			}
-			$third_party->address = $address;
-			$third_party->zip = $zip;
-			$third_party->town = $town;
-			$third_party->country_id = $country_id;
-			$third_party->default_lang = $country_id == $mysoc->country_id ? $mysoc->default_lang : (!empty($conf->global->ECOMMERCENG_DEFAULT_LANG_OTHER_COUNTRY) ? $conf->global->ECOMMERCENG_DEFAULT_LANG_OTHER_COUNTRY : null);
-			$third_party->email = $email;
-			$third_party->phone = $phone;
-			$third_party->fax = $fax;
 			$third_party->typent_code = 'TE_PRIVATE';
 			$third_party->typent_id = dol_getIdFromCode($this->db, $third_party->typent_code, 'c_typent', 'code', 'id');
 			if (!($third_party->typent_id > 0)) {
@@ -6596,6 +6602,14 @@ class eCommerceSynchro
 		} else {
 			$third_party->name = $company;
 		}
+		$third_party->address = $address;
+		$third_party->zip = $zip;
+		$third_party->town = $town;
+		$third_party->country_id = $country_id;
+		$third_party->default_lang = $country_id == $mysoc->country_id ? $mysoc->default_lang : (!empty($conf->global->ECOMMERCENG_DEFAULT_LANG_OTHER_COUNTRY) ? $conf->global->ECOMMERCENG_DEFAULT_LANG_OTHER_COUNTRY : null);
+		$third_party->email = $email;
+		$third_party->phone = $phone;
+		$third_party->fax = $fax;
 		$third_party->code_client = -1;           // Automatic code
 		$third_party->code_fournisseur = -1;      // Automatic code
 

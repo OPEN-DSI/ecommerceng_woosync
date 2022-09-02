@@ -188,6 +188,9 @@ if ($_POST['site_form_detail_action'] == 'save')
             if ($conf->supplier_invoice->enabled && !empty($ecommerceOrderActions['create_invoice'])) {
                 $ecommerceOrderActions['create_supplier_invoice'] = GETPOST('ecommerce_create_supplier_invoice', 'int') ? 1 : 0;
             }
+			if ($conf->commande->enabled || $conf->facture->enabled) {
+				$ecommerceOrderActions['fee_line_as_item_line'] = GETPOST('ecommerce_fee_line_as_item_line', 'int') ? 1 : 0;
+			}
 
             $efields = new ExtraFields($db);
             $ecommerceExtrafieldsCorrespondence = array();

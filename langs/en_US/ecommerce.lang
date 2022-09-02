@@ -295,6 +295,7 @@ ECommerceCreateOrderInvoiceWhenSyncOrder    = Actions when retrieving WooCommerc
 ECommerceCreateOrder                        = Create the order
 ECommerceCreateInvoice                      = Create the bill
 ECommerceCreateSupplierInvoiceFromFee       = Create the supplier bill from the charges
+ECommerceFeeLineAsItemLine                  = The fee line is as the service line
 ECommerceSendInvoiceByMail                  = Send the bill by email
 ECommerceCreateOrderDescription             = Related actions when retrieving WooCommerce orders (Enter the payment methods associated with WooCommerce)
 ECommerceCreateInvoiceIfAmount0                                                                     =Créer la facture même si le montant est égale à 0

@@ -400,6 +400,8 @@ if (!empty($conf->commande->enabled)) {
             <?php
             }
             ?>
+			<br>
+			<input type="checkbox" id="ecommerce_fee_line_as_item_line" name="ecommerce_fee_line_as_item_line" value="1" <?php print !empty($ecommerceOrderActions['fee_line_as_item_line']) ? ' checked' : '' ?>>&nbsp;<label for="ecommerce_fee_line_as_item_line"><?php print $langs->trans('ECommerceFeeLineAsItemLine') ?></label>&nbsp;
         </td>
         <td><?php print $langs->trans('ECommerceCreateOrderDescription') ?></td>
     </tr>

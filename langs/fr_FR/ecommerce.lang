@@ -287,6 +287,7 @@ ECommerceCreateOrderInvoiceWhenSyncOrder                                        
 ECommerceCreateOrder                                                                                =Créer la commande
 ECommerceCreateInvoice                                                                              =Créer la facture
 ECommerceCreateSupplierInvoiceFromFee                                                               =Créer la facture fournisseur à partir des frais
+ECommerceFeeLineAsItemLine                                                                          =Considéré les lignes de frais comme des lignes de services
 ECommerceSendInvoiceByMail                                                                          =Envoyer la facture par mail
 ECommerceCreateOrderDescription                                                                     =Actions associées lors de la récupération des commandes WooCommerce (Renseigner les modes de paiements associés à WooCommerce)
 ECommerceCreateInvoiceIfAmount0                                                                     =Créer la facture même si le montant est égale à 0

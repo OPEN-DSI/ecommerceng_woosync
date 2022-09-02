@@ -1557,6 +1557,7 @@ class eCommerceRemoteAccessWoocommerce
 
 		// Set fee lines
 		$fee_lines = [];
+		$fee_line_as_item_line = !empty($this->site->parameters['order_actions']['fee_line_as_item_line']);
 		if (!empty($remote_data->fee_lines)) {
 			foreach ($remote_data->fee_lines as $fee_line) {
 				$line = [
@@ -1575,7 +1576,19 @@ class eCommerceRemoteAccessWoocommerce
 				$line['total_local_tax1'] = $taxes['total_local_tax1'];
 				$line['total_local_tax2'] = $taxes['total_local_tax2'];
 
-				$fee_lines[] = $line;
+				if ($fee_line_as_item_line) {
+					$line['product_type'] = 'service';
+					$line['id_product'] = 0;
+					$line['description'] = $fee_line->name;
+					$line['price'] = $fee_line->total;
+					$line['qty'] = 1;
+					$line['discount'] = 0;
+					$line['buy_price'] = 0;
+
+					$items[] = $line;
+				} else {
+					$fee_lines[] = $line;
+				}
 			}
 		}
 		// Manage fees in meta data (stripe payment, ...)
@@ -4228,20 +4241,22 @@ class eCommerceRemoteAccessWoocommerce
 
 		$this->loadTaxes();
 
-		foreach ($taxes_data as $data) {
-			if (empty($data->total)) continue;
-			$count++;
-			if ($count > 1) break;
+		if (!empty(self::$taxes_rates_cached) || !empty($tax_list)) {
+			foreach ($taxes_data as $data) {
+				if (empty($data->total)) continue;
+				$count++;
+				if ($count > 1) break;
 
-			$tax_id = $data->id;
-			if (isset($tax_list[$tax_id])) {
-				$tva_tx = $tax_list[$tax_id];
-			} else {
-				if (isset(self::$taxes_rates_cached[$tax_id])) {
-					$tva_tx = self::$taxes_rates_cached[$tax_id]['rate'];
+				$tax_id = $data->id;
+				if (isset($tax_list[$tax_id])) {
+					$tva_tx = $tax_list[$tax_id];
 				} else {
-					$this->errors[] = $langs->trans('ECommerceWooCommerceErrorTaxNotFound', $tax_id);
-					return false;
+					if (isset(self::$taxes_rates_cached[$tax_id])) {
+						$tva_tx = self::$taxes_rates_cached[$tax_id]['rate'];
+					} else {
+						$this->errors[] = $langs->trans('ECommerceWooCommerceErrorTaxNotFound', $tax_id);
+						return false;
+					}
 				}
 			}
 		}

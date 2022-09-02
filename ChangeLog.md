@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 4.1.14.0
+- Ajout d'une nouvelle option pour considéré les lignes de frais comme des lignes de services
+- Lors de la creation d'un nouveau tiers lors de la synchronisation d'une commande, l'adresse est renseignée sur le tiers
+- Lors de la creation d'une facture lors de la synchronisation d'une commande, vérifie si il n'y a pas déjà une facture liée
+
 ## 4.1.13.0
 - Suppression du test pour que les prix des produits dolibarr soit dans le meme type (HT ou TTC) que le site lors de la maj de dolibarr vers le site, il envoie le prix attendu dans le type du site
 
