@@ -4281,9 +4281,13 @@ class eCommerceSynchro
 										// Customer not supported (eg. order created by admin so we don't need it)
 										$third_party_id = null;
 									}
+								} else {
+									// Customer not supported (eg. order created by admin so we don't need it)
+									$third_party_id = null;
 								}
 							}
-						} else {
+						}
+						if ($third_party_id === 0) {
 							// This is an guest customer.
 							if ($this->eCommerceSite->fk_anonymous_thirdparty > 0) {
 								$third_party_id = $this->eCommerceSite->fk_anonymous_thirdparty;

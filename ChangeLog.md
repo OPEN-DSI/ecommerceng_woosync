@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.15.0
+- Correction lors de la synchro d'une commande dont le client est un utilisateur woocommerce dont le role n'est pas supporté
+
 ## 4.1.14.0
 - Ajout d'une nouvelle option pour considéré les lignes de frais comme des lignes de services
 - Lors de la creation d'un nouveau tiers lors de la synchronisation d'une commande, l'adresse est renseignée sur le tiers
