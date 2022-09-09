@@ -335,12 +335,15 @@ if ($_POST['site_form_detail_action'] == 'save')
                 'ref' => isset($_POST['ecommerce_product_ref_synch_direction']) ? GETPOST('ecommerce_product_ref_synch_direction', 'alpha') : 'etod',
                 'description' => isset($_POST['ecommerce_product_description_synch_direction']) ? GETPOST('ecommerce_product_description_synch_direction', 'alpha') : 'etod',
                 'short_description' => isset($_POST['ecommerce_product_short_description_synch_direction']) ? GETPOST('ecommerce_product_short_description_synch_direction', 'alpha') : 'etod',
-                'weight' => isset($_POST['ecommerce_product_weight_synch_direction']) ? GETPOST('ecommerce_product_weight_synch_direction', 'alpha') : 'etod',
-				'dimension' => isset($_POST['ecommerce_product_dimension_synch_direction']) ? GETPOST('ecommerce_product_dimension_synch_direction', 'alpha') : 'etod',
                 'tax' => isset($_POST['ecommerce_product_tax_synch_direction']) ? GETPOST('ecommerce_product_tax_synch_direction', 'alpha') : 'etod',
                 'status' => isset($_POST['ecommerce_product_status_synch_direction']) ? GETPOST('ecommerce_product_status_synch_direction', 'alpha') : 'etod',
             );
-
+			if (empty($conf->global->PRODUCT_DISABLE_WEIGHT)) {
+				$ecommerceProductSynchDirection['weight'] = isset($_POST['ecommerce_product_weight_synch_direction']) ? GETPOST('ecommerce_product_weight_synch_direction', 'alpha') : 'etod';
+			}
+			if (empty($conf->global->PRODUCT_DISABLE_SIZE)) {
+				$ecommerceProductSynchDirection['dimension'] = isset($_POST['ecommerce_product_dimension_synch_direction']) ? GETPOST('ecommerce_product_dimension_synch_direction', 'alpha') : 'etod';
+			}
 			$ecommerceCreateInvoiceType = GETPOST('ecommerce_create_invoice_type', 'int');
 			if (empty($ecommerceCreateInvoiceType)) $ecommerceCreateInvoiceType = Facture::TYPE_STANDARD;
 
@@ -367,8 +370,6 @@ if ($_POST['site_form_detail_action'] == 'save')
                 'realtime_dtoe' => $ecommerceRealtimeDolibarrToECommerce,
                 'product_synch_direction' => $ecommerceProductSynchDirection,
                 'product_synch_price' => $ecommerceProductSynchPrice,
-				'product_weight_units' => $_POST['ecommerce_product_weight_units'],
-				'product_dimension_units' => $_POST['ecommerce_product_dimension_units'],
 				'product_variation_mode' => GETPOSTISSET('ecommerce_product_variation_mode') ? GETPOST('ecommerce_product_variation_mode', 'aZ09') : 'one_to_one',
                 'customer_roles' => $ecommerceWoocommerceCustomerRoles,
 				'create_invoice_type' => $ecommerceCreateInvoiceType,
@@ -377,6 +378,12 @@ if ($_POST['site_form_detail_action'] == 'save')
 				'order_filter_keys_metadata_product_lines_to_description_etod' => GETPOST('ecommerce_order_filter_keys_metadata_product_lines_to_description_etod', 'alpha'),
 				'default_account' => $ecommerceDefaultAccount,
             );
+			if (empty($conf->global->PRODUCT_DISABLE_WEIGHT)) {
+				$siteDb->parameters['product_weight_units'] = $_POST['ecommerce_product_weight_units'];
+			}
+			if (empty($conf->global->PRODUCT_DISABLE_SIZE)) {
+				$siteDb->parameters['product_dimension_units'] = $_POST['ecommerce_product_dimension_units'];
+			}
             if ($conf->commande->enabled || $conf->facture->enabled || $conf->supplier_invoice->enabled) {
                 $siteDb->parameters['order_actions'] = $ecommerceOrderActions;
             }
@@ -1015,16 +1022,20 @@ if ($ecommerceId > 0) {
 			$ecommerceOrderFirstDateForECommerceToDolibarr = isset($siteDb->parameters['order_first_date_etod']) ? $siteDb->parameters['order_first_date_etod'] : '';
         }
 
-		$ecommerceProductWeightUnits = (isset($siteDb->parameters['product_weight_units']) ? $siteDb->parameters['product_weight_units'] : (empty($conf->global->MAIN_WEIGHT_DEFAULT_UNIT)?0:$conf->global->MAIN_WEIGHT_DEFAULT_UNIT));
-		$ecommerceProductDimensionUnits = (isset($siteDb->parameters['product_dimension_units']) ? $siteDb->parameters['product_dimension_units'] : -2); // -2 = cm
+		if (empty($conf->global->PRODUCT_DISABLE_WEIGHT)) {
+			$ecommerceProductWeightSynchDirection = isset($siteDb->parameters['product_synch_direction']['weight']) ? $siteDb->parameters['product_synch_direction']['weight'] : 'etod';
+			$ecommerceProductWeightUnits = (isset($siteDb->parameters['product_weight_units']) ? $siteDb->parameters['product_weight_units'] : (empty($conf->global->MAIN_WEIGHT_DEFAULT_UNIT) ? 0 : $conf->global->MAIN_WEIGHT_DEFAULT_UNIT));
+		}
+		if (empty($conf->global->PRODUCT_DISABLE_SIZE)) {
+			$ecommerceProductDimensionSynchDirection = isset($siteDb->parameters['product_synch_direction']['dimension']) ? $siteDb->parameters['product_synch_direction']['dimension'] : 'etod';
+			$ecommerceProductDimensionUnits = (isset($siteDb->parameters['product_dimension_units']) ? $siteDb->parameters['product_dimension_units'] : -2); // -2 = cm
+		}
 
         $ecommerceProductSynchPrice = isset($siteDb->parameters['product_synch_price']) ? $siteDb->parameters['product_synch_price'] : 'regular';
         $ecommerceProductImageSynchDirection = isset($siteDb->parameters['product_synch_direction']['image']) ? $siteDb->parameters['product_synch_direction']['image'] : 'etod';
         $ecommerceProductRefSynchDirection = isset($siteDb->parameters['product_synch_direction']['ref']) ? $siteDb->parameters['product_synch_direction']['ref'] : 'etod';
         $ecommerceProductDescriptionSynchDirection = isset($siteDb->parameters['product_synch_direction']['description']) ? $siteDb->parameters['product_synch_direction']['description'] : 'etod';
         $ecommerceProductShortDescriptionSynchDirection = isset($siteDb->parameters['product_synch_direction']['short_description']) ? $siteDb->parameters['product_synch_direction']['short_description'] : 'etod';
-		$ecommerceProductWeightSynchDirection = isset($siteDb->parameters['product_synch_direction']['weight']) ? $siteDb->parameters['product_synch_direction']['weight'] : 'etod';
-		$ecommerceProductDimensionSynchDirection = isset($siteDb->parameters['product_synch_direction']['dimension']) ? $siteDb->parameters['product_synch_direction']['dimension'] : 'etod';
         $ecommerceProductTaxSynchDirection = isset($siteDb->parameters['product_synch_direction']['tax']) ? $siteDb->parameters['product_synch_direction']['tax'] : 'etod';
         $ecommerceProductStatusSynchDirection = isset($siteDb->parameters['product_synch_direction']['status']) ? $siteDb->parameters['product_synch_direction']['status'] : 'etod';
 		$ecommerceProductVariationMode = isset($siteDb->parameters['product_variation_mode']) ? $siteDb->parameters['product_variation_mode'] : 'one_to_one';

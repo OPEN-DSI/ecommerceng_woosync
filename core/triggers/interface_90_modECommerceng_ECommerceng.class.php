@@ -149,11 +149,12 @@ class InterfaceECommerceng
 				}
 			} else {
 				$eCommerceSite = new eCommerceSite($this->db);
-				$sites = $eCommerceSite->listSites('object');
+				$sites = $eCommerceSite->listSites('object', true);
 				$entities = explode(',', getEntity('societe'));
+				$fromsyncofecommerceid = $object->context['fromsyncofecommerceid'];
 
 				foreach ($sites as $site) {
-					if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id) {
+					if ($fromsyncofecommerceid > 0 && $fromsyncofecommerceid == $site->id) {
 						dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
 						continue;
 					}
@@ -259,11 +260,12 @@ class InterfaceECommerceng
 			$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - Action {$action} (ID: {$object->id})");
 
 			$eCommerceSite = new eCommerceSite($this->db);
-			$sites = $eCommerceSite->listSites('object');
+			$sites = $eCommerceSite->listSites('object', true);
 			$entities = explode(',', getEntity('socpeople'));
+			$fromsyncofecommerceid = $object->context['fromsyncofecommerceid'];
 
 			foreach ($sites as $site) {
-				if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id) {
+				if ($fromsyncofecommerceid > 0 && $fromsyncofecommerceid == $site->id) {
 					dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
 					continue;
 				}
@@ -375,9 +377,10 @@ class InterfaceECommerceng
 			}
 
 			$eCommerceSite = new eCommerceSite($this->db);
-			$sites = $eCommerceSite->listSites('object');
+			$sites = $eCommerceSite->listSites('object', true);
 			$entities = explode(',', getEntity('product'));
 			$object->context['ec_price_entities'] = explode(',', getEntity('productprice'));
+			$fromsyncofecommerceid = $object->context['fromsyncofecommerceid'];
 
 			foreach ($sites as $site) {
 				if (!in_array($site->fk_cat_product, $categories)) {
@@ -385,7 +388,7 @@ class InterfaceECommerceng
 					continue;
 				}
 
-				if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id) {
+				if ($fromsyncofecommerceid > 0 && $fromsyncofecommerceid == $site->id) {
 					dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
 					continue;
 				}
@@ -466,7 +469,7 @@ class InterfaceECommerceng
 							$remote_id = $result['remote_id'];
 							$object->url = $result['remote_url'];
 							$object->context['fromsyncofecommerceid'] = $site->id;
-							$result = $object->update($object->id, $user);
+							$result = $object->update($object->id, $user, true);
 							if ($result < 0) {
 								$error++;
 								$error_msg = $langs->trans('ECommerceUpdateProduct');
@@ -566,7 +569,7 @@ class InterfaceECommerceng
 			}
 
 			$eCommerceSite = new eCommerceSite($this->db);
-			$sites = $eCommerceSite->listSites('object');
+			$sites = $eCommerceSite->listSites('object', true);
 			$entities = explode(',', getEntity('commande'));
 
 			foreach ($sites as $site) {
@@ -652,11 +655,12 @@ class InterfaceECommerceng
 			$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - Action {$action} (ID: {$object->id})");
 
 			$eCommerceSite = new eCommerceSite($this->db);
-			$sites = $eCommerceSite->listSites('object');
+			$sites = $eCommerceSite->listSites('object', true);
 			$entities = explode(',', getEntity('facture'));
+			$fromsyncofecommerceid = $object->context['fromsyncofecommerceid'];
 
 			foreach ($sites as $site) {
-				if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id) {
+				if ($fromsyncofecommerceid > 0 && $fromsyncofecommerceid == $site->id) {
 					dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
 					continue;
 				}
@@ -908,11 +912,12 @@ class InterfaceECommerceng
 			$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - Action {$action} (ID: {$object->id})");
 
 			$eCommerceSite = new eCommerceSite($this->db);
-			$sites = $eCommerceSite->listSites('object');
+			$sites = $eCommerceSite->listSites('object', true);
 			$entities = explode(',', getEntity('expedition'));
+			$fromsyncofecommerceid = $object->context['fromsyncofecommerceid'];
 
 			foreach ($sites as $site) {
-				if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id) {
+				if ($fromsyncofecommerceid > 0 && $fromsyncofecommerceid == $site->id) {
 					dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
 					continue;
 				}
@@ -1023,11 +1028,12 @@ class InterfaceECommerceng
 			$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - Action {$action} (ID: {$object->id})");
 
 			$eCommerceSite = new eCommerceSite($this->db);
-			$sites = $eCommerceSite->listSites('object');
+			$sites = $eCommerceSite->listSites('object', true);
 			$entities = explode(',', getEntity('stock'));
+			$fromsyncofecommerceid = $object->context['fromsyncofecommerceid'];
 
 			foreach ($sites as $site) {
-				if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id) {
+				if ($fromsyncofecommerceid > 0 && $fromsyncofecommerceid == $site->id) {
 					dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
 					continue;
 				}

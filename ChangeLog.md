@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.1.16.0
+- Correction synchronisation multi-site et multi-entité
+- Correction synchro produit par ref sur les commandes si le produit par l'id n'est pas trouvé
+
 ## 4.1.15.0
 - Correction lors de la synchro d'une commande dont le client est un utilisateur woocommerce dont le role n'est pas supporté
 

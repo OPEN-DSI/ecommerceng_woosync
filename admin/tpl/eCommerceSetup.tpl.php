@@ -550,6 +550,7 @@ if ($ecommerceType == 2)
           </td>
           <td><?php print $langs->trans('ECommerceProductShortDescriptionSyncDirectionDescription') ?></td>
         </tr>
+		  <?php if (empty($conf->global->PRODUCT_DISABLE_WEIGHT)) { ?>
         <tr <?php print $bc[$var] ?>>
           <td><span><?php print $langs->trans('ECommerceProductWeightSyncDirection') ?></span></td>
           <td>
@@ -572,6 +573,8 @@ if ($ecommerceType == 2)
 			  </td>
 			  <td><?php print $langs->trans('ECommerceProductWeightUnitsDescription') ?></td>
 		  </tr>
+		  <?php } ?>
+		  <?php if (empty($conf->global->PRODUCT_DISABLE_SIZE)) { ?>
 		  <tr <?php print $bc[$var] ?>>
 			  <td><span><?php print $langs->trans('ECommerceProductDimensionSyncDirection') ?></span></td>
 			  <td>
@@ -594,6 +597,7 @@ if ($ecommerceType == 2)
 			  </td>
 			  <td><?php print $langs->trans('ECommerceProductDimensionUnitsDescription') ?></td>
 		  </tr>
+		  <?php } ?>
         <tr <?php print $bc[$var] ?>>
           <td><span><?php print $langs->trans('ECommerceProductTaxSyncDirection') ?></span></td>
           <td>
@@ -907,8 +911,7 @@ if ($conf->stock->enabled)
 
 
 <?php
-if ($ecommerceOrderStatus)
-{
+if ($conf->commande->enabled && (!isset($ecommerceOrderActions['create_order']) || !empty($ecommerceOrderActions['create_order'])) && $ecommerceOrderStatus) {
 	if ((!isset($ecommerceOrderActions['create_order']) || !empty($ecommerceOrderActions['create_order']))) {
 		print_titre($langs->trans("ECommerceOrdersSyncSetup"));
 		?>
@@ -1164,84 +1167,86 @@ if ($ecommerceType == 2) {
 	<?php
 	}
 
-	if (!empty($orderExtrafields)) {
-	?>
-		<table class="noborder centpercent">
-			<tr class="liste_titre">
-				<td colspan="3"><?php print $langs->trans('ExtraFields') . ' : ' . $langs->trans('Orders') ?></td>
-				<td width="5%" align="center"><?php print $langs->trans('Enabled') ?></td>
-			</tr>
-			<tr class="liste_titre">
-				<td width="20%"><?php print $langs->trans('Label') ?></td>
-				<td><?php print $langs->trans('Value') ?></td>
-				<td><?php print $langs->trans('Description') ?></td>
-				<td width="5%" align="center"><input type="checkbox" class="ef_crp_all"
-													 name="act_all_ef_crp_<?php print $order_table_element ?>"
-													 value="1"/></td>
-			</tr>
-			<?php
-			foreach ($orderExtrafields as $key => $label) {
-				$var = !$var;
-				$options_saved = $ecommerceExtrafieldsCorrespondence[$order_table_element][$key];
-				?>
-				<tr <?php print $bc[$var] ?>>
-					<td><span><?php print $label ?></span></td>
-					<td>
-						<input type="text" class="ef_crp_value"
-							   name="ef_crp_<?php print $order_table_element ?>_<?php print $key ?>"
-							   value="<?php print dol_escape_htmltag(isset($options_saved['correspondences']) ? $options_saved['correspondences'] : '') ?>"<?php print empty($options_saved['activated']) ? ' disabled' : '' ?> />
-					</td>
-					<td><?php print $langs->trans('ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription', $key) ?></td>
-					<td width="5%" align="center"><input type="checkbox" class="ef_crp_state"
-														 name="act_ef_crp_<?php print $order_table_element ?>_<?php print $key ?>"
-														 value="1"<?php print !empty($options_saved['activated']) ? ' checked' : '' ?> />
-					</td>
+	if ($conf->commande->enabled && (!isset($ecommerceOrderActions['create_order']) || !empty($ecommerceOrderActions['create_order']))) {
+		if (!empty($orderExtrafields)) {
+		?>
+			<table class="noborder centpercent">
+				<tr class="liste_titre">
+					<td colspan="3"><?php print $langs->trans('ExtraFields') . ' : ' . $langs->trans('Orders') ?></td>
+					<td width="5%" align="center"><?php print $langs->trans('Enabled') ?></td>
+				</tr>
+				<tr class="liste_titre">
+					<td width="20%"><?php print $langs->trans('Label') ?></td>
+					<td><?php print $langs->trans('Value') ?></td>
+					<td><?php print $langs->trans('Description') ?></td>
+					<td width="5%" align="center"><input type="checkbox" class="ef_crp_all"
+														 name="act_all_ef_crp_<?php print $order_table_element ?>"
+														 value="1"/></td>
 				</tr>
 				<?php
-			}
-			?>
-		</table>
-	<?php
-	}
+				foreach ($orderExtrafields as $key => $label) {
+					$var = !$var;
+					$options_saved = $ecommerceExtrafieldsCorrespondence[$order_table_element][$key];
+					?>
+					<tr <?php print $bc[$var] ?>>
+						<td><span><?php print $label ?></span></td>
+						<td>
+							<input type="text" class="ef_crp_value"
+								   name="ef_crp_<?php print $order_table_element ?>_<?php print $key ?>"
+								   value="<?php print dol_escape_htmltag(isset($options_saved['correspondences']) ? $options_saved['correspondences'] : '') ?>"<?php print empty($options_saved['activated']) ? ' disabled' : '' ?> />
+						</td>
+						<td><?php print $langs->trans('ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription', $key) ?></td>
+						<td width="5%" align="center"><input type="checkbox" class="ef_crp_state"
+															 name="act_ef_crp_<?php print $order_table_element ?>_<?php print $key ?>"
+															 value="1"<?php print !empty($options_saved['activated']) ? ' checked' : '' ?> />
+						</td>
+					</tr>
+					<?php
+				}
+				?>
+			</table>
+		<?php
+		}
 
-	if (!empty($orderLinesExtrafields)) {
-	?>
-		<table class="noborder centpercent">
-			<tr class="liste_titre">
-				<td colspan="3"><?php print $langs->trans('ExtraFieldsLines') . ' : ' . $langs->trans('Orders') ?></td>
-				<td width="5%" align="center"><?php print $langs->trans('Enabled') ?></td>
-			</tr>
-			<tr class="liste_titre">
-				<td width="20%"><?php print $langs->trans('Label') ?></td>
-				<td><?php print $langs->trans('Value') ?></td>
-				<td><?php print $langs->trans('Description') ?></td>
-				<td width="5%" align="center"><input type="checkbox" class="ef_crp_all"
-													 name="act_all_ef_crp_<?php print $order_line_table_element ?>"
-													 value="1"/></td>
-			</tr>
-			<?php
-			foreach ($orderLinesExtrafields as $key => $label) {
-				$var = !$var;
-				$options_saved = $ecommerceExtrafieldsCorrespondence[$order_line_table_element][$key];
-				?>
-				<tr <?php print $bc[$var] ?>>
-					<td><span><?php print $label ?></span></td>
-					<td>
-						<input type="text" class="ef_crp_value"
-							   name="ef_crp_<?php print $order_line_table_element ?>_<?php print $key ?>"
-							   value="<?php print dol_escape_htmltag(isset($options_saved['correspondences']) ? $options_saved['correspondences'] : '') ?>"<?php print empty($options_saved['activated']) ? ' disabled' : '' ?> />
-					</td>
-					<td><?php print $langs->trans('ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription', $key) ?></td>
-					<td width="5%" align="center"><input type="checkbox" class="ef_crp_state"
-														 name="act_ef_crp_<?php print $order_line_table_element ?>_<?php print $key ?>"
-														 value="1"<?php print !empty($options_saved['activated']) ? ' checked' : '' ?> />
-					</td>
+		if (!empty($orderLinesExtrafields)) {
+		?>
+			<table class="noborder centpercent">
+				<tr class="liste_titre">
+					<td colspan="3"><?php print $langs->trans('ExtraFieldsLines') . ' : ' . $langs->trans('Orders') ?></td>
+					<td width="5%" align="center"><?php print $langs->trans('Enabled') ?></td>
+				</tr>
+				<tr class="liste_titre">
+					<td width="20%"><?php print $langs->trans('Label') ?></td>
+					<td><?php print $langs->trans('Value') ?></td>
+					<td><?php print $langs->trans('Description') ?></td>
+					<td width="5%" align="center"><input type="checkbox" class="ef_crp_all"
+														 name="act_all_ef_crp_<?php print $order_line_table_element ?>"
+														 value="1"/></td>
 				</tr>
 				<?php
-			}
-			?>
-		</table>
-	<?php
+				foreach ($orderLinesExtrafields as $key => $label) {
+					$var = !$var;
+					$options_saved = $ecommerceExtrafieldsCorrespondence[$order_line_table_element][$key];
+					?>
+					<tr <?php print $bc[$var] ?>>
+						<td><span><?php print $label ?></span></td>
+						<td>
+							<input type="text" class="ef_crp_value"
+								   name="ef_crp_<?php print $order_line_table_element ?>_<?php print $key ?>"
+								   value="<?php print dol_escape_htmltag(isset($options_saved['correspondences']) ? $options_saved['correspondences'] : '') ?>"<?php print empty($options_saved['activated']) ? ' disabled' : '' ?> />
+						</td>
+						<td><?php print $langs->trans('ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription', $key) ?></td>
+						<td width="5%" align="center"><input type="checkbox" class="ef_crp_state"
+															 name="act_ef_crp_<?php print $order_line_table_element ?>_<?php print $key ?>"
+															 value="1"<?php print !empty($options_saved['activated']) ? ' checked' : '' ?> />
+						</td>
+					</tr>
+					<?php
+				}
+				?>
+			</table>
+		<?php
+		}
 	}
 }
 
@@ -1376,7 +1381,9 @@ if ($siteDb->type == 2)
 ?>
 	<a class="butAction" href='javascript:eCommerceConfirmWoocommerceUpdateAttributes("site_form_detail", "<?php print $langs->trans('ECommerceWoocommerceConfirmUpdateDictAttributes') ?>")'><?php print $langs->trans('ECommerceWoocommerceUpdateDictAttributes') ?></a>
     <a class="butAction" href='javascript:eCommerceConfirmWoocommerceUpdateDictTaxClass("site_form_detail", "<?php print $langs->trans('ECommerceWoocommerceConfirmUpdateDictTaxClasses') ?>")'><?php print $langs->trans('ECommerceWoocommerceUpdateDictTaxClasses') ?></a>
-	<a class="butAction" href='javascript:eCommerceConfirmUpdatePaymentGateways("site_form_detail", "<?php print $langs->trans('ECommerceConfirmUpdatePaymentGateways') ?>")'><?php print $langs->trans('ECommerceUpdatePaymentGateways') ?></a>
+	<?php if (!empty($ecommerceOrderActions['create_order']) || !empty($ecommerceOrderActions['create_invoice']) || !empty($ecommerceOrderActions['create_supplier_invoice'])) { ?>
+		<a class="butAction" href='javascript:eCommerceConfirmUpdatePaymentGateways("site_form_detail", "<?php print $langs->trans('ECommerceConfirmUpdatePaymentGateways') ?>")'><?php print $langs->trans('ECommerceUpdatePaymentGateways') ?></a>
+	<?php } ?>
 <?php
 }
 ?>

@@ -265,8 +265,8 @@ function printStatus($num_sites, $max_sites, $num_jobs, $max_jobs)
 {
 	global $startTime;
 
-	$sub_percent = $num_sites * 100 / $max_sites;
-	$percent = $num_jobs * $sub_percent / $max_jobs;
+	$sub_percent = max(0, $num_sites - 1) * 100 / $max_sites;
+	$percent = $sub_percent + ($num_jobs * 100 / $max_jobs) / $max_sites;
 	$elapsedTime = microtime(true) - $startTime;
 	$remainingTime = $percent > 0 ? $elapsedTime * (100 - $percent) / $percent : 0;
 	print sprintf("\rStatus: Site: %2d / %2d - Invoice: %6d / %6d - %3d%% - Elapsed: " . microTimeToTime($elapsedTime) . " - Remaining: " . microTimeToTime($remainingTime), $num_sites, $max_sites, $num_jobs, $max_jobs, $percent);

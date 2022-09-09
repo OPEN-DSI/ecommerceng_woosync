@@ -41,10 +41,11 @@ if (substr($sapi_type, 0, 3) == 'cgi') {
 
 // Check parameters
 if (! isset($argv[1]) || ! $argv[1]) {
-    print 'Usage: ' . $script_file . ' user_login_in_dolibarr';
+    print 'Usage: ' . $script_file . ' user_login_in_dolibarr [force_synchronization]';
     exit(-1);
 }
 $userlogin=$argv[1];
+$force_synchronization=$argv[2] == 'force_synchronization';
 
 // Change this following line to use the correct relative path (../, ../../, etc)
 $res=0;
@@ -85,7 +86,7 @@ if ($res == 0) {
 }
 
 $siteDb = new eCommerceSite($db);
-$sites = $siteDb->listSites('object');
+$sites = $siteDb->listSites('object', true);
 
 $max_sites = count($sites);
 $num_sites = 0;
@@ -123,22 +124,26 @@ if ($max_sites > 0) {
 		}
 
 		$supported_warehouses = is_array($site->parameters['fk_warehouse_to_ecommerce']) ? $site->parameters['fk_warehouse_to_ecommerce'] : array();
-		if (empty($supported_warehouses)) {
+		$synchronize_warehouse_sens = $site->stock_sync_direction == 'dtoe' || $site->stock_sync_direction == 'etod' ? $site->stock_sync_direction  : '';
+		if (empty($supported_warehouses) && !empty($synchronize_warehouse_sens)) {
 			print "Warning: Warehouses not configured.\n";
 			continue;
 		}
 
-		$sql = "SELECT DISTINCT p.rowid AS product_id, IFNULL(ep.remote_id, '') as remote_id, ep.rowid AS link_id FROM " . MAIN_DB_PREFIX . "product as p" .
+		$site->cleanOrphelins();
+		$site->cleanDuplicatesRemoteID();
+
+		$sql = "SELECT DISTINCT p.rowid AS product_id, IFNULL(ep.remote_id, '') as remote_id FROM " . MAIN_DB_PREFIX . "product as p" .
 			" INNER JOIN " . MAIN_DB_PREFIX . "categorie_product as cp ON p.rowid = cp.fk_product AND cp.fk_categorie IN (" . implode(',', $woocommerce_product_categories) . ")" .
 			" LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_product as ep ON p.rowid = ep.fk_product AND ep.fk_site=" . $site->id .
 			" LEFT JOIN " . MAIN_DB_PREFIX . "product_extrafields as pf ON pf.fk_object = p.rowid" .
-			" WHERE (ep.rowid IS NULL OR ep.last_update < p.tms OR (pf.tms IS NOT NULL AND ep.last_update < pf.tms))" .
-			" AND p.entity IN (" . getEntity('product') . ")";
+			" WHERE p.entity IN (" . getEntity('product') . ")";
+		if (!$force_synchronization) {
+			$sql .= " AND (ep.rowid IS NULL OR ep.last_update < p.tms OR (pf.tms IS NOT NULL AND ep.last_update < pf.tms))";
+		}
 
 		$resql = $db->query($sql);
 		if ($resql) {
-			$eCommerceProduct = new eCommerceProduct($db);
-
 			$ec_price_entities = explode(',', getEntity('productprice'));
 			$max_jobs = $db->num_rows($resql);
 
@@ -169,15 +174,16 @@ if ($max_sites > 0) {
 						} else {
 							$remote_id = $result['remote_id'];
 
-							$object->url = $result['remote_url'];
-							$object->context['fromsyncofecommerceid'] = $site->id;
-							$result = $object->update($object->id, $user);
+							$dbProduct->url = $result['remote_url'];
+							$dbProduct->context['fromsyncofecommerceid'] = $site->id;
+							$result = $dbProduct->update($obj->product_id, $user);
 							if ($result < 0) {
 								$error++;
 								$error_msg = $langs->trans('ECommerceUpdateProduct');
 								$this->errors[] = $error_msg;
-								$this->errors = array_merge($this->errors, $object->errors);
+								$this->errors = array_merge($this->errors, $dbProduct->errors);
 								dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
+								print "\nError: Update product url (ID: {$obj->product_id}, remote ID: {$remote_id}): " . errorsToString($dbProduct->errors) . ".\n";
 							}
 						}
 					} else {
@@ -190,27 +196,37 @@ if ($max_sites > 0) {
 					}
 
 					if (!$error) {
-						if (empty($obj->link_id)) {
-							// Create product link
-							$eCommerceProduct->remote_id = $remote_id;
-							$eCommerceProduct->fk_site = $site->id;
-							$eCommerceProduct->fk_product = $dbProduct->id;
+						// Get the link of the synchronization
+						//--------------------------------------------
+						$eCommerceProduct = new eCommerceProduct($db);
+						$result = $eCommerceProduct->fetchByProductId($dbProduct->id, $site->id);
+						if ($result < 0 && !empty($eCommerceProduct->error)) {
+							print "\nError: Get product link (Product ID: {$obj->product_id}, Site ID: {$site->id}): " . errorsToString($eCommerceProduct) . ".\n";
+							$error++;
+						}
+
+						// Update the link of the synchronization
+						//--------------------------------------------
+						if (!$error) {
 							$eCommerceProduct->last_update = dol_print_date(dol_now(), '%Y-%m-%d %H:%M:%S');
-							$result = $eCommerceProduct->create($user);
-							if ($result < 0) {
-								print "\nError: Create product link (ID: {$obj->product_id}): " . errorsToString($eCommerceProduct) . ".\n";
-								$error++;
-							}
-						} else {
-							// Update product link
-							$result = $eCommerceProduct->fetch($obj->link_id);
-							if ($result > 0) {
-								$eCommerceProduct->last_update = dol_print_date(dol_now(), '%Y-%m-%d %H:%M:%S');
+							$eCommerceProduct->fk_product = $dbProduct->id;
+							$eCommerceProduct->remote_id = $remote_id;
+
+							// Update link
+							if ($eCommerceProduct->id > 0) {
 								$result = $eCommerceProduct->update($user);
-							}
-							if ($result < 0) {
-								print "\nError: Update product link (ID: {$obj->product_id}): " . errorsToString($eCommerceProduct) . ".\n";
-								$error++;
+								if ($result < 0) {
+									print "\nError: Update product link (ID: {$obj->product_id}): " . errorsToString($eCommerceProduct) . ".\n";
+									$error++;
+								}
+							} // Create link
+							else {
+								$eCommerceProduct->fk_site = $site->id;
+								$result = $eCommerceProduct->create($user);
+								if ($result < 0) {
+									print "\nError: Create product link (ID: {$obj->product_id}): " . errorsToString($eCommerceProduct) . ".\n";
+									$error++;
+								}
 							}
 						}
 					}
@@ -227,6 +243,7 @@ if ($max_sites > 0) {
 			}
 
 			$db->free($resql);
+			print "\n\n";
 		} else {
 			print "\nError: SQL : $sql; Error: " . $db->lasterror() . "\n";
 			continue;
@@ -264,8 +281,8 @@ function printStatus($num_sites, $max_sites, $num_jobs, $max_jobs)
 {
 	global $startTime;
 
-	$sub_percent = $num_sites * 100 / $max_sites;
-	$percent = $num_jobs * $sub_percent / $max_jobs;
+	$sub_percent = max(0, $num_sites - 1) * 100 / $max_sites;
+	$percent = $sub_percent + ($num_jobs * 100 / $max_jobs) / $max_sites;
 	$elapsedTime = microtime(true) - $startTime;
 	$remainingTime = $percent > 0 ? $elapsedTime * (100 - $percent) / $percent : 0;
 	print sprintf("\rStatus: Site: %2d / %2d - Product: %6d / %6d - %3d%% - Elapsed: " . microTimeToTime($elapsedTime) . " - Remaining: " . microTimeToTime($remainingTime), $num_sites, $max_sites, $num_jobs, $max_jobs, $percent);

@@ -109,16 +109,18 @@ class eCommerceSite // extends CommonObject
 	{
 		$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__);
 		$ids = array();
-		$sql = "SELECT remote_id FROM " . MAIN_DB_PREFIX . "ecommerce_product GROUP BY remote_id HAVING COUNT(*) > 1";
+		$sql = "SELECT remote_id, fk_site FROM " . MAIN_DB_PREFIX . "ecommerce_product GROUP BY remote_id, fk_site HAVING COUNT(*) > 1";
 		$resql = $this->db->query($sql);
 		if ($resql) {
 			while ($obj = $this->db->fetch_object($resql)) {
-				$ids[] = $obj->remote_id;
+				$ids[$obj->fk_site][] = $obj->remote_id;
 			}
 		}
 		if (!empty($ids)) {
-			$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_product WHERE remote_id IN (" . implode(',', $ids) . ")";
-			$this->db->query($sql);
+			foreach ($ids as $site_id => $id_list) {
+				$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_product WHERE remote_id IN (" . implode(',', $id_list) . ") AND fk_site = " . $site_id;
+				$this->db->query($sql);
+			}
 		}
 		eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 	}
@@ -604,10 +606,11 @@ class eCommerceSite // extends CommonObject
 	/**
 	 *    Return list of all defined ecommerce sites
 	 *
-	 *    @param	string		$mode		'array' or 'object'
-	 *    @return 	array					List of sites
+	 *    @param	string		$mode			'array' or 'object'
+	 *    @param	bool		$all_entities	Get all sites in all entities
+	 *    @return 	array						List of sites
 	 */
-	function listSites($mode='array')
+	function listSites($mode='array', $all_entities = false)
 	{
 		global $langs;
 
@@ -618,7 +621,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " t.name,";
 		$sql.= " t.last_update";
 		$sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_site as t";
-		$sql.= " WHERE t.entity IN (" . getEntity('ecommerceng') . ")";
+		if (!$all_entities) $sql.= " WHERE t.entity IN (" . getEntity('ecommerceng') . ")";
 
     	$result = $this->db->query($sql);
 		if ($result)

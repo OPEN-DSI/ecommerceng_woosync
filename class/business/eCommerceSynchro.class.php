@@ -3926,6 +3926,11 @@ class eCommerceSynchro
 							}
 						}
 
+						if (!$error) {
+							// For synchronize on other sites
+							$product->update($product->id, $this->user);
+						}
+
 						// Update the link of the synchronization
 						//--------------------------------------------
 						if (!$error && !empty($product_data['remote_id'])) {
@@ -4609,7 +4614,8 @@ class eCommerceSynchro
 														} elseif ($result > 0) {
 															$fk_product = $this->eCommerceProduct->fk_product;
 														}
-													} else {
+													}
+													if (empty($fk_product)) {
 														$product_ref = trim($item['ref']);
 														if (!empty($product_ref)) {
 															$product = new Product($this->db);
@@ -5468,7 +5474,8 @@ class eCommerceSynchro
 																		} elseif ($result > 0) {
 																			$fk_product = $this->eCommerceProduct->fk_product;
 																		}
-																	} else {
+																	}
+																	if (empty($fk_product)) {
 																		$product_ref = trim($item['ref']);
 																		if (!empty($product_ref)) {
 																			$product = new Product($this->db);
