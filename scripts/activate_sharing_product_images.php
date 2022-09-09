@@ -41,14 +41,14 @@ if (substr($sapi_type, 0, 3) == 'cgi') {
 
 // Check parameters
 if (! isset($argv[3]) || $argv[3] === '') {
-	print "Usage: " . $script_file . " user_login_in_dolibarr entity only_synchronized [images_extension]\n";
-	print " only_synchronized: 0 or 1\n";
+	print "Usage: " . $script_file . " user_login_in_dolibarr entity only_parent_category [images_extension]\n";
+	print " only_parent_category: 0 (all) or id of the parent category (all product in this category and sub categories)\n";
 	print " images_extension: images extension separate by comma (by default: png,jpg,jpeg,gif)\n";
     exit(-1);
 }
 $userlogin=$argv[1];
 $entity=$argv[2];
-$only_synchronized=$argv[3];
+$only_parent_category=$argv[3];
 $images_extension=isset($argv[4]) ? $argv[4] : null;
 
 // Change this following line to use the correct relative path (../, ../../, etc)
@@ -57,6 +57,7 @@ if (! $res && file_exists("../../master.inc.php")) $res=@include '../../master.i
 if (! $res && file_exists("../../../master.inc.php")) $res=@include '../../../master.inc.php';		// to work if your module directory is into a subdir of root htdocs directory
 if (! $res) die("Include of main fails");
 require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
+require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
 dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
 dol_include_once('/ecommerceng/class/data/eCommerceProduct.class.php');
@@ -92,15 +93,27 @@ if ($res == 0) {
 $siteDb = new eCommerceSite($db);
 $siteDb->setEntityValues($entity);
 
+$only_categories = array();
+if ($only_parent_category > 0) {
+	$cat = new Categorie($db);
+	$all_cat = $cat->get_full_arbo($type);
+	if (is_array($all_cat)) {
+		foreach ($all_cat as $category) {
+			if (preg_match('/_' . $only_parent_category . '(_|$)/', $category['fullpath'])) {
+				$only_categories[$category['id']] = $category['id'];
+			}
+		}
+	}
+}
+
 $sql = "SELECT p.rowid";
 $sql.= " FROM " . MAIN_DB_PREFIX . "product AS p";
-if (!empty($only_synchronized)) {
-	$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_product AS ep ON ep.fk_product = p.rowid";
-	$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_site AS es ON es.rowid = ep.fk_site";
+if (!empty($only_categories)) {
+	$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "categorie_product AS cp ON cp.fk_product = p.rowid";
 }
 $sql.= " WHERE p.entity IN (" . getEntity('product') . ")";
-if (!empty($only_synchronized)) {
-	$sql .= " AND es.entity IN (" . getEntity('ecommerceng') . ")";
+if (!empty($only_categories)) {
+	$sql .= " AND cp.fk_categorie IN (" . implode(',', $only_categories) . ")";
 }
 
 $resql = $db->query($sql);
