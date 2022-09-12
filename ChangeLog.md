@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.16.0
+- Correction de la synchronisation du produit lors de sa creation si lié à la catégorie du site
+
 ## 4.1.15.0
 - Correction lors de la synchro d'une commande dont le client est un utilisateur woocommerce dont le role n'est pas supporté
 
