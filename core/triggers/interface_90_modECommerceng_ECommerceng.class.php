@@ -102,13 +102,19 @@ class InterfaceECommerceng
 		$error = 0;
 
 		if ($action == 'CATEGORY_LINK') {
-			if (isset($object->linkto->element)) {
-				switch ($object->linkto->element) {
+			$link_to = null;
+			if (isset($object->linkto)) {
+				$link_to = $object->linkto;
+			} elseif (isset($object->context['linkto'])) {
+				$link_to = $object->context['linkto'];
+			}
+			if (isset($link_to->element)) {
+				switch ($link_to->element) {
 					case 'product':
 						//$cat_link_action_old = $action;
 						//$cat_link_object_old = $object;
 						$action = 'PRODUCT_MODIFY';
-						$object = $object->linkto;
+						$object = $link_to;
 						break;
 				}
 			}
