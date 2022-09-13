@@ -833,6 +833,7 @@ class eCommerceRemoteAccessWoocommerce
 		$to_date = isset($to_date) ? dol_print_date($to_date, '%Y-%m-%dT%H:%M:%S') : null;
 		$product_variation_mode_all_to_one = !empty($this->site->parameters['product_variation_mode']) && $this->site->parameters['product_variation_mode'] == 'all_to_one';
 
+		$one_product_id = '';
 		$include_ids = [];
 		$include_variation_ids = [];
 		foreach ($remoteObject as $id) {
@@ -853,7 +854,13 @@ class eCommerceRemoteAccessWoocommerce
 		];
 		if ($toNb > 0) $filters['per_page'] = min($nb_max_by_request, $toNb);
 		if (empty($remoteObject)) $filters['status'] = 'publish';
-		if (!empty($include_ids)) $filters['include'] = implode(',', $include_ids);
+		if (!empty($include_ids)) {
+			if (count($include_ids) == 1) {
+				$one_product_id = '/' . array_values($include_ids)[0];
+			} else {
+				$filters['include'] = implode(',', $include_ids);
+			}
+		}
 		else {
 			if (isset($from_date)) $filters['after'] = $from_date;
 			if (isset($to_date)) $filters['before'] = $to_date;
@@ -865,7 +872,7 @@ class eCommerceRemoteAccessWoocommerce
 			$filters['page'] = $idxPage++;
 			$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET products (filters: " . json_encode($filters). ")");
 			try {
-				$page = $this->client->get('products', $filters);
+				$page = $this->client->get('products'.$one_product_id, $filters);
 				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 			} catch (HttpClientException $fault) {
 				eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
@@ -876,7 +883,8 @@ class eCommerceRemoteAccessWoocommerce
 				return false;
 			}
 
-			if (!isset($page) || count($page) == 0) break;
+			if ((!empty($one_product_id) && empty($page)) || !isset($page) || count($page) == 0) break;
+			if (!empty($one_product_id) && !empty($page)) $page = [$page];
 
 			foreach ($page as $product) {
 				// Don't synchronize the variation parent
@@ -1168,9 +1176,11 @@ class eCommerceRemoteAccessWoocommerce
 			$product['images'] = $images;
 		}
 
-		// Synchronize metadata to extra fields
-		if (!empty($this->site->parameters['ef_crp']['product'])) {
-			$metas_data = array();
+		// Get metadata
+		$metas_data = array();
+		if (!empty($this->site->parameters['ef_crp']['product']) ||
+			$remote_data->type == 'woosb'
+		) {
 			if (is_array($remote_data->meta_data)) {
 				foreach ($remote_data->meta_data as $meta) {
 					$metas_data[$meta->key] = $meta;
@@ -1183,18 +1193,19 @@ class eCommerceRemoteAccessWoocommerce
 					}
 				}
 			}
+		}
 
-			if (!empty($metas_data)) {
-				$correspondences = array();
-				foreach ($this->site->parameters['ef_crp']['product'] as $key => $options_saved) {
-					if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
-						$correspondences[$options_saved['correspondences']] = $key;
-					}
+		// Synchronize metadata to extra fields
+		if (!empty($this->site->parameters['ef_crp']['product']) && !empty($metas_data)) {
+			$correspondences = array();
+			foreach ($this->site->parameters['ef_crp']['product'] as $key => $options_saved) {
+				if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
+					$correspondences[$options_saved['correspondences']] = $key;
 				}
-				foreach ($metas_data as $meta) {
-					if (isset($correspondences[$meta->key])) {
-						$product['extrafields'][$correspondences[$meta->key]] = $meta->value;
-					}
+			}
+			foreach ($metas_data as $meta) {
+				if (isset($correspondences[$meta->key])) {
+					$product['extrafields'][$correspondences[$meta->key]] = $meta->value;
 				}
 			}
 		}
@@ -1228,6 +1239,18 @@ class eCommerceRemoteAccessWoocommerce
 					}
 				}
 			}
+		}
+
+		// Synchronize bundle to virtual product
+		if ($remote_data->type == 'woosb' && !empty($metas_data['woosb_ids'])) {
+			$components = [];
+			$list = explode(',', $metas_data['woosb_ids']->value);
+			foreach ($list as $item) {
+				$tmp = explode('/', $item);
+				$components[$tmp[0]] = $tmp[1];
+			}
+			$product['components'] = $components;
+			$product['extrafields']["ecommerceng_wc_manage_stock_{$this->site->id}_{$conf->entity}"] = $metas_data['woosb_manage_stock'] == 'on' ? 1 : 0; // disable stock management
 		}
 
 		return $product;

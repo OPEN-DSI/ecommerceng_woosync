@@ -3926,6 +3926,94 @@ class eCommerceSynchro
 							}
 						}
 
+						// Manage virtual product
+						if (!empty($product_data['components'])) {
+							// Get new components
+							$new_component = [];
+							foreach ($product_data['components'] as $sub_product_id => $sub_product_qty) {
+								$eCommerceProduct = new eCommerceProduct($this->db);
+								$result = $eCommerceProduct->fetchByRemoteId($sub_product_id, $this->eCommerceSite->id); // load info of table ecommerce_product
+								if ($result < 0 && empty($eCommerceProduct->error)) $result = $eCommerceProduct->fetchByRemoteId('%|' . $sub_product_id, $this->eCommerceSite->id); // load info of table ecommerce_product
+								if ($result < 0 && !empty($eCommerceProduct->error)) {
+									$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $sub_product_id, $this->eCommerceSite->id);
+									$this->errors[] = $eCommerceProduct->error;
+									$error++;
+									break;
+								} elseif ($result > 0) {
+									// Add new components already synchronized
+									$new_component[$eCommerceProduct->fk_product] = $sub_product_qty;
+								} else {
+									// Synchronize missing new components
+									$result = $this->synchronizeProducts(null, null, [$sub_product_id], 1, false);
+									if ($result < 0) {
+										$error++;
+										break;
+									} else {
+										$this->initECommerceProduct();
+										$result = $eCommerceProduct->fetchByRemoteId($sub_product_id, $this->eCommerceSite->id); // load info of table ecommerce_product
+										if ($result < 0 && empty($eCommerceProduct->error)) $result = $eCommerceProduct->fetchByRemoteId('%|' . $sub_product_id, $this->eCommerceSite->id); // load info of table ecommerce_product
+										if ($result < 0 && !empty($eCommerceProduct->error)) {
+											$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $sub_product_id, $this->eCommerceSite->id);
+											$this->errors[] = $eCommerceProduct->error;
+											$error++;
+											break;
+										} elseif ($result > 0) {
+											// Add new components already synchronized
+											$new_component[$eCommerceProduct->fk_product] = $sub_product_qty;
+										} else {
+											$this->errors[] = $this->langs->trans('ECommerceErrorSynchronizeProductComponent', $sub_product_id, $this->eCommerceSite->id);
+											$error++;
+											break;
+										}
+									}
+								}
+							}
+
+							// Get current components
+							if (!$error) {
+								$current_components = $product->getChildsArbo($product->id, 1);
+								if (!is_array($current_components)) {
+									$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductComponents', $product->id);
+									$error++;
+								}
+							}
+
+							// Add / Update components
+							if (!$error) {
+								foreach ($new_component as $sub_product_id => $sub_product_qty) {
+									if (isset($current_components[$sub_product_id])) {
+										$result = $product->update_sousproduit($product->id, $sub_product_id, $sub_product_qty, 1);
+										if ($result < 0) {
+											$this->errors[] = $this->langs->trans('ECommerceErrorUpdateProductComponent', $sub_product_id, $sub_product_qty, $product->id);
+											$error++;
+											break;
+										}
+									} else {
+										$result = $product->add_sousproduit($product->id, $sub_product_id, $sub_product_qty, 1);
+										if ($result < 0) {
+											$this->errors[] = $this->langs->trans('ECommerceErrorAddProductComponent', $sub_product_id, $sub_product_qty, $product->id);
+											$error++;
+											break;
+										}
+									}
+								}
+							}
+
+							// Remove missing components
+							if (!$error) {
+								foreach ($current_components as $sub_product_id => $sub_product_info) {
+									if (!isset($new_component[$sub_product_id])) {
+										$result = $product->del_sousproduit($product->id, $sub_product_id);
+										if ($result < 0) {
+											$this->errors[] = $this->langs->trans('ECommerceErrorDelProductComponent', $sub_product_id, $product->id);
+											$error++;
+											break;
+										}
+									}
+								}
+							}
+						}
+
 						// Update the link of the synchronization
 						//--------------------------------------------
 						if (!$error && !empty($product_data['remote_id'])) {

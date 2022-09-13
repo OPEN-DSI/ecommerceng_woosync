@@ -231,6 +231,8 @@ function activateShareProductImages($db, $user, $product_id, $extensions)
 			if ($result > 0) {
 				require_once DOL_DOCUMENT_ROOT . '/core/lib/security2.lib.php';
 				$ecmfile->share = getRandomPassword(true);
+				$ecmfile->src_object_type = $object->element;
+				$ecmfile->src_object_id = $object->id;
 				$result = $ecmfile->update($user);
 				if ($result < 0) {
 					print "\nError: Set share of file '" . $file['fullname'] . "': " . $ecmfile->errorsToString() . "\n";
