@@ -1371,13 +1371,45 @@ class eCommerceRemoteAccessWoocommerce
 			$order_filter_mode_metadata_product_lines_to_description_etod = !empty($this->site->parameters['order_filter_mode_metadata_product_lines_to_description_etod']) ? $this->site->parameters['order_filter_mode_metadata_product_lines_to_description_etod'] : 'exclude';
 			$order_filter_keys_metadata_product_lines_to_description_etod = !empty($this->site->parameters['order_filter_keys_metadata_product_lines_to_description_etod']) ? array_filter(array_map('trim', explode(',', (string)$this->site->parameters['order_filter_keys_metadata_product_lines_to_description_etod'])), 'strlen') : array();
 
+			$bundles_ids = [];
 			$parent_match = array();
 			foreach ($remote_data->line_items as $item) {
+				// Get metadata
+				$metas_data = array();
+				if (is_array($item->meta_data)) {
+					foreach ($item->meta_data as $meta) {
+						$metas_data[$meta->key] = $meta;
+					}
+				}
+
+				// Set prices
+				$price = $item->subtotal != $item->total ? ($item->subtotal / $item->quantity) : $item->price;
+				$total_ht = $item->subtotal;
+				$total_tva = $item->subtotal_tax;
+				$total_ttc = $item->subtotal + $item->subtotal_tax;
+
+				// Support module bundle to virtual product
+				if (!empty($metas_data['_woosb_ids'])) {
+					$bundles_ids[$item->product_id] = $item->id;
+					$total_ht = $metas_data['_woosb_price']->value / (1 + ($item->subtotal_tax / $item->subtotal));
+					$total_tva = $metas_data['_woosb_price']->value - $total_ht;
+					$total_ttc = $metas_data['_woosb_price']->value;
+					$price = $total_ht / $item->quantity;
+				}
+				if (!empty($metas_data['_woosb_parent_id']) && isset($bundles_ids[$metas_data['_woosb_parent_id']->value])) {
+					$item_id = $bundles_ids[$metas_data['_woosb_parent_id']->value];
+					if (!isset($items[$item_id]['additional_description'])) $items[$item_id]['additional_description'] = $langs->trans('ECommerceWooCommerceBundleComposite');
+					$items[$item_id]['additional_description'] .= "\n - " . $item->quantity . ' x ' . $item->name;
+					continue;
+				}
+
+				// Support produits composés
 				if (!empty($item->composite_children) && is_array($item->composite_children)) {
 					foreach ($item->composite_children as $child_id) {
 						$parent_match[$child_id] = $item->id;
 					}
 				}
+
 				$item_data = [
 					'parent_item_id' => isset($parent_match[$item->id]) ? $parent_match[$item->id] : 0,
 					'item_id' => $item->id,
@@ -1385,10 +1417,10 @@ class eCommerceRemoteAccessWoocommerce
 					'label' => $item->name,
 					'id_remote_product' => !empty($item->variation_id) ? (!$product_variation_mode_all_to_one ? $item->product_id . '|' . $item->variation_id : $item->product_id . '|%') : $item->product_id,
 					'product_type' => 'simple',
-					'price' => $item->subtotal != $item->total ? ($item->subtotal / $item->quantity) : $item->price,
-					'total_ht' => $item->subtotal,
-					'total_tva' => $item->subtotal_tax,
-					'total_ttc' => $item->subtotal + $item->subtotal_tax,
+					'price' => $price,
+					'total_ht' => $total_ht,
+					'total_tva' => $total_tva,
+					'total_ttc' => $total_ttc,
 					'qty' => $item->quantity,
 					'discount' => 0,
 					'buy_price' => null,
@@ -1404,7 +1436,7 @@ class eCommerceRemoteAccessWoocommerce
 				$item_data['total_local_tax2'] = $taxes['total_local_tax2'];
 
 				if (isset($item->cog_item_cost)) $item_data['buy_price'] = $this->site->ecommerce_price_type == 'TTC' ? 100 * $item->cog_item_cost / (100 + $item_data['tva_tx']) : $item->cog_item_cost;
-				if ($this->site->ecommerce_price_type == 'TTC') $item_data['price'] = (100 * ($item->subtotal + $item->subtotal_tax) / (100 + $item_data['tva_tx'])) / $item->quantity;
+				if ($this->site->ecommerce_price_type == 'TTC') $item_data['price'] = (100 * $total_ttc / (100 + $item_data['tva_tx'])) / $item->quantity;
 
 				if (!empty($item->meta_data)) {
 					// Synch extrafields <=> metadatas
@@ -1437,7 +1469,7 @@ class eCommerceRemoteAccessWoocommerce
 					}
 				}
 
-				$items[] = $item_data;
+				$items[$item->id] = $item_data;
 			}
 		}
 
