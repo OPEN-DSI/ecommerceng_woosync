@@ -1242,16 +1242,16 @@ class eCommerceRemoteAccessWoocommerce
 		}
 
 		// Synchronize bundle to virtual product
-		if ($remote_data->type == 'woosb' && !empty($metas_data['woosb_ids'])) {
-			$components = [];
-			$list = explode(',', $metas_data['woosb_ids']->value);
-			foreach ($list as $item) {
-				$tmp = explode('/', $item);
-				$components[$tmp[0]] = $tmp[1];
-			}
-			$product['components'] = $components;
-			$product['extrafields']["ecommerceng_wc_manage_stock_{$this->site->id}_{$conf->entity}"] = $metas_data['woosb_manage_stock'] == 'on' ? 1 : 0; // disable stock management
-		}
+//		if ($remote_data->type == 'woosb' && !empty($metas_data['woosb_ids'])) {
+//			$components = [];
+//			$list = explode(',', $metas_data['woosb_ids']->value);
+//			foreach ($list as $item) {
+//				$tmp = explode('/', $item);
+//				$components[$tmp[0]] = $tmp[1];
+//			}
+//			$product['components'] = $components;
+//			$product['extrafields']["ecommerceng_wc_manage_stock_{$this->site->id}_{$conf->entity}"] = $metas_data['woosb_manage_stock'] == 'on' ? 1 : 0; // disable stock management
+//		}
 
 		return $product;
 	}
@@ -1397,10 +1397,14 @@ class eCommerceRemoteAccessWoocommerce
 					$price = $total_ht / $item->quantity;
 				}
 				if (!empty($metas_data['_woosb_parent_id']) && isset($bundles_ids[$metas_data['_woosb_parent_id']->value])) {
-					$item_id = $bundles_ids[$metas_data['_woosb_parent_id']->value];
-					if (!isset($items[$item_id]['additional_description'])) $items[$item_id]['additional_description'] = $langs->trans('ECommerceWooCommerceBundleComposite');
-					$items[$item_id]['additional_description'] .= "\n - " . $item->quantity . ' x ' . $item->name;
-					continue;
+//					$item_id = $bundles_ids[$metas_data['_woosb_parent_id']->value];
+//					if (!isset($items[$item_id]['additional_description'])) $items[$item_id]['additional_description'] = $langs->trans('ECommerceWooCommerceBundleComposite');
+//					$items[$item_id]['additional_description'] .= "\n - " . $item->quantity . ' x ' . $item->name;
+//					continue;
+					$total_ht = 0;
+					$total_tva = 0;
+					$total_ttc = 0;
+					$price = 0;
 				}
 
 				// Support produits composés
@@ -1411,7 +1415,7 @@ class eCommerceRemoteAccessWoocommerce
 				}
 
 				$item_data = [
-					'parent_item_id' => isset($parent_match[$item->id]) ? $parent_match[$item->id] : 0,
+					'parent_item_id' => isset($metas_data['_woosb_parent_id']->value)? $metas_data['_woosb_parent_id']->value : (isset($parent_match[$item->id]) ? $parent_match[$item->id] : 0),
 					'item_id' => $item->id,
 					'ref' => $item->sku,
 					'label' => $item->name,
