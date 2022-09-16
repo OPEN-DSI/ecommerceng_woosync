@@ -1242,7 +1242,7 @@ class eCommerceRemoteAccessWoocommerce
 		}
 
 		// Synchronize bundle to virtual product
-//		if ($remote_data->type == 'woosb' && !empty($metas_data['woosb_ids'])) {
+		if ($remote_data->type == 'woosb' && !empty($metas_data['woosb_ids'])) {
 //			$components = [];
 //			$list = explode(',', $metas_data['woosb_ids']->value);
 //			foreach ($list as $item) {
@@ -1250,8 +1250,8 @@ class eCommerceRemoteAccessWoocommerce
 //				$components[$tmp[0]] = $tmp[1];
 //			}
 //			$product['components'] = $components;
-//			$product['extrafields']["ecommerceng_wc_manage_stock_{$this->site->id}_{$conf->entity}"] = $metas_data['woosb_manage_stock'] == 'on' ? 1 : 0; // disable stock management
-//		}
+			$product['extrafields']["ecommerceng_wc_manage_stock_{$this->site->id}_{$conf->entity}"] = $metas_data['woosb_manage_stock'] == 'on' ? 1 : 0; // disable stock management
+		}
 
 		return $product;
 	}
