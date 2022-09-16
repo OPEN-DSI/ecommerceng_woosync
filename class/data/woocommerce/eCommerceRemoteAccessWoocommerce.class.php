@@ -1397,7 +1397,7 @@ class eCommerceRemoteAccessWoocommerce
 					$price = $total_ht / $item->quantity;
 				}
 				if (!empty($metas_data['_woosb_parent_id']) && isset($bundles_ids[$metas_data['_woosb_parent_id']->value])) {
-//					$item_id = $bundles_ids[$metas_data['_woosb_parent_id']->value];
+					$item_id = $bundles_ids[$metas_data['_woosb_parent_id']->value];
 //					if (!isset($items[$item_id]['additional_description'])) $items[$item_id]['additional_description'] = $langs->trans('ECommerceWooCommerceBundleComposite');
 //					$items[$item_id]['additional_description'] .= "\n - " . $item->quantity . ' x ' . $item->name;
 //					continue;
@@ -1415,7 +1415,7 @@ class eCommerceRemoteAccessWoocommerce
 				}
 
 				$item_data = [
-					'parent_item_id' => isset($metas_data['_woosb_parent_id']->value)? $metas_data['_woosb_parent_id']->value : (isset($parent_match[$item->id]) ? $parent_match[$item->id] : 0),
+					'parent_item_id' => isset($item_id) ? $item_id : (isset($parent_match[$item->id]) ? $parent_match[$item->id] : 0),
 					'item_id' => $item->id,
 					'ref' => $item->sku,
 					'label' => $item->name,
