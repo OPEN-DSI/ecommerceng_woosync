@@ -1398,8 +1398,8 @@ class eCommerceRemoteAccessWoocommerce
 				}
 				if (!empty($metas_data['_woosb_parent_id']) && isset($bundles_ids[$metas_data['_woosb_parent_id']->value])) {
 					$item_id = $bundles_ids[$metas_data['_woosb_parent_id']->value];
-//					if (!isset($items[$item_id]['additional_description'])) $items[$item_id]['additional_description'] = $langs->trans('ECommerceWooCommerceBundleComposite');
-//					$items[$item_id]['additional_description'] .= "\n - " . $item->quantity . ' x ' . $item->name;
+					if (!isset($items[$item_id]['additional_description'])) $items[$item_id]['additional_description'] = $langs->trans('ECommerceWooCommerceBundleComposite');
+					$items[$item_id]['additional_description'] .= "\n - " . $item->quantity . ' x ' . $item->name;
 //					continue;
 					$total_ht = 0;
 					$total_tva = 0;
