@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.17.0
+- Ajout du support du module "F4 Shipping Phone and E-Mail for WooCommerce" version 1.0.16
+
 ## 4.1.16.0
 - Correction de la synchronisation du produit lors de sa creation si lié à la catégorie du site
 
