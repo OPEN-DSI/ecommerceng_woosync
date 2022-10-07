@@ -1389,6 +1389,7 @@ class eCommerceRemoteAccessWoocommerce
 				$total_ttc = $item->subtotal + $item->subtotal_tax;
 
 				// Support module bundle to virtual product
+				$item_id = null;
 				if (!empty($metas_data['_woosb_ids'])) {
 					$bundles_ids[$item->product_id] = $item->id;
 					$total_ht = $metas_data['_woosb_price']->value / (1 + ($item->subtotal_tax / $item->subtotal));
