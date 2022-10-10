@@ -1600,6 +1600,33 @@ class eCommerceRemoteAccessWoocommerce
 			}
 		}
 
+		// Set refund lines
+		$refund_lines = [];
+		if (!empty($remote_data->refunds)) {
+			$parameters['consumer_key'] = "ck_9736ffcbb8aeac4da9d24dfd80102530d4bd8a9d";
+			$parameters['consumer_secret'] = "cs_a348ae93292dad7b5b2cf95e2cc724360341c185";
+			$verifySsl = true;
+			$timeout = 30;
+			$followRedirects = false;
+			$rawHeaders=['Content-Type: application/json'];
+			$url = "https://staging.tokay-ultimate.com/";
+
+			$url .= "wp-json/wc/v3/orders/16180/refunds/";
+			$url .= '?' . http_build_query($parameters);
+
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $verifySsl);
+			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+			curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			curl_setopt($ch, CURLOPT_HTTPHEADER, $rawHeaders);
+			curl_setopt($ch, CURLOPT_URL, $url);
+
+			$body    = curl_exec($ch);
+			
+			$refund_lines = $remote_data->refunds;
+		}
+
 		$create_date = $this->getDateTimeFromGMTDateTime($remote_data->date_created_gmt);
 		$last_update = $this->getDateTimeFromGMTDateTime(!empty($remote_data->date_modified_gmt) ? $remote_data->date_modified_gmt : $remote_data->date_created_gmt);
 
@@ -1765,6 +1792,7 @@ class eCommerceRemoteAccessWoocommerce
 			'payment_method_id' => $remote_data->payment_method,
 			'payment_amount_ttc' => $remote_data->total,
 			'fee_lines' => $fee_lines,
+			'refunds' => $refund_lines,
 			'extrafields' => [
 				"ecommerceng_online_payment_{$conf->entity}" => empty($remote_data->date_paid) ? 0 : 1,
 				"ecommerceng_wc_status_{$this->site->id}_{$conf->entity}" => $orderStatus,
@@ -4228,7 +4256,7 @@ class eCommerceRemoteAccessWoocommerce
 		$this->loadTaxes();
 
 		foreach ($taxes_data as $data) {
-			if (empty($data->total)) continue;
+			if (empty($data->subtotal)) continue;
 			$count++;
 			if ($count > 1) break;
 
