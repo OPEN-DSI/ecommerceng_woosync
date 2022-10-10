@@ -1,9 +1,15 @@
 # ChangeLog
 
-## 4.1.17.0
+## 4.1.19.0
 - Prise en compte de la synchronisation des kits de WooCommerce vers Dolibarr (Support partiel du module Woocommerce "WPC Product Bundles for WooCommerce" v6.1.1)
   Pour rappel, seul la synchronisation des produits simples et des produits variables (sans le produit parent) est supporté.
   Un bundle constitué d'un produit variable parent ne pourra pas être synchronisé et générera une erreur. 
+
+## 4.1.18.0
+- Correction des doublons dans les tables de liens
+
+## 4.1.17.0
+- Ajout du support du module "F4 Shipping Phone and E-Mail for WooCommerce" version 1.0.16
 
 ## 4.1.16.0
 - Correction de la synchronisation du produit lors de sa creation si lié à la catégorie du site
