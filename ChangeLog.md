@@ -1,9 +1,15 @@
 # ChangeLog
 
-## 4.1.17.0
+## 4.1.19.0
 - Correction synchronisation multi-site et multi-entité
 - Correction synchro produit par ref sur les commandes si le produit par l'id n'est pas trouvé
 - Modification des parametres du script activate_sharing_product_images.php
+
+## 4.1.18.0
+- Correction des doublons dans les tables de liens
+
+## 4.1.17.0
+- Ajout du support du module "F4 Shipping Phone and E-Mail for WooCommerce" version 1.0.16
 
 ## 4.1.16.0
 - Correction de la synchronisation du produit lors de sa creation si lié à la catégorie du site

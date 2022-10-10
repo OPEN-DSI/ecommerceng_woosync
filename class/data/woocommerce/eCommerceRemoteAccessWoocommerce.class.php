@@ -1671,6 +1671,15 @@ class eCommerceRemoteAccessWoocommerce
 				} elseif (empty($firstname) && empty($lastname)) {
 					$lastname = $langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
 				}
+				$email = null;
+				if (!empty($remote_data->meta_data)) {
+					foreach ($remote_data->meta_data as $meta) {
+						if ($meta->key == '_shipping_email') {
+							$email = $meta->value;
+							break;
+						}
+					}
+				}
 				$contactShipping = [
 					'remote_id' => "",
 					'type' => 1, //eCommerceSocpeople::CONTACT_TYPE_DELIVERY,
@@ -1682,8 +1691,8 @@ class eCommerceRemoteAccessWoocommerce
 					'zip' => $sContact->postcode,
 					'town' => $sContact->city,
 					'country_id' => getCountry($sContact->country, 3),
-					'email' => null,
-					'phone' => null,
+					'email' => $email,
+					'phone' => isset($sContact->phone) ? $sContact->phone : null,
 					'fax' => null,
 				];
 

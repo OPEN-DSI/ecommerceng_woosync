@@ -17,5 +17,6 @@
 -- ===================================================================
 ALTER TABLE llx_ecommerce_socpeople  ADD INDEX idx_ecommerce_socpeople_fk_socpeople ( fk_socpeople );
 ALTER TABLE llx_ecommerce_socpeople  ADD INDEX idx_ecommerce_socpeople_fk_site ( fk_site );
-ALTER TABLE llx_ecommerce_socpeople  ADD UNIQUE KEY uk_ecommerce_socpeople_fk_site_fk_socpeople ( fk_site ,fk_socpeople,remote_id ,type);
+ALTER TABLE llx_ecommerce_socpeople  ADD UNIQUE KEY uk_ecommerce_socpeople_fk_site_fk_socpeople ( fk_site, fk_socpeople, type);
+ALTER TABLE llx_ecommerce_socpeople  ADD UNIQUE KEY uk_ecommerce_socpeople_fk_site_remote_id ( fk_site, remote_id, type);
 --ALTER TABLE llx_ecommerce_socpeople  ADD CONSTRAINT fk_ecommerce_socpeople_fk_socpeople FOREIGN KEY (fk_socpeople) REFERENCES llx_socpeople(rowid);
