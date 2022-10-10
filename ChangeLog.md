@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.1.19.0
+- Correction des la desactivation des taches planifiés (avec perte de la configurtaion) a la réactivation du module
+- Correction de l'enregistrement, avec pertes de la configuration, de la synchro des status de la commandes lors de plusieurs sites 
+
 ## 4.1.18.0
 - Correction des doublons dans les tables de liens
 
