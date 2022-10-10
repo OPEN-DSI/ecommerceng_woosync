@@ -385,6 +385,71 @@ class modECommerceNg extends DolibarrModules
 	{
 		$sql = array();
 
+		// Clean duplicate link and re-set the unique key on links tables
+		// Categories
+		$sql[] = [ 'sql' => "DELETE llx_ecommerce_category FROM llx_ecommerce_category
+LEFT JOIN (
+	SELECT MIN(t.rowid) AS rowid, t.fk_category, t.fk_site, t.remote_id
+	FROM llx_ecommerce_category as t
+	GROUP BY t.fk_category, t.fk_site, t.remote_id
+	HAVING COUNT(*) > 1
+) AS c ON c.rowid != llx_ecommerce_category.rowid AND c.fk_category = llx_ecommerce_category.fk_category AND c.fk_site = llx_ecommerce_category.fk_site AND c.remote_id = llx_ecommerce_category.remote_id
+WHERE c.rowid IS NOT NULL" ];
+		$sql[] = [ 'sql' => "ALTER TABLE llx_ecommerce_category  ADD UNIQUE INDEX uk_ecommerce_category_fk_site_fk_category ( fk_site, fk_category )", 'ignoreerror' => 1 ];
+		$sql[] = [ 'sql' => "ALTER TABLE llx_ecommerce_category  ADD UNIQUE INDEX uk_ecommerce_category_fk_site_remote_id ( fk_site, remote_id )", 'ignoreerror' => 1 ];
+		// Products
+		$sql[] = [ 'sql' => "DELETE llx_ecommerce_product FROM llx_ecommerce_product
+LEFT JOIN (
+	SELECT MIN(t.rowid) AS rowid, t.fk_product, t.fk_site, t.remote_id
+	FROM llx_ecommerce_product as t
+	GROUP BY t.fk_product, t.fk_site, t.remote_id
+	HAVING COUNT(*) > 1
+) AS c ON c.rowid != llx_ecommerce_product.rowid AND c.fk_product = llx_ecommerce_product.fk_product AND c.fk_site = llx_ecommerce_product.fk_site AND c.remote_id = llx_ecommerce_product.remote_id
+WHERE c.rowid IS NOT NULL" ];
+		$sql[] = [ 'sql' => "ALTER TABLE llx_ecommerce_product  ADD UNIQUE KEY uk_ecommerce_product_fk_site_fk_product ( fk_site, fk_product )", 'ignoreerror' => 1 ];
+		$sql[] = [ 'sql' => "ALTER TABLE llx_ecommerce_product  ADD UNIQUE KEY uk_ecommerce_product_fk_site_remote_id ( fk_site, remote_id )", 'ignoreerror' => 1 ];
+		// Third parties
+		$sql[] = [ 'sql' => "DELETE llx_ecommerce_societe FROM llx_ecommerce_societe
+LEFT JOIN (
+	SELECT MIN(t.rowid) AS rowid, t.fk_societe, t.fk_site, t.remote_id
+	FROM llx_ecommerce_societe as t
+	GROUP BY t.fk_societe, t.fk_site, t.remote_id
+	HAVING COUNT(*) > 1
+) AS c ON c.rowid != llx_ecommerce_societe.rowid AND c.fk_societe = llx_ecommerce_societe.fk_societe AND c.fk_site = llx_ecommerce_societe.fk_site AND c.remote_id = llx_ecommerce_societe.remote_id
+WHERE c.rowid IS NOT NULL" ];
+		$sql[] = [ 'sql' => "ALTER TABLE llx_ecommerce_societe  ADD UNIQUE KEY uk_ecommerce_societe_fk_site_fk_societe ( fk_site, fk_societe );", 'ignoreerror' => 1 ];
+		$sql[] = [ 'sql' => "ALTER TABLE llx_ecommerce_societe  ADD UNIQUE KEY uk_ecommerce_societe_fk_site_remote_id ( fk_site, remote_id );", 'ignoreerror' => 1 ];
+		// Contacts
+		$sql[] = [ 'sql' => "DELETE llx_ecommerce_socpeople FROM llx_ecommerce_socpeople
+LEFT JOIN (
+	SELECT MIN(t.rowid) AS rowid, t.fk_socpeople, t.fk_site, t.remote_id, t.type
+	FROM llx_ecommerce_socpeople as t
+	GROUP BY t.fk_socpeople, t.fk_site, t.remote_id, t.type
+	HAVING COUNT(*) > 1
+) AS c ON c.rowid != llx_ecommerce_socpeople.rowid AND c.fk_socpeople = llx_ecommerce_socpeople.fk_socpeople AND c.fk_site = llx_ecommerce_socpeople.fk_site AND c.remote_id = llx_ecommerce_socpeople.remote_id AND c.type = llx_ecommerce_socpeople.type
+WHERE c.rowid IS NOT NULL" ];
+		$sql[] = [ 'sql' => "ALTER TABLE llx_ecommerce_socpeople  DROP INDEX uk_ecommerce_socpeople_fk_site_fk_socpeople", 'ignoreerror' => 1 ];
+		$sql[] = [ 'sql' => "ALTER TABLE llx_ecommerce_socpeople  ADD UNIQUE KEY uk_ecommerce_socpeople_fk_site_fk_socpeople ( fk_site, fk_socpeople, type );", 'ignoreerror' => 1 ];
+		$sql[] = [ 'sql' => "ALTER TABLE llx_ecommerce_socpeople  ADD UNIQUE KEY uk_ecommerce_socpeople_fk_site_remote_id ( fk_site, remote_id, type );", 'ignoreerror' => 1 ];
+		// Orders
+		$sql[] = [ 'sql' => "DELETE llx_ecommerce_commande FROM llx_ecommerce_commande
+LEFT JOIN (
+	SELECT MIN(t.rowid) AS rowid, t.fk_commande, t.fk_site, t.remote_id
+	FROM llx_ecommerce_commande as t
+	GROUP BY t.fk_commande, t.fk_site, t.remote_id
+	HAVING COUNT(*) > 1
+) AS c ON c.rowid != llx_ecommerce_commande.rowid AND c.fk_commande = llx_ecommerce_commande.fk_commande AND c.fk_site = llx_ecommerce_commande.fk_site AND c.remote_id = llx_ecommerce_commande.remote_id
+WHERE c.rowid IS NOT NULL" ];
+		$sql[] = [ 'sql' => "ALTER TABLE llx_ecommerce_commande  ADD UNIQUE KEY uk_ecommerce_commande_fk_site_fk_commande ( fk_site, fk_commande );", 'ignoreerror' => 1 ];
+		$sql[] = [ 'sql' => "ALTER TABLE llx_ecommerce_commande  ADD UNIQUE KEY uk_ecommerce_commande_fk_site_remote_id ( fk_site, remote_id );", 'ignoreerror' => 1 ];
+
+		// Clean corrupted data
+		$sql[] = [ 'sql' => "DELETE FROM llx_ecommerce_societe WHERE fk_societe NOT IN (SELECT rowid FROM llx_societe);" ];
+		$sql[] = [ 'sql' => "DELETE FROM llx_ecommerce_socpeople WHERE fk_socpeople NOT IN (SELECT rowid FROM llx_socpeople);" ];
+		$sql[] = [ 'sql' => "DELETE FROM llx_ecommerce_product WHERE fk_product NOT IN (SELECT rowid FROM llx_product);" ];
+		$sql[] = [ 'sql' => "DELETE FROM llx_ecommerce_commande WHERE fk_commande NOT IN (SELECT rowid FROM llx_commande);" ];
+		$sql[] = [ 'sql' => "DELETE FROM llx_ecommerce_facture WHERE fk_facture NOT IN (SELECT rowid FROM llx_facture);" ];
+
 		// Delete semaphore token for cron jobs
 		require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 		dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION', 0);

@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.18.0
+- Correction des doublons dans les tables de liens
+
 ## 4.1.17.0
 - Ajout du support du module "F4 Shipping Phone and E-Mail for WooCommerce" version 1.0.16
 
