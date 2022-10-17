@@ -1,9 +1,19 @@
 # ChangeLog
 
-## 4.1.19.0
+## 4.1.21.0
 - Correction synchronisation multi-site et multi-entité
 - Correction synchro produit par ref sur les commandes si le produit par l'id n'est pas trouvé
 - Modification des parametres du script activate_sharing_product_images.php
+
+## 4.1.20.0
+- Recherche le tiers dans l'ordre suivant email -> nom + code postal -> nom
+- Prise en compte de la synchronisation des kits de WooCommerce vers Dolibarr (Support partiel du module Woocommerce "WPC Product Bundles for WooCommerce" v6.1.1)
+  Pour rappel, seul la synchronisation des produits simples et des produits variables (sans le produit parent) est supporté.
+  Un bundle constitué d'un produit variable parent ne pourra pas être synchronisé et générera une erreur. 
+
+## 4.1.19.0
+- Correction des la desactivation des taches planifiés (avec perte de la configurtaion) a la réactivation du module
+- Correction de l'enregistrement, avec pertes de la configuration, de la synchro des status de la commandes lors de plusieurs sites 
 
 ## 4.1.18.0
 - Correction des doublons dans les tables de liens

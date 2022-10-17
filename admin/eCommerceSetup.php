@@ -86,6 +86,10 @@ if (count($sites))
 
 //LOAD SELECTED SITE
 $siteId = GETPOST('site_form_select_site', 'int');
+if ($siteId > 0) {
+	Header("Location: " . $_SERVER["PHP_SELF"] . "?ecommerce_id=" . $siteId);
+	exit;
+}
 if (empty($siteId)) $siteId = GETPOST('ecommerce_id', 'int');
 if (empty($siteId)) $siteId = $site_form_select_site;
 

@@ -3186,7 +3186,7 @@ class eCommerceSynchro
 
 						// Search customer by name if it's a company
 						if (!$error && !($third_party_id > 0) && (!isset($customer_data['type']) || $customer_data['type'] == 'company')) {
-							$result = $this->getThirdPartyByName($customer_data['name']);
+							$result = $this->getThirdPartyByInfos($customer_data['name'], $customer_data['zip']);
 							if ($result < 0) {
 								if ($result != -2) $error++;
 							} else {
@@ -3926,6 +3926,94 @@ class eCommerceSynchro
 							}
 						}
 
+						// Manage virtual product
+						if (!empty($product_data['components'])) {
+							// Get new components
+							$new_component = [];
+							foreach ($product_data['components'] as $sub_product_id => $sub_product_qty) {
+								$eCommerceProduct = new eCommerceProduct($this->db);
+								$result = $eCommerceProduct->fetchByRemoteId($sub_product_id, $this->eCommerceSite->id); // load info of table ecommerce_product
+								if ($result < 0 && empty($eCommerceProduct->error)) $result = $eCommerceProduct->fetchByRemoteId('%|' . $sub_product_id, $this->eCommerceSite->id); // load info of table ecommerce_product
+								if ($result < 0 && !empty($eCommerceProduct->error)) {
+									$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $sub_product_id, $this->eCommerceSite->id);
+									$this->errors[] = $eCommerceProduct->error;
+									$error++;
+									break;
+								} elseif ($result > 0) {
+									// Add new components already synchronized
+									$new_component[$eCommerceProduct->fk_product] = $sub_product_qty;
+								} else {
+									// Synchronize missing new components
+									$result = $this->synchronizeProducts(null, null, [$sub_product_id], 1, false);
+									if ($result < 0) {
+										$error++;
+										break;
+									} else {
+										$this->initECommerceProduct();
+										$result = $eCommerceProduct->fetchByRemoteId($sub_product_id, $this->eCommerceSite->id); // load info of table ecommerce_product
+										if ($result < 0 && empty($eCommerceProduct->error)) $result = $eCommerceProduct->fetchByRemoteId('%|' . $sub_product_id, $this->eCommerceSite->id); // load info of table ecommerce_product
+										if ($result < 0 && !empty($eCommerceProduct->error)) {
+											$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $sub_product_id, $this->eCommerceSite->id);
+											$this->errors[] = $eCommerceProduct->error;
+											$error++;
+											break;
+										} elseif ($result > 0) {
+											// Add new components already synchronized
+											$new_component[$eCommerceProduct->fk_product] = $sub_product_qty;
+										} else {
+											$this->errors[] = $this->langs->trans('ECommerceErrorSynchronizeProductComponent', $sub_product_id, $this->eCommerceSite->id);
+											$error++;
+											break;
+										}
+									}
+								}
+							}
+
+							// Get current components
+							if (!$error) {
+								$current_components = $product->getChildsArbo($product->id, 1);
+								if (!is_array($current_components)) {
+									$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductComponents', $product->id);
+									$error++;
+								}
+							}
+
+							// Add / Update components
+							if (!$error) {
+								foreach ($new_component as $sub_product_id => $sub_product_qty) {
+									if (isset($current_components[$sub_product_id])) {
+										$result = $product->update_sousproduit($product->id, $sub_product_id, $sub_product_qty, 1);
+										if ($result < 0) {
+											$this->errors[] = $this->langs->trans('ECommerceErrorUpdateProductComponent', $sub_product_id, $sub_product_qty, $product->id);
+											$error++;
+											break;
+										}
+									} else {
+										$result = $product->add_sousproduit($product->id, $sub_product_id, $sub_product_qty, 1);
+										if ($result < 0) {
+											$this->errors[] = $this->langs->trans('ECommerceErrorAddProductComponent', $sub_product_id, $sub_product_qty, $product->id);
+											$error++;
+											break;
+										}
+									}
+								}
+							}
+
+							// Remove missing components
+							if (!$error) {
+								foreach ($current_components as $sub_product_id => $sub_product_info) {
+									if (!isset($new_component[$sub_product_id])) {
+										$result = $product->del_sousproduit($product->id, $sub_product_id);
+										if ($result < 0) {
+											$this->errors[] = $this->langs->trans('ECommerceErrorDelProductComponent', $sub_product_id, $product->id);
+											$error++;
+											break;
+										}
+									}
+								}
+							}
+						}
+
 						if (!$error) {
 							// For synchronize on other sites
 							$product->update($product->id, $this->user);
@@ -4410,7 +4498,7 @@ class eCommerceSynchro
 											} else {
 												$third_party_name = $contact_data['company'];
 											}
-											$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
+											$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
 											if ($result < 0) {
 												$error++;
 											} elseif ($result > 0) {
@@ -4474,7 +4562,7 @@ class eCommerceSynchro
 												} else {
 													$third_party_name = $contact_data['company'];
 												}
-												$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
+												$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
 												if ($result < 0) {
 													$error++;
 												} elseif ($result > 0) {
@@ -4527,7 +4615,7 @@ class eCommerceSynchro
 												} else {
 													$third_party_name = $contact_data['company'];
 												}
-												$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
+												$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
 												if ($result < 0) {
 													$error++;
 												} elseif ($result > 0) {
@@ -5627,7 +5715,7 @@ class eCommerceSynchro
 														} else {
 															$third_party_name = $contact_data['company'];
 														}
-														$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
+														$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
 														if ($result < 0) {
 															$error++;
 														} elseif ($result > 0) {
@@ -5691,7 +5779,7 @@ class eCommerceSynchro
 															} else {
 																$third_party_name = $contact_data['company'];
 															}
-															$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
+															$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
 															if ($result < 0) {
 																$error++;
 															} elseif ($result > 0) {
@@ -5744,7 +5832,7 @@ class eCommerceSynchro
 															} else {
 																$third_party_name = $contact_data['company'];
 															}
-															$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
+															$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
 															if ($result < 0) {
 																$error++;
 															} elseif ($result > 0) {
@@ -6439,10 +6527,11 @@ class eCommerceSynchro
 	 * Get third party by name
 	 *
 	 * @param	string		$name			Third party name
+	 * @param	string		$zip			Third party zip code
 	 * @param	int			$site_id		Site ID
 	 * @return	int							<0 if KO, =0 if not found, otherwise the third party ID
 	 */
-	public function getThirdPartyByName($name, $site_id = 0)
+	public function getThirdPartyByNameAndZipOrName($name, $zip = '', $site_id = 0)
 	{
 		if (empty($name)) {
 			return 0;
@@ -6450,10 +6539,12 @@ class eCommerceSynchro
 
 		// Search by name
 		$name = $this->db->escape($name);
+		$zip = $this->db->escape($zip);
 
 		$sql = "SELECT DISTINCT s.rowid FROM " . MAIN_DB_PREFIX . "societe AS s";
 		if ($site_id > 0) $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_societe AS es ON es.fk_societe = s.rowid";
 		$sql .= " WHERE (s.nom = '$name' OR s.name_alias = '$name')";
+		if (!empty($zip)) $sql .= " AND s.zip = '$zip'";
 		if ($site_id > 0) $sql .= " AND es.fk_site = $site_id";
 		$sql .= " AND s.status = 1";
 		$sql .= " AND s.entity IN (" . getEntity('societe') . ")";
@@ -6491,15 +6582,18 @@ class eCommerceSynchro
 	 *
 	 * @param	string		$email			Third party email
 	 * @param	string		$name			Third party name
+	 * @param	string		$zip			Third party zip code
 	 * @param	int			$site_id		Site ID
 	 * @return	int							<0 if KO, =0 if not found, otherwise the third party ID
 	 */
-	public function getThirdPartyByEmailOrName($email, $name = '', $site_id = 0)
+	public function getThirdPartyByInfos($email, $name = '', $zip = '', $site_id = 0)
 	{
 		// Search by email
 		$result = $this->getThirdPartyByEmail($email, $site_id);
+		// Search by name and zip
+		if ($result == 0) $result = $this->getThirdPartyByNameAndZipOrName($name, $zip, $site_id);
 		// Search by name
-		if ($result == 0) $result = $this->getThirdPartyByName($name, $site_id);
+		if ($result == 0) $result = $this->getThirdPartyByNameAndZipOrName($name, '', $site_id);
 
 		return $result;
 	}
