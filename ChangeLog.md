@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.20.0
+- Recherche le tiers dans l'ordre suivant email -> nom + code postal -> nom
+
 ## 4.1.19.0
 - Correction des la desactivation des taches planifiés (avec perte de la configurtaion) a la réactivation du module
 - Correction de l'enregistrement, avec pertes de la configuration, de la synchro des status de la commandes lors de plusieurs sites 

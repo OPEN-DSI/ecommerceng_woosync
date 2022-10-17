@@ -3186,7 +3186,7 @@ class eCommerceSynchro
 
 						// Search customer by name if it's a company
 						if (!$error && !($third_party_id > 0) && (!isset($customer_data['type']) || $customer_data['type'] == 'company')) {
-							$result = $this->getThirdPartyByName($customer_data['name']);
+							$result = $this->getThirdPartyByInfos($customer_data['name'], $customer_data['zip']);
 							if ($result < 0) {
 								if ($result != -2) $error++;
 							} else {
@@ -4405,7 +4405,7 @@ class eCommerceSynchro
 											} else {
 												$third_party_name = $contact_data['company'];
 											}
-											$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
+											$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
 											if ($result < 0) {
 												$error++;
 											} elseif ($result > 0) {
@@ -4469,7 +4469,7 @@ class eCommerceSynchro
 												} else {
 													$third_party_name = $contact_data['company'];
 												}
-												$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
+												$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
 												if ($result < 0) {
 													$error++;
 												} elseif ($result > 0) {
@@ -4522,7 +4522,7 @@ class eCommerceSynchro
 												} else {
 													$third_party_name = $contact_data['company'];
 												}
-												$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
+												$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
 												if ($result < 0) {
 													$error++;
 												} elseif ($result > 0) {
@@ -5620,7 +5620,7 @@ class eCommerceSynchro
 														} else {
 															$third_party_name = $contact_data['company'];
 														}
-														$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
+														$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
 														if ($result < 0) {
 															$error++;
 														} elseif ($result > 0) {
@@ -5684,7 +5684,7 @@ class eCommerceSynchro
 															} else {
 																$third_party_name = $contact_data['company'];
 															}
-															$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
+															$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
 															if ($result < 0) {
 																$error++;
 															} elseif ($result > 0) {
@@ -5737,7 +5737,7 @@ class eCommerceSynchro
 															} else {
 																$third_party_name = $contact_data['company'];
 															}
-															$result = $this->getThirdPartyByEmailOrName($contact_data['email'], $third_party_name);
+															$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
 															if ($result < 0) {
 																$error++;
 															} elseif ($result > 0) {
@@ -6432,10 +6432,11 @@ class eCommerceSynchro
 	 * Get third party by name
 	 *
 	 * @param	string		$name			Third party name
+	 * @param	string		$zip			Third party zip code
 	 * @param	int			$site_id		Site ID
 	 * @return	int							<0 if KO, =0 if not found, otherwise the third party ID
 	 */
-	public function getThirdPartyByName($name, $site_id = 0)
+	public function getThirdPartyByNameAndZipOrName($name, $zip = '', $site_id = 0)
 	{
 		if (empty($name)) {
 			return 0;
@@ -6443,10 +6444,12 @@ class eCommerceSynchro
 
 		// Search by name
 		$name = $this->db->escape($name);
+		$zip = $this->db->escape($zip);
 
 		$sql = "SELECT DISTINCT s.rowid FROM " . MAIN_DB_PREFIX . "societe AS s";
 		if ($site_id > 0) $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_societe AS es ON es.fk_societe = s.rowid";
 		$sql .= " WHERE (s.nom = '$name' OR s.name_alias = '$name')";
+		if (!empty($zip)) $sql .= " AND s.zip = '$zip'";
 		if ($site_id > 0) $sql .= " AND es.fk_site = $site_id";
 		$sql .= " AND s.status = 1";
 		$sql .= " AND s.entity IN (" . getEntity('societe') . ")";
@@ -6484,15 +6487,18 @@ class eCommerceSynchro
 	 *
 	 * @param	string		$email			Third party email
 	 * @param	string		$name			Third party name
+	 * @param	string		$zip			Third party zip code
 	 * @param	int			$site_id		Site ID
 	 * @return	int							<0 if KO, =0 if not found, otherwise the third party ID
 	 */
-	public function getThirdPartyByEmailOrName($email, $name = '', $site_id = 0)
+	public function getThirdPartyByInfos($email, $name = '', $zip = '', $site_id = 0)
 	{
 		// Search by email
 		$result = $this->getThirdPartyByEmail($email, $site_id);
+		// Search by name and zip
+		if ($result == 0) $result = $this->getThirdPartyByNameAndZipOrName($name, $zip, $site_id);
 		// Search by name
-		if ($result == 0) $result = $this->getThirdPartyByName($name, $site_id);
+		if ($result == 0) $result = $this->getThirdPartyByNameAndZipOrName($name, '', $site_id);
 
 		return $result;
 	}
