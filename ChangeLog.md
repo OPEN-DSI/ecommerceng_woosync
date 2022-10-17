@@ -2,6 +2,9 @@
 
 ## 4.1.20.0
 - Recherche le tiers dans l'ordre suivant email -> nom + code postal -> nom
+- Prise en compte de la synchronisation des kits de WooCommerce vers Dolibarr (Support partiel du module Woocommerce "WPC Product Bundles for WooCommerce" v6.1.1)
+  Pour rappel, seul la synchronisation des produits simples et des produits variables (sans le produit parent) est supporté.
+  Un bundle constitué d'un produit variable parent ne pourra pas être synchronisé et générera une erreur. 
 
 ## 4.1.19.0
 - Correction des la desactivation des taches planifiés (avec perte de la configurtaion) a la réactivation du module

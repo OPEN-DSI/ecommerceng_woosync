@@ -544,6 +544,11 @@ ECommerceErrorUpdateRefProduct                                                  
 ECommerceErrorFetchProductByRef                                                                     =Erreur lors du chargement du produit par sa reference (Ref: %s)
 ECommerceErrorProductNotFoundByRef                                                                  =Le produit n'as pas été trouvé par sa reference (Ref: %s)
 ECommerceErrorProductRefMandatory2                                                                  =Le produit "%s" n'as de reference sur le site
+ECommerceErrorSynchronizeProductComponent                                                           =Le composant (ID distant: %s, Site ID: %s) n'a pas réussi à se synchroniser
+ECommerceErrorFetchProductComponents                                                                =Erreur lors de la récupération des composants constituant le produit (ID: %s)
+ECommerceErrorAddProductComponent                                                                   =Erreur lors de l'ajout du composant (ID: %s, Qty: %s) constituant le produit (ID: %s)
+ECommerceErrorUpdateProductComponent                                                                =Erreur lors de la mise à jour du composant (ID: %s, Qty: %s) constituant le produit (ID: %s)
+ECommerceErrorDelProductComponent                                                                   =Erreur lors de la suppression du composant (ID: %s) constituant le produit (ID: %s)
 
 ############################################################################################
 # Warnings

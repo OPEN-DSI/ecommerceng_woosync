@@ -130,6 +130,8 @@ ECommercengWoocommerceCompanyRole_                                   = Pas de r�
 ECommerceWoocommerceCustomerRolesSupported                           = Rôles utilisateurs supportés
 ECommerceWoocommerceCustomerRolesSupportedDescription                = Listes des rôles utilisateurs supportées pour la synchronisation.(vide pour tous les rôles; liste de valeurs séparées par des virgules)<br>Seules les valeurs retournées par l'API sont supportées. ex: customer, administrator, author, contributor, editor, subscriber, shop_manager, ...<br>Seul les utilisateurs des rôles définis seront traitées<br>Seul les commandes invités ou dont le client est synchronisé seront traitées
 
+ECommerceWooCommerceBundleComposite                                  = Composition du kit :
+
 ECommerceWooCommerceErrorOrderStatusNotConfigured                    = La correspondance du statut "%s" de la commande n'est pas paramétré dans la configuration du site (il faut peut etre le rajouter dans le champs complémentaire de la commande "Statut sur le site [%s]")
 ECommerceWooCommerceErrorDiscountCodeServiceNotConfigured            = Le service gérant les codes promos n'a pas été configurer dans le paramétrage du site "%s".
 ECommerceWooCommerceErrorPwGiftCardsServiceNotConfigured             = Le service gérant les cartes cadeaux n'a pas été configurer dans le paramétrage du site "%s".
