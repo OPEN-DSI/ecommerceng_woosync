@@ -176,6 +176,8 @@ SeeECommerceConfFileIfKo=See content of file <strong>%s</strong>, on your eComme
 RestrictNbInSync=Restrict number of record of same object to synchronize in same request
 SynchUnkownCustomersOnThirdParty=Use the following thirdparty for orders done on unknown customers (non logged customers)
 ThirdPartyForNonLoggedUsers=Third party for anonymous/non logged users
+ECommerceDontUpdateDolibarrCompany                                                                  =Mise a jour du tiers
+ECommerceDontUpdateDolibarrCompanyDescription                                                       =Ne pas mettre à jour le tiers sur Dolibarr lorsqu'il existe déja dans dolibarr
 
 ## OAuth Setup ##
 ECommerceOAuthWordpressSetup=OAuth2 connection on WordPress ( Go to <a class="notasortlink" href="%s" target="_blank">this page</a> , then "Add a new customer" to create the OAuth2 credentials)

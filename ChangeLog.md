@@ -1,5 +1,12 @@
 # ChangeLog
 
+## 4.1.21.0
+- Ajout d'une option pour ne pas mettre à jour le tiers s'il existe deja dans dolibarr
+- Correction affichage des parametrage du poids et de la dimension
+- Recupere la condition de reglement du tiers si definie sinon celui definie dans le site
+- Recupere la banque du tiers si definie et qu'il n'a pas eu de paiement en ligne sinon celui definie dans le site
+- Récupère les valeures par defaut des attributs supplémentaires lors d'une creation d'un produit, tiers, commande, facture, ...
+
 ## 4.1.20.0
 - Recherche le tiers dans l'ordre suivant email -> nom + code postal -> nom
 - Prise en compte de la synchronisation des kits de WooCommerce vers Dolibarr (Support partiel du module Woocommerce "WPC Product Bundles for WooCommerce" v6.1.1)

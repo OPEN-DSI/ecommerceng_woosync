@@ -115,6 +115,7 @@ class eCommerceSynchro
     private $factureToUpdate;
 
 	public $cache_categories;
+	public static $default_extra_fields_cached;
 
 	public $payment_gateways_cached;
 	public $product_category_cached;
@@ -184,6 +185,30 @@ class eCommerceSynchro
 
         return -1;
     }
+
+	/**
+	 * Get default extrafields
+	 *
+	 * @param	string		$table_element		Table element
+	 * @return	array							List of extrafields values by default
+	 */
+	public function getDefaultExtraFields($table_element)
+	{
+		if (!isset(self::$default_extra_fields_cached[$table_element])) {
+			require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
+			$extra_fields = new Extrafields($this->db);
+			$extra_fields->fetch_name_optionals_label($table_element);
+
+			$values = [];
+			foreach ($extra_fields->attributes[$table_element]['default'] as $key => $value) {
+				if (!empty($value)) $values['options_' . $key] = $value;
+			}
+
+			self::$default_extra_fields_cached[$table_element] = $values;
+		}
+
+		return self::$default_extra_fields_cached[$table_element];
+	}
 
     /**
      * Getter for toDate
@@ -979,7 +1004,9 @@ class eCommerceSynchro
                         $dBCategorie->fk_parent = ($fk_parent != $dBCategorie->id) ? $fk_parent : 0;
                         $dBCategorie->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
 
-                        if ($eCommerceCatExists > 0)
+						if (!($eCommerceCatExists > 0)) $dBCategorie->array_options = $this->getDefaultExtraFields($dBCategorie->table_element);
+
+						if ($eCommerceCatExists > 0)
                         {
                             $result = $dBCategorie->update($this->user);
                         }
@@ -1197,6 +1224,8 @@ class eCommerceSynchro
                     $synchExists = $this->eCommerceSocpeople->fetchByFkSocpeople($dBContact->id, $this->eCommerceSite->id);
                 }
             }
+
+			if ($contactExists == 0) $dBContact->array_options = $this->getDefaultExtraFields($dBContact->table_element);
 
             if ($contactExists > 0) {
                 $result = $dBContact->update($dBContact->id, $this->user);
@@ -1544,7 +1573,7 @@ class eCommerceSynchro
                                 $dBFacture->origin = $origin;
                                 $dBFacture->origin_id = $originid;
                                 $dBFacture->linked_objects[$dBFacture->origin] = $dBFacture->origin_id;
-
+								$dBFacture->array_options = $this->getDefaultExtraFields($dBFacture->table_element);
 
                                 // Now we create invoice
                                 $result = $dBFacture->create($this->user);
@@ -2550,34 +2579,36 @@ class eCommerceSynchro
                     if ($synchExists > 0 && isset($this->eCommerceSociete->fk_societe)) {
                         $refExists = $dBSociete->fetch($this->eCommerceSociete->fk_societe);
                         if ($refExists >= 0) {
-							$dBSociete->oldcopy = clone $dBSociete;
-                            $dBSociete->name = $societeArray['name'];
-                            //$dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];      // No need of ref_ext, we will search if already exists on name
-                            $dBSociete->client = $societeArray['client'];
-                            if (isset($societeArray['name_alias'])) $dBSociete->name_alias = $societeArray['name_alias'];
-                            if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
-                            if (!empty($societeArray['vatnumber'])) {
-                                $dBSociete->tva_intra = $societeArray['vatnumber']; //dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
-                                $dBSociete->tva_assuj = 1;                          // tva_intra is not saved if this field is not set
-                            } else {
-                                $dBSociete->tva_assuj = 0;                          // tva_intra is not saved if this field is not set
-                            }
-                            if (isset($societeArray['country_id'])) $dBSociete->country_id = $societeArray['country_id'];
-                            if (isset($societeArray['default_lang'])) $dBSociete->default_lang = $societeArray['default_lang'];
-                            $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                        	if (empty($this->eCommerceSite->parameters['dont_update_dolibarr_company'])) {
+								$dBSociete->oldcopy = clone $dBSociete;
+								$dBSociete->name = $societeArray['name'];
+								//$dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];      // No need of ref_ext, we will search if already exists on name
+								$dBSociete->client = $societeArray['client'];
+								if (isset($societeArray['name_alias'])) $dBSociete->name_alias = $societeArray['name_alias'];
+								if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
+								if (!empty($societeArray['vatnumber'])) {
+									$dBSociete->tva_intra = $societeArray['vatnumber']; //dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
+									$dBSociete->tva_assuj = 1;                          // tva_intra is not saved if this field is not set
+								} else {
+									$dBSociete->tva_assuj = 0;                          // tva_intra is not saved if this field is not set
+								}
+								if (isset($societeArray['country_id'])) $dBSociete->country_id = $societeArray['country_id'];
+								if (isset($societeArray['default_lang'])) $dBSociete->default_lang = $societeArray['default_lang'];
+								$dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
 
-                            if (is_array($societeArray['extrafields'])) {
-                                foreach ($societeArray['extrafields'] as $extrafield => $extrafield_value) {
-                                    $dBSociete->array_options['options_' . $extrafield] = $extrafield_value;
-                                }
-                            }
+								if (is_array($societeArray['extrafields'])) {
+									foreach ($societeArray['extrafields'] as $extrafield => $extrafield_value) {
+										$dBSociete->array_options['options_' . $extrafield] = $extrafield_value;
+									}
+								}
 
-                            $result = $dBSociete->update($dBSociete->id, $this->user);
-                            if ($result < 0) {
-                                $error++;
-                                $this->errors[] = $this->langs->trans('ECommerceSynchSocieteUpdateError') . ' ' . $dBSociete->error;
-                                $this->errors = array_merge($this->errors, $dBSociete->errors);
-                            }
+								$result = $dBSociete->update($dBSociete->id, $this->user);
+								if ($result < 0) {
+									$error++;
+									$this->errors[] = $this->langs->trans('ECommerceSynchSocieteUpdateError') . ' ' . $dBSociete->error;
+									$this->errors = array_merge($this->errors, $dBSociete->errors);
+								}
+							}
                         } else {
                             $error++;
                             $this->errors[] = $this->langs->trans('ECommerceSynchSocieteErrorBetweenECommerceSocieteAndSociete');
@@ -2641,6 +2672,7 @@ class eCommerceSynchro
                             $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
                             $dBSociete->code_client = -1;           // Automatic code
                             $dBSociete->code_fournisseur = -1;      // Automatic code
+							$dBSociete->array_options = $this->getDefaultExtraFields($dBSociete->table_element);
 
                             if (is_array($societeArray['extrafields'])) {
                                 foreach ($societeArray['extrafields'] as $extrafield => $extrafield_value) {
@@ -2656,7 +2688,7 @@ class eCommerceSynchro
                             }
 
                             $dBSociete->update_note($societeArray['note_private'], '_private');
-                        } else if ($result > 0) {
+                        } else if ($result > 0 && empty($this->eCommerceSite->parameters['dont_update_dolibarr_company'])) {
 							$dBSociete->oldcopy = clone $dBSociete;
                             $dBSociete->name = $societeArray['name'];
                             //$dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];      // No need of ref_ext, we will search if already exists on name
@@ -3251,18 +3283,20 @@ class eCommerceSynchro
 						if (!$error) {
 							// Update third party
 							if ($third_party->id > 0) {
-								if (!empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE)) {
-									$third_party->note_private = dol_concatdesc($third_party->note_private, $this->langs->trans('ECommerceUpdateThirdPartyFromSiteNote', dol_print_date(dol_now(), 'dayhour'), $this->eCommerceSite->name, $customer_data['remote_id']));
-									if (!empty($conf->global->ECOMMERCENG_ENABLE_DETAILED_UPDATE_LOG_IN_NOTE)) {
-										$third_party->note_private = dol_concatdesc($third_party->note_private . " :", json_encode($customer_data['remote_datas']));
+								if (empty($this->eCommerceSite->parameters['dont_update_dolibarr_company'])) {
+									if (!empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE)) {
+										$third_party->note_private = dol_concatdesc($third_party->note_private, $this->langs->trans('ECommerceUpdateThirdPartyFromSiteNote', dol_print_date(dol_now(), 'dayhour'), $this->eCommerceSite->name, $customer_data['remote_id']));
+										if (!empty($conf->global->ECOMMERCENG_ENABLE_DETAILED_UPDATE_LOG_IN_NOTE)) {
+											$third_party->note_private = dol_concatdesc($third_party->note_private . " :", json_encode($customer_data['remote_datas']));
+										}
 									}
-								}
 
-								$third_party->error = '';
-								$third_party->errors = array();
-								$result = $third_party->update($third_party->id, $this->user);
-								if ($result < 0) {
-									$this->errors[] = $this->langs->trans('ECommerceErrorUpdateThirdParty', $third_party->id);
+									$third_party->error = '';
+									$third_party->errors = array();
+									$result = $third_party->update($third_party->id, $this->user);
+									if ($result < 0) {
+										$this->errors[] = $this->langs->trans('ECommerceErrorUpdateThirdParty', $third_party->id);
+									}
 								}
 							} // Create third party
 							else {
@@ -3272,6 +3306,7 @@ class eCommerceSynchro
 								if (!empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE)) {
 									$third_party->note_private = dol_concatdesc($third_party->note_private, $this->langs->trans('ECommerceCreateThirdPartyFromSiteNote', $this->eCommerceSite->name) . " :\n" . json_encode($customer_data['remote_datas']));
 								}
+								$third_party->array_options = $this->getDefaultExtraFields($third_party->table_element);
 
 								$third_party->error = '';
 								$third_party->errors = array();
@@ -3660,6 +3695,7 @@ class eCommerceSynchro
 
 						if (!isset($product->stock_reel)) $product->stock_reel = 0;
 
+						if (!($product->id > 0)) $product->array_options = $this->getDefaultExtraFields($product->table_element);
 						if (is_array($product_data['extrafields'])) {
 							foreach ($product_data['extrafields'] as $key => $value) {
 								$product->array_options['options_' . $key] = $value;
@@ -4422,6 +4458,7 @@ class eCommerceSynchro
 									$order->date_commande = strtotime($order_data['date_commande']);
 									$order->date_livraison = strtotime($order_data['date_livraison']);
 
+									if (!($order->id > 0)) $order->array_options = $this->getDefaultExtraFields($order->table_element);
 									if (is_array($order_data['extrafields'])) {
 										foreach ($order_data['extrafields'] as $key => $value) {
 											$order->array_options['options_' . $key] = $value;
@@ -4448,9 +4485,12 @@ class eCommerceSynchro
 										}
 									} // Create order
 									else {
+										$third_party = new Societe($this->db);
+										$third_party->fetch($third_party_id);
+
 										$new_order = true;
 										$order->statut = Commande::STATUS_DRAFT;             // STATUS_DRAFT by default at creation
-										$order->cond_reglement_id = isset($this->eCommerceSite->parameters['payment_cond']) ? $this->eCommerceSite->parameters['payment_cond'] : null;
+										$order->cond_reglement_id = $third_party->cond_reglement_id > 0 ? $third_party->cond_reglement_id : (isset($this->eCommerceSite->parameters['payment_cond']) ? $this->eCommerceSite->parameters['payment_cond'] : null);
 										$order->source = dol_getIdFromCode($this->db, 'OrderByWWW', 'c_input_method', 'code', 'rowid'); // Order mode. Not visible with some Dolibarr versions
 										$order->note_private = isset($order_data['note']) ? $order_data['note'] : "";
 										if (!empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE)) {
@@ -4755,7 +4795,7 @@ class eCommerceSynchro
 													$description = dol_concatdesc($description, $item['additional_description']);
 													$product_type = $item['product_type'] != "simple" ? 1 : 0;
 
-													$array_options = array();
+													$array_options = $this->getDefaultExtraFields('product');
 													if (is_array($item['extrafields'])) {
 														foreach ($item['extrafields'] as $extrafield => $extrafield_value) {
 															$array_options['options_' . $extrafield] = $extrafield_value;
@@ -5157,6 +5197,9 @@ class eCommerceSynchro
 								// Create the invoice only if the third party ID is found (otherwise it's bypassed)
 								if (!$error) {
 									if (isset($third_party_id)) {
+										$third_party = new Societe($this->db);
+										$third_party->fetch($third_party_id);
+
 										$isDepositType = isset($this->eCommerceSite->parameters['create_invoice_type']) && $this->eCommerceSite->parameters['create_invoice_type'] == Facture::TYPE_DEPOSIT;
 										$typeAmount = isset($this->eCommerceSite->parameters['order_actions']['create_invoice_deposit_type']) ? $this->eCommerceSite->parameters['order_actions']['create_invoice_deposit_type'] : '';
 										$valueDeposit = isset($this->eCommerceSite->parameters['order_actions']['create_invoice_deposit_value']) ? $this->eCommerceSite->parameters['order_actions']['create_invoice_deposit_value'] : 0;
@@ -5168,7 +5211,7 @@ class eCommerceSynchro
 										$invoice->ref_client = $order->id > 0 ? $order->ref_client : $order_data['ref_client'];
 										$invoice->ref_ext = $invoice_ref_ext;
 										$invoice->modelpdf = $conf->global->FACTURE_ADDON_PDF;
-										$invoice->cond_reglement_id = $order->id > 0 ? $order->cond_reglement_id : (isset($this->eCommerceSite->parameters['payment_cond']) ? $this->eCommerceSite->parameters['payment_cond'] : null);
+										$invoice->cond_reglement_id = $order->id > 0 ? $order->cond_reglement_id : ($third_party->cond_reglement_id > 0 ? $third_party->cond_reglement_id : (isset($this->eCommerceSite->parameters['payment_cond']) ? $this->eCommerceSite->parameters['payment_cond'] : null));
 										$invoice->multicurrency_code = $order->id > 0 ? $order->multicurrency_code : null;
 										$invoice->multicurrency_tx = $order->id > 0 ? $order->multicurrency_tx : null;
 										$invoice->entity = $conf->entity;
@@ -5186,6 +5229,7 @@ class eCommerceSynchro
 										if ($order->id > 0) {
 											$invoice->array_options = $order->array_options;
 										} elseif (is_array($order_data['extrafields'])) {
+											$invoice->array_options = $this->getDefaultExtraFields($invoice->table_element);
 											foreach ($order_data['extrafields'] as $key => $value) {
 												$invoice->array_options['options_' . $key] = $value;
 											}
@@ -5363,7 +5407,7 @@ class eCommerceSynchro
 																}
 
 																// Extrafields
-																$array_options = array();
+																$array_options = $this->getDefaultExtraFields('product');
 																if (empty($conf->global->MAIN_EXTRAFIELDS_DISABLED)) {
 																	$array_options = $line->array_options;
 																}
@@ -5646,7 +5690,7 @@ class eCommerceSynchro
 																		$discount = $item['discount'];
 																		$product_type = $item['product_type'] != "simple" ? 1 : 0;
 
-																		$array_options = array();
+																		$array_options = $this->getDefaultExtraFields('product');
 																		if (is_array($item['extrafields'])) {
 																			foreach ($item['extrafields'] as $extrafield => $extrafield_value) {
 																				$array_options['options_' . $extrafield] = $extrafield_value;
@@ -5919,7 +5963,7 @@ class eCommerceSynchro
 
 										// Set bank account
 										if (!$error && isset($selected_payment_gateways)) {
-											$bank_account_id = $selected_payment_gateways['bank_account_id'] > 0 ? $selected_payment_gateways['bank_account_id'] : 0;
+											$bank_account_id = empty($order_data['date_payment']) && $third_party->fk_bank > 0 ? $third_party->fk_bank : ($selected_payment_gateways['bank_account_id'] > 0 ? $selected_payment_gateways['bank_account_id'] : 0);
 											if ($bank_account_id == 0 && $conf->banque->enabled && (!empty($selected_payment_gateways['create_invoice_payment']) || !empty($selected_payment_gateways['create_supplier_invoice_payment']))) {
 												$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysBankAccountNotConfigured', $order_data['payment_method_id'], $order_data['payment_method']);
 												$error++;
@@ -6061,6 +6105,7 @@ class eCommerceSynchro
 												$supplier_invoice->cond_reglement_id = 0;
 												$supplier_invoice->mode_reglement_id = $invoice->mode_reglement_id;
 												$supplier_invoice->fk_account = $bank_account_id;
+												$supplier_invoice->array_options = $this->getDefaultExtraFields($supplier_invoice->table_element);
 
 												if (!empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE)) {
 													$supplier_invoice->note_private = dol_concatdesc($supplier_invoice->note_private, $this->langs->trans('ECommerceCreateSupplierInvoiceFromSiteNote', $this->eCommerceSite->name) . " :\n" . json_encode($order_data['remote_order']));
@@ -6710,6 +6755,7 @@ class eCommerceSynchro
 		$third_party->fax = $fax;
 		$third_party->code_client = -1;           // Automatic code
 		$third_party->code_fournisseur = -1;      // Automatic code
+		$third_party->array_options = $this->getDefaultExtraFields($third_party->table_element);
 
 		$result = $third_party->create($this->user);
 		if ($result < 0) {
