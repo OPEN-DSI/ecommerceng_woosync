@@ -1849,7 +1849,7 @@ class eCommerceRemoteAccessWoocommerce
 			'payment_amount_ttc' => $remote_data->total,
 			'fee_lines' => $fee_lines,
 			'extrafields' => [
-				"ecommerceng_online_payment_{$conf->entity}" => empty($remote_data->date_paid) ? 0 : 1,
+				"ecommerceng_online_payment_{$conf->entity}" => empty($remote_data->transaction_id) ? 0 : 1,
 				"ecommerceng_wc_status_{$this->site->id}_{$conf->entity}" => $orderStatus,
 				"ecommerceng_wc_link_{$this->site->id}_{$conf->entity}" => rtrim($this->site->webservice_address, '/') . '/wp-admin/post.php?action=edit&post=' . $remote_data->id,
 			],
