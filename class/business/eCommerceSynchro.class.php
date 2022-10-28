@@ -5962,8 +5962,8 @@ class eCommerceSynchro
 										}
 
 										// Set bank account
-										if (!$error && isset($selected_payment_gateways)) {
-											$bank_account_id = empty($order_data['date_payment']) && $third_party->fk_bank > 0 ? $third_party->fk_bank : ($selected_payment_gateways['bank_account_id'] > 0 ? $selected_payment_gateways['bank_account_id'] : 0);
+										$bank_account_id = empty($order_data['extrafields']["ecommerceng_online_payment_{$conf->entity}"]) && $third_party->fk_bank > 0 ? $third_party->fk_bank : (!empty($selected_payment_gateways['bank_account_id']) ? $selected_payment_gateways['bank_account_id'] : 0);
+										if (!$error) {
 											if ($bank_account_id == 0 && $conf->banque->enabled && (!empty($selected_payment_gateways['create_invoice_payment']) || !empty($selected_payment_gateways['create_supplier_invoice_payment']))) {
 												$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysBankAccountNotConfigured', $order_data['payment_method_id'], $order_data['payment_method']);
 												$error++;
