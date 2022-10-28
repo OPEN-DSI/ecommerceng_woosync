@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.21.0
+- Recherche du contact sur ses informations ne doivent retourné que des contacts lié au meme tiers (prend le dernier trouvé)
+
 ## 4.1.20.0
 - Recherche le tiers dans l'ordre suivant email -> nom + code postal -> nom
 - Prise en compte de la synchronisation des kits de WooCommerce vers Dolibarr (Support partiel du module Woocommerce "WPC Product Bundles for WooCommerce" v6.1.1)

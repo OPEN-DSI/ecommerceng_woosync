@@ -6600,7 +6600,7 @@ class eCommerceSynchro
 	 */
 	public function getContactInfosFromData($contact_data, $company_id = 0)
 	{
-		global $conf;
+		global $conf, $langs;
 
 		// Clean parameters
 		$socid = $contact_data['fk_soc'];
@@ -6646,16 +6646,31 @@ class eCommerceSynchro
 		if ($resql) {
 			$result = array();
 
-			if ($obj = $this->db->fetch_object($resql)) {
+			$temp_id = 0;
+			While ($obj = $this->db->fetch_object($resql)) {
+				if ($temp_id > 0 && $obj->fk_soc != $temp_id) {
+					$this->errors[] = $langs->trans('ECommerceErrorTooManyThirdPartyFoundWhenSearchContact', $lastname, $firstname, $this->eCommerceSite->id);
+					$this->errors[] = $address . ' - ' . $town . ' - ' . $zip . ' - ' . $country_id . ' - ' . $email . ' - ' . $phone_pro . ' - ' . $fax . ' - ' . $socid . ' - ' . $company_id;
+					dol_syslog(__METHOD__ . " - Error: " . $this->errorsToString(), LOG_ERR);
+					return -1;
+				}
+				$temp_id = $obj->fk_soc;
 				$result = array('contact_id' => $obj->rowid, 'company_id' => $obj->fk_soc);
+			}
+
+			if (!empty($result) && empty($temp_id)) {
+				$this->errors[] = $langs->trans('ECommerceErrorFoundContactWhoHaveNotCompany', $lastname, $firstname, $this->eCommerceSite->id);
+				$this->errors[] = $address . ' - ' . $town . ' - ' . $zip . ' - ' . $country_id . ' - ' . $email . ' - ' . $phone_pro . ' - ' . $fax . ' - ' . $socid;
+				dol_syslog(__METHOD__ . " - Error: " . $this->errorsToString(), LOG_ERR);
+				return -1;
 			}
 
 			$this->db->free($resql);
 
 			return $result;
 		} else {
-			$this->error = $this->db->lasterror();
-			dol_syslog(__METHOD__ . " - Error: " . $this->error, LOG_ERR);
+			$this->errors[] = $this->db->lasterror();
+			dol_syslog(__METHOD__ . " - Error: " . $this->errorsToString(), LOG_ERR);
 			return -1;
 		}
 	}

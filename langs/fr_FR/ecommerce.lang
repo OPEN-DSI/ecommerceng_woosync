@@ -513,6 +513,7 @@ ECommerceErrorInvoiceSendByMail                                                 
 ECommerceErrorWhenSynchronizeOrderToInvoice                                                         =Erreur lors de la synchronisation de la facture a partir de la commande (ID distant: %s)
 ECommerceErrorSearchThirdPartyByEmail                                                               =Erreur lors de la recherche du tiers grâce à son email (Email: %s, Site ID : %s)
 ECommerceErrorTooManyThirdPartyFoundDueToEmail                                                      =Trop de tiers trouvés grâce à son email (Email: %s, Site ID : %s)
+ECommerceErrorTooManyThirdPartyFoundWhenSearchContact                                               =Trop de tiers trouvés lors de la recherche du contact (Nom: %s, Prenom: %s, Site ID : %s)
 ECommerceErrorWhenSearchThirdPartyByName                                                            =Erreur lors de la recherche du tiers grâce a son nom (Nom: %s, Site ID : %s)
 ECommerceErrorTooManyThirdPartyFoundDueToName                                                       =Trop de tiers trouvés grâce a son nom (Nom: %s, Site ID : %s)
 ECommerceErrorThirdPartyFoundDueToNameIsTheAnonymousThirdParty                                      =Erreur, le tiers trouvé grâce a son nom est le tiers pour les utilisateurs anonymes (non connectés)

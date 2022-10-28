@@ -521,6 +521,7 @@ ECommerceErrorInvoiceSendByMail                     = Error when sending the bil
 ECommerceErrorWhenSynchronizeOrderToInvoice         = Error when synchronizing the bill from the order (remote ID: %s)
 ECommerceErrorSearchThirdPartyByEmail               = Error when searching for a third party by email (Email: %s, Site ID: %s)
 ECommerceErrorTooManyThirdPartyFoundDueToEmail      = Too many third party found through email(Email: %s, Site ID: %s)
+ECommerceErrorTooManyThirdPartyFoundWhenSearchContact                                               =Trop de tiers trouvés lors de la recherche du contact (Nom: %s, Prenom: %s, Site ID : %s)
 ECommerceErrorWhenSearchThirdPartyByName            = Error when searching for a third party by name (Name: %s, Site ID: %s)
 ECommerceErrorTooManyThirdPartyFoundDueToName       = Too many third parties found through name (Name: %s, Site ID: %s)
 ECommerceErrorThirdPartyFoundDueToNameIsTheAnonymousThirdParty = Error, the third party found by name is the third party for anonymous users (not logged in)
