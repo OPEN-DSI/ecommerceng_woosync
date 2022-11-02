@@ -718,6 +718,21 @@ class eCommerceRemoteAccessWoocommerce
 			$item['email'] = $remote_data->email;
 		}
 
+		// Synchronize metadata to extra fields
+		if (!empty($this->site->parameters['ef_crp']['company']) && !empty($metas_data)) {
+			$correspondences = array();
+			foreach ($this->site->parameters['ef_crp']['company'] as $key => $options_saved) {
+				if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
+					$correspondences[$options_saved['correspondences']] = $key;
+				}
+			}
+			foreach ($metas_data as $meta) {
+				if (isset($correspondences[$meta->key])) {
+					$item['extrafields'][$correspondences[$meta->key]] = $meta->value;
+				}
+			}
+		}
+
 		return $item;
 	}
 
@@ -3125,6 +3140,22 @@ class eCommerceRemoteAccessWoocommerce
             //'password'      => '',                  // string   Customer password.
             //'meta_data'     => $meta_data,          // array    Meta data. See Customer - Meta data properties
         ];
+
+		// Synch extrafields <=> metadatas and attributes
+		if (!empty($object->array_options)) {
+			foreach ($object->array_options as $key => $value) {
+				$cr_key = substr($key, 8);
+				if (preg_match('/^ecommerceng_/', $cr_key)) continue;
+
+				// Synch extrafields <=> metadatas
+				$options_saved = $this->site->parameters['ef_crp']['company'][$cr_key];
+				if ($options_saved['activated']) {
+					$rm_key = $cr_key;
+					if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
+					$variationData['meta_data'][] = array('key' => $rm_key, 'value' => $value);
+				}
+			}
+		}
 
 		$stopwatch_id = -1;
         try {
