@@ -718,10 +718,18 @@ class eCommerceRemoteAccessWoocommerce
 			$item['email'] = $remote_data->email;
 		}
 
+		// Get metadata
+		$metas_data = array();
+		if (is_array($remote_data->meta_data)) {
+			foreach ($remote_data->meta_data as $meta) {
+				$metas_data[$meta->key] = $meta;
+			}
+		}
+
 		// Synchronize metadata to extra fields
-		if (!empty($this->site->parameters['ef_crp']['company']) && !empty($metas_data)) {
+		if (!empty($this->site->parameters['ef_crp']['societe']) && !empty($metas_data)) {
 			$correspondences = array();
-			foreach ($this->site->parameters['ef_crp']['company'] as $key => $options_saved) {
+			foreach ($this->site->parameters['ef_crp']['societe'] as $key => $options_saved) {
 				if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
 					$correspondences[$options_saved['correspondences']] = $key;
 				}
@@ -3148,11 +3156,11 @@ class eCommerceRemoteAccessWoocommerce
 				if (preg_match('/^ecommerceng_/', $cr_key)) continue;
 
 				// Synch extrafields <=> metadatas
-				$options_saved = $this->site->parameters['ef_crp']['company'][$cr_key];
+				$options_saved = $this->site->parameters['ef_crp']['societe'][$cr_key];
 				if ($options_saved['activated']) {
 					$rm_key = $cr_key;
 					if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
-					$variationData['meta_data'][] = array('key' => $rm_key, 'value' => $value);
+					$companyData['meta_data'][] = array('key' => $rm_key, 'value' => $value);
 				}
 			}
 		}
