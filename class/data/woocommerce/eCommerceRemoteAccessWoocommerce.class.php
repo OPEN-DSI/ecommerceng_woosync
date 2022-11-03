@@ -1415,10 +1415,17 @@ class eCommerceRemoteAccessWoocommerce
 				$item_id = null;
 				if (!empty($metas_data['_woosb_ids'])) {
 					$bundles_ids[$item->product_id] = $item->id;
-					$total_ht = $metas_data['_woosb_price']->value / (1 + ($item->subtotal_tax / $item->subtotal));
-					$total_tva = $metas_data['_woosb_price']->value - $total_ht;
-					$total_ttc = $metas_data['_woosb_price']->value;
-					$price = $total_ht / $item->quantity;
+					if ($item->subtotal != 0) {
+						$total_ht = $metas_data['_woosb_price']->value / (1 + ($item->subtotal_tax / $item->subtotal));
+						$total_tva = $metas_data['_woosb_price']->value - $total_ht;
+						$total_ttc = $metas_data['_woosb_price']->value;
+						$price = $total_ht / $item->quantity;
+					} else {
+						$total_ht = 0;
+						$total_tva = 0;
+						$total_ttc = 0;
+						$price = 0;
+					}
 				}
 				if (!empty($metas_data['_woosb_parent_id']) && isset($bundles_ids[$metas_data['_woosb_parent_id']->value])) {
 					$item_id = $bundles_ids[$metas_data['_woosb_parent_id']->value];

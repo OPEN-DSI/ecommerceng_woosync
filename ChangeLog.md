@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.22.0
+- Correction de la synchro avec le module "WPC Product Bundles for WooCommerce" quand le prix du produit composant le bundle est egale a 0
+
 ## 4.1.21.0
 - Ajout de la synchro des meta-datas du client avec les attributs supplémentaires du tiers
 
