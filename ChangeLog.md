@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.23.0
+- Correction de la de la prise en compte d'un paiement en ligne
+
 ## 4.1.22.0
 - Correction de la synchro avec le module "WPC Product Bundles for WooCommerce" quand le prix du produit composant le bundle est egale a 0
 
