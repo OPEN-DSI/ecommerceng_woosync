@@ -718,6 +718,29 @@ class eCommerceRemoteAccessWoocommerce
 			$item['email'] = $remote_data->email;
 		}
 
+		// Get metadata
+		$metas_data = array();
+		if (is_array($remote_data->meta_data)) {
+			foreach ($remote_data->meta_data as $meta) {
+				$metas_data[$meta->key] = $meta;
+			}
+		}
+
+		// Synchronize metadata to extra fields
+		if (!empty($this->site->parameters['ef_crp']['societe']) && !empty($metas_data)) {
+			$correspondences = array();
+			foreach ($this->site->parameters['ef_crp']['societe'] as $key => $options_saved) {
+				if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
+					$correspondences[$options_saved['correspondences']] = $key;
+				}
+			}
+			foreach ($metas_data as $meta) {
+				if (isset($correspondences[$meta->key])) {
+					$item['extrafields'][$correspondences[$meta->key]] = $meta->value;
+				}
+			}
+		}
+
 		return $item;
 	}
 
@@ -1392,10 +1415,17 @@ class eCommerceRemoteAccessWoocommerce
 				$item_id = null;
 				if (!empty($metas_data['_woosb_ids'])) {
 					$bundles_ids[$item->product_id] = $item->id;
-					$total_ht = $metas_data['_woosb_price']->value / (1 + ($item->subtotal_tax / $item->subtotal));
-					$total_tva = $metas_data['_woosb_price']->value - $total_ht;
-					$total_ttc = $metas_data['_woosb_price']->value;
-					$price = $total_ht / $item->quantity;
+					if ($item->subtotal != 0) {
+						$total_ht = $metas_data['_woosb_price']->value / (1 + ($item->subtotal_tax / $item->subtotal));
+						$total_tva = $metas_data['_woosb_price']->value - $total_ht;
+						$total_ttc = $metas_data['_woosb_price']->value;
+						$price = $total_ht / $item->quantity;
+					} else {
+						$total_ht = 0;
+						$total_tva = 0;
+						$total_ttc = 0;
+						$price = 0;
+					}
 				}
 				if (!empty($metas_data['_woosb_parent_id']) && isset($bundles_ids[$metas_data['_woosb_parent_id']->value])) {
 					$item_id = $bundles_ids[$metas_data['_woosb_parent_id']->value];
@@ -3125,6 +3155,22 @@ class eCommerceRemoteAccessWoocommerce
             //'password'      => '',                  // string   Customer password.
             //'meta_data'     => $meta_data,          // array    Meta data. See Customer - Meta data properties
         ];
+
+		// Synch extrafields <=> metadatas and attributes
+		if (!empty($object->array_options)) {
+			foreach ($object->array_options as $key => $value) {
+				$cr_key = substr($key, 8);
+				if (preg_match('/^ecommerceng_/', $cr_key)) continue;
+
+				// Synch extrafields <=> metadatas
+				$options_saved = $this->site->parameters['ef_crp']['societe'][$cr_key];
+				if ($options_saved['activated']) {
+					$rm_key = $cr_key;
+					if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
+					$companyData['meta_data'][] = array('key' => $rm_key, 'value' => $value);
+				}
+			}
+		}
 
 		$stopwatch_id = -1;
         try {

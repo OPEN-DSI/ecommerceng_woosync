@@ -4458,7 +4458,16 @@ class eCommerceSynchro
 									$order->date_commande = strtotime($order_data['date_commande']);
 									$order->date_livraison = strtotime($order_data['date_livraison']);
 
-									if (!($order->id > 0)) $order->array_options = $this->getDefaultExtraFields($order->table_element);
+									if (!($order->id > 0)) {
+										$order->array_options = $this->getDefaultExtraFields($order->table_element);
+										if (!empty($conf->global->THIRDPARTY_PROPAGATE_EXTRAFIELDS_TO_ORDER) && $order->socid > 0 && $order->fetch_thirdparty() > 0) {
+											// Only on create
+											foreach ($order->thirdparty->array_options as $key => $value) {
+												$order->array_options[$key] = $value;
+											}
+										}
+									}
+
 									if (is_array($order_data['extrafields'])) {
 										foreach ($order_data['extrafields'] as $key => $value) {
 											$order->array_options['options_' . $key] = $value;
@@ -5003,6 +5012,27 @@ class eCommerceSynchro
 							$this->errors = array_merge($this->errors, $this->eCommerceCommande->errors);
 							$error++;
 						}
+					}
+
+					// Generate PDF
+					if (!$error && !$bypass && $order->id > 0 && empty($conf->global->MAIN_DISABLE_PDF_AUTOUPDATE)) {
+						// Define output language
+						$outputlangs = $this->langs;
+						$newlang = '';
+						if ($conf->global->MAIN_MULTILANGS && empty($newlang)) $newlang = $order->thirdparty->default_lang;
+						if (!empty($newlang)) {
+							$outputlangs = new Translate("", $conf);
+							$outputlangs->setDefaultLang($newlang);
+							$outputlangs->load('products');
+						}
+						$order->fetch($order->id); // Reload to get new records
+						$order->fetch_thirdparty();
+
+						$hidedetails = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DETAILS) ? 1 : 0;
+						$hidedesc = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DESC) ? 1 : 0;
+						$hideref = !empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_REF) ? 1 : 0;
+
+						$result = $order->generateDocument($order->modelpdf, $outputlangs, $hidedetails, $hidedesc, $hideref);
 					}
 
 					$last_sync_date = 'ECOMMERCE_LAST_SYNC_DATE_ORDER_' . $this->eCommerceSite->id;
@@ -5962,7 +5992,7 @@ class eCommerceSynchro
 										}
 
 										// Set bank account
-										$bank_account_id = empty($order_data['extrafields']["ecommerceng_online_payment_{$conf->entity}"]) && $third_party->fk_bank > 0 ? $third_party->fk_bank : (!empty($selected_payment_gateways['bank_account_id']) ? $selected_payment_gateways['bank_account_id'] : 0);
+										$bank_account_id = empty($order_data['extrafields']["ecommerceng_online_payment_{$conf->entity}"]) && $third_party->fk_account > 0 ? $third_party->fk_account : (!empty($selected_payment_gateways['bank_account_id']) ? $selected_payment_gateways['bank_account_id'] : 0);
 										if (!$error) {
 											if ($bank_account_id == 0 && $conf->banque->enabled && (!empty($selected_payment_gateways['create_invoice_payment']) || !empty($selected_payment_gateways['create_supplier_invoice_payment']))) {
 												$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysBankAccountNotConfigured', $order_data['payment_method_id'], $order_data['payment_method']);

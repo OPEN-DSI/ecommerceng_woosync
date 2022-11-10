@@ -801,5 +801,15 @@ class eCommerceSite // extends CommonObject
 			return 0;
 		}
 	}
+
+	/**
+	 * Method to output saved errors
+	 *
+	 * @return	string		String with errors
+	 */
+	public function errorsToString()
+	{
+		return $this->error.(is_array($this->errors) ? (($this->error != '' ? ', ' : '').join(', ', $this->errors)) : '');
+	}
 }
 

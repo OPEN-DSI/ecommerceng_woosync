@@ -226,7 +226,25 @@ if ($_POST['site_form_detail_action'] == 'save')
                 }
             }
 
-            if ($conf->commande->enabled) {
+			if ($conf->societe->enabled) {
+				$thirdparty_table_element = 'societe';
+				$ecommerceExtrafieldsCorrespondence[$thirdparty_table_element] = array();
+
+				$thirdpartyExtrafields = $efields->fetch_name_optionals_label($thirdparty_table_element);
+				foreach ($thirdpartyExtrafields as $key => $label) {
+					if (preg_match('/^ecommerceng_/', $key)) continue;
+
+					$options_saved = $siteDb->parameters['ef_crp'][$thirdparty_table_element][$key];
+					$activated = GETPOST('act_ef_crp_' . $thirdparty_table_element . '_' . $key, 'alpha');
+					$correspondence = GETPOST('ef_crp_' . $thirdparty_table_element . '_' . $key, 'alpha');
+					$ecommerceExtrafieldsCorrespondence[$thirdparty_table_element][$key] = array(
+						'correspondences' => !empty($activated) ? $correspondence : (isset($options_saved['correspondences']) ? $options_saved['correspondences'] : $key),
+						'activated' => !empty($activated) ? 1 : 0,
+					);
+				}
+			}
+
+			if ($conf->commande->enabled) {
                 $order_table_element = 'commande';
                 $orderExtrafields = $efields->fetch_name_optionals_label($order_table_element, true);
 
@@ -995,6 +1013,23 @@ if ($ecommerceId > 0) {
 				);
             }
         }
+		if ($conf->societe->enabled) {
+			$thirdparty_table_element = 'societe';
+			$thirdPartyExtrafields = array();
+			$ecommerceExtrafieldsCorrespondence[$thirdparty_table_element] = array();
+
+			$tempExtrafields = $extrafields->fetch_name_optionals_label($thirdparty_table_element);
+			foreach ($tempExtrafields as $key => $label) {
+				if (preg_match('/^ecommerceng_/', $key)) continue;
+				$thirdPartyExtrafields[$key] = $label;
+
+				$options_saved = $siteDb->parameters['ef_crp'][$thirdparty_table_element][$key];
+				$ecommerceExtrafieldsCorrespondence[$thirdparty_table_element][$key] = array(
+					'correspondences' => (isset($options_saved['correspondences']) ? $options_saved['correspondences'] : $key),
+					'activated' => (isset($options_saved['activated']) ? $options_saved['activated'] : 0),
+				);
+			}
+		}
         if ($conf->commande->enabled) {
             $order_table_element = 'commande';
             $orderExtrafields = array();

@@ -1048,7 +1048,7 @@ if ($ecommerceOrderStatus)
 
 <?php
 if ($ecommerceType == 2) {
-	if (!empty($productExtrafields) || !empty($orderExtrafields) || !empty($orderLinesExtrafields)) {
+	if (!empty($productExtrafields) || !empty($thirdPartyExtrafields) || !empty($orderExtrafields) || !empty($orderLinesExtrafields)) {
 		?>
 		<script type="text/javascript">
 			$(document).ready(function () {
@@ -1168,6 +1168,46 @@ if ($ecommerceType == 2) {
 			}
 			?>
 		</table>
+	<?php
+	}
+
+	if (!empty($thirdPartyExtrafields)) {
+	?>
+	<table class="noborder centpercent">
+		<tr class="liste_titre">
+			<td colspan="3"><?php print $langs->trans('ExtraFields') . ' : ' . $langs->trans('ThirdParty') ?></td>
+			<td width="5%" align="center"><?php print $langs->trans('Enabled') ?></td>
+		</tr>
+		<tr class="liste_titre">
+			<td width="20%"><?php print $langs->trans('Label') ?></td>
+			<td><?php print $langs->trans('Value') ?></td>
+			<td><?php print $langs->trans('Description') ?></td>
+			<td width="5%" align="center"><input type="checkbox" class="ef_crp_all"
+												 name="act_all_ef_crp_<?php print $thirdparty_table_element ?>"
+												 value="1"/></td>
+		</tr>
+		<?php
+		foreach ($thirdPartyExtrafields as $key => $label) {
+			$var = !$var;
+			$options_saved = $ecommerceExtrafieldsCorrespondence[$thirdparty_table_element][$key];
+			?>
+			<tr <?php print $bc[$var] ?>>
+				<td><span><?php print $label ?></span></td>
+				<td>
+					<input type="text" class="ef_crp_value"
+						   name="ef_crp_<?php print $thirdparty_table_element ?>_<?php print $key ?>"
+						   value="<?php print dol_escape_htmltag(isset($options_saved['correspondences']) ? $options_saved['correspondences'] : '') ?>"<?php print empty($options_saved['activated']) ? ' disabled' : '' ?> />
+				</td>
+				<td><?php print $langs->trans('ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription', $key) ?></td>
+				<td width="5%" align="center"><input type="checkbox" class="ef_crp_state"
+													 name="act_ef_crp_<?php print $thirdparty_table_element ?>_<?php print $key ?>"
+													 value="1"<?php print !empty($options_saved['activated']) ? ' checked' : '' ?> />
+				</td>
+			</tr>
+			<?php
+		}
+		?>
+	</table>
 	<?php
 	}
 
