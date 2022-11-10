@@ -423,6 +423,13 @@ if (!empty($conf->commande->enabled)) {
     }
 }
 ?>
+	<tr <?php print $bc[$var] ?>>
+		<td><?php print $langs->trans('ECommerceDontUpdateDolibarrCompany') ?></td>
+		<td>
+			<input type="checkbox" id="ecommerce_dont_update_dolibarr_company" name="ecommerce_dont_update_dolibarr_company" value="1" <?php print !empty($ecommerceDontUpdateDolibarrCompany) ? ' checked' : '' ?>>
+		</td>
+		<td><?php print $langs->trans('ECommerceDontUpdateDolibarrCompanyDescription') ?></td>
+	</tr>
 </table>
 
 <?php
