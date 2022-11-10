@@ -163,6 +163,12 @@ ECommerceShipping=Spese di spedizione
 ECommercePriceLevel=Livello dei prezzi
 ECommercePriceLevelDescription=Solo questo livello di prezzo sarà sincronizzato tra Dolibarr ed E-commerce
 ECommerceConfirmUpdatePriceLevel=Hai modificato il livello dei prezzi. I prodotti sul sito di e-commerce verranno aggiornati. Potrebbe essere necessario molto tempo, confermare.
+SeeECommerceConfFileIfKo=See content of file <strong>%s</strong>, on your eCommerce server, if this URL does not work.
+RestrictNbInSync=Restrict number of record of same object to synchronize in same request
+SynchUnkownCustomersOnThirdParty=Use the following thirdparty for orders done on unknown customers (non logged customers)
+ThirdPartyForNonLoggedUsers=Third party for anonymous/non logged users
+ECommerceDontUpdateDolibarrCompany                                                                  =Mise a jour du tiers
+ECommerceDontUpdateDolibarrCompanyDescription                                                       =Ne pas mettre à jour le tiers sur Dolibarr lorsqu'il existe déja dans dolibarr
 
 ## OAuth Setup ##
 ECommerceOAuthWordpressSetup=Connessione OAuth2 su WordPress (continua su <a class="notasortlink" href="%s" target="_blank">questa pagina</a>, quindi "Aggiungi un nuovo client" per creare le credenziali OAuth2)
@@ -251,6 +257,25 @@ ECommerceCountToUpdateDtoE  = Numero di elementi da sincronizzare (Prodotto con 
 SyncProductFirst            = Sincronizza prima i prodotti
 
 ECommerceCreateRemoteCategoryLink   = Errore durante la creazione del collegamento alla categoria 'id:%s' per lo shop '%s': %s
+ECommerceNGUpdateElementDateMoreRecent=Also includes elements whose update date is more recent than the synchronization date
+ProductsSyncSetup=Products synchronization
+AllDirection=In both directions
+ECommerceProductImageSyncDirection=Images synchronization
+ECommerceProductImageSyncDirectionDescription=This parameter determines the direction in which the images are updated
+ECommerceProductRefSyncDirection=Reference synchronization
+ECommerceProductRefSyncDirectionDescription=This parameter determines the direction in which the reference is updated
+ECommerceProductDescriptionSyncDirection=Description synchronization
+ECommerceProductDescriptionSyncDirectionDescription=This parameter determines the direction in which the description is updated
+ECommerceProductShortDescriptionSyncDirection=Short description synchronization
+ECommerceProductShortDescriptionSyncDirectionDescription=This parameter determines the direction in which the short description is updated
+ECommerceProductWeightSyncDirection=Product weight synchronization
+ECommerceProductWeightSyncDirectionDescription=This parameter determines the direction in which the product weight is updated
+ECommerceProductDimensionSyncDirection                                                              =Synchronisation des dimensions du produit
+ECommerceProductDimensionSyncDirectionDescription                                                   =Ce paramètre détermine le sens de mise à jour des dimensions du produit
+ECommerceProductTaxSyncDirection=VAT classes of the store synchronization
+ECommerceProductTaxSyncDirectionDescription=This parameter determines the direction in which the VAT classes of the store are updated
+ECommerceProductStatusSyncDirection=Status on the store synchronization
+ECommerceProductStatusSyncDirectionDescription=This parameter determines the direction in which the status on the store is updated
 
 ECommerceSyncheCommerceMotherCategoryCreateError=Errore durante la creazione del collegamento alla categoria principale per la categoria remota '%s' 'id:%s' per lo shop '%s'.
 ECommerceNGUpdateElementDateMoreRecent=Include anche elementi la cui data di aggiornamento è più recente della data di sincronizzazione
@@ -282,13 +307,46 @@ ECommerceSynchProductError=Errore durante la sincronizzazione del prodotto remot
 
 ECommerceOnlyNew = Solo quelli nuovi
 
+ECommerceOnlyNew = Only the new ones
+
 ECommerceUpdateRemoteCompanyLinkWhenMergeCompany    = Errore durante l'aggiornamento del collegamento della società "id: %s" durante l'unione con la società 'id:%s': %s
+ECommerceSynchronizeStockToECommerce=Synchronization of the product stock on the site %s.
+
+ECommerceCreateOrderInvoiceWhenSyncOrder    = Actions when retrieving WooCommerce orders
+ECommerceCreateOrder                        = Create the order
+ECommerceCreateInvoice                      = Create the bill
+ECommerceCreateSupplierInvoiceFromFee       = Create the supplier bill from the charges
+ECommerceFeeLineAsItemLine                  = The fee line is as the service line
+ECommerceSendInvoiceByMail                  = Send the bill by email
+ECommerceCreateOrderDescription             = Related actions when retrieving WooCommerce orders (Enter the payment methods associated with WooCommerce)
+ECommerceCreateInvoiceIfAmount0                                                                     =Créer la facture même si le montant est égale à 0
+
+ECommercePaymentGatewaysCorrespondence              = Correspondence of the payment methods with the site
+ECommercePaymentGatewayLabel                        = Payment method on the site
+ECommerceUpdatePaymentGateways                      = Update of payment methods
+ECommerceConfirmUpdatePaymentGateways               = Confirm the update of payment methods for this site ?
+ECommercePaymentGatewaysUpdated                     = Payment methods from the site updated.
+ECommerceCreateAssociatePaymentForInvoice           = Create the associated payment for the bill
+ECommerceSelectMailModelForSendInvoice              = Choice of email template for bill sending
+ECommerceProductForFee                              = Product for the supplier bill fees
+ECommerceCreateAssociatePaymentForSupplierInvoice   = Create the associated payment for the supplier bill
+
+ECommerceCreateOrderSalesRepresentativeFollowByDefault              = Customer care manager
+ECommerceCreateOrderSalesRepresentativeFollowByDefaultDescription   = User type "Manager of the tracking of order/bill/... client" assigned by default when synchronizing an order from the site
+
+RestrictSyncForRecordBetween    = Limit data synchronization (is based on the registration date for customers, the publication date for products and the creation for orders) to
+RestrictSyncToCompanyRemoteID   = Limit customer synchronization to the following remote IDs (customer_id, customer_id, ...)
+RestrictSyncToProductRemoteID   = Limit product synchronization to the following remote IDs (product_id, product_id|variation_id, ...)
+RestrictSyncToOrderRemoteID     = Limit order synchronization to the following remote IDs (order_id, order_id, ...)
+DontSyncProductWhenSyncOrders   = Do not synchronize products when synchronizing orders
 
 ECommerceSiteWebHooksSetup                          = Configuration des Crochets Web (WebHooks)
 ECommerceSiteWebHooksUrl                            = URL de livraison
 ECommerceSiteWebHooksUrlDescription                 = URL sur laquelle la connexion du crochet Web est délivrée
 ECommerceSiteWebHooksSecret                         = Secret
 ECommerceSiteWebHooksSecretDescription              = La clé secrète est utilisée pour générer un hachage du crochet Web livré et indiqué dans les en-têtes de requête
+ECommerceSiteWebHooksVolumetryAlert                                                                 =Alerte volumétrie
+ECommerceSiteWebHooksVolumetryAlertDescription                                                      =Envoie un email grace a une tache planifié si le nombre de hooks en attente de traitement depasse cette valeur (0 signifie qu'il n'y a pas de verification)
 ECommerceShippingService                            = Frais de port
 ECommerceShippingServiceDescription                 = Service utilisé pour la gestion des frais de port
 ECommerceDiscountCodeService                        = Code promo

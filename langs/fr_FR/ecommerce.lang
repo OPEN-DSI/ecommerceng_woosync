@@ -168,6 +168,8 @@ ECommercePriceLevelDescription                                                  
 ECommerceConfirmUpdatePriceLevel                                                                    =Vous avez modifié le niveau de prix. Les produits sur le site e-commerce vont être mis à jour.\nCette opération peut être longue, merci de confirmer.
 ThirdPartyForNonLoggedUsers                                                                         =Tiers générique de recueil des clients sans compte créé
 SynchUnkownCustomersOnThirdParty                                                                    =Tiers générique auquel seront rattachées les commandes de clients sans compte
+ECommerceDontUpdateDolibarrCompany                                                                  =Mise a jour du tiers
+ECommerceDontUpdateDolibarrCompanyDescription                                                       =Ne pas mettre à jour le tiers sur Dolibarr lorsqu'il existe déja dans dolibarr
 
 ## OAuth Setup ##
 ECommerceOAuthWordpressSetup                                                                        =Connexion OAuth2 sur WordPress ( Allez sur <a class="notasortlink" href="%s" target="_blank">cette page</a> , puis "Ajouter un nouveau client" pour créer les informations d'identification OAuth2 )

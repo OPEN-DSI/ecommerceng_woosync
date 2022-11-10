@@ -1,5 +1,14 @@
 # ChangeLog
 
+## 4.1.24.0
+- Prise en compte de la variable global THIRDPARTY_PROPAGATE_EXTRAFIELDS_TO_ORDER pendant de la creation d'une commande sychronisée
+- Ajout de la génération du PDF lors de la création/ mise a jour d'une commande synchronisée
+- Ajout d'une option pour ne pas mettre à jour le tiers s'il existe deja dans dolibarr
+- Correction affichage des parametrage du poids et de la dimension
+- Recupere la condition de reglement du tiers si definie sinon celui definie dans le site
+- Recupere la banque du tiers si definie et qu'il n'a pas eu de paiement en ligne sinon celui definie dans le site
+- Récupère les valeures par defaut des attributs supplémentaires lors d'une creation d'un produit, tiers, commande, facture, ...
+
 ## 4.1.23.0
 - Correction de la de la prise en compte d'un paiement en ligne
 
