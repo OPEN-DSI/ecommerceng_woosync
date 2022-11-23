@@ -140,8 +140,7 @@ class ActionsECommerceNg
                     $eCommerceSociete = new eCommerceSociete($object->db);
                     $eCommerceSociete->fetchByFkSociete($object->id, $siteDb->id);
 
-                    $toNb = empty($conf->global->ECOMMERCENG_MAXRECORD_PERSYNC) ? '' : $conf->global->ECOMMERCENG_MAXRECORD_PERSYNC;
-                    $result = $synchro->updateCompaniesToDolibarr(array($eCommerceSociete->remote_id), $toNb);
+                    $result = $synchro->updateCompaniesToDolibarr(array($eCommerceSociete->remote_id), 1);
                     if ($result <= 0) {
                         setEventMessages($synchro->error, $synchro->errors, 'errors');
                         $error++;

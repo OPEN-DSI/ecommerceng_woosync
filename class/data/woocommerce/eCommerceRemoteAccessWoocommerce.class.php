@@ -906,7 +906,7 @@ class eCommerceRemoteAccessWoocommerce
 				return false;
 			}
 
-			if ((!empty($one_product_id) && empty($page)) || !isset($page) || count($page) == 0) break;
+			if (!isset($page) || (!empty($one_product_id) && empty($page)) || count($page) == 0) break;
 			if (!empty($one_product_id) && !empty($page)) $page = [$page];
 
 			foreach ($page as $product) {
@@ -2136,16 +2136,16 @@ class eCommerceRemoteAccessWoocommerce
 		// Convert Weight
 		$from_unit = $object->weight_units;
 		$to_unit = isset($this->site->parameters['product_weight_units']) ? $this->site->parameters['product_weight_units'] : (empty($conf->global->MAIN_WEIGHT_DEFAULT_UNIT)?0:$conf->global->MAIN_WEIGHT_DEFAULT_UNIT);
-		$totalWeight = weight_convert($object->weight, $from_unit, $to_unit);
+		$totalWeight = weight_convert((double)$object->weight, $from_unit, $to_unit);
 
 		// Convert Dimension
 		$from_unit = $object->width_units;
 		$to_unit = isset($this->site->parameters['product_direction_units']) ? $this->site->parameters['product_direction_units'] : -2; // -2 = cm
-		$totalWidth = weight_convert($object->width, $from_unit, $to_unit);
+		$totalWidth = weight_convert((double)$object->width, $from_unit, $to_unit);
 		$from_unit = $object->height_units;
-		$totalHeight = weight_convert($object->height, $from_unit, $to_unit);
+		$totalHeight = weight_convert((double)$object->height, $from_unit, $to_unit);
 		$from_unit = $object->length_units;
-		$totalLength = weight_convert($object->length, $from_unit, $to_unit);
+		$totalLength = weight_convert((double)$object->length, $from_unit, $to_unit);
 
         // Price
 //        $error_price = 0;
@@ -3813,7 +3813,7 @@ class eCommerceRemoteAccessWoocommerce
 				// Convert Weight
 				$from_unit = $product_static->weight_units;
 				$to_unit = isset($this->site->parameters['product_weight_units']) ? $this->site->parameters['product_weight_units'] : (empty($conf->global->MAIN_WEIGHT_DEFAULT_UNIT)?0:$conf->global->MAIN_WEIGHT_DEFAULT_UNIT);
-				$totalWeight = weight_convert($product_static->weight, $from_unit, $to_unit);
+				$totalWeight = weight_convert((double)$product_static->weight, $from_unit, $to_unit);
 
                 // Price
                 $error_price = 0;

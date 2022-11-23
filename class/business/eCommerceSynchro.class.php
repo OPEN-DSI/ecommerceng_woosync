@@ -2550,7 +2550,7 @@ class eCommerceSynchro
 
             dol_syslog("***** eCommerceSynchro synchSociete");
             if (is_array($companies_id)) {
-                if (count($companies_id) > 0) $societes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSociete($companies_id, $toNb);
+                if (count($companies_id) > 0) $societes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSociete(null, null, $companies_id, $toNb);
             } else {
                 $error++;
             }
@@ -3257,6 +3257,7 @@ class eCommerceSynchro
 						}
 						if (isset($customer_data['country_id'])) $third_party->country_id = $customer_data['country_id'];
 						if (isset($customer_data['default_lang'])) $third_party->default_lang = $customer_data['default_lang'];
+						if (!($third_party->id > 0)) $third_party->array_options = $this->getDefaultExtraFields($third_party->table_element);
 						if (is_array($customer_data['extrafields'])) {
 							foreach ($customer_data['extrafields'] as $key => $value) {
 								$third_party->array_options['options_' . $key] = $value;
@@ -3306,7 +3307,6 @@ class eCommerceSynchro
 								if (!empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE)) {
 									$third_party->note_private = dol_concatdesc($third_party->note_private, $this->langs->trans('ECommerceCreateThirdPartyFromSiteNote', $this->eCommerceSite->name) . " :\n" . json_encode($customer_data['remote_datas']));
 								}
-								$third_party->array_options = $this->getDefaultExtraFields($third_party->table_element);
 
 								$third_party->error = '';
 								$third_party->errors = array();

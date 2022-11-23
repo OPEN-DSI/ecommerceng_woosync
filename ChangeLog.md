@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.1.25.0
+- Corrections mineures
+- Corrections mise à jour du tiers venant de WooCommerce depuis sa fiche
+
 ## 4.1.24.0
 - Prise en compte de la variable global THIRDPARTY_PROPAGATE_EXTRAFIELDS_TO_ORDER pendant de la creation d'une commande sychronisée
 - Ajout de la génération du PDF lors de la création/ mise a jour d'une commande synchronisée
