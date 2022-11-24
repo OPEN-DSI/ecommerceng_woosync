@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.1.26.0
+- Ajout d'une option pour choisir l'entrepot utilisé lors de la validation d'une commande / facture pendant une synchro du Site vers Dolibarr
+- Force le montant TVA/TTC de la commande et de la facture si le montant TTC est different de celle de WooCommerce
+
 ## 4.1.25.0
 - Corrections mineures
 - Corrections mise à jour du tiers venant de WooCommerce depuis sa fiche

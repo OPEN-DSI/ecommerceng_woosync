@@ -157,6 +157,8 @@ SoapCacheIsOff=Your PHP WSDL cache is off.
 SetupOfWarehouseNotDefinedForThisSite=A new or modified product were found on eCommerce shop with a different stock level than into Dolibarr. To be able to create/update them in Dolibarr, you must setup the warehouse to initialize.
 ECommerceStockSyncDirection=Stock synchronisation direction
 ECommerceStockSyncDirectionDescription=Define if you want to see stock decrease in Dolibarr when stock decrease on Magento (rare), or overwrite Magento stock when stock in Dolibarr is modified (common choice)
+ECommerceValidOrderWarehouse                                                                        =Validation d'une commande/facture
+ECommerceValidOrderWarehouseDescription                                                             =Entrepot utilisé lors de la validation d'une commande ou facture pendant une synchronisation du Site vers Dolibarr
 MainSyncSetup=Main synchronization setup
 StockSyncSetup=Stock synchronization setup
 ErrorModuleSoapRequired=Error: PHP module SOAP is required to have this module working.
@@ -559,6 +561,8 @@ ECommerceErrorFetchProductComponents                                            
 ECommerceErrorAddProductComponent                                                                   =Erreur lors de l'ajout du composant (ID: %s, Qty: %s) constituant le produit (ID: %s)
 ECommerceErrorUpdateProductComponent                                                                =Erreur lors de la mise à jour du composant (ID: %s, Qty: %s) constituant le produit (ID: %s)
 ECommerceErrorDelProductComponent                                                                   =Erreur lors de la suppression du composant (ID: %s) constituant le produit (ID: %s)
+ECommerceErrorSetOrderCorrectAmount                                                                 =Erreur lors du forcage du prix TTC de la commande
+ECommerceErrorSetInvoiceCorrectAmount                                                               =Erreur lors du forcage du prix TTC de la facture
 
 ############################################################################################
 # Warnings

@@ -156,6 +156,8 @@ SoapCacheIsOff                                                                  
 SetupOfWarehouseNotDefinedForThisSite                                                               =A new or modified product were found on eCommerce shop with a different stock level than into Dolibarr. To be able to create/update them in Dolibarr, you must setup the warehouse to initialize.
 ECommerceStockSyncDirection                                                                         =Synchronisation des stocks
 ECommerceStockSyncDirectionDescription                                                              =Ce paramètre détermine :<br/>- Si le stock doit être décrémenté dans Dolibarr suite à une décrémentation du stock e-commerce (rare) ou <br/>- Si le stock e-commerce doit être remplacé par le stock Dolibarr suite à sa modification (choix commun)
+ECommerceValidOrderWarehouse                                                                        =Validation d'une commande/facture
+ECommerceValidOrderWarehouseDescription                                                             =Entrepot utilisé lors de la validation d'une commande ou facture pendant une synchronisation du Site vers Dolibarr
 MainSyncSetup                                                                                       =Synchronisation générale
 StockSyncSetup                                                                                      =Synchronisation des stocks
 ErrorModuleSoapRequired                                                                             =Erreur: Le module PHP SOAP est requis pour le bon fonctionnement du module.
@@ -551,6 +553,8 @@ ECommerceErrorFetchProductComponents                                            
 ECommerceErrorAddProductComponent                                                                   =Erreur lors de l'ajout du composant (ID: %s, Qty: %s) constituant le produit (ID: %s)
 ECommerceErrorUpdateProductComponent                                                                =Erreur lors de la mise à jour du composant (ID: %s, Qty: %s) constituant le produit (ID: %s)
 ECommerceErrorDelProductComponent                                                                   =Erreur lors de la suppression du composant (ID: %s) constituant le produit (ID: %s)
+ECommerceErrorSetOrderCorrectAmount                                                                 =Erreur lors du forcage du prix TTC de la commande
+ECommerceErrorSetInvoiceCorrectAmount                                                               =Erreur lors du forcage du prix TTC de la facture
 
 ############################################################################################
 # Warnings

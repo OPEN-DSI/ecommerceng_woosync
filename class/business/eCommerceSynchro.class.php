@@ -4833,14 +4833,21 @@ class eCommerceSynchro
 										elseif (method_exists($order, 'getLinesArray')) $order->getLinesArray();
 									}
 
-									// Set amount paid warning
+									// Force set amount if another amount paid
 									if (!$error && price2num($order_data['payment_amount_ttc']) != price2num($order->total_ttc)) {
-										$result = $order->update_note(dol_concatdesc($this->langs->trans('ECommerceWarningWrongAmountTTCWithPaid', $order_data['payment_amount_ttc']), $order->note_private), '_private');
-										if ($result < 0) {
-											$this->errors[] = $this->langs->trans('ECommerceErrorUpdatePrivateNote');
-											if (!empty($order->error)) $this->errors[] = $order->error;
-											$this->errors = array_merge($this->errors, $order->errors);
+										$sql = "UPDATE " . MAIN_DB_PREFIX . $order->table_element .
+											" SET total_tva = " . $order_data['total_tva'] .
+											" , total_ttc = " . $order_data['payment_amount_ttc'] .
+											" WHERE rowid = " . $order->id;
+
+										$resql = $this->db->query($sql);
+										if (!$resql) {
+											$this->errors[] = $this->langs->trans('ECommerceErrorSetCorrectAmount');
+											$this->errors[] = $this->db->lasterror();
 											$error++;
+										} else {
+											$order->total_tva = $order_data['total_tva'];
+											$order->total_ttc = $order_data['payment_amount_ttc'];
 										}
 									}
 
@@ -4898,14 +4905,7 @@ class eCommerceSynchro
 
 									// Update the order status
 									if (!$error && ($new_order || ($order->statut != $order_data['status']))) {        // Always when creating
-										// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
-										$warehouse_id = 0;
-										if ($this->eCommerceSite->stock_sync_direction == 'dolibarr2ecommerce') {
-											$supported_warehouses = is_array($this->eCommerceSite->parameters['fk_warehouse_to_ecommerce']) ? $this->eCommerceSite->parameters['fk_warehouse_to_ecommerce'] : array();
-											if (count($supported_warehouses) == 1) {
-												$warehouse_id = array_values($supported_warehouses)[0];
-											}
-										}
+										$warehouse_id = $this->eCommerceSite->parameters['order_actions']['valid_order_fk_warehouse'] > 0 ? $this->eCommerceSite->parameters['order_actions']['valid_order_fk_warehouse'] : 0;
 
 										// Valid the order if the distant order is not at the draft status but the order is draft. For set the order ref.
 										if ($order_data['status'] != Commande::STATUS_DRAFT && $order->statut == Commande::STATUS_DRAFT) {
@@ -5749,17 +5749,6 @@ class eCommerceSynchro
 													}
 												}
 
-												// Set amount paid warning
-												if (!$error && price2num($order_data['payment_amount_ttc']) != price2num($invoice->total_ttc)) {
-													$result = $invoice->update_note(dol_concatdesc($this->langs->trans('ECommerceWarningWrongAmountTTCWithPaid', $order_data['payment_amount_ttc']), $invoice->note_private), '_private');
-													if ($result < 0) {
-														$this->errors[] = $this->langs->trans('ECommerceErrorUpdatePrivateNote');
-														if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-														$this->errors = array_merge($this->errors, $invoice->errors);
-														$error++;
-													}
-												}
-
 												// Add contacts
 												if (!$error) {
 													// Search or create the third party for customer contact
@@ -5942,6 +5931,24 @@ class eCommerceSynchro
 											}
 										}
 
+										// Force set amount if another amount paid
+										if (!$error && price2num($order_data['payment_amount_ttc']) != price2num($invoice->total_ttc)) {
+											$sql = "UPDATE " . MAIN_DB_PREFIX . $invoice->table_element .
+												" SET total_tva = " . $order_data['total_tva'] .
+												" , total_ttc = " . $order_data['payment_amount_ttc'] .
+												" WHERE rowid = " . $invoice->id;
+
+											$resql = $this->db->query($sql);
+											if (!$resql) {
+												$this->errors[] = $this->langs->trans('ECommerceErrorSetCorrectAmount');
+												$this->errors[] = $this->db->lasterror();
+												$error++;
+											} else {
+												$invoice->total_tva = $order_data['total_tva'];
+												$invoice->total_ttc = $order_data['payment_amount_ttc'];
+											}
+										}
+
 										// Get payment gateways
 										if (!$error && !empty($order_data['payment_method_id'])) {
 											$result = $this->loadPaymentGateways();
@@ -6009,21 +6016,7 @@ class eCommerceSynchro
 										}
 
 										// Get warehouse ID
-										$warehouse_id = 0;
-										// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
-//									if (!$error && !empty($conf->global->STOCK_CALCULATE_ON_BILL) && $this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') {
-//									 	$warehouse_id = $this->eCommerceSite->fk_warehouse > 0 ? $this->eCommerceSite->fk_warehouse : 0;
-//										if (empty($conf->global->STOCK_SUPPORTS_SERVICES)) {
-//											$qualified_for_stock_change = $invoice->hasProductsOrServices(2);
-//										} else {
-//											$qualified_for_stock_change = $invoice->hasProductsOrServices(1);
-//										}
-//
-//										if ($qualified_for_stock_change && $warehouse_id == 0) {
-//											$this->errors[] = $this->langs->trans('ECommerceErrorWarehouseNotConfigured');
-//											$error++;
-//										}
-//									}
+										$warehouse_id = $this->eCommerceSite->parameters['order_actions']['valid_order_fk_warehouse'] > 0 ? $this->eCommerceSite->parameters['order_actions']['valid_order_fk_warehouse'] : 0;
 
 										if ($isDepositType) {
 											$save_WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER = $conf->global->WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER;
@@ -6042,6 +6035,24 @@ class eCommerceSynchro
 												if (!empty($invoice->error)) $this->errors[] = $invoice->error;
 												$this->errors = array_merge($this->errors, $invoice->errors);
 												$error++;
+											}
+										}
+
+										// Force set amount if another amount paid
+										if (!$error && price2num($order_data['payment_amount_ttc']) != price2num($invoice->total_ttc)) {
+											$sql = "UPDATE " . MAIN_DB_PREFIX . $invoice->table_element .
+												" SET total_tva = " . $order_data['total_tva'] .
+												" , total_ttc = " . $order_data['payment_amount_ttc'] .
+												" WHERE rowid = " . $invoice->id;
+
+											$resql = $this->db->query($sql);
+											if (!$resql) {
+												$this->errors[] = $this->langs->trans('ECommerceErrorSetCorrectAmount');
+												$this->errors[] = $this->db->lasterror();
+												$error++;
+											} else {
+												$invoice->total_tva = $order_data['total_tva'];
+												$invoice->total_ttc = $order_data['payment_amount_ttc'];
 											}
 										}
 
