@@ -864,7 +864,16 @@ if ($conf->stock->enabled)
 					<td><?php print $langs->trans('Value') ?></td>
 					<td><?php print $langs->trans('Description') ?></td>
 				</tr>
-
+				<tr <?php print $bc[$var] ?>>
+					<td><span><?php print $langs->trans('ECommerceValidOrderWarehouse') ?></span></td>
+					<td>
+						<?php print $formproduct->selectWarehouses($ecommerceOrderActions['valid_order_fk_warehouse'], 'valid_order_fk_warehouse', 0, 1) ?>
+					</td>
+					<td><?php print $langs->trans('ECommerceValidOrderWarehouseDescription') ?></td>
+				</tr>
+<?php
+$var=!$var;
+?>
 				<tr <?php print $bc[$var] ?>>
 					<td><span><?php print $langs->trans('ECommerceStockSyncDirection') ?></span></td>
 					<td>
@@ -886,7 +895,7 @@ if ($conf->stock->enabled)
 					</td>
 					<td><?php print $langs->trans('ECommerceStockProductDescription', $langs->transnoentitiesnoconv('ECommerceStockSyncDirection')) ?></td>
 				</tr>
-      </table>
+			</table>
 	<script type="text/javascript">
 		function update_warehouse_display() {
 			var value = jQuery('#ecommerce_stock_sync_direction').val();

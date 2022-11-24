@@ -175,7 +175,8 @@ if ($_POST['site_form_detail_action'] == 'save')
             $ecommerceOrderActions = array();
             if ($conf->commande->enabled) {
                 $ecommerceOrderActions['create_order'] = GETPOST('ecommerce_create_order', 'int') ? 1 : 0;
-            }
+				$ecommerceOrderActions['valid_order_fk_warehouse'] = GETPOST('valid_order_fk_warehouse', 'int');
+			}
             if ($conf->facture->enabled) {
                 $ecommerceOrderActions['create_invoice'] = GETPOST('ecommerce_create_invoice', 'int') ? 1 : 0;
 				$ecommerceOrderActions['send_invoice_by_mail'] = GETPOST('ecommerce_send_invoice_by_mail', 'int') ? 1 : 0;
