@@ -140,7 +140,7 @@ class ActionsECommerceNg
                     $eCommerceSociete = new eCommerceSociete($object->db);
                     $eCommerceSociete->fetchByFkSociete($object->id, $siteDb->id);
 
-                    $result = $synchro->updateCompaniesToDolibarr(array($eCommerceSociete->remote_id), 1);
+                    $result = $synchro->synchronizeCustomers(null, null, array($eCommerceSociete->remote_id), 1, false, false, true);
                     if ($result <= 0) {
                         setEventMessages($synchro->error, $synchro->errors, 'errors');
                         $error++;

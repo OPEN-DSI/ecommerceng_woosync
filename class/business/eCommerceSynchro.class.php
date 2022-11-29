@@ -2530,293 +2530,6 @@ class eCommerceSynchro
 	}
 
 
-    /**
-     * Synchronize selected companies to update to dolibarr
-     *
-     * @param  array     $companies_id      List of companies ID to upadate from ECommerce to Dolibarr
-     * @param  int      $toNb               Max nb to synch
-     * @return int                          >0 if OK, <0 if KO
-     */
-    public function updateCompaniesToDolibarr($companies_id, $toNb)
-    {
-        global $conf;
-
-        $error = 0;
-
-        try {
-            $nbrecorderror = 0;
-            $nbgoodsunchronize = 0;
-            $societes = array();
-
-            dol_syslog("***** eCommerceSynchro synchSociete");
-            if (is_array($companies_id)) {
-                if (count($companies_id) > 0) $societes = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSociete(null, null, $companies_id, $toNb);
-            } else {
-                $error++;
-            }
-
-            // Check return of remote...
-            if (is_array($companies_id) && count($companies_id) > 0 && (!is_array($societes) || count($societes) == 0))    // return of remote is bad or empty when input was not empty
-            {
-                $error++;
-            }
-
-            if (!$error && is_array($societes)) {
-                $counter = 0;
-                foreach ($societes as $societeArray) {
-                    $counter++;
-                    if ($toNb > 0 && $counter > $toNb) break;
-
-                    $this->db->begin();
-
-                    //check if societe exists in eCommerceSociete
-                    dol_syslog("-- Start thirdparty remote_id=" . $societeArray['remote_id'] . " site=" . $this->eCommerceSite->id);
-                    $this->initECommerceSociete();
-                    $synchExists = $this->eCommerceSociete->fetchByRemoteId($societeArray['remote_id'], $this->eCommerceSite->id);
-                    $dBSociete = new Societe($this->db);
-
-                    //if societe exists in eCommerceSociete, societe must exists in societe
-                    if ($synchExists > 0 && isset($this->eCommerceSociete->fk_societe)) {
-                        $refExists = $dBSociete->fetch($this->eCommerceSociete->fk_societe);
-                        if ($refExists >= 0) {
-                        	if (empty($this->eCommerceSite->parameters['dont_update_dolibarr_company'])) {
-								$dBSociete->oldcopy = clone $dBSociete;
-								$dBSociete->name = $societeArray['name'];
-								//$dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];      // No need of ref_ext, we will search if already exists on name
-								$dBSociete->client = $societeArray['client'];
-								if (isset($societeArray['name_alias'])) $dBSociete->name_alias = $societeArray['name_alias'];
-								if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
-								if (!empty($societeArray['vatnumber'])) {
-									$dBSociete->tva_intra = $societeArray['vatnumber']; //dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
-									$dBSociete->tva_assuj = 1;                          // tva_intra is not saved if this field is not set
-								} else {
-									$dBSociete->tva_assuj = 0;                          // tva_intra is not saved if this field is not set
-								}
-								if (isset($societeArray['country_id'])) $dBSociete->country_id = $societeArray['country_id'];
-								if (isset($societeArray['default_lang'])) $dBSociete->default_lang = $societeArray['default_lang'];
-								$dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
-
-								if (is_array($societeArray['extrafields'])) {
-									foreach ($societeArray['extrafields'] as $extrafield => $extrafield_value) {
-										$dBSociete->array_options['options_' . $extrafield] = $extrafield_value;
-									}
-								}
-
-								$result = $dBSociete->update($dBSociete->id, $this->user);
-								if ($result < 0) {
-									$error++;
-									$this->errors[] = $this->langs->trans('ECommerceSynchSocieteUpdateError') . ' ' . $dBSociete->error;
-									$this->errors = array_merge($this->errors, $dBSociete->errors);
-								}
-							}
-                        } else {
-                            $error++;
-                            $this->errors[] = $this->langs->trans('ECommerceSynchSocieteErrorBetweenECommerceSocieteAndSociete');
-                        }
-                    } //if societe not exists in eCommerceSociete, societe is created
-                    else {
-                        $result = 0;
-
-                        // First, we check object does not alreay exists. If not, we create it, if it exists, do nothing.
-                        if (isset($societeArray['email_key']) && !empty($societeArray['email_key'])) {
-                            // Search into email company and contact
-                            $result = get_company_by_email($this->db, $societeArray['email_key']);
-
-                            if ($result > 0 && $result != $this->eCommerceSite->fk_anonymous_thirdparty) {
-                                $result = $dBSociete->fetch($result);
-                            }
-                        }
-
-                        if ($result < 1 && (!isset($societeArray['type']) || $societeArray['type'] == 'company')) {
-                            // Search for the company name
-                            $result = $dBSociete->fetch(0, $societeArray['name']);
-                        }
-
-                        if ($result == -2) {
-                            $error++;
-                            $this->error = 'Several thirdparties with name "' . $societeArray['name'] . '" were found in Dolibarr. Sync is not possible. Please rename one of it to avoid duplicate.';
-                            $this->errors[] = $this->error;
-                        }
-
-//                        if (! $error && $result > 0)    // We did not found with remote id but we found one with the fetch on name.
-//                        {
-//                            $eCommerceSocieteBis=new eCommerceSociete($this->db);
-//                            $synchExistsBis = $eCommerceSocieteBis->fetchByFkSociete($dBSociete->id, $this->eCommerceSite->id);
-//                            dol_syslog("Warning: we did not found the remote id into dolibarr eCommerceSociete table but we found a record with the name.");
-//                            if ($synchExistsBis > 0 && $eCommerceSocieteBis->id != $this->eCommerceSociete->id)
-//                            {
-//                                // We found a dolibarr record with name, but this one is alreayd linked and we know it is linked with another remote id because
-//                                // the current remote_id was not found  when we previously did the fetchByRemoteId
-//                                // So we make as if we didn't found the thirdparty. It may be a duplicate name created in same transaction from Magento
-//                                dol_syslog("Warning: the record found with the name already has a remote_id in the eCommerceSite. So what we found is not what we want. We forget the find.");
-//                                unset($dBSociete);  // Clear object, fetch was not what we wanted
-//                                $dBSociete = new Societe($this->db);
-//                                $result = 0;
-//                            }
-//                        }
-
-                        if ($result == 0) {
-                            $dBSociete->name = $societeArray['name'];
-                            //$dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];      // No need of ref_ext, we will search if already exists on name
-                            $dBSociete->client = $societeArray['client'];
-                            if (isset($societeArray['name_alias'])) $dBSociete->name_alias = $societeArray['name_alias'];
-                            if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
-                            if (!empty($societeArray['vatnumber'])) {
-                                $dBSociete->tva_intra = $societeArray['vatnumber']; //dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
-                                $dBSociete->tva_assuj = 1;                          // tva_intra is not saved if this field is not set
-                            } else {
-                                $dBSociete->tva_assuj = 0;                          // tva_intra is not saved if this field is not set
-                            }
-                            if (isset($societeArray['country_id'])) $dBSociete->country_id = $societeArray['country_id'];
-                            if (isset($societeArray['default_lang'])) $dBSociete->default_lang = $societeArray['default_lang'];
-                            $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
-                            $dBSociete->code_client = -1;           // Automatic code
-                            $dBSociete->code_fournisseur = -1;      // Automatic code
-							$dBSociete->array_options = $this->getDefaultExtraFields($dBSociete->table_element);
-
-                            if (is_array($societeArray['extrafields'])) {
-                                foreach ($societeArray['extrafields'] as $extrafield => $extrafield_value) {
-                                    $dBSociete->array_options['options_' . $extrafield] = $extrafield_value;
-                                }
-                            }
-
-                            $result = $dBSociete->create($this->user);
-                            if ($result < 0) {
-                                $error++;
-                                $this->errors[] = $this->langs->trans('ECommerceSynchSocieteCreateError') . ' ' . $dBSociete->error;
-                                $this->errors = array_merge($this->errors, $dBSociete->errors);
-                            }
-
-                            $dBSociete->update_note($societeArray['note_private'], '_private');
-                        } else if ($result > 0 && empty($this->eCommerceSite->parameters['dont_update_dolibarr_company'])) {
-							$dBSociete->oldcopy = clone $dBSociete;
-                            $dBSociete->name = $societeArray['name'];
-                            //$dBSociete->ref_ext = $this->eCommerceSite->name.'-'.$societeArray['remote_id'];      // No need of ref_ext, we will search if already exists on name
-                            $dBSociete->client = $societeArray['client'];
-                            if (isset($societeArray['name_alias'])) $dBSociete->name_alias = $societeArray['name_alias'];
-                            if (isset($societeArray['email'])) $dBSociete->email = $societeArray['email'];
-                            if (!empty($societeArray['vatnumber'])) {
-                                $dBSociete->tva_intra = $societeArray['vatnumber']; //dol_trunc($societeArray['vatnumber'], 20, 'right', 'UTF-8', 1);
-                                $dBSociete->tva_assuj = 1;                          // tva_intra is not saved if this field is not set
-                            } else {
-                                $dBSociete->tva_assuj = 0;                          // tva_intra is not saved if this field is not set
-                            }
-                            if (isset($societeArray['country_id'])) $dBSociete->country_id = $societeArray['country_id'];
-                            if (isset($societeArray['default_lang'])) $dBSociete->default_lang = $societeArray['default_lang'];
-                            $dBSociete->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
-
-                            if (is_array($societeArray['extrafields'])) {
-                                foreach ($societeArray['extrafields'] as $extrafield => $extrafield_value) {
-                                    $dBSociete->array_options['options_' . $extrafield] = $extrafield_value;
-                                }
-                            }
-
-                            $result = $dBSociete->update($dBSociete->id, $this->user);
-                            if ($result < 0) {
-                                $error++;
-                                $this->errors[] = $this->langs->trans('ECommerceSynchSocieteUpdateError') . ' ' . $dBSociete->error;
-                                $this->errors = array_merge($this->errors, $dBSociete->errors);
-                            }
-                        }
-                    }
-
-                    //if create/update of societe table ok
-                    if ($result >= 0) {
-                        dol_syslog("synchSociete Now we will set the tags id=" . $this->eCommerceSite->fk_cat_societe . " to the thirdparty id=" . $dBSociete->id . " created or modified");
-
-                        //set category
-                        $cat = new Categorie($this->db);
-                        $cat->fetch($this->eCommerceSite->fk_cat_societe);
-                        $cat->add_type($dBSociete, 'customer');
-
-                        dol_syslog("synchSociete Now we will update link rowid=" . $this->eCommerceSociete->id . " with last_update = " . $societeArray['last_update']);
-                        $this->eCommerceSociete->last_update = $societeArray['last_update'];
-                        $this->eCommerceSociete->fk_societe = $dBSociete->id;
-                        //if a previous synchro exists
-                        if ($synchExists > 0 && !isset($this->error)) {
-//                            $old_remote_ids = explode(',', $this->eCommerceSociete->remote_id);
-//                            if (!in_array($societeArray['remote_id'], $old_remote_ids)) {
-//                                $this->eCommerceSociete->remote_id = $this->eCommerceSociete->remote_id.','.$societeArray['remote_id'];
-//                            }
-                            //eCommerce update
-                            if ($this->eCommerceSociete->update($this->user) < 0) {
-                                $error++;
-                                $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceSocieteUpdateError') . ' ' . $societeArray['name'] . ' ' . $societeArray['email'] . ' ' . $societeArray['client'];
-                                $this->errors = array_merge($this->errors, $this->eCommerceSociete->errors);
-                            }
-                        } //if no previous synchro exists
-                        else {
-                            //eCommerce create
-                            $this->eCommerceSociete->fk_site = $this->eCommerceSite->id;
-                            $this->eCommerceSociete->remote_id = $societeArray['remote_id'];
-                            if ($this->eCommerceSociete->create($this->user) < 0) {
-                                $error++;
-                                $this->errors[] = $this->langs->trans('ECommerceSyncheCommerceSocieteCreateError') . ' ' . $societeArray['name'] . ' ' . $societeArray['email'] . ' ' . $societeArray['client'] . ' ' . $this->eCommerceSociete->error;
-                                $this->errors = array_merge($this->errors, $this->eCommerceSociete->errors);
-                            }
-                        }
-
-                        // Sync also people of thirdparty
-                        // We can disable this to have contact/address of thirdparty synchronize only when an order or invoice is synchronized
-                        if (!$error) {
-                            dol_syslog("Make a remote call to get contacts");   // Slow because done on each thirdparty to sync.
-                            $listofaddressids = $this->eCommerceRemoteAccess->getRemoteAddressIdForSociete($societeArray['remote_id']);   // Ask contacts to magento
-                            if (is_array($listofaddressids) || $this->eCommerceSite->type == 2) {
-                                if ($this->eCommerceSite->type == 2) { // Woocommerce
-                                    $listofaddressids = $societeArray['remote_datas'];
-                                }
-
-                                $socpeoples = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrSocpeople($listofaddressids);
-                                foreach ($socpeoples as $tmpsocpeople) {
-                                    $tmpsocpeople['fk_soc'] = $dBSociete->id;
-                                    $tmpsocpeople['type'] = 1;    // address of company
-                                    $socpeopleCommandeId = $this->synchSocpeople($tmpsocpeople);
-                                }
-                            }
-                        }
-                    } else {
-                        $error++;
-                        $this->errors[] = $this->langs->trans('ECommerceSynchSocieteErrorCreateUpdateSociete') . ' "' . $societeArray['name'] . '" "' . $societeArray['email'] . '" "' . $societeArray['client'] . '"';
-                    }
-
-                    unset($dBSociete);
-
-                    if ($error || !empty($this->errors)) {
-                        $this->db->rollback();
-                        $nbrecorderror++;
-                        break;      // We decide to stop on first error
-                    } else {
-                        $this->db->commit();
-                        $nbgoodsunchronize = $nbgoodsunchronize + 1;
-                    }
-                }   // end foreach
-
-                if (empty($this->errors) && !$error) {
-                    $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchSocieteSuccess');
-
-                    // TODO If we commit even if there was an error (to validate previous record ok), we must also remove 1 second the the higher
-                    // date into table of links to be sure we will retry (during next synch) also record with same update_at than the last record ok.
-
-                    return $nbgoodsunchronize;
-                } else {
-                    if (!empty($nbgoodsunchronize)) $this->success[] = $nbgoodsunchronize . ' ' . $this->langs->trans('ECommerceSynchSocieteSuccess');
-                    if (!empty($nbrecorderror)) $this->errors[] = $this->langs->trans('ECommerceSynchSocieteFailed', $nbrecorderror);
-                    return -1;
-                }
-            } else {
-                $this->error = $this->langs->trans('ECommerceErrorsynchSociete') . ' (Code FailToGetDetailsOfRecord)';
-                $this->errors[] = $this->error;
-            }
-        } catch (Exception $e) {
-            $this->errors[] = $this->langs->trans('ECommerceErrorsynchSociete') . ': ' . $e->getMessage();
-        }
-
-        return -1;
-    }
-
-
-
-
 
 
 
@@ -3050,11 +2763,12 @@ class eCommerceSynchro
 	 * @param	int		$toNb						Max nb
 	 * @param	bool	$only_not_synchronized		Synchronize only customer not already synchronized
 	 * @param	bool	$success_log				Keep success log
+	 * @param	bool	$force_update				Force update even if update date not more recent
 	 * @return	int									<0 if KO, >0 if OK
 	 */
-	public function synchronizeCustomers($from_date = null, $to_date = null, $remote_ids = array(), $toNb = 0, $only_not_synchronized = false, $success_log = true)
+	public function synchronizeCustomers($from_date = null, $to_date = null, $remote_ids = array(), $toNb = 0, $only_not_synchronized = false, $success_log = true, $force_update = false)
 	{
-		dol_syslog(__METHOD__ . ' remote_ids=' . json_encode($remote_ids) . ', toNb=' . $toNb . ', only_not_synchronized=' . $only_not_synchronized, LOG_DEBUG);
+		dol_syslog(__METHOD__ . ' remote_ids=' . json_encode($remote_ids) . ', toNb=' . $toNb . ', only_not_synchronized=' . $only_not_synchronized . ', force_update=' . $force_update, LOG_DEBUG);
 
 		$this->error = '';
 		$this->errors = array();
@@ -3103,7 +2817,7 @@ class eCommerceSynchro
 				if (!$error && !empty($customers_data)) {
 					foreach ($customers_data as $customer_data) {
 						// Synchronize the customer
-						$result = $this->synchronizeCustomer($customer_data, $only_not_synchronized);
+						$result = $this->synchronizeCustomer($customer_data, $only_not_synchronized, $force_update);
 						if ($result < 0) {
 							$error++;
 							break;
@@ -3133,12 +2847,13 @@ class eCommerceSynchro
 	 *
 	 * @param	array	$customer_data				Customer data to synchronize
 	 * @param	bool	$only_not_synchronized		Synchronize only customer not already synchronized
+	 * @param	bool	$force_update				Force update even if update date not more recent
 	 * @return	int									<0 if KO, Id of the third party in Dolibarr if OK
 	 */
-	public function synchronizeCustomer($customer_data, $only_not_synchronized = false)
+	public function synchronizeCustomer($customer_data, $only_not_synchronized = false, $force_update = false)
 	{
 		global $conf;
-		dol_syslog(__METHOD__ . ' customer_data=' . json_encode($customer_data) . ', only_not_synchronized=' . $only_not_synchronized, LOG_DEBUG);
+		dol_syslog(__METHOD__ . ' customer_data=' . json_encode($customer_data) . ', only_not_synchronized=' . $only_not_synchronized . ', force_update=' . $force_update, LOG_DEBUG);
 
 		$this->error = '';
 		$this->errors = array();
@@ -3188,7 +2903,7 @@ class eCommerceSynchro
 				}
 
 				// Need to synchronize ?
-				$bypass = !empty($this->eCommerceSociete->last_update) && strtotime($customer_data['last_update']) <= strtotime($this->eCommerceSociete->last_update);
+				$bypass = !$force_update && !empty($this->eCommerceSociete->last_update) && strtotime($customer_data['last_update']) <= strtotime($this->eCommerceSociete->last_update);
 
 				// if remote_id < 0 then bypass the creation of the third party and contact. Only create the link with the third party ID equal 0
 				if (!$error && $customer_data['remote_id'] >= 0 && !$bypass) {
@@ -3263,13 +2978,11 @@ class eCommerceSynchro
 								$third_party->array_options['options_' . $key] = $value;
 							}
 						}
-						if (!($third_party->id > 0)) {
-							// Only when create third party
-							if (isset($customer_data['address'])) $third_party->address = $customer_data['address'];
-							if (isset($customer_data['zip'])) $third_party->zip = $customer_data['zip'];
-							if (isset($customer_data['town'])) $third_party->town = $customer_data['town'];
-							if (isset($customer_data['phone'])) $third_party->phone = $customer_data['phone'];
-						}
+						// Only when create third party
+						if (isset($customer_data['address'])) $third_party->address = $customer_data['address'];
+						if (isset($customer_data['zip'])) $third_party->zip = $customer_data['zip'];
+						if (isset($customer_data['town'])) $third_party->town = $customer_data['town'];
+						if (isset($customer_data['phone'])) $third_party->phone = $customer_data['phone'];
 						$third_party->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
 
 						if ($customer_data['type'] == 'user') {
@@ -3717,7 +3430,7 @@ class eCommerceSynchro
 
 							$product->error = '';
 							$product->errors = array();
-							$result = $product->update($product->id, $this->user);
+							$result = $product->update($product->id, $this->user, false, 'update', true);
 							if ($result < 0) {
 								$this->errors[] = $this->langs->trans('ECommerceErrorUpdateProduct', $product->id);
 								if (!empty($product_ref) && $product_ref != $product->oldcopy->ref && $product->db->errno() == 'DB_ERROR_RECORD_ALREADY_EXISTS' && empty($conf->barcode->enabled) || empty($product->barcode)) {
@@ -4381,34 +4094,25 @@ class eCommerceSynchro
 						// Check if third party already synchronized
 						if ($order_data['remote_id_societe'] > 0) {
 							$this->initECommerceSociete();
-							$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
-							if ($result < 0 && !empty($this->eCommerceSociete->error)) {
-								$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
-								$this->errors[] = $this->eCommerceSociete->error;
+							// Synchronize the customer
+							$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 1, false, false);
+							if ($result < 0) {
 								$error++;
 							} elseif ($result > 0) {
-								$third_party_id = $this->eCommerceSociete->fk_societe;
-							} else {
-								// Synchronize the new customer
-								$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 1, true, false);
-								if ($result < 0) {
+								$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
+								if ($result < 0 && !empty($this->eCommerceSociete->error)) {
+									$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
+									$this->errors[] = $this->eCommerceSociete->error;
 									$error++;
 								} elseif ($result > 0) {
-									$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
-									if ($result < 0 && !empty($this->eCommerceSociete->error)) {
-										$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
-										$this->errors[] = $this->eCommerceSociete->error;
-										$error++;
-									} elseif ($result > 0) {
-										$third_party_id = $this->eCommerceSociete->fk_societe;
-									} else {
-										// Customer not supported (eg. order created by admin so we don't need it)
-										$third_party_id = null;
-									}
+									$third_party_id = $this->eCommerceSociete->fk_societe;
 								} else {
 									// Customer not supported (eg. order created by admin so we don't need it)
 									$third_party_id = null;
 								}
+							} else {
+								// Customer not supported (eg. order created by admin so we don't need it)
+								$third_party_id = null;
 							}
 						}
 						if ($third_party_id === 0) {
@@ -5187,33 +4891,28 @@ class eCommerceSynchro
 									// Check if third party already synchronized
 									if ($order_data['remote_id_societe'] > 0) {
 										$this->initECommerceSociete();
-										$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
-										if ($result < 0 && !empty($this->eCommerceSociete->error)) {
-											$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
-											$this->errors[] = $this->eCommerceSociete->error;
+										// Synchronize the customer
+										$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 1, false, false);
+										if ($result < 0) {
 											$error++;
 										} elseif ($result > 0) {
-											$third_party_id = $this->eCommerceSociete->fk_societe;
-										} else {
-											// Synchronize the new customer
-											$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 1, true, false);
-											if ($result < 0) {
+											$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
+											if ($result < 0 && !empty($this->eCommerceSociete->error)) {
+												$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
+												$this->errors[] = $this->eCommerceSociete->error;
 												$error++;
 											} elseif ($result > 0) {
-												$result = $this->eCommerceSociete->fetchByRemoteId($order_data['remote_id_societe'], $this->eCommerceSite->id);
-												if ($result < 0 && !empty($this->eCommerceSociete->error)) {
-													$this->errors[] = $this->langs->trans('ECommerceErrorFetchThirdPartyLinkByRemoteId', $order_data['remote_id_societe'], $this->eCommerceSite->id);
-													$this->errors[] = $this->eCommerceSociete->error;
-													$error++;
-												} elseif ($result > 0) {
-													$third_party_id = $this->eCommerceSociete->fk_societe;
-												} else {
-													// Customer not supported (eg. order created by admin so we don't need it)
-													$third_party_id = null;
-												}
+												$third_party_id = $this->eCommerceSociete->fk_societe;
+											} else {
+												// Customer not supported (eg. order created by admin so we don't need it)
+												$third_party_id = null;
 											}
+										} else {
+											// Customer not supported (eg. order created by admin so we don't need it)
+											$third_party_id = null;
 										}
-									} else {
+									}
+									if ($third_party_id === 0) {
 										// This is an guest customer.
 										if ($this->eCommerceSite->fk_anonymous_thirdparty > 0) {
 											$third_party_id = $this->eCommerceSite->fk_anonymous_thirdparty;

@@ -1,5 +1,12 @@
 # ChangeLog
 
+## 4.1.27.0
+- Mise a jour du tiers lors de la synchro d'une commande
+- Factorisation de la mise a jour du tiers (synchro et bouton sur le tiers)
+- Force la synchro du tiers quelle que soit la date de mise a jour du tiers depuis sa fiche
+- Correction de la mise a jour du type du produit lors de sa synchro
+- Prend en compte le nom fournit dans l'adresse de facturation en premier sinon celle de l'utilisateur wordpresse
+
 ## 4.1.26.0
 - Ajout d'une option pour choisir l'entrepot utilisé lors de la validation d'une commande / facture pendant une synchro du Site vers Dolibarr
 - Force le montant TVA/TTC de la commande et de la facture si le montant TTC est different de celle de WooCommerce

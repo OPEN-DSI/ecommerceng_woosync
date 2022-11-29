@@ -654,13 +654,15 @@ class eCommerceRemoteAccessWoocommerce
 		global $conf, $langs, $mysoc;
 
 		$this->errors = array();
-		$last_update = $this->getDateTimeFromGMTDateTime(/*!empty($remote_data->date_modified_gmt) ? $remote_data->date_modified_gmt :*/ $remote_data->date_created_gmt);
+
+		$create_date = $this->getDateTimeFromGMTDateTime($remote_data->date_created_gmt);
+		$last_update = $this->getDateTimeFromGMTDateTime(!empty($remote_data->date_modified_gmt) ? $remote_data->date_modified_gmt : $remote_data->date_created_gmt);
 
 		// Global infos
 		$item = [
-			'create_date' => strtotime($remote_data->date_created),
-			'remote_id' => $remote_data->id,
+			'create_date' => $create_date->getTimestamp(),
 			'last_update' => $last_update->format('Y-m-d H:i:s'),
+			'remote_id' => $remote_data->id,
 			'name_alias' => null,
 			'email_key' => $remote_data->email,
 			'client' => 1,
@@ -700,8 +702,13 @@ class eCommerceRemoteAccessWoocommerce
 			$item['email'] = !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_GET_EMAIL_ON_COMPANY) ? $remote_data->email : null;
 		} // User
 		else {
-			$firstname = !empty($remote_data->first_name) ? $remote_data->first_name : $remote_data->billing->first_name;
-			$lastname = !empty($remote_data->last_name) ? $remote_data->last_name : $remote_data->billing->last_name;
+			if (!empty($remote_data->billing->first_name) || !empty($remote_data->billing->last_name)) {
+				$firstname = $remote_data->billing->first_name;
+				$lastname = $remote_data->billing->last_name;
+			}else {
+				$firstname = $remote_data->first_name;
+				$lastname = $remote_data->last_name;
+			}
 			if (!empty($conf->global->ECOMMERCENG_UPPERCASE_LASTNAME)) {
 				$firstname = dol_ucwords(dol_strtolower($firstname));
 				$lastname = dol_strtoupper($lastname);
