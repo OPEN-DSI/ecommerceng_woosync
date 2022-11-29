@@ -4095,7 +4095,7 @@ class eCommerceSynchro
 						if ($order_data['remote_id_societe'] > 0) {
 							$this->initECommerceSociete();
 							// Synchronize the customer
-							$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 1, false, false);
+							$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 1, false, false, true);
 							if ($result < 0) {
 								$error++;
 							} elseif ($result > 0) {
@@ -4892,7 +4892,7 @@ class eCommerceSynchro
 									if ($order_data['remote_id_societe'] > 0) {
 										$this->initECommerceSociete();
 										// Synchronize the customer
-										$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 1, false, false);
+										$result = $this->synchronizeCustomers(null, null, array($order_data['remote_id_societe']), 1, false, false, true);
 										if ($result < 0) {
 											$error++;
 										} elseif ($result > 0) {

@@ -656,7 +656,7 @@ class eCommerceRemoteAccessWoocommerce
 		$this->errors = array();
 
 		$create_date = $this->getDateTimeFromGMTDateTime($remote_data->date_created_gmt);
-		$last_update = $this->getDateTimeFromGMTDateTime(!empty($remote_data->date_modified_gmt) ? $remote_data->date_modified_gmt : $remote_data->date_created_gmt);
+		$last_update = $this->getDateTimeFromGMTDateTime(/*!empty($remote_data->date_modified_gmt) ? $remote_data->date_modified_gmt :*/ $remote_data->date_created_gmt);
 
 		// Global infos
 		$item = [
