@@ -1442,9 +1442,11 @@ class eCommerceSynchro
                                         // Target status is not draft. We validate if current status is still draft to get correct ref.
                                         if ($dBFacture->statut == Facture::STATUS_DRAFT)
                                         {
-                                            $idWareHouse = 0;
-                                            // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
-                                            //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
+											if ($this->site->stock_sync_direction == 'dolibarr2ecommerce') {
+												$idWareHouse = $this->eCommerceSite->fk_warehouse > 0 ? $this->eCommerceSite->fk_warehouse : 0;
+											} else {
+												$idWareHouse = 0;
+											}
                                             $dBFacture->validate($this->user, '', $idWareHouse);
                                         }
                                     }
@@ -1505,9 +1507,11 @@ class eCommerceSynchro
                             // If we create invoice, we can force status of order in some cases
                             if ($refCommandeExists > 0 && $dBCommande->statut == Commande::STATUS_DRAFT)
                             {
-                                $idWareHouse = 0;
-                                // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
-                                //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
+								if ($this->site->stock_sync_direction == 'dolibarr2ecommerce') {
+									$idWareHouse = $this->eCommerceSite->fk_warehouse > 0 ? $this->eCommerceSite->fk_warehouse : 0;
+								} else {
+									$idWareHouse = 0;
+								}
                                 $dBCommande->valid($this->user, $idWareHouse);
                             }
                             if ($refCommandeExists > 0 && $dBCommande->statut == Commande::STATUS_VALIDATED)
@@ -1657,9 +1661,11 @@ class eCommerceSynchro
                                     // Target status is not draft. We validate if current status is still draft to get correct ref.
                                     if ($dBFacture->statut == Facture::STATUS_DRAFT)
                                     {
-                                        $idWareHouse = 0;
-                                        // We don't change stock here, even if dolibarr option is on because, this should be already done by product sync
-                                        //if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $idWareHouse=$this->eCommerceSite->fk_warehouse;
+										if ($this->site->stock_sync_direction == 'dolibarr2ecommerce') {
+											$idWareHouse = $this->eCommerceSite->fk_warehouse > 0 ? $this->eCommerceSite->fk_warehouse : 0;
+										} else {
+											$idWareHouse = 0;
+										}
                                         $dBFacture->validate($this->user, '', $idWareHouse);
                                     }
                                 }
@@ -5935,21 +5941,11 @@ class eCommerceSynchro
 										}
 
 										// Get warehouse ID
-										$warehouse_id = 0;
-										// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
-//									if (!$error && !empty($conf->global->STOCK_CALCULATE_ON_BILL) && $this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') {
-//									 	$warehouse_id = $this->eCommerceSite->fk_warehouse > 0 ? $this->eCommerceSite->fk_warehouse : 0;
-//										if (empty($conf->global->STOCK_SUPPORTS_SERVICES)) {
-//											$qualified_for_stock_change = $invoice->hasProductsOrServices(2);
-//										} else {
-//											$qualified_for_stock_change = $invoice->hasProductsOrServices(1);
-//										}
-//
-//										if ($qualified_for_stock_change && $warehouse_id == 0) {
-//											$this->errors[] = $this->langs->trans('ECommerceErrorWarehouseNotConfigured');
-//											$error++;
-//										}
-//									}
+										if ($this->site->stock_sync_direction == 'dolibarr2ecommerce') {
+											$warehouse_id = $this->eCommerceSite->fk_warehouse > 0 ? $this->eCommerceSite->fk_warehouse : 0;
+										} else {
+											$warehouse_id = 0;
+										}
 
 										if ($isDepositType) {
 											$save_WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER = $conf->global->WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER;
