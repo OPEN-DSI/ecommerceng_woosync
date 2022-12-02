@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.28.0
+- Ne recherche le tiers par le nom qu'avec le code postal
+
 ## 4.1.27.0
 - Mise a jour du tiers lors de la synchro d'une commande
 - Factorisation de la mise a jour du tiers (synchro et bouton sur le tiers)

@@ -6309,7 +6309,7 @@ class eCommerceSynchro
 	 * @param	int			$site_id		Site ID
 	 * @return	int							<0 if KO, =0 if not found, otherwise the third party ID
 	 */
-	public function getThirdPartyByNameAndZipOrName($name, $zip = '', $site_id = 0)
+	public function getThirdPartyByNameAndZip($name, $zip = '', $site_id = 0)
 	{
 		if (empty($name)) {
 			return 0;
@@ -6323,6 +6323,7 @@ class eCommerceSynchro
 		if ($site_id > 0) $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_societe AS es ON es.fk_societe = s.rowid";
 		$sql .= " WHERE (s.nom = '$name' OR s.name_alias = '$name')";
 		if (!empty($zip)) $sql .= " AND s.zip = '$zip'";
+		else  $sql .= " AND (s.zip IS NULL OR s.zip = '')";
 		if ($site_id > 0) $sql .= " AND es.fk_site = $site_id";
 		$sql .= " AND s.status = 1";
 		$sql .= " AND s.entity IN (" . getEntity('societe') . ")";
@@ -6369,9 +6370,7 @@ class eCommerceSynchro
 		// Search by email
 		$result = $this->getThirdPartyByEmail($email, $site_id);
 		// Search by name and zip
-		if ($result == 0) $result = $this->getThirdPartyByNameAndZipOrName($name, $zip, $site_id);
-		// Search by name
-		if ($result == 0) $result = $this->getThirdPartyByNameAndZipOrName($name, '', $site_id);
+		if ($result == 0) $result = $this->getThirdPartyByNameAndZip($name, $zip, $site_id);
 
 		return $result;
 	}
