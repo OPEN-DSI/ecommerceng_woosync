@@ -1270,7 +1270,7 @@ class eCommerceSynchro
                 {
                     //eCommerce create
                     $this->eCommerceSocpeople->fk_site = $this->eCommerceSite->id;
-                    $this->eCommerceSocpeople->remote_id = isset($socpeopleArray['remote_id']) ? $socpeopleArray['remote_id'] : 'none-'.$dBContact->id;
+                    $this->eCommerceSocpeople->remote_id = !empty($socpeopleArray['remote_id']) ? $socpeopleArray['remote_id'] : 'none-'.$dBContact->id;
                     $this->eCommerceSocpeople->type = $socpeopleArray['type'];
                     if ($this->eCommerceSocpeople->create($this->user) < 0)
                     {
