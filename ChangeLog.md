@@ -1,5 +1,10 @@
 # ChangeLog
 
+## next
+- Fix: Error init module if MAIN_DB_PREFIX is not llx by nicolas-eoxia
+- Update eCommerceSynchro.class.php for synchSocpeople() function by thibdrev
+- Update ecommerce.lang by thibdrev
+
 ## 4.1.28.0
 - Ne recherche le tiers par le nom qu'avec le code postal
 
