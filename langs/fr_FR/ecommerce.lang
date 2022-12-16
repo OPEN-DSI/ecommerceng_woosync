@@ -7,14 +7,14 @@ Permission107102                                                                
 Permission107103                                                                                    =Configurer les sites e-commerce
 
 ##ADMIN##
-Module107100Name                                                                                    =Woosync
+Module107100Name                                                                                    =WooSync
 Module107100Desc                                                                                    =Module de synchronisation entre Dolibarr et les plateformes e-commerce WooCommerce
 BackToListOfSites                                                                                   =Retour à la liste des sites
 NothingToSetup                                                                                      =Activez le module pour accéder à sa configuration
 
 ##MENU##
 ECommerceMenuMain                                                                                   =WooSync
-ECommerceMenuSites                                                                                  =Synchro. E-Commerce
+ECommerceMenuSites                                                                                  =Synchronisation
 ECommerceMenuSetup                                                                                  =Configuration des sites
 
 ##SETUP##
@@ -22,7 +22,7 @@ magento                                                                         
 woocommerce                                                                                         =WooCommerce
 ECommerceToDolibarr                                                                                 =De E-Commerce vers Dolibarr
 DolibarrToECommerce                                                                                 =De Dolibarr vers E-Commerce
-ECommercePriceType                                                                                  =Type de prix importés
+ECommercePriceType                                                                                  =Type de prix importé
 ECommercePriceTypeHT                                                                                =Hors Taxes
 ECommercePriceTypeTTC                                                                               =Toutes Taxes Comprises
 ECommercePriceTypeDescription                                                                       =Définit l'application de la TVA sur les prix des produits E-Commerce importés (HT ou TTC)
@@ -41,34 +41,34 @@ ECommerceFilterLabel                                                            
 ECommerceFilterValue                                                                                =Valeur du filtre
 ECommerceSiteType                                                                                   =Type de site
 ECommerceSiteAddress                                                                                =Adresse du site
-ECommerceUserName                                                                                   =Clé client API Woocommerce
-ECommerceUserPassword                                                                               =Clé secret API Woocommerce
-ECommerceUserPasswordRetype                                                                         =Clé secret API Woocommerce - confirmation
+ECommerceUserName                                                                                   =Clé client API WooCommerce
+ECommerceUserPassword                                                                               =Clé secret API WooCommerce
+ECommerceUserPasswordRetype                                                                         =Clé secret API WooCommerce - confirmation
 ECommerceConfirmDelete                                                                              =Êtes vous sûre de vouloir supprimer ce site ?
-ECommerceConfirmReset                                                                               =Êtes vous sûre de vouloir purger les données synchronisées liées à ce site? (<strong>Attention<strong> : cette action est irréversible, toute les données synchronisées seront perdues)
+ECommerceConfirmReset                                                                               =Êtes vous sûre de vouloir purger les données synchronisées liées à ce site ? (<strong>Attention<strong> : cette action est irréversible, toute les données synchronisées seront perdues)
 ECommerceSetupSaved                                                                                 =La configuration a bien été enregistrée.
 ECommerceSetupErrorDb                                                                               =Une erreur est survenue lors de l'enregistrement dans la base de données.
 ECommerceDeleteOk                                                                                   =Le site a bien été supprimé.
 ECommerceSetupPasswordNotSame                                                                       =Le mot de passe doit être identique dans les deux champs.
 ECommerceSetupNameEmpty                                                                             =Le nom du site est obligatoire.
 ECommerceSiteNameDescription                                                                        =Indiquez le nom qui sera affiché dans la liste des sites e-commerce dans Dolibarr (exemple : Mon Site)
-ECommerceCatProductDescription                                                                      =Sélectionnez la catégorie Produit mère Dolibarr qui accueille les catégories Produit à synchroniser avec la plateforme e-commerce (à créer une fois le module Catégories de Dolibarr activé). Exemple: "Produits Eboutique"
-ECommerceCatSocieteDescription                                                                      =Sélectionnez la catégorie Tiers client Dolibarr pour marquer les clients e-commerce (à créer une fois le module Catégories Dolibarr activé). Exemple: "Clients Eboutique"
+ECommerceCatProductDescription                                                                      =Sélectionnez la catégorie Produit mère Dolibarr qui accueille les catégories Produit à synchroniser avec la plateforme e-commerce (exemple : Produits Eboutique). À créer une fois le module Catégories de Dolibarr activé.
+ECommerceCatSocieteDescription                                                                      =Sélectionnez la catégorie Tiers client Dolibarr pour marquer les clients e-commerce (exemple : Clients Eboutique). À créer une fois le module Catégories Dolibarr activé.
 ECommerceFilterLabelDescription                                                                     =Indiquez un filtre (exemple : store_id)
 ECommerceFilterValueDescription                                                                     =Indiquez la valeur du filtre (exemple : *)
 ECommerceSiteTypeDescription                                                                        =Sélectionnez un type de site
-ECommerceSiteAddressDescription                                                                     =URL du site Woocommerce. (Note: L'accès par localhost peut ne pas fonctionner)
-ECommerceUserNameDescription                                                                        =Compte à créer dans Woocommerce via le menu <strong>Réglages > avancés</strong>.
-ECommerceUserPasswordDescription                                                                    =Compte à créer dans Woocommerce via le menu <strong>Réglages > avancés</strong>.
+ECommerceSiteAddressDescription                                                                     =URL du site WooCommerce. (Note: L'accès par localhost peut ne pas fonctionner)
+ECommerceUserNameDescription                                                                        =Compte à créer dans WooCommerce via le menu <strong>Réglages > avancés</strong>.
+ECommerceUserPasswordDescription                                                                    =Compte à créer dans WooCommerce via le menu <strong>Réglages > avancés</strong>.
 ECommerceSite                                                                                       =Site
 ECommerceLastUpdate                                                                                 =Dernière mise à jour
-ECommerceNoUpdateSite                                                                               =Ce site n'a jamais été synchronisé ENTIÈREMENT (Entièrement =plus aucun élément à synchroniser)
+ECommerceNoUpdateSite                                                                               =Ce site n'a jamais été synchronisé entièrement (plus aucun élément à synchroniser)
 ECommerceUpdateSite                                                                                 =Synchronisation détaillée du site
 ECommerceUpdateAll                                                                                  =Tout synchroniser pour ce site
 ECommerceStockProduct                                                                               =Entrepôt
-ECommerceStockProductDescription                                                                    =Si vous définissez l'option précédente de <b>%s</b> à <b>E-Commerce vers Dolibarr</b>, les produits créés ou modifiés depuis la plateforme e-commerce seront synchronisés dans Dolibarr dans cet entrepôt. <br><b>Attention</b> : Les stocks de Dolibarr sont modifiés lors de la synchronisation des produits et non pas pendant la synchronisation des commandes ou des factures.
-ECommerceReset                                                                                      =Supprimer de Dolibarr toutes les données issues de synchronisation de la boutique Ecommerce
-ECommerceResetLink                                                                                  =Supprimer les enregistrements liens entre Dolibarr et la boutique Ecommerce
+ECommerceStockProductDescription                                                                    =Si vous définissez l'option précédente de <b>%s</b> à <b>E-Commerce vers Dolibarr</b>, les produits créés ou modifiés depuis la plateforme E-Commerce seront synchronisés dans Dolibarr dans cet entrepôt. <br><b>Attention</b> : Les stocks de Dolibarr sont modifiés lors de la synchronisation des produits et non pas pendant la synchronisation des commandes ou des factures.
+ECommerceReset                                                                                      =Supprimer de Dolibarr toutes les données issues de la synchronisation de la boutique E-Commerce
+ECommerceResetLink                                                                                  =Supprimer les enregistrements liens entre Dolibarr et la boutique E-Commerce
 ECommerceSetupCatProductEmpty                                                                       =Une catégorie produit est obligatoire.
 ECommerceSetupCatSocieteEmpty                                                                       =Une catégorie client est obligatoire.
 ECommerceSetupTypeEmpty                                                                             =Le type de site est obligatoire.
@@ -80,7 +80,7 @@ ECommerceProducts                                                               
 ECommerceCommande                                                                                   =Commandes
 ECommerceFacture                                                                                    =Factures
 ECommerceObjectToUpdate                                                                             =Éléments à synchroniser
-ECommerceCountToUpdate                                                                              =Nombre d'éléments à synchroniser (modifié côté Ecommerce et non à jour dans Dolibarr)
+ECommerceCountToUpdate                                                                              =Nombre d'éléments à synchroniser (modifié côté E-Commerce et non à jour dans Dolibarr)
 ECommerceSiteErrorConnect                                                                           =Un problème de connexion est survenue. Merci de réessayer.
 ECommerceSynchronizeSociete                                                                         =Synchroniser les tiers clients et contacts de tiers
 ECommerceSynchronizeProduct                                                                         =Synchroniser les produits
@@ -90,11 +90,11 @@ ECommerceSynchronizeNewSociete                                                  
 ECommerceSynchronizeNewProduct                                                                      =Synchroniser les nouveaux produits
 ECommerceSynchronizeNewCommande                                                                     =Synchroniser les nouvelles commandes
 ECommerceSynchSocieteErrorCreateUpdateSociete                                                       =Erreur dans le synchronisation du client
-ECommerceErrorGetSocieteToUpdate                                                                    =Un problème de connexion est survenue lors de la récupération des clients. Merci de réessayer.
-ECommerceErrorGetProduitsToUpdate                                                                   =Un problème de connexion est survenue lors de la récupération des produits. Merci de réessayer.
-ECommerceErrorGetCategoryToUpdate                                                                   =Un problème de connexion est survenue lors de la récupération des catégories. Merci de réessayer.
-ECommerceErrorGetCommandeToUpdate                                                                   =Un problème de connexion est survenue lors de la récupération des commandes. Merci de réessayer.
-ECommerceErrorGetFactureToUpdate                                                                    =Un problème de connexion est survenue lors de la récupération des factures. Merci de réessayer.
+ECommerceErrorGetSocieteToUpdate                                                                    =Un problème de connexion est survenu lors de la récupération des clients. Merci de réessayer.
+ECommerceErrorGetProduitsToUpdate                                                                   =Un problème de connexion est survenu lors de la récupération des produits. Merci de réessayer.
+ECommerceErrorGetCategoryToUpdate                                                                   =Un problème de connexion est survenu lors de la récupération des catégories. Merci de réessayer.
+ECommerceErrorGetCommandeToUpdate                                                                   =Un problème de connexion est survenu lors de la récupération des commandes. Merci de réessayer.
+ECommerceErrorGetFactureToUpdate                                                                    =Un problème de connexion est survenu lors de la récupération des factures. Merci de réessayer.
 ECommerceReboot                                                                                     =Veuillez désactiver le module et le réactiver avant de réessayer.
 ECommerceAnonymousCreateFailed                                                                      =Échec de création de l'objet de synchronisation correspondant au tiers anonyme.
 ECommerceNoDbAnonymous                                                                              =Le tiers anonyme n'existe pas dans la base de donnée.
@@ -102,11 +102,11 @@ ECommerceResetDolFactureSuccess                                                 
 ECommerceResetSynchFactureSuccess                                                                   =références de synchronisation de factures ont bien été supprimées. 
 ECommerceResetDolCommandeSuccess                                                                    =commandes importées ont bien été supprimées.
 ECommerceResetSynchCommandeSuccess                                                                  =références de synchronisation de commandes ont bien été supprimées. 
-ECommerceResetDolProductSuccess                                                                     =produits importées ont bien été supprimées.
+ECommerceResetDolProductSuccess                                                                     =produits importés ont bien été supprimés.
 ECommerceResetSynchProductSuccess                                                                   =références de synchronisation de produits ont bien été supprimées. 
-ECommerceResetDolSocpeopleSuccess                                                                   =contacts importées ont bien été supprimées.
+ECommerceResetDolSocpeopleSuccess                                                                   =contacts importés ont bien été supprimés.
 ECommerceResetSynchSocpeopleSuccess                                                                 =références de synchronisation de contacts ont bien été supprimées. 
-ECommerceResetDolSocieteSuccess                                                                     =tiers clients importés ont bien été supprimées.
+ECommerceResetDolSocieteSuccess                                                                     =tiers clients importés ont bien été supprimés.
 ECommerceResetSynchSocieteSuccess                                                                   =références de synchronisation de tiers clients ont bien été supprimées.
 ECommerceResetDolCategorySuccess                                                                    =catégories importées ont bien été supprimées (ce nombre peut-être supérieur à celui indiqué en incluant les enfants des catégories supprimées).
 ECommerceResetSynchCategorySuccess                                                                  =références de synchronisation de catégories ont bien été supprimées (ce nombre peut-être supérieur à celui indiqué en incluant les enfants des références supprimées).
@@ -116,66 +116,66 @@ ECommerceSynchronizeCategoryProduct                                             
 ECommerceSynchCategoryError                                                                         =Erreur lors de la synchronisation des catégories.
 ECommerceSynchCategorySuccess                                                                       =catégories ont bien été synchronisées.
 ECommerceSynchCategoryNoImportRoot                                                                  =La synchronisation des catégories a été annulée car la catégorie d'import de Dolibarr n'est pas définie. Veuillez la définir dans la configuration de synchronisation avant de réessayer.
-ECommerceSynchCategoryConnectError                                                                  =Une erreur de connexion est survenue durant la synchronisation des catégories. Veuillez réessayer.
-ECommerceSynchSocieteSuccess                                                                        =clients ont bien été synchronisées.
+ECommerceSynchCategoryConnectError                                                                  =Une erreur de connexion est survenue lors de la synchronisation des catégories. Veuillez réessayer.
+ECommerceSynchSocieteSuccess                                                                        =clients ont bien été synchronisés.
 ECommerceSynchProductSuccess                                                                        =produits ont bien été synchronisés.
 ECommerceSynchCommandeSuccess                                                                       =commandes ont bien été synchronisées.
 ECommerceSynchFactureSuccess                                                                        =factures ont bien été synchronisées.
 ECommerceSynchSocieteFailed                                                                         =%s erreurs se sont produites lors de la synchronisation.
 ECommerceSynchECommerceSocpeopleCreateError                                                         =Une erreur est survenue lors de l'enregistrement du contact (Tiers ID : %s; prénom: %s; nom: %s).
-ECommerceTimeout                                                                                    =Timeout des accès APIS
+ECommerceTimeout                                                                                    =Timeout des accès aux APIs
 ECommerceClickUrlToTestUrl                                                                          =Cliquez ici pour tester l'URL (un fichier XML ou JSON doit s'afficher)
-ECommerceTimeoutDescription                                                                         =Timeout pour les accès aux APIs, en secondes
+ECommerceTimeoutDescription                                                                         =Timeout des accès aux APIs, en secondes
 ECommerceSetupTimeoutEmpty                                                                          =Durée de connexion vide
 ECommerceSetupTimeoutMustBeInt                                                                      =La durée de connexion doit-être un entier
 ECommerceCategoriesProducts                                                                         =Catégories de produits
 SyncCategFirst                                                                                      =Synchroniser d'abord les catégories
 ECommerceSynchCommandeError                                                                         =Erreur durant la synchronisation des commandes
 OnlyThirdPartyWithTags                                                                              =Nb de tiers rattachés à la catégorie <b>%s</b> (donc sensé être commun avec la boutique en ligne)
-NbInDolibarr                                                                                        =Nb dans l'ERP
-NbInDolibarrLinkedToE                                                                               =Nb dans l'ERP liés à la boutique
-ModuleCustomerOrderDisabled                                                                         =Non géré (module Commande Client désactivé)
-ECommerceLastCompleteSync                                                                           =Date de la dernière synchronisation <b>de %s vers Dolibarr</b> réalisée ENTIÈREMENT (Entièrement =plus aucun élément à synchroniser)
-WithMagentoThirdIsModifiedIfAddressModified                                                         =Avec Magento et WooCommerce, un tiers sera aussi considéré comme modifié si un de ces contacts/adresses a été modifié.
+NbInDolibarr                                                                                        =Nb dans Dolibarr
+NbInDolibarrLinkedToE                                                                               =Nb dans Dolibarr liés à la boutique en ligne
+ModuleCustomerOrderDisabled                                                                         =Non géré (module "Commandes" non activé)
+ECommerceLastCompleteSync                                                                           =Date de la dernière synchronisation <b>de %s vers Dolibarr</b> réalisée entièrement (plus aucun élément à synchroniser)
+WithMagentoThirdIsModifiedIfAddressModified                                                         =Avec Magento et WooCommerce, un tiers sera aussi considéré comme modifié si un de ses contacts/adresses a été modifié.
 SyncSocieteFirst                                                                                    =Synchroniser d'abord les tiers
 SyncCommandeFirst                                                                                   =Synchroniser d'abord les commandes
-OnlyProductsIn                                                                                      =Seuls les produits de la catégorie <b>%s</b> et de ses sous-catégories sont synchronisées de Dolibarr vers Magento ou WooCommerce.
-NbInDolibarr                                                                                        =Nb dans l'ERP
-NbInDolibarrLinkedToE                                                                               =NB dans l'ERP liés à la boutique
+OnlyProductsIn                                                                                      =Seuls les produits de la catégorie <b>%s</b> et de ses sous-catégories sont synchronisés de Dolibarr vers Magento ou WooCommerce.
+NbInDolibarr                                                                                        =Nb dans Dolibarr
+NbInDolibarrLinkedToE                                                                               =NB dans Dolibarr liés à la boutique
 RefreshCount                                                                                        =Rafraîchir le comptage
 ModuleCustomerOrderDisabled                                                                         =Non pris en charge (les commandes clients ne sont pas activées)
-ECommerceLastCompleteSync                                                                           =Last synchronize <strong>from %s to Dolibarr</strong> done completely (no more elements to synchronize)
-SyncIsAutomaticInRealTime                                                                           =La synchronisation <b>De Dolibarr vers %s</b> est effectuée en temps réel.
-WithMagentoThirdIsModifiedIfAddressModified                                                         =With Magento, a third party is also flagged as modified if one of its contact/address is modified
-OnlyProductCategIn                                                                                  =Seule la catégorie <b>%s</b> et ses sous-catégories sont synchronisée de Dolibarr vers Magento ou WooCommerce.
-OnlyThirdPartyIn                                                                                    =Seuls les tiers de la catégorie <b>%s</b> et de ses sous-catégories sont synchronisées de Dolibarr vers Magento ou WooCommerce.²
-OnlyThirdPartyWithTags                                                                              =Nb of thirdparties with tag '<b>%s</b>' (so that should be common with the online ecommerce shop)
-WarningSoapCacheIsOn                                                                                =Attention : WSDL cache is on into directory <strong>%s</strong>.
-WarningSoapCacheIsOn2                                                                               =Changer <strong>%s</strong> ou son contenu peut ne pas être vu par le PHP.
+ECommerceLastCompleteSync                                                                           =Dernière synchronisation <strong>de %s vers Dolibarr</strong> réalisée entièrement (plus aucun élément à synchroniser)
+SyncIsAutomaticInRealTime                                                                           =La synchronisation <b>de Dolibarr vers %s</b> est effectuée en temps réel.
+WithMagentoThirdIsModifiedIfAddressModified                                                         =Avec Magento, un tiers est également indiqué comme modifié si l'un de ses contact/adresse est modifié
+OnlyProductCategIn                                                                                  =Seule la catégorie <b>%s</b> et ses sous-catégories sont synchronisées de Dolibarr vers Magento ou WooCommerce.
+OnlyThirdPartyIn                                                                                    =Seuls les tiers de la catégorie <b>%s</b> et de ses sous-catégories sont synchronisés de Dolibarr vers Magento ou WooCommerce.
+OnlyThirdPartyWithTags                                                                              =Nb de tiers de la catégorie '<b>%s</b>' (qui devraient donc être communs avec la boutique E-Commerce)
+WarningSoapCacheIsOn                                                                                =Attention : cache WSDL actif sur le répertoire <strong>%s</strong>.
+WarningSoapCacheIsOn2                                                                               =Changer <strong>%s</strong> ou son contenu peut ne pas être vu par PHP.
 SoapCacheIsOff                                                                                      =Votre cache PHP WSDL est inactif.
-SetupOfWarehouseNotDefinedForThisSite                                                               =A new or modified product were found on eCommerce shop with a different stock level than into Dolibarr. To be able to create/update them in Dolibarr, you must setup the warehouse to initialize.
+SetupOfWarehouseNotDefinedForThisSite                                                               =Un nouveau produit ou un produit modifié a été trouvé sur la boutique E-Commerce avec un niveau de stock différent de celui de Dolibarr. Afin de pouvoir les créer/mettre à jour dans Dolibarr, vous devez mettre en place l'entrepôt à initialiser.
 ECommerceStockSyncDirection                                                                         =Synchronisation des stocks
-ECommerceStockSyncDirectionDescription                                                              =Ce paramètre détermine :<br/>- Si le stock doit être décrémenté dans Dolibarr suite à une décrémentation du stock e-commerce (rare) ou <br/>- Si le stock e-commerce doit être remplacé par le stock Dolibarr suite à sa modification (choix commun)
+ECommerceStockSyncDirectionDescription                                                              =Ce paramètre détermine :<br/>- Si le stock doit être décrémenté dans Dolibarr suite à une décrémentation du stock E-Commerce (rare) ou <br/>- Si le stock E-Commerce doit être remplacé par le stock Dolibarr suite à sa modification (choix commun)
 ECommerceValidOrderWarehouse                                                                        =Validation d'une commande/facture
-ECommerceValidOrderWarehouseDescription                                                             =Entrepot utilisé lors de la validation d'une commande ou facture pendant une synchronisation du Site vers Dolibarr
+ECommerceValidOrderWarehouseDescription                                                             =Entrepot utilisé lors de la validation d'une commande ou facture pendant une synchronisation de E-Commerce vers Dolibarr
 MainSyncSetup                                                                                       =Synchronisation générale
 StockSyncSetup                                                                                      =Synchronisation des stocks
-ErrorModuleSoapRequired                                                                             =Erreur: Le module PHP SOAP est requis pour le bon fonctionnement du module.
+ErrorModuleSoapRequired                                                                             =Erreur: le module PHP SOAP est requis pour le bon fonctionnement du module.
 SyncAll                                                                                             =Synchroniser tout
 DangerZone                                                                                          =Zone dangereuse
 ShowDebugTools                                                                                      =Afficher les outils d'init/purge/debug
 ECommerceShipping                                                                                   =Frais de port
 ECommercePriceLevel                                                                                 =Niveau de prix
-ECommercePriceLevelDescription                                                                      =Seul ce niveau de prix sera synchronisé entre Dolibarr et Ecommerce
-ECommerceConfirmUpdatePriceLevel                                                                    =Vous avez modifié le niveau de prix. Les produits sur le site e-commerce vont être mis à jour.\nCette opération peut être longue, merci de confirmer.
+ECommercePriceLevelDescription                                                                      =Seul ce niveau de prix sera synchronisé entre Dolibarr et E-Commerce
+ECommerceConfirmUpdatePriceLevel                                                                    =Vous avez modifié le niveau de prix. Les produits sur le site E-Commerce vont être mis à jour.\nCette opération peut être longue, merci de confirmer.
 ThirdPartyForNonLoggedUsers                                                                         =Tiers générique de recueil des clients sans compte créé
 SynchUnkownCustomersOnThirdParty                                                                    =Tiers générique auquel seront rattachées les commandes de clients sans compte
-ECommerceDontUpdateDolibarrCompany                                                                  =Mise a jour du tiers
-ECommerceDontUpdateDolibarrCompanyDescription                                                       =Ne pas mettre à jour le tiers sur Dolibarr lorsqu'il existe déja dans dolibarr
+ECommerceDontUpdateDolibarrCompany                                                                  =Mise à jour du tiers
+ECommerceDontUpdateDolibarrCompanyDescription                                                       =Ne pas mettre à jour le tiers de Dolibarr lorsqu'il existe déja dans dolibarr
 
 ## OAuth Setup ##
-ECommerceOAuthWordpressSetup                                                                        =Connexion OAuth2 sur WordPress ( Allez sur <a class="notasortlink" href="%s" target="_blank">cette page</a> , puis "Ajouter un nouveau client" pour créer les informations d'identification OAuth2 )
-ECommerceSiteOAuthRedirectUri                                                                       =Url de redirection
+ECommerceOAuthWordpressSetup                                                                        =Connexion OAuth2 sur WordPress (Allez sur <a class="notasortlink" href="%s" target="_blank">cette page</a> , puis "Ajouter un nouveau client" pour créer les informations d'identification OAuth2)
+ECommerceSiteOAuthRedirectUri                                                                       =URL de redirection
 ECommerceSiteOAuthRedirectUriDescription                                                            =Utilisez l'URL suivante comme URI de redirection (Callback) quand vous créez une nouvelle application (ou un nouveau client)
 ECommerceSiteOAuthId                                                                                =OAuth ID
 ECommerceSiteOAuthIdDescription                                                                     =Id de connexion au service OAuth
@@ -185,7 +185,7 @@ ECommerceOAuthCheckToken                                                        
 
 ECommerceOrderStatusSetup                                                                           =Synchronisation des statuts des commandes
 ECommerceOrderStatusSetupDescription                                                                =Choisissez le statut correspondant lors de la synchronisation.
-ECommerceOrderStatusDtoECheckLvlStatus                                                              =Ne change le statut que si le niveau est plus élevé que le statut précédant
+ECommerceOrderStatusDtoECheckLvlStatus                                                              =Ne change le statut que si le niveau est plus élevé que le statut précédent
 ECommerceOrderStatusDtoECheckLvlStatusDescription                                                   =Le niveau du statut se renseigne dans les valeurs de l'attribut complémentaire du statut de la commande (Index sous la forme: niveau_statut,libellé). ex: 0_on-hold,En attente
 
 ECommerceSynchronizeProductImages                                                                   =Synchroniser les images
@@ -204,12 +204,12 @@ ECommerceRemoteAccessGetCommandeToUpdate                                        
 ECommerceRemoteAccessGetProductToUpdate                                                             =Erreur de récupération de la liste des produits à mettre à jour sur le site '%s': %s
 ECommerceRemoteAccessGetRemoteCategoryTree                                                          =Erreur de récupération de la liste des catégories à mettre à jour sur le site '%s': %s
 ECommerceRemoteAccessGetSocieteToUpdate                                                             =Erreur de récupération de la liste des clients à mettre à jour sur le site '%s': %s
-ECommerceRemoteAccessSendFileForCommande                                                            =Erreur pour lier le fichier avec la commande distante 'id:%s' sur le site '%s': %s
-ECommerceRemoteAccessSendFileForCommandeInWordpress                                                 =Erreur de l'envoi du fichier pour la commande distante 'id:%s' dans les média de Wordpress sur le site '%s': %s
+ECommerceRemoteAccessSendFileForCommande                                                            =Erreur de liaison du fichier avec la commande distante 'id:%s' sur le site '%s': %s
+ECommerceRemoteAccessSendFileForCommandeInWordpress                                                 =Erreur d'envoi du fichier pour la commande distante 'id:%s' dans les média de Wordpress sur le site '%s': %s
 ECommerceRemoteAccessUpdateRemoteCommande                                                           =Erreur de mise à jour de la commande distante 'id:%s' sur le site '%s': %s
 ECommerceRemoteAccessUpdateRemoteProduct                                                            =Erreur de mise à jour du produit distant 'id:%s' sur le site '%s': %s
 ECommerceRemoteAccessUpdateRemoteProductGetRemoteProduct                                            =Erreur de récupération du produit distant 'id:%s' sur le site '%s': %s
-ECommerceRemoteAccessUpdateRemoteProductSendImage                                                   =Erreur de l'envoi d'une image pour le produit distante 'id:%s' dans les média de Wordpress sur le site '%s': %s
+ECommerceRemoteAccessUpdateRemoteProductSendImage                                                   =Erreur d'envoi d'une image pour le produit distant 'id:%s' dans les média de Wordpress sur le site '%s': %s
 ECommerceRemoteAccessUpdateRemoteProductVariation                                                   =Erreur de mise à jour de la variation 'id:%s' du produit distant 'id:%s' sur le site '%s': %s
 ECommerceRemoteAccessUpdateRemoteSociete                                                            =Erreur de mise à jour de la société distante 'id:%s' sur le site '%s': %s
 ECommerceRemoteAccessUpdateRemoteSocpeople                                                          =Erreur de mise à jour des contacts/adresses de la société distante 'id:%s' sur le site '%s': %s
@@ -218,29 +218,29 @@ ECommerceRemoteAccessUpdateRemoteStockProductVariation                          
 
 ECommerceSyncheCommerceProductDownloadImageError                                                    =Erreur de récupération de l'image (%s) pour le produit 'id:%s' du produit distant 'id:%s' sur le site '%s'
 
-ECommerceNoDescForProductLine                                                                       =L'api n'a pas pu récupérer la description du produit
+ECommerceNoDescForProductLine                                                                       =L'API n'a pas pu récupérer la description du produit
 
 ECommerceUpdateRemoteCompanyLink                                                                    =Erreur de mise à jour du lien de la société 'id:%s' sur le site '%s': %s
 ECommerceUpdateRemoteSocpeopleLink                                                                  =Erreur de mise à jour du lien du contact 'id:%s' sur le site '%s': %s
 ECommerceUpdateRemoteProductLink                                                                    =Erreur de mise à jour du lien du produit 'id:%s' sur le site '%s': %s
-ECommerceCreateRemoteProductLink                                                                    =Erreur de la création du lien du produit 'id:%s' sur le site '%s': %s
+ECommerceCreateRemoteProductLink                                                                    =Erreur de création du lien du produit 'id:%s' sur le site '%s': %s
 ECommerceUpdateRemoteOrderLink                                                                      =Erreur de mise à jour du lien de la commande 'id:%s' sur le site '%s': %s
 ECommerceUpdateRemoteInvoiceLink                                                                    =Erreur de mise à jour du lien de la facture 'id:%s' sur le site '%s': %s
 
-ECommerceRealTimeSynchroDolibarrToECommerceSetup                                                    =Synchronisation en temps réel de Dolibarr vers Ecommerce
+ECommerceRealTimeSynchroDolibarrToECommerceSetup                                                    =Synchronisation en temps réel de Dolibarr vers E-Commerce
 ECommerceThirdParty                                                                                 =Tiers
 ECommerceContact                                                                                    =Contacts
 ECommerceProduct                                                                                    =Produits
 ECommerceOrder                                                                                      =Commandes
-ECommerceRealTimeSynchroDolibarrToECommerceSetupDescription                                         =Synchronisation de l'élément dans le site ECommerce à la modification de celui lié dans Dolibarr
+ECommerceRealTimeSynchroDolibarrToECommerceSetupDescription                                         =Synchronisation de l'élément dans le site E-Commerce à la modification de celui lié dans Dolibarr
 
 ECommercePaymentCondition                                                                           =Conditions de règlement
-ECommercePaymentConditionDescription                                                                =Conditions de règlement par défaut lors de la récupération de la commande depuis le site ECommerce
+ECommercePaymentConditionDescription                                                                =Conditions de règlement par défaut lors de la récupération de la commande depuis le site E-Commerce
 
-ECommerceCountToUpdateDtoE                                                                          =Nombre d'éléments à synchroniser (Produit avec la catégorie du site et n'etant pas lié ou plus récent)
+ECommerceCountToUpdateDtoE                                                                          =Nombre d'éléments à synchroniser (Produit avec la catégorie du site et n'étant pas lié ou plus récent)
 SyncProductFirst                                                                                    =Synchroniser d'abord les produits
 
-ECommerceCreateRemoteCategoryLink                                                                   =Erreur de la création du lien de la catégorie 'id:%s' sur le site '%s': %s
+ECommerceCreateRemoteCategoryLink                                                                   =Erreur de création du lien de la catégorie 'id:%s' sur le site '%s': %s
 
 ECommerceSyncheCommerceMotherCategoryCreateError                                                    =Erreur de création du lien de la catégorie racine pour la catégorie distante '%s' 'id:%s' sur le site '%s'.
 ECommerceNGUpdateElementDateMoreRecent                                                              =Inclus aussi les éléments dont la date de mise à jour est plus récente que celle de synchronisation
@@ -258,25 +258,25 @@ ECommerceProductWeightSyncDirection                                             
 ECommerceProductWeightSyncDirectionDescription                                                      =Ce paramètre détermine le sens de mise à jour du poids du produit
 ECommerceProductDimensionSyncDirection                                                              =Synchronisation des dimensions du produit
 ECommerceProductDimensionSyncDirectionDescription                                                   =Ce paramètre détermine le sens de mise à jour des dimensions du produit
-ECommerceProductTaxSyncDirection                                                                    =Synchronisation de la classes de TVA sur la boutique
-ECommerceProductTaxSyncDirectionDescription                                                         =Ce paramètre détermine le sens de mise à jour de la classes de TVA sur la boutique
-ECommerceProductStatusSyncDirection                                                                 =Synchronisation du statut sur la boutique
-ECommerceProductStatusSyncDirectionDescription                                                      =Ce paramètre détermine le sens de mise à jour du statut sur la boutique
+ECommerceProductTaxSyncDirection                                                                    =Synchronisation de la classe de TVA sur le site E-Commerce
+ECommerceProductTaxSyncDirectionDescription                                                         =Ce paramètre détermine le sens de mise à jour de la classe de TVA sur le site E-Commerce
+ECommerceProductStatusSyncDirection                                                                 =Synchronisation du statut sur le site E-Commerce
+ECommerceProductStatusSyncDirectionDescription                                                      =Ce paramètre détermine le sens de mise à jour du statut sur le site E-Commerce
 
-ECommerceProductWeightUnits                                                                         =Unité de poids sur la boutique
-ECommerceProductWeightUnitsDescription                                                              =Ce paramètre détermine l'unité de poids sur la boutique
-ECommerceProductDimensionUnits                                                                      =Unité des dimensions sur la boutique
-ECommerceProductDimensionUnitsDescription                                                           =Ce paramètre détermine l'unité des dimensions sur la boutique
+ECommerceProductWeightUnits                                                                         =Unité de poids sur le site E-Commerce
+ECommerceProductWeightUnitsDescription                                                              =Ce paramètre détermine l'unité de poids sur le site E-Commerce
+ECommerceProductDimensionUnits                                                                      =Unité des dimensions sur le site E-Commerce
+ECommerceProductDimensionUnitsDescription                                                           =Ce paramètre détermine l'unité des dimensions sur le site E-Commerce
 
 ECommerceExportProductsPrices                                                                       =Export des prix des produits (WooSync)
-ECommerceImportProductsPrices                                                                       =Import des prix des produits (WooSync) (Ne supporte pas l'ajout de nouveaux produits, la mise à jour n'est supportée que par un fichier CSV)
+ECommerceImportProductsPrices                                                                       =Import des prix des produits (WooSync) (ne supporte pas l'ajout de nouveaux produits, la mise à jour n'est supportée que par un fichier .csv)
 
-EcommerceNGUnlinkToECommerce                                                                        =Enlever le produit du site ECommerce
-EcommerceNGConfirmUnlinkToECommerce                                                                 =Êtes-vous sûr de vouloir enlever ce produit du site ECommerce ?
+EcommerceNGUnlinkToECommerce                                                                        =Enlever le produit du site E-Commerce
+EcommerceNGConfirmUnlinkToECommerce                                                                 =Êtes-vous sûr de vouloir enlever ce produit du site E-Commerce ?
 ECommerceResetCategoriesProductSuccess                                                              =Catégories du site sur les produits ont bien été retirées.
 
-EcommerceUpdateCompanyFromECommerce                                                                 =Mise à jour depuis le site ECommerce
-EcommerceConfirmUpdateCompanyFromECommerce                                                          =Êtes-vous sûr de vouloir mettre à jour ce tiers depuis ce site ECommerce ?
+EcommerceUpdateCompanyFromECommerce                                                                 =Mise à jour depuis le site E-Commerce
+EcommerceConfirmUpdateCompanyFromECommerce                                                          =Êtes-vous sûr de vouloir mettre à jour ce tiers depuis ce site E-Commerce ?
 EcommerceUpdateCompanyFromECommerceSuccess                                                          =Ce tiers à bien été mis à jour.
 EcommerceSiteNotFound                                                                               =Le site avec l'ID %s n'a pas pu être chargé
 
@@ -291,28 +291,28 @@ ECommerceCreateOrderInvoiceWhenSyncOrder                                        
 ECommerceCreateOrder                                                                                =Créer la commande
 ECommerceCreateInvoice                                                                              =Créer la facture
 ECommerceCreateSupplierInvoiceFromFee                                                               =Créer la facture fournisseur à partir des frais
-ECommerceFeeLineAsItemLine                                                                          =Considéré les lignes de frais comme des lignes de services
-ECommerceSendInvoiceByMail                                                                          =Envoyer la facture par mail
-ECommerceCreateOrderDescription                                                                     =Actions associées lors de la récupération des commandes WooCommerce (Renseigner les modes de paiements associés à WooCommerce)
-ECommerceCreateInvoiceIfAmount0                                                                     =Créer la facture même si le montant est égale à 0
+ECommerceFeeLineAsItemLine                                                                          =Considérer les lignes de frais comme des lignes de services
+ECommerceSendInvoiceByMail                                                                          =Envoyer la facture par courriel
+ECommerceCreateOrderDescription                                                                     =Actions associées lors de la récupération des commandes WooCommerce (renseigner les modes de paiements associés à WooCommerce)
+ECommerceCreateInvoiceIfAmount0                                                                     =Créer la facture même si le montant est nul
 
 ECommercePaymentGatewaysCorrespondence                                                              =Correspondance des modes de paiements avec le site
 ECommercePaymentGatewayLabel                                                                        =Mode de paiement sur le site
-ECommerceUpdatePaymentGateways                                                                      =Mise à jour des modes de paiements
-ECommerceConfirmUpdatePaymentGateways                                                               =Confirmer la mise à jour des modes de paiements pour ce site ?
-ECommercePaymentGatewaysUpdated                                                                     =Modes de paiements depuis le site mise à jour.
+ECommerceUpdatePaymentGateways                                                                      =Mise à jour des modes de paiement
+ECommerceConfirmUpdatePaymentGateways                                                               =Confirmer la mise à jour des modes de paiement pour ce site ?
+ECommercePaymentGatewaysUpdated                                                                     =Modes de paiement depuis le site mise à jour.
 ECommerceCreateAssociatePaymentForInvoice                                                           =Créer le règlement associé pour la facture
-ECommerceSelectMailModelForSendInvoice                                                              =Choix du modèle de mail pour l'envoi de la facture
+ECommerceSelectMailModelForSendInvoice                                                              =Choix du modèle de courriel pour l'envoi de la facture
 ECommerceProductForFee                                                                              =Produit pour les frais de la facture fournisseur
 ECommerceCreateAssociatePaymentForSupplierInvoice                                                   =Créer le règlement associé pour la facture fournisseur
 
 ECommerceCreateOrderSalesRepresentativeFollowByDefault                                              =Responsable suivi client
-ECommerceCreateOrderSalesRepresentativeFollowByDefaultDescription                                   =Utilisateur de type "Responsable suivi commande/facture/... client" par défaut affecté lors de la synchro d'une commande depuis le site
+ECommerceCreateOrderSalesRepresentativeFollowByDefaultDescription                                   =Utilisateur de type "Responsable suivi commande/facture/... client" par défaut affecté lors de la synchronisation d'une commande depuis le site E-Commerce
 
-RestrictSyncForRecordBetween                                                                        =Limite la synchronisation des données (se base sur la date d'enregistrement pour les clients, la date de publication pour les produits et la date de création pour les commandes) du
-RestrictSyncToCompanyRemoteID                                                                       =Limite la synchronisation des clients aux ID distants suivants (customer_id, customer_id, ...)
-RestrictSyncToProductRemoteID                                                                       =Limite la synchronisation des produits aux ID distants suivants (product_id, product_id|variation_id, ...)
-RestrictSyncToOrderRemoteID                                                                         =Limite la synchronisation des commandes aux ID distants suivants (order_id, order_id, ...)
+RestrictSyncForRecordBetween                                                                        =Limiter la synchronisation des données (en se basant sur la date d'enregistrement pour les clients, la date de publication pour les produits et la date de création pour les commandes) du
+RestrictSyncToCompanyRemoteID                                                                       =Limiter la synchronisation des clients aux ID distants suivants (customer_id, customer_id, ...)
+RestrictSyncToProductRemoteID                                                                       =Limiter la synchronisation des produits aux ID distants suivants (product_id, product_id|variation_id, ...)
+RestrictSyncToOrderRemoteID                                                                         =Limiter la synchronisation des commandes aux ID distants suivants (order_id, order_id, ...)
 DontSyncProductWhenSyncOrders                                                                       =Ne pas synchroniser les produits lors de la synchronisation des commandes
 
 ECommerceSiteWebHooksSetup                                                                          =Configuration des Crochets Web (WebHooks)
@@ -356,24 +356,24 @@ ECommerceWoocommerceOrderFirstDateForECommerceToDolibarrDescription             
 ECommerceWoocommerceOrderMetaDataInProductLineToDescriptionForECommerceToDolibarr                   =Méta-données sur ligne de produit
 ECommerceWoocommerceOrderMetaDataInProductLineToDescriptionForECommerceToDolibarrDescription        =Ajoute les méta-données des lignes de produit de la commandes WooCommerce dans la description des lignes de produit dans la commande Dolibarr<br>Les méta-données des lignes de produits des commandes WooCommerce doivent posséder les propriétées 'display_key' et 'display_value' pour que cette fonctionnalité fonctionne
 ECommerceWoocommerceOrderFilterMetaDataInProductLineToDescriptionForECommerceToDolibarr             =Méta-données sur ligne de produit
-ECommerceWoocommerceOrderFilterMetaDataInProductLineToDescriptionForECommerceToDolibarrDescription  =Liste des clés des méta-données à inclure ou non dans la description (séparés par des virgules)
+ECommerceWoocommerceOrderFilterMetaDataInProductLineToDescriptionForECommerceToDolibarrDescription  =Liste des clés des méta-données à inclure ou non dans la description (séparées par des virgules)
 ECommerceExclude                                                                                    =Exclure
 ECommerceInclude                                                                                    =Inclure
 
 ECommerceSynchronize                                                                                =Synchroniser
 
-ECOMMERCE_ACCOUNTING_PRODUCT_BUY_ACCOUNT                = Compte comptable par défaut pour les produits achetés (utilisé si non défini dans la fiche produit ou dans dolibarr)
-ECOMMERCE_ACCOUNTING_PRODUCT_BUY_INTRA_ACCOUNT          = Compte comptable par défaut pour les produits achetés dans la CEE (utilisé si non défini dans la fiche produit ou dans dolibarr)
-ECOMMERCE_ACCOUNTING_PRODUCT_BUY_EXPORT_ACCOUNT         = Compte comptable par défaut pour les produits achetés et importés hors de la CEE (utilisé si non défini dans la fiche produit ou dans dolibarr)
-ECOMMERCE_ACCOUNTING_PRODUCT_SOLD_ACCOUNT               = Compte comptable par défaut pour les produits vendus (utilisé si non défini dans la fiche produit ou dans dolibarr)
-ECOMMERCE_ACCOUNTING_PRODUCT_SOLD_INTRA_ACCOUNT         = Compte comptable par défaut pour les produits vendus dans la CEE (utilisé si non défini dans la fiche produit ou dans dolibarr)
-ECOMMERCE_ACCOUNTING_PRODUCT_SOLD_EXPORT_ACCOUNT        = Compte comptable par défaut pour les produits vendus et exportés hors de la CEE (utilisé si non défini dans la fiche produit ou dans dolibarr)
-ECOMMERCE_ACCOUNTING_SERVICE_BUY_ACCOUNT                = Compte comptable par défaut pour les services achetés (utilisé si non défini dans la fiche service ou dans dolibarr)
-ECOMMERCE_ACCOUNTING_SERVICE_BUY_INTRA_ACCOUNT          = Compte comptable par défaut pour les services achetés dans la CEE (utilisé si non défini dans la fiche service ou dans dolibarr)
-ECOMMERCE_ACCOUNTING_SERVICE_BUY_EXPORT_ACCOUNT         = Compte comptable par défaut pour les services achetés et importés hors de la CEE (utilisé si non défini dans la fiche service ou dans dolibarr)
-ECOMMERCE_ACCOUNTING_SERVICE_SOLD_ACCOUNT               = Compte comptable par défaut pour les services vendus (utilisé si non défini dans la fiche service ou dans dolibarr)
-ECOMMERCE_ACCOUNTING_SERVICE_SOLD_INTRA_ACCOUNT         = Compte comptable par défaut pour les services vendus dans la CEE (utilisé si non défini dans la fiche service ou dans dolibarr)
-ECOMMERCE_ACCOUNTING_SERVICE_SOLD_EXPORT_ACCOUNT        = Compte comptable par défaut pour les services vendus et exportés hors de la CEE (utilisé si non défini dans la fiche service ou dans dolibarr)
+ECOMMERCE_ACCOUNTING_PRODUCT_BUY_ACCOUNT                = Compte comptable par défaut pour les produits achetés (utilisé si non défini dans la fiche produit ou dans Dolibarr)
+ECOMMERCE_ACCOUNTING_PRODUCT_BUY_INTRA_ACCOUNT          = Compte comptable par défaut pour les produits achetés dans la CEE (utilisé si non défini dans la fiche produit ou dans Dolibarr)
+ECOMMERCE_ACCOUNTING_PRODUCT_BUY_EXPORT_ACCOUNT         = Compte comptable par défaut pour les produits achetés et importés hors de la CEE (utilisé si non défini dans la fiche produit ou dans Dolibarr)
+ECOMMERCE_ACCOUNTING_PRODUCT_SOLD_ACCOUNT               = Compte comptable par défaut pour les produits vendus (utilisé si non défini dans la fiche produit ou dans Dolibarr)
+ECOMMERCE_ACCOUNTING_PRODUCT_SOLD_INTRA_ACCOUNT         = Compte comptable par défaut pour les produits vendus dans la CEE (utilisé si non défini dans la fiche produit ou dans Dolibarr)
+ECOMMERCE_ACCOUNTING_PRODUCT_SOLD_EXPORT_ACCOUNT        = Compte comptable par défaut pour les produits vendus et exportés hors de la CEE (utilisé si non défini dans la fiche produit ou dans Dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_BUY_ACCOUNT                = Compte comptable par défaut pour les services achetés (utilisé si non défini dans la fiche service ou dans Dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_BUY_INTRA_ACCOUNT          = Compte comptable par défaut pour les services achetés dans la CEE (utilisé si non défini dans la fiche service ou dans Dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_BUY_EXPORT_ACCOUNT         = Compte comptable par défaut pour les services achetés et importés hors de la CEE (utilisé si non défini dans la fiche service ou dans Dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_SOLD_ACCOUNT               = Compte comptable par défaut pour les services vendus (utilisé si non défini dans la fiche service ou dans Dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_SOLD_INTRA_ACCOUNT         = Compte comptable par défaut pour les services vendus dans la CEE (utilisé si non défini dans la fiche service ou dans Dolibarr)
+ECOMMERCE_ACCOUNTING_SERVICE_SOLD_EXPORT_ACCOUNT        = Compte comptable par défaut pour les services vendus et exportés hors de la CEE (utilisé si non défini dans la fiche service ou dans Dolibarr)
 
 ############################################################################################
 # Web Hooks
@@ -411,19 +411,19 @@ ECommerceConfirmMassSetProcessed                                                
 ECommerceConfirmMassSetProcessedQuestion                                                            =Êtes-vous sur de vouloir mettre en traité les %s enregistrement(s) sélectionné(s) ?
 
 ECommerceBoxWebHooks                                                                                =WooSync - Crochet web (WebHooks)
-ECommerceNoRecordedWebHooks                                                                         =Aucun crochet web (WebHooks) enregistrée
+ECommerceNoRecordedWebHooks                                                                         =Aucun crochet web (WebHooks) enregistré
 
-ECommerceCheckWebHooksStatus                                                                        =Vérification du statut des crochet Web (WebHooks)
-ECommerceSuccessCheckWebHooksStatus                                                                 =Les %s crochet WEB (WebHook) du site "%s" (ID : %s) sont activés
-ECommerceSendEmailErrorCheckWebHooksStatus                                                          =Envoie du mails de notification des erreurs
-ECommerceNotifyEmailCheckWebHooksStatusErrorSubject                                                 =[WooSync] Erreur lors de la vérification du statut des crochet Web (WebHooks)
-ECommerceCheckWebHooksStatusSuccess                                                                 =La vérification du statut des crochet Web (WebHooks) s'est terminé avec succes
+ECommerceCheckWebHooksStatus                                                                        =Vérification du statut des crochets Web (WebHooks)
+ECommerceSuccessCheckWebHooksStatus                                                                 =Les %s crochets web (WebHooks) du site "%s" (ID : %s) sont activés
+ECommerceSendEmailErrorCheckWebHooksStatus                                                          =Envoi du courriel de notification des erreurs
+ECommerceNotifyEmailCheckWebHooksStatusErrorSubject                                                 =[WooSync] Erreur lors de la vérification du statut des crochets Web (WebHooks)
+ECommerceCheckWebHooksStatusSuccess                                                                 =La vérification du statut des crochets Web (WebHooks) s'est terminé avec succès
 
-ECommerceCheckWebHooksVolumetry                                                                     =Vérification de la volumétrie des crochet Web (WebHooks)
-ECommerceErrorCheckWebHooksVolumetry                                                                =Le nombre de crochet WEB (WebHook) en attentes de traitements du site "%s" (ID : %s) a dépassé la volumétrie (%s / %s)
-ECommerceSendEmailErrorCheckWebHooksVolumetry                                                       =Envoie du mails de notification des dépassements de volumétrie des crochet Web (WebHooks)
-ECommerceSendEmailErrorCheckWebHooksVolumetryErrorSubject                                           =[WooSync] Erreur lors de la vérification de la volumétrie des crochet Web (WebHooks)
-ECommerceCheckWebHooksVolumetrySuccess                                                              =La vérification de la volumétrie des crochet Web (WebHooks) s'est terminé avec succes
+ECommerceCheckWebHooksVolumetry                                                                     =Vérification de la volumétrie des crochets web (WebHooks)
+ECommerceErrorCheckWebHooksVolumetry                                                                =Le nombre de crochets web (WebHooks) en attente de traitement du site "%s" (ID : %s) a dépassé la volumétrie (%s / %s)
+ECommerceSendEmailErrorCheckWebHooksVolumetry                                                       =Envoi du courriel de notification des dépassements de volumétrie des crochets Web (WebHooks)
+ECommerceSendEmailErrorCheckWebHooksVolumetryErrorSubject                                           =[WooSync] Erreur lors de la vérification de la volumétrie des crochets Web (WebHooks)
+ECommerceCheckWebHooksVolumetrySuccess                                                              =La vérification de la volumétrie des crochets Web (WebHooks) s'est terminée avec succès
 
 ############################################################################################
 # Errors
@@ -434,72 +434,72 @@ ECommerceErrorWhenSynchronizeOrders                                             
 ECommerceErrorFetchThirdPartyLinkByRemoteId                                                         =Erreur du chargement de lien de synchronisation du tiers (ID distant: %s, Site ID : %s)
 ECommerceErrorAnonymousThirdPartyNotConfigured                                                      =Le tiers pour les utilisateurs anonymes (non connectés) n'est pas configuré (Site ID : %s)
 ECommerceErrorFetchThirdParty                                                                       =Erreur du chargement du tiers (ID : %s)
-ECommerceErrorUpdateThirdParty                                                                      =Erreur lors de la mise a jour du tiers dans Dolibarr (ID : %s)
+ECommerceErrorUpdateThirdParty                                                                      =Erreur lors de la mise à jour du tiers dans Dolibarr (ID : %s)
 ECommerceErrorCreateThirdParty                                                                      =Erreur lors de la création du tiers dans Dolibarr
-ECommerceErrorMoveContactsInAnonymousThirdPartyToNewOrFoundThirdParty                               =Erreur durant le déplacement des contacts du tiers pour les utilisateurs anonymes (non connectés) vers le nouveau tiers trouvé (ID : %s) grace à l'email : %s
-ECommerceErrorUpdateThirdPartyLink                                                                  =Erreur lors de la mise a jour du lien de synchronisation du tiers
+ECommerceErrorMoveContactsInAnonymousThirdPartyToNewOrFoundThirdParty                               =Erreur lors du déplacement des contacts du tiers pour les utilisateurs anonymes (non connectés) vers le nouveau tiers trouvé (ID : %s) grâce au courriel : %s
+ECommerceErrorUpdateThirdPartyLink                                                                  =Erreur lors de la mise à jour du lien de synchronisation du tiers
 ECommerceErrorCreateThirdPartyLink                                                                  =Erreur lors de la création du lien de synchronisation du tiers
 ECommerceErrorWhenSynchronizeCustomer                                                               =Erreur lors de la synchronisation du client (ID distant: %s)
-ECommerceErrorProductRefMandatory                                                                   =La référence du produit doit être renseignée sur votre produit distant
-ECommerceErrorFetchProductLinkByRemoteId                                                            =Erreur du chargement de lien de synchronisation du produit (ID distant: %s, Site ID : %s)
-ECommerceErrorFetchProduct                                                                          =Erreur du chargement du produit (ID : %s)
-ECommerceErrorFetchProductByRef                                                                     =Erreur du chargement du produit (Réf. : %s)
-ECommerceErrorFetchProductLinkByProductId                                                           =Erreur du chargement de lien de synchronisation du produit (ID : %s, Site ID : %s)
-ECommerceErrorProductAlreadyLinkedWithRemoteProduct                                                 =Le produit avec la Réf. %s est déjà lié au produit distant ID : %s
-ECommerceErrorUpdateProduct                                                                         =Erreur lors de la mise a jour du produit dans Dolibarr (ID : %s)
+ECommerceErrorProductRefMandatory                                                                   =La référence du produit doit être renseignée sur votre produit distant (ex: UGS)
+ECommerceErrorFetchProductLinkByRemoteId                                                            =Erreur de chargement du lien de synchronisation du produit (ID distant: %s, Site ID : %s)
+ECommerceErrorFetchProduct                                                                          =Erreur de chargement du produit (ID : %s)
+ECommerceErrorFetchProductByRef                                                                     =Erreur de chargement du produit (Réf. : %s)
+ECommerceErrorFetchProductLinkByProductId                                                           =Erreur de chargement du lien de synchronisation du produit (ID : %s, Site ID : %s)
+ECommerceErrorProductAlreadyLinkedWithRemoteProduct                                                 =Le produit avec la référence %s est déjà lié au produit distant ID : %s
+ECommerceErrorUpdateProduct                                                                         =Erreur lors de la mise à jour du produit dans Dolibarr (ID : %s)
 ECommerceErrorCreateProduct                                                                         =Erreur lors de la création du produit dans Dolibarr
-ECommerceErrorUpdateProductPrice                                                                    =Erreur lors de la mise a jour du prix du produit dans Dolibarr
-ECommerceErrorUpdateProductStock                                                                    =Erreur lors de la mise a jour du stock du produit dans Dolibarr
-ECommerceErrorSetProductUpdateDate                                                                  =Erreur lors de la mise a jour de la date de modification du produit dans Dolibarr
-ECommerceErrorProductCategoryNotConfigured                                                          =La catégorie des produit synchronisés n'est pas configuré (Site ID : %s)
-ECommerceErrorWhenSynchronizeCategories                                                             =Des erreurs se sont produites lors de la synchronisation des catégories de produits
-ECommerceErrorNumberCategoryToLinkMismatched                                                        =Toutes les catégories de produits à lier (%s) n'ont pas été trouvées dans celles synchronisées (%s)
+ECommerceErrorUpdateProductPrice                                                                    =Erreur lors de la mise à jour du prix du produit dans Dolibarr
+ECommerceErrorUpdateProductStock                                                                    =Erreur lors de la mise à jour du stock du produit dans Dolibarr
+ECommerceErrorSetProductUpdateDate                                                                  =Erreur lors de la mise à jour de la date de modification du produit dans Dolibarr
+ECommerceErrorProductCategoryNotConfigured                                                          =La catégorie des produits synchronisés n'est pas configurée (Site ID : %s)
+ECommerceErrorWhenSynchronizeCategories                                                             =Des erreurs se sont produites lors de la synchronisation des catégories des produits
+ECommerceErrorNumberCategoryToLinkMismatched                                                        =Toutes les catégories des produits à lier (%s) n'ont pas été trouvées dans celles synchronisées (%s)
 ECommerceErrorDownloadProductImage                                                                  =Erreur de récupération de l'image (%s) pour le produit 'id:%s' du produit distant 'id:%s' sur le site '%s'
 ECommerceErrorRemoveObsoleteProductImage                                                            =Erreur lors de la suppression des images obsolètes pour le produit 'id:%s' du produit distant 'id:%s' sur le site '%s'
-ECommerceErrorUpdateProductLink                                                                     =Erreur lors de la mise a jour du lien de synchronisation du produit
+ECommerceErrorUpdateProductLink                                                                     =Erreur lors de la mise à jour du lien de synchronisation du produit
 ECommerceErrorCreateProductLink                                                                     =Erreur lors de la création du lien de synchronisation du produit
 ECommerceErrorWhenSynchronizeProduct                                                                =Erreur lors de la synchronisation du produit (ID distant: %s)
 ECommerceErrorWhenConvertProductData                                                                =Erreur lors de la conversion des données du produit (ID distant: %s)
-ECommerceErrorFetchOrderLinkByRemoteId                                                              =Erreur du chargement de lien de synchronisation de la commande (ID distant: %s, Site ID : %s)
-ECommerceErrorFetchOrder                                                                            =Erreur du chargement de la commande (ID : %s)
-ECommerceErrorFetchOrderByRefExt                                                                    =Erreur du chargement de la commande (Réf. ext. : %s)
-ECommerceErrorUpdateOrder                                                                           =Erreur lors de la mise a jour de la commande dans Dolibarr (ID : %s)
+ECommerceErrorFetchOrderLinkByRemoteId                                                              =Erreur de chargement du lien de synchronisation de la commande (ID distant: %s, Site ID : %s)
+ECommerceErrorFetchOrder                                                                            =Erreur de chargement de la commande (ID : %s)
+ECommerceErrorFetchOrderByRefExt                                                                    =Erreur de chargement de la commande (Réf. ext. : %s)
+ECommerceErrorUpdateOrder                                                                           =Erreur lors de la mise à jour de la commande dans Dolibarr (ID : %s)
 ECommerceErrorCreateOrder                                                                           =Erreur lors de la création de la commande dans Dolibarr
-ECommerceErrorUpdateTotalOrder                                                                      =Erreur lors de la mise a jour des prix correct de la commande dans Dolibarr
-ECommerceErrorOrderDefineBuyPrice                                                                   =Erreur lors de la mise a jour du prix dans Dolibarr (ID : %s, Prix: %s)
+ECommerceErrorUpdateTotalOrder                                                                      =Erreur lors de la mise à jour des prix corrects de la commande dans Dolibarr
+ECommerceErrorOrderDefineBuyPrice                                                                   =Erreur lors de la mise à jour du prix dans Dolibarr (ID : %s, Prix: %s)
 ECommerceErrorOrderAddLine                                                                          =Erreur lors de l'ajout d'une ligne de produit dans la commande
 ECommerceErrorOrderAddDeliveryLine                                                                  =Erreur lors de l'ajout d'une ligne de livraison dans la commande
 ECommerceErrorValidOrder                                                                            =Erreur lors de la validation de la commande
-ECommerceErrorSetStatusOrderValidated                                                               =Erreur lors du passage de la commande en 'Validé'
-ECommerceErrorSetStatusOrderShipmentOnProcess                                                       =Erreur lors du passage de la commande en 'En cours'
-ECommerceErrorCancelOrder                                                                           =Erreur lors du passage de la commande en 'Annulée'
-ECommerceErrorCloseOrder                                                                            =Erreur lors du passage de la commande en 'Livré'
-ECommerceErrorClassifyOrderBilled                                                                   =Erreur lors du passage de la commande en 'Traité'
+ECommerceErrorSetStatusOrderValidated                                                               =Erreur lors du passage de la commande à 'Validé'
+ECommerceErrorSetStatusOrderShipmentOnProcess                                                       =Erreur lors du passage de la commande à 'En cours'
+ECommerceErrorCancelOrder                                                                           =Erreur lors du passage de la commande à 'Annulée'
+ECommerceErrorCloseOrder                                                                            =Erreur lors du passage de la commande à 'Livré'
+ECommerceErrorClassifyOrderBilled                                                                   =Erreur lors du passage de la commande à 'Traité'
 ECommerceErrorPaymentGatewaysNotFound                                                               =Le mode de paiement (%s, %s) n'a pas été trouvé dans ceux synchronisés
 ECommerceErrorPaymentGatewaysPaymentMethodNotConfigured                                             =Le mode de paiement (%s, %s) synchronisé n'a pas été configuré pour le mode de paiement Dolibarr
 ECommerceErrorWhenFetchPaymentMethodByLabel                                                         =Erreur du chargement du mode de paiement (%s) grâce a son nom
-ECommerceErrorOrderSetPaymentMethods                                                                =Erreur lors de la mise a jour du mode de paiement de la commande
-ECommerceErrorUpdateOrderLink                                                                       =Erreur lors de la mise a jour du lien de synchronisation de la commande
+ECommerceErrorOrderSetPaymentMethods                                                                =Erreur lors de la mise à jour du mode de paiement de la commande
+ECommerceErrorUpdateOrderLink                                                                       =Erreur lors de la mise à jour du lien de synchronisation de la commande
 ECommerceErrorCreateOrderLink                                                                       =Erreur lors de la création du lien de synchronisation de la commande
 ECommerceErrorWhenSynchronizeOrder                                                                  =Erreur lors de la synchronisation de la commande (ID distant: %s)
 ECommerceErrorWhenConvertOrderData                                                                  =Erreur lors de la conversion des données de la commande (ID distant: %s)
 ECommerceErrorInvoiceCreate                                                                         =Erreur lors de la création de la facture dans Dolibarr
-ECommerceErrorUpdateTotalInvoice                                                                    =Erreur lors de la mise a jour des prix correct de la facture dans Dolibarr
+ECommerceErrorUpdateTotalInvoice                                                                    =Erreur lors de la mise à jour des prix corrects de la facture dans Dolibarr
 ECommerceErrorInvoiceInsertDiscount                                                                 =Erreur lors de l'insertion de la réduction sur la facture dans Dolibarr
 ECommerceErrorInvoiceDiscountCreate                                                                 =Erreur lors de la création de la réduction pour la facture
 ECommerceErrorInvoiceAddLine                                                                        =Erreur lors de l'ajout d'une ligne de produit dans la facture
 ECommerceErrorInvoiceGetOrderInternalContacts                                                       =Erreur lors de la récupération des contacts internes de la commande (ID : %s)
 ECommerceErrorInvoiceGetOrderExternalContacts                                                       =Erreur lors de la récupération des contacts externes de la commande (ID : %s)
 ECommerceErrorInvoiceAddContact                                                                     =Erreur lors de l'ajout d'un contact (ID : %s, Type: %s, Source: %s) dans la facture
-ECommerceErrorInvoiceDefineBuyPrice                                                                 =Erreur lors de la mise a jour du prix dans Dolibarr (ID : %s, Prix: %s)
+ECommerceErrorInvoiceDefineBuyPrice                                                                 =Erreur lors de la mise à jour du prix dans Dolibarr (ID : %s, Prix: %s)
 ECommerceErrorInvoiceAddLine                                                                        =Erreur lors de l'ajout d'une ligne de produit dans la facture
 ECommerceErrorInvoiceAddDeliveryLine                                                                =Erreur lors de l'ajout d'une ligne de livraison dans la facture
-ECommerceErrorInvoiceSetPaymentMethods                                                              =Erreur lors de la mise a jour du mode de paiement de la facture
+ECommerceErrorInvoiceSetPaymentMethods                                                              =Erreur lors de la mise à jour du mode de paiement de la facture
 ECommerceErrorPaymentGatewaysBankAccountNotConfigured                                               =Le mode de paiement (%s, %s) synchronisé n'a pas été configuré pour la banque Dolibarr
 ECommerceErrorInvoiceValidate                                                                       =Erreur lors de la validation de la facture
 ECommerceErrorInvoiceCreatePayment                                                                  =Erreur lors de la création du paiement sur la facture
 ECommerceErrorInvoiceAddPaymentToBank                                                               =Erreur lors de l'ajout du paiement sur la banque pour la facture
-ECommerceErrorInvoiceSetPaid                                                                        =Erreur lors du classement de la facture en payée
+ECommerceErrorInvoiceSetPaid                                                                        =Erreur lors du classement de la facture en 'payée'
 ECommerceErrorInvoiceGenerateDocument                                                               =Erreur lors de la génération du document de la facture
 ECommerceErrorPaymentGatewaysSupplierNotConfigured                                                  =Le mode de paiement (%s, %s) synchronisé n'a pas été configuré pour le tiers fournisseur Dolibarr
 ECommerceErrorSupplierInvoiceCreate                                                                 =Erreur lors de la création de la facture fournisseur dans Dolibarr
@@ -509,52 +509,52 @@ ECommerceErrorSupplierInvoiceCreatePayment                                      
 ECommerceErrorSupplierInvoiceAddPaymentToBank                                                       =Erreur lors de l'ajout du paiement sur la banque pour la facture fournisseur
 ECommerceErrorSupplierInvoiceGenerateDocument                                                       =Erreur lors de la génération du document de la facture fournisseur
 ECommerceErrorCustomerEmailEmptyForSendInvoiceByEmail                                               =Erreur, l'email de la commande distante est vide pour l'envoi de la facture par e-mail
-ECommerceErrorPaymentGatewaysMailModelNotConfigured                                                 =Le mode de paiement (%s, %s) synchronisé n'a pas été configuré pour le modele de mail Dolibarr
+ECommerceErrorPaymentGatewaysMailModelNotConfigured                                                 =Le mode de paiement (%s, %s) synchronisé n'a pas été configuré pour le modèle d'e-mail de Dolibarr
 ECommerceErrorInvoiceCreateMail                                                                     =Erreur lors de la création de l'e-mail pour l'envoi de la facture
 ECommerceErrorInvoiceGetExternalContacts                                                            =Erreur lors de la récupération des contacts externes de la facture (ID : %s)
-ECommerceErrorInvoiceCreateSendMailEvent                                                            =Erreur lors de la création de l'événement de l'envoi de la facture par mail
+ECommerceErrorInvoiceCreateSendMailEvent                                                            =Erreur lors de la création de l'événement de l'envoi de la facture par e-mail
 ECommerceErrorInvoiceSendByMail                                                                     =Erreur lors de l'envoi de la facture par e-mail
-ECommerceErrorWhenSynchronizeOrderToInvoice                                                         =Erreur lors de la synchronisation de la facture a partir de la commande (ID distant: %s)
-ECommerceErrorSearchThirdPartyByEmail                                                               =Erreur lors de la recherche du tiers grâce à son email (Email: %s, Site ID : %s)
-ECommerceErrorTooManyThirdPartyFoundDueToEmail                                                      =Trop de tiers trouvés grâce à son email (Email: %s, Site ID : %s)
+ECommerceErrorWhenSynchronizeOrderToInvoice                                                         =Erreur lors de la synchronisation de la facture à partir de la commande (ID distant: %s)
+ECommerceErrorSearchThirdPartyByEmail                                                               =Erreur lors de la recherche du tiers grâce à son e-mail (e-mail: %s, Site ID : %s)
+ECommerceErrorTooManyThirdPartyFoundDueToEmail                                                      =Trop de tiers trouvés grâce à son e-mail (e-mail: %s, Site ID : %s)
 ECommerceErrorWhenSearchThirdPartyByName                                                            =Erreur lors de la recherche du tiers grâce a son nom (Nom: %s, Site ID : %s)
 ECommerceErrorTooManyThirdPartyFoundDueToName                                                       =Trop de tiers trouvés grâce a son nom (Nom: %s, Site ID : %s)
 ECommerceErrorThirdPartyFoundDueToNameIsTheAnonymousThirdParty                                      =Erreur, le tiers trouvé grâce a son nom est le tiers pour les utilisateurs anonymes (non connectés)
-ECommerceErrorUpdateContact                                                                         =Erreur lors de la mise a jour du contact de la pièce dans Dolibarr (Ligne ID : %s, ID : %s, Type ID : %s, Statut: %s)
+ECommerceErrorUpdateContact                                                                         =Erreur lors de la mise à jour du contact de la pièce dans Dolibarr (Ligne ID : %s, ID : %s, Type ID : %s, Statut: %s)
 ECommerceErrorAddContact                                                                            =Erreur lors de l'ajout du contact dans la pièce dans Dolibarr (ID : %s, Type: %s, Source: %s)
 ECommerceErrorGetPaymentGateways                                                                    =Erreur lors du chargement des modes de paiements synchronisés (Site ID : %s)
 ECommerceErrorGetProductCategories                                                                  =Erreur lors du chargement des catégories de produit Dolibarr
 ECommerceErrorPrivateThirdPartyTypeNotFound                                                         =Le type de tiers "Particulier" avec le code "TE_PRIVATE" n'est pas activé ou a été supprimé du dictionnaires des type de tiers
 ECommerceErrorSynchronizeWebHook                                                                    =Erreur lors de la synchronisation de la ligne de la file d'attente (ID : %s, Topic: %s)
-ECommerceErrorSetLastSyncDateCustome                                                                =Erreur lors de la mise à jour de la date de la plus récente date de synchronisation des clients pour le site (ID : %s)
-ECommerceErrorSetLastSyncDateProduct                                                                =Erreur lors de la mise à jour de la date de la plus récente date de synchronisation des produits pour le site (ID : %s)
-ECommerceErrorSetLastSyncDateOrder                                                                  =Erreur lors de la mise à jour de la date de la plus récente date de synchronisation des commandes pour le site (ID : %s)
-ECommerceErrorUpdatePrivateNote                                                                     =Erreur lors de la mise a jour de la note privée
+ECommerceErrorSetLastSyncDateCustome                                                                =Erreur lors de la mise à jour de la date de la plus récente synchronisation des clients pour le site (ID : %s)
+ECommerceErrorSetLastSyncDateProduct                                                                =Erreur lors de la mise à jour de la date de la plus récente synchronisation des produits pour le site (ID : %s)
+ECommerceErrorSetLastSyncDateOrder                                                                  =Erreur lors de la mise à jour de la date de la plus récente synchronisation des commandes pour le site (ID : %s)
+ECommerceErrorUpdatePrivateNote                                                                     =Erreur lors de la mise à jour de la note privée
 ECommerceErrorGetEMailTemplate                                                                      =Erreur lors de la récupération du modèle d'e-mail
 ECommerceErrorWhenCheckOrderExist                                                                   =Erreur lors du test si la commande existe dans Dolibarr
-ECommerceErrorWhenCheckOrderExistFromData                                                           =Erreur lors du test si la commande existe dans Dolibarr grâce aux données distants
-ECommerceErrorWhenProcessPendingWebHooks                                                            =Erreur lors de la synchronisation de la file d'attente des WebHooks
-ECommerceErrorWebHooksStatusNotActivated                                                            =Le crochet WEB (WebHook) "%s" (ID distant: %s) n'est pas activé (Infos complémentaires: %s)
-ECommerceErrorCheckWebHooksStatus                                                                   =Erreur lors de la vérification des crochet WEB (WebHook) du site "%s" (ID : %s)
-ECommerceErrorWhenCheckingWebHooksStatus                                                            =Erreur lors de la vérification des crochet WEB (WebHook)
+ECommerceErrorWhenCheckOrderExistFromData                                                           =Erreur lors du test si la commande existe dans Dolibarr grâce aux données distantes
+ECommerceErrorWhenProcessPendingWebHooks                                                            =Erreur lors de la synchronisation de la file d'attente des crochets web (WebHooks)
+ECommerceErrorWebHooksStatusNotActivated                                                            =Le crochet web (WebHook) "%s" (ID distant: %s) n'est pas activé (Infos complémentaires: %s)
+ECommerceErrorCheckWebHooksStatus                                                                   =Erreur lors de la vérification des crochet web (WebHooks) du site "%s" (ID : %s)
+ECommerceErrorWhenCheckingWebHooksStatus                                                            =Erreur lors de la vérification des crochet web (WebHooks)
 ECommerceErrorTooManyProductLinkToTheRemoteID                                                       =Trop de produits (IDs: %s) liés au même produit distant (ID distant: %s, Site ID : %s)
-ECommerceErrorDeleteProductLink                                                                     =Erreur lors de la suppression du lien avec produit distant (ID distant: %s)
+ECommerceErrorDeleteProductLink                                                                     =Erreur lors de la suppression du lien avec le produit distant (ID distant: %s)
 ECommerceErrorWhenGetProductToUnlink                                                                =Erreur lors de la récupération des produits à délier (Site: %s; Données: %s)
 ECommerceErrorWhenUnlinkProductByProductId                                                          =Erreur lors de la suppression du lien du produit (Site: %s; ID : %s)
 ECommerceErrorWhenUnlinkProductByRemoteId                                                           =Erreur lors de la suppression du lien du produit (Site: %s; ID distant: %s)
 ECommerceErrorWhenUnlinkProduct                                                                     =Erreur lors de la suppression du lien du produit (Site: %s; ID : %s; ID distant: %s)
 ECommerceErrorWhenUnlinkProductCategory                                                             =Erreur lors de la suppression de la catégorie sur le produit (Site: %s; ID : %s; Catégorie ID : %s)
 ECommerceErrorUpdateRefProduct                                                                      =Erreur lors de la modification de la référence du produit '%s' vers la nouvelle référence '%s' (elle existe déjà)
-ECommerceErrorFetchProductByRef                                                                     =Erreur lors du chargement du produit par sa reference (Ref: %s)
-ECommerceErrorProductNotFoundByRef                                                                  =Le produit n'as pas été trouvé par sa reference (Ref: %s)
-ECommerceErrorProductRefMandatory2                                                                  =Le produit "%s" n'as de reference sur le site
+ECommerceErrorFetchProductByRef                                                                     =Erreur lors du chargement du produit par sa référence (Ref: %s)
+ECommerceErrorProductNotFoundByRef                                                                  =Le produit n'as pas été trouvé par sa référence (Ref: %s)
+ECommerceErrorProductRefMandatory2                                                                  =Le produit "%s" n'as de référence sur le site E-Commerce
 ECommerceErrorSynchronizeProductComponent                                                           =Le composant (ID distant: %s, Site ID: %s) n'a pas réussi à se synchroniser
 ECommerceErrorFetchProductComponents                                                                =Erreur lors de la récupération des composants constituant le produit (ID: %s)
 ECommerceErrorAddProductComponent                                                                   =Erreur lors de l'ajout du composant (ID: %s, Qty: %s) constituant le produit (ID: %s)
 ECommerceErrorUpdateProductComponent                                                                =Erreur lors de la mise à jour du composant (ID: %s, Qty: %s) constituant le produit (ID: %s)
 ECommerceErrorDelProductComponent                                                                   =Erreur lors de la suppression du composant (ID: %s) constituant le produit (ID: %s)
-ECommerceErrorSetOrderCorrectAmount                                                                 =Erreur lors du forcage du prix TTC de la commande
-ECommerceErrorSetInvoiceCorrectAmount                                                               =Erreur lors du forcage du prix TTC de la facture
+ECommerceErrorSetOrderCorrectAmount                                                                 =Erreur lors du forçage du prix TTC de la commande
+ECommerceErrorSetInvoiceCorrectAmount                                                               =Erreur lors du forçage du prix TTC de la facture
 
 ############################################################################################
 # Warnings
@@ -563,5 +563,5 @@ ECommerceWarningWrongAmountTTCWithPaid                                          
 ECommerceWarningOrderThirdPartyNotSupported                                                         =Attention !! La commande (ID : %s) est ignorée car elle a été créée par un client (ID : %s) dont le type n'est pas autorisé dans la configuration
 ECommerceWarningSynchronizeWebHook                                                                  =Attention !! Lors de la synchronisation de la ligne de la file d'attente (ID : %s, Topic: %s)
 ECommerceWarningUpdateOrderNotSynchronized                                                          =Attention !! Tentative de mise à jour d'une commande non synchronisée
-ECommerceWarningNotifyEmailErrorCheckWebHooksStatusNotDefined                                       =Attention !! La variable globale ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_STATUS contenant les adresses emails séparées par des virgules n'a pas été activée
-ECommerceWarningNotifyEmailErrorCheckWebHooksVolumetryNotDefined                                    =Attention !! La variable globale ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_VOLUMETRY contenant les adresses emails séparées par des virgules n'a pas été activée
+ECommerceWarningNotifyEmailErrorCheckWebHooksStatusNotDefined                                       =Attention !! La variable globale ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_STATUS (contenant les adresses e-mails séparées par des virgules) est inactive
+ECommerceWarningNotifyEmailErrorCheckWebHooksVolumetryNotDefined                                    =Attention !! La variable globale ECOMMERCE_NOTIFY_EMAIL_ERRORS_CHECK_WEBHOOKS_VOLUMETRY (contenant les adresses e-mails séparées par des virgules) est inactive
