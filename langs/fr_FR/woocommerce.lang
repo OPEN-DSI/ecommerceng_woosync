@@ -15,12 +15,12 @@ ECommerceWoocommerceGetProductToUpdate                               =Erreur de 
 ECommerceWoocommerceGetRemoteCategoryTree                            =Erreur de récupération de la liste des catégories à mettre à jour sur le site '%s': %s
 ECommerceWoocommerceGetSocieteToUpdate                               =Erreur de récupération de la liste des sociétés à mettre à jour sur le site '%s': %s
 ECommerceWoocommerceSendFileForCommande                              =Erreur pour lier le fichier avec la commande distante 'id:%s' sur le site '%s': %s
-ECommerceWoocommerceSendFileForCommandeInWordpress                   =Erreur de l'envoi du fichier pour la commande distante 'id:%s' dans les média de Wordpress sur le site '%s': %s
+ECommerceWoocommerceSendFileForCommandeInWordpress                   =Erreur de l'envoi du fichier pour la commande distante 'id:%s' dans les médias de Wordpress sur le site '%s': %s
 ECommerceWoocommerceUpdateRemoteCommande                             =Erreur de mise à jour de la commande distante 'id:%s' sur le site '%s': %s
 ECommerceWoocommerceUpdateRemoteProduct                              =Erreur de mise à jour du produit distant 'id:%s' sur le site '%s': %s
 ECommerceWoocommerceUpdateRemoteTranslatedProduct                    =Erreur de mise à jour de la traduction 'id:%s' du produit distant 'id:%s' sur le site '%s': %s
 ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct              =Erreur de récupération du produit distant 'id:%s' sur le site '%s': %s
-ECommerceWoocommerceUpdateRemoteProductSendImage                     =Erreur de l'envoi d'une image pour le produit distante 'id:%s' dans les média de Wordpress sur le site '%s': %s
+ECommerceWoocommerceUpdateRemoteProductSendImage                     =Erreur de l'envoi d'une image pour le produit distante 'id:%s' dans les médias de Wordpress sur le site '%s': %s
 ECommerceWoocommerceUpdateRemoteProductVariation                     =Erreur de mise à jour de la variation 'id:%s' du produit distant 'id:%s' sur le site '%s': %s
 ECommerceWoocommerceUpdateRemoteTranslatedProductVariation           =Erreur de mise à jour de la traduction 'id:%s' de la variation 'id:%s' du produit distant 'id:%s' sur le site '%s'
 ECommerceWoocommerceUpdateRemoteSociete                              =Erreur de mise à jour de la société distante 'id:%s' sur le site '%s': %s
@@ -32,7 +32,7 @@ ECommerceWoocommerceUpdateRemoteStockTranslatedProductVariation      =Erreur de 
 ECommerceWoocommerceGetAllWoocommerceAttributes                      =Erreur de récupération des données des attributs sur le site '%s': %s
 ECommerceWoocommerceGetAllWoocommerceTaxClass                        =Erreur de récupération des données des classes de taxes sur le site '%s': %s
 ECommerceWoocommerceGetWoocommerceTaxes                              =Erreur de récupération des données des taxes sur le site '%s': %s
-ECommerceWoocommerceCreateRemoteProductSendImage                     =Erreur de l'envoi d'une image pour le produit 'ref:%s' dans les média de Wordpress sur le site '%s': %s
+ECommerceWoocommerceCreateRemoteProductSendImage                     =Erreur de l'envoi d'une image pour le produit 'ref:%s' dans les médias de Wordpress sur le site '%s': %s
 ECommerceWoocommerceGetAllWoocommercePaymentGateways                 =Erreur de récupération des données des classes de taxes sur le site '%s': %s
 ECommerceWoocommerceGetTranslatedProductVariation                    =Erreur de récupération de la traduction 'id:%s' de la variation 'id:%s' du produit distant 'id:%s' sur le site '%s':
 
@@ -54,16 +54,16 @@ ECommerceWoocommerceConfirmUpdateDictTaxClasses                      =Confirmer 
 ECommerceWoocommerceUpdateDictTaxClasses                             =Mise à jour du dictionnaire des classes de TVA
 ECommerceWoocommerceErrorDisableDictTaxClass                         =Erreur de désactivation d'une classe de TVA, code:"%s", erreur:"%s"
 ECommerceWoocommerceErrorAddDictTaxClass                             =Erreur d'ajout d'une classe de TVA, code:"%s", nom:"%s", erreur:"%s"
-ECommerceWoocommerceErrorUpdateDictTaxClass                          =Erreur de mise a jour d'une classe de TVA, code:"%s", erreur:"%s"
+ECommerceWoocommerceErrorUpdateDictTaxClass                          =Erreur de mise à jour d'une classe de TVA, code:"%s", erreur:"%s"
 
 ECommercengWoocommerceDictTaxRate                                    =Liste des taux de TVA sur Woocommerce
 ECommerceWoocommerceErrorDisableDictTaxRate                          =Erreur de désactivation d'un taux de TVA, ID:"%s", erreur:"%s"
 ECommerceWoocommerceErrorAddDictTaxRate                              =Erreur d'ajout d'un taux de TVA, ID:"%s", erreur:"%s"
-ECommerceWoocommerceErrorUpdateDictTaxRate                           =Erreur de mise a jour d'un taux de TVA, ID:"%s", erreur:"%s"
+ECommerceWoocommerceErrorUpdateDictTaxRate                           =Erreur de mise à jour d'un taux de TVA, ID:"%s", erreur:"%s"
 
 ECommerceWoocommerceErrorDisableDictAttribute                        =Erreur de désactivation d'un attribut, slug:"%s", erreur:"%s"
 ECommerceWoocommerceErrorAddDictAttribute                            =Erreur d'ajout d'un attribut, slug:"%s", nom:"%s", erreur:"%s"
-ECommerceWoocommerceErrorUpdateDictAttribute                         =Erreur de mise a jour d'un attribut, slug:"%s", erreur:"%s"
+ECommerceWoocommerceErrorUpdateDictAttribute                         =Erreur de mise à jour d'un attribut, slug:"%s", erreur:"%s"
 
 ECommercengWoocommerceStatusDraft                                    =Brouillon
 ECommercengWoocommerceStatusPending                                  =En attente de relecture
@@ -87,7 +87,7 @@ ECommercengWoocommerceOrderLink                                      =Lien vers 
 
 ECommercengWoocommerceProductExtrafieldsCorrespondenceAttribute                 = Correspondance des attributs supplémentaires avec les attributs de Woocommerce
 ECommercengWoocommerceProductAttribute                                          = Attribut WooCommerce
-ECommercengWoocommerceProductExtrafieldsCorrespondenceAttributeSetupDescription = Code champ dolibarr : %s. Les valeurs du champs complémentaire Dolibarr doit être sous la forme "Nom,Nom" exemple: "Jaune,Jaune"
+ECommercengWoocommerceProductExtrafieldsCorrespondenceAttributeSetupDescription = Code champ dolibarr : %s. Les valeurs du champ complémentaire Dolibarr doit être sous la forme "Nom,Nom" exemple: "Jaune,Jaune"
 
 ECommercengWoocommerceExtrafieldsCorrespondence                      = Correspondance des attributs supplémentaires avec les méta-données de Woocommerce
 ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription      = Renseigner le nom de la méta-donnée correspondant à cet attribut supplémentaire : %s
@@ -128,21 +128,21 @@ ECommercengWoocommerceCompanyRole_shop_manager                       = Gestionna
 ECommercengWoocommerceCompanyRole_                                   = Pas de rôle sur ce site
 
 ECommerceWoocommerceCustomerRolesSupported                           = Rôles utilisateurs supportés
-ECommerceWoocommerceCustomerRolesSupportedDescription                = Listes des rôles utilisateurs supportées pour la synchronisation.(vide pour tous les rôles; liste de valeurs séparées par des virgules)<br>Seules les valeurs retournées par l'API sont supportées. ex: customer, administrator, author, contributor, editor, subscriber, shop_manager, ...<br>Seul les utilisateurs des rôles définis seront traitées<br>Seul les commandes invités ou dont le client est synchronisé seront traitées
+ECommerceWoocommerceCustomerRolesSupportedDescription                = Liste des rôles utilisateurs supportés pour la synchronisation.(vide pour tous les rôles; liste de valeurs séparées par des virgules)<br>Seules les valeurs retournées par l'API sont supportées. ex: customer, administrator, author, contributor, editor, subscriber, shop_manager, ...<br>Seuls les utilisateurs des rôles définis seront traités<br>Seules les commandes invités ou dont le client est synchronisé seront traitées
 
 ECommerceWooCommerceBundleComposite                                  = Composition du kit :
 
-ECommerceWooCommerceErrorOrderStatusNotConfigured                    = La correspondance du statut "%s" de la commande n'est pas paramétré dans la configuration du site (il faut peut etre le rajouter dans le champs complémentaire de la commande "Statut sur le site [%s]")
-ECommerceWooCommerceErrorDiscountCodeServiceNotConfigured            = Le service gérant les codes promos n'a pas été configurer dans le paramétrage du site "%s".
-ECommerceWooCommerceErrorPwGiftCardsServiceNotConfigured             = Le service gérant les cartes cadeaux n'a pas été configurer dans le paramétrage du site "%s".
+ECommerceWooCommerceErrorOrderStatusNotConfigured                    = La correspondance du statut "%s" de la commande n'est pas paramétrée dans la configuration du site (il faut peut-être le rajouter dans le champ complémentaire de la commande "Statut sur le site [%s]")
+ECommerceWooCommerceErrorDiscountCodeServiceNotConfigured            = Le service gérant les codes promos n'a pas été configuré dans le paramétrage du site "%s".
+ECommerceWooCommerceErrorPwGiftCardsServiceNotConfigured             = Le service gérant les cartes cadeaux n'a pas été configuré dans le paramétrage du site "%s".
 
 ECommerceWoocommerceErrorDisableDictTaxClass                         = Erreur lors de la désactivation de la ligne de la classe de taxe (Code: %s): %s
-ECommerceWoocommerceErrorUpdateDictTaxClass                          = Erreur lors de la mise a jour de la ligne de la classe de taxe (Code: %s): %s
+ECommerceWoocommerceErrorUpdateDictTaxClass                          = Erreur lors de la mise à jour de la ligne de la classe de taxe (Code: %s): %s
 ECommerceWoocommerceErrorAddDictTaxClass                             = Erreur lors de l'ajout de la ligne de la classe de taxe (Code: %s): %s
 ECommerceWoocommerceErrorDisableDictTaxRate                          = Erreur lors de la désactivation de la ligne du taux de la taxe (ID: %s): %s
-ECommerceWoocommerceErrorUpdateDictTaxRate                           = Erreur lors de la mise a jour de la ligne du taux de la taxe (ID: %s): %s
+ECommerceWoocommerceErrorUpdateDictTaxRate                           = Erreur lors de la mise à jour de la ligne du taux de la taxe (ID: %s): %s
 ECommerceWoocommerceErrorAddDictTaxRate                              = Erreur lors de l'ajout de la ligne du taux de la taxe (ID: %s): %s
 ECommerceWooCommerceErrorTaxNotFound                                 = Erreur la taxe n'a pas été trouvée dans celles synchronisées (ID: %s)
 ECommerceWooCommerceErrorDontSupportMultiTaxes                       = Le module ne supporte pas actuellement le multi-taxe.
 ECommerceWoocommerceErrorGetWoocommerceWebHooks                      = Erreur de récupération des crochets web sur le site '%s': %s
-ECommerceWoocommerceErrorTaxClassNotFoundFromTaxRate                 = La taxe '%s' n'est pas trouver dans le dictionnaire de taxe du module WooSync pour le site '%s' pour le produit '%s'
+ECommerceWoocommerceErrorTaxClassNotFoundFromTaxRate                 = La taxe '%s' n'est pas trouvée dans le dictionnaire de taxe du module WooSync pour le site '%s' pour le produit '%s'
