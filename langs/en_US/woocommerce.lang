@@ -5,6 +5,7 @@ ECommerceWoocommerceConnect=Error connecting to site '%s': %s
 ECommerceWoocommerceConvertRemoteObjectIntoDolibarrCommande=Error retrieving orders on the site '%s': %s
 ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct=Error retrieving products on the site '%s': %s
 ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProductVariations=Error retrieving variations of remote product 'id:%s' on the site '%s': %s
+ECommerceWoocommerceCheckRemoteProductExist                          =Erreur lors de la verification de l'existance du produit %s sur le site '%s': %s
 ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSociete=Erreor retrieving companies on the site '%s': %s
 ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSocpeople=Error retrieving companies (for contact/adresses) on the site '%s': %s
 ECommerceWoocommerceCreateRemoteProduct=Error creating the product 'id:%s' on the site '%s': %s

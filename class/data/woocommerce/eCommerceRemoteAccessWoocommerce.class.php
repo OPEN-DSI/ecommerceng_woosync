@@ -983,6 +983,46 @@ class eCommerceRemoteAccessWoocommerce
     }
 
 	/**
+	 * Call Woocommerce API to check if the remote product exist.
+	 *
+	 * @param	string		$remote_id          Remote ID of a product
+	 * @return	int								<0 if KO, =0 if NO, >0 if Yes
+	 */
+	public function checkRemoteProductExist($remote_id)
+	{
+		dol_syslog(__METHOD__ . ": Check remote products ID: {$remote_id} exist on site ID {$this->site->id}", LOG_DEBUG);
+		global $langs;
+
+		$this->errors = array();
+
+		$ids = explode('|', $remote_id);
+		$product_id = $ids[0];
+		if (isset($ids[1])) {
+			$product_variation_id = $ids[1];
+		}
+
+		$stopwatch_id = eCommerceUtils::startStopwatch(__METHOD__ . " - GET product {$remote_id}");
+		try {
+			$page = $this->client->get('products/' . $product_id . (!empty($product_variation_id) ? '/variations/'.$product_variation_id : ''));
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+		} catch (HttpClientException $fault) {
+			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+
+			if ($fault->getCode() == 404 && strpos($fault->getMessage(), '[woocommerce_rest_product_invalid_id]') !== false) {
+				return 0;
+			}
+
+			$this->errors[] = $langs->trans('ECommerceWoocommerceCheckRemoteProductExist', $remote_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage());
+			dol_syslog(__METHOD__ .
+				': Error:' . $langs->transnoentitiesnoconv('ECommerceWoocommerceCheckRemoteProductExist', $remote_id, $this->site->name, $fault->getCode() . ': ' . $fault->getMessage()) .
+				' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
+			return -1;
+		}
+
+		return 1;
+	}
+
+	/**
 	 * Call Woocommerce API to get product datas and put into dolibarr product class.
 	 *
 	 * @param	array		$remote_data 			Remote data

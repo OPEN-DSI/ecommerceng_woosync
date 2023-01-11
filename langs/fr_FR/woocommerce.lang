@@ -5,6 +5,7 @@ ECommerceWoocommerceConnect                                          =Erreur de 
 ECommerceWoocommerceConvertRemoteObjectIntoDolibarrCommande          =Erreur de récupération des commandes sur le site '%s': %s
 ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct           =Erreur de récupération des produits sur le site '%s': %s
 ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProductVariations =Erreur de récupération des variations du produit distant 'id:%s' sur le site '%s': %s
+ECommerceWoocommerceCheckRemoteProductExist                          =Erreur lors de la verification de l'existance du produit %s sur le site '%s': %s
 ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSociete           =Erreur de récupération des sociétés sur le site '%s': %s
 ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSocpeople         =Erreur de récupération des sociétés (pour les contacts/adresses) sur le site '%s': %s
 ECommerceWoocommerceCreateRemoteProduct                              =Erreur de création du produit 'id:%s' sur le site '%s': %s

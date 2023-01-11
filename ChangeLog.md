@@ -1,9 +1,11 @@
 # ChangeLog
 
-## next
+## 4.1.29.0
 - Fix: Error init module if MAIN_DB_PREFIX is not llx by nicolas-eoxia
 - Update eCommerceSynchro.class.php for synchSocpeople() function by thibdrev
 - Update ecommerce.lang by thibdrev
+- Correction orthographe-conjugaison by smuteau
+- Delie automatiquement le produit Dolibarr aillant la meme ref du produit synchronisé si le produit distant lié au produit dolibarr n'existe plus sur le site 
 
 ## 4.1.28.0
 - Ne recherche le tiers par le nom qu'avec le code postal

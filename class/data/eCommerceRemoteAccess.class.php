@@ -201,6 +201,20 @@ class eCommerceRemoteAccess
 	    return $result;
 	}
 
+	/**
+	 * Check if a remote product exist from instantiated class in the constructor
+	 *
+	 * @param	string		$remote_id          Remote ID of a product
+	 * @return	int								<0 if KO, =0 if NO, >0 if Yes
+	 */
+	public function checkRemoteProductExist($remote_id)
+	{
+		$result=$this->class->checkRemoteProductExist($remote_id);
+		$this->error=$this->class->error;
+		$this->errors=$this->class->errors;
+		return $result;
+	}
+
     /**
      * Put the remote data into commande dolibarr data from instantiated class in the constructor
      *

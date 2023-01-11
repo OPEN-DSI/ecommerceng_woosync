@@ -3371,8 +3371,22 @@ class eCommerceSynchro
 									$check = $matches1[1] == $matches2[1];
 								}
 								if (!$check) {
-									$this->errors[] = $this->langs->trans('ECommerceErrorProductAlreadyLinkedWithRemoteProduct', $product_ref, $this->eCommerceProduct->remote_id);
-									$error++;
+									// Check if the remote product exist
+									$remote_product_exist = $this->eCommerceRemoteAccess->checkRemoteProductExist($this->eCommerceProduct->remote_id);
+									if ($remote_product_exist < 0) {
+										$this->errors = array_merge($this->errors, $this->eCommerceRemoteAccess->errors);
+										$error++;
+									} elseif ($remote_product_exist > 0) {
+										$this->errors[] = $this->langs->trans('ECommerceErrorProductAlreadyLinkedWithRemoteProduct', $product_ref, $this->eCommerceProduct->remote_id);
+										$error++;
+									} else {
+										$result = $this->unlinkProduct($this->eCommerceSite->id, 0, $this->eCommerceProduct->remote_id);
+										if ($result < 0) {
+											$error++;
+										}
+
+										$this->initECommerceProduct();
+									}
 								}
 							}
 						}
