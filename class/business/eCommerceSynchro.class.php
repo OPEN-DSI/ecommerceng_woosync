@@ -3630,28 +3630,33 @@ class eCommerceSynchro
 										$this->errors = array_merge(array($this->langs->trans('ECommerceErrorNumberCategoryToLinkMismatched', implode(',', $product_data['categories']), implode(',', $category_ids))), $this->errors);
 										$error++;
 									} else {
-										// delete categories
+										// Add root category if not in the remote product categories
+										if (!in_array($this->eCommerceSite->fk_cat_product, $category_ids)) $category_ids[] = $this->eCommerceSite->fk_cat_product;
+
+										// Get all current categories on product
 										$cat = new Categorie($this->db);
 										$product_category_ids = $cat->containing($product->id, 'product', 'id');
-										if (is_array($product_category_ids)) {
-											$this->loadProductCategories();
-											foreach ($product_category_ids as $product_category_id) {
-												if (isset($this->product_category_cached[$product_category_id])) {
-													$cat = new Categorie($this->db);
-													$cat->fetch($product_category_id);
-													$cat->del_type($product, 'product');
-												}
+										$product_category_ids = is_array($product_category_ids) ? $product_category_ids : array();
+
+										// Load all synchronized categories of the site
+										$this->loadProductCategories();
+
+										// Add new categories
+										foreach ($category_ids as $category_id) {
+											if (!in_array($category_id, $product_category_ids)) {
+												$cat = new Categorie($this->db); // Instanciate a new cat without id (to avoid fetch)
+												$cat->id = $category_id;     // Affecting id (for calling add_type)
+												$cat->add_type($product, 'product');
 											}
 										}
 
-										// add root category
-										if (!in_array($this->eCommerceSite->fk_cat_product, $category_ids)) $category_ids[] = $this->eCommerceSite->fk_cat_product;
-
-										// add categories
-										foreach ($category_ids as $category_id) {
-											$cat = new Categorie($this->db); // Instanciate a new cat without id (to avoid fetch)
-											$cat->id = $category_id;     // Affecting id (for calling add_type)
-											$cat->add_type($product, 'product');
+										// Delete old categories
+										foreach ($product_category_ids as $category_id) {
+											if (isset($this->product_category_cached[$this->eCommerceSite->id][$category_id]) && !in_array($category_id, $category_ids)) {
+												$cat = new Categorie($this->db);
+												$cat->fetch($category_id);
+												$cat->del_type($product, 'product');
+											}
 										}
 									}
 								} else {
@@ -4495,9 +4500,9 @@ class eCommerceSynchro
 													if (isset($item['buy_price'])) {
 														$buy_price = $item['buy_price'];
 													} else {
-														$buy_price = $item['price'];
+														$buy_price = 0;
 														if ($fk_product > 0) {
-															$result = $order->defineBuyPrice($buy_price, 0, $fk_product);
+															$result = $order->defineBuyPrice(0, 0, $fk_product);
 															if ($result < 0) {
 																$this->errors[] = $this->langs->trans('ECommerceErrorOrderDefineBuyPrice', $fk_product, $buy_price);
 																if (!empty($order->error)) $this->errors[] = $order->error;
@@ -4507,6 +4512,9 @@ class eCommerceSynchro
 															} else {
 																$buy_price = $result;
 															}
+														}
+														if (empty($buy_price) && isset($conf->global->ForceBuyingPriceIfNull) && $conf->global->ForceBuyingPriceIfNull > 0) {
+															$buy_price = $item['price'];
 														}
 													}
 
@@ -6866,7 +6874,7 @@ class eCommerceSynchro
 	 */
 	public function loadProductCategories()
 	{
-		if (!isset($this->product_category_cached)) {
+		if (!isset($this->product_category_cached[$this->eCommerceSite->id])) {
 			require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 			$cat = new Categorie($this->db);
 			$result = $cat->get_full_arbo('product', $this->eCommerceSite->fk_cat_product, 1);
@@ -6877,7 +6885,12 @@ class eCommerceSynchro
 				return -1;
 			}
 
-			$this->product_category_cached = $result;
+			$list = array();
+			foreach ($result as $item) {
+				$list[$item['id']] = $item['id'];
+			}
+
+			$this->product_category_cached[$this->eCommerceSite->id] = $list;
 		}
 
 		return 1;

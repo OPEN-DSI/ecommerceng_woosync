@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.1.30.0
+- Correction de la recuperation du prix d'achat en fonction du parametrage des marges lors d'ajout de ligne sur la commande synchronisé 
+- Modification de la facon de synchroniser les catégories du produit synchronisé 
+
 ## 4.1.29.0
 - Fix: Error init module if MAIN_DB_PREFIX is not llx by nicolas-eoxia
 - Update eCommerceSynchro.class.php for synchSocpeople() function by thibdrev
