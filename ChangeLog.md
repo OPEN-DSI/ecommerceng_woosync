@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.31.0
+- Ajout d'une variable global ECOMMERCENG_WOOCOMMERCE_NO_VERIFY_SSL pour tester la connection SSL avec un certificat auto-signé
+
 ## 4.1.30.0
 - Correction de la recuperation du prix d'achat en fonction du parametrage des marges lors d'ajout de ligne sur la commande synchronisé 
 - Modification de la facon de synchroniser les catégories du produit synchronisé 

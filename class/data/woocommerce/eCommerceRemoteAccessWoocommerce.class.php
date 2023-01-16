@@ -230,7 +230,8 @@ class eCommerceRemoteAccessWoocommerce
                     'wp_api' => true,
                     'version' => 'wc/v3',
                     'timeout' => $response_timeout,
-                    'query_string_auth' => !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_QUERY_STRING_AUTH),
+					'verify_ssl' => empty($conf->global->ECOMMERCENG_WOOCOMMERCE_NO_VERIFY_SSL),
+					'query_string_auth' => !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_QUERY_STRING_AUTH),
                 ]
             );
 //            $filters = [ 'page' => 1, 'per_page' => 1 ];
