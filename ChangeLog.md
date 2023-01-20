@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 4.1.32.0
+- Correction de la synchronisation des produits depuis la liste des crochets web
+- Correction du passage de la facture au statut payée
+- Correction de la récupération du prix d'achat sur la synchro des commandes (cas factures seules)
+
 ## 4.1.31.0
 - Ajout d'une variable global ECOMMERCENG_WOOCOMMERCE_NO_VERIFY_SSL pour tester la connection SSL avec un certificat auto-signé
 

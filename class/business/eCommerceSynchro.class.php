@@ -2611,12 +2611,12 @@ class eCommerceSynchro
 			} else {
 				$product_ref = dol_string_nospecial(trim($product_data['ref']));
 				// if the ref not defined in the data provided
-				if (empty($product_ref) && (empty($conf->global->PRODUCT_CODEPRODUCT_ADDON) || $conf->global->PRODUCT_CODEPRODUCT_ADDON == 'mod_codeproduct_leopard')) {
+				if (!empty($product_data['has_variations']) || (empty($product_ref) && (empty($conf->global->PRODUCT_CODEPRODUCT_ADDON) || $conf->global->PRODUCT_CODEPRODUCT_ADDON == 'mod_codeproduct_leopard'))) {
 					$tmp = explode('|', $product_data['remote_id']);
 					if (count($tmp) > 2) {
-						$remote_id_to_synchronize = array($product_data['remote_parent_id']);
+						$remote_id_to_synchronize = $product_data['remote_parent_id'];
 					} else {
-						$remote_id_to_synchronize = array($product_data['remote_id']);
+						$remote_id_to_synchronize = $product_data['remote_id'];
 					}
 
 					// Check if product already synchronized
@@ -2635,23 +2635,31 @@ class eCommerceSynchro
 					}
 
 					// Get last data of product
-					$products_data = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrProduct(null, null, $remote_id_to_synchronize, 1);
+					$products_data = $this->eCommerceRemoteAccess->convertRemoteObjectIntoDolibarrProduct(null, null, array($remote_id_to_synchronize), 1);
 					if ($products_data === false) {
 						$this->errors = array_merge($this->errors, $this->eCommerceRemoteAccess->errors);
 						return -1;
 					}
 
-					$product_data = $products_data[0];
-					if (empty($product_data)) {
+					if (empty($products_data)) {
 						// Product not found
-						dol_syslog(__METHOD__ . " - Product not found (Remote ID: {$remote_id_to_synchronize[0]})", LOG_NOTICE);
+						dol_syslog(__METHOD__ . " - Product not found (Remote ID: {$remote_id_to_synchronize})", LOG_NOTICE);
 						return 0;
+					}
+				} else {
+					$products_data = array($product_data);
+				}
+
+				if (is_array($products_data)) {
+					foreach ($products_data as $product_data) {
+						$result = $this->synchronizeProduct($product_data);
+						if ($result < 0) {
+							return -1;
+						}
 					}
 				}
 
-				$result = $this->synchronizeProduct($product_data);
-
-				return $result;
+				return 1;
 			}
 		} catch (Exception $e) {
 			$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeProducts')), $this->errors);
@@ -5422,9 +5430,9 @@ class eCommerceSynchro
 																		if (isset($item['buy_price'])) {
 																			$buy_price = $item['buy_price'];
 																		} else {
-																			$buy_price = $item['price'];
+																			$buy_price = 0;
 																			if ($fk_product > 0) {
-																				$result = $order->defineBuyPrice($buy_price, 0, $fk_product);
+																				$result = $order->defineBuyPrice(0, 0, $fk_product);
 																				if ($result < 0) {
 																					$this->errors[] = $this->langs->trans('ECommerceErrorOrderDefineBuyPrice', $fk_product, $buy_price);
 																					if (!empty($order->error)) $this->errors[] = $order->error;
@@ -5434,6 +5442,9 @@ class eCommerceSynchro
 																				} else {
 																					$buy_price = $result;
 																				}
+																			}
+																			if (empty($buy_price) && isset($conf->global->ForceBuyingPriceIfNull) && $conf->global->ForceBuyingPriceIfNull > 0) {
+																				$buy_price = $item['price'];
 																			}
 																		}
 
@@ -5805,7 +5816,9 @@ class eCommerceSynchro
 														}
 													}
 												}
-											} else {
+											}
+											$invoice->fetch($invoice->id); // Reload to get new records
+											if (empty($invoice->total_ttc) || (empty($invoice->paye) && ((string)$invoice->getRemainToPay()) == 0)) {
 												$result = $invoice->set_paid($this->user);
 												if ($result < 0) {
 													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceSetPaid');

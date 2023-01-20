@@ -1175,6 +1175,7 @@ class eCommerceRemoteAccessWoocommerce
 			'stock_qty' => $remote_data->stock_quantity,
 			'is_in_stock' => $remote_data->in_stock,   // not used
 			'variations' => $variations,
+			'has_variations' => !empty($remote_data->variations),
 			'extrafields' => [
 				"ecommerceng_wc_regular_price_{$this->site->id}_{$conf->entity}" => $remote_data->regular_price,
 				"ecommerceng_wc_sale_price_{$this->site->id}_{$conf->entity}" => $remote_data->sale_price,
