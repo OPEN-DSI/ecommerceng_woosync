@@ -3467,7 +3467,7 @@ class eCommerceRemoteAccessWoocommerce
                 ' - Request:' . json_encode($fault->getRequest()) . ' - Response:' . json_encode($fault->getResponse()), LOG_ERR);
             return false;
         }
-        $results = isset($results->products) ? $results->products : is_array($results) ? $results : [];
+          $results = ((isset($results->products) ? $results->products : is_array($results) ) ? $results : []);
 
 		$remote_id = '';
 		$remote_url = '';
