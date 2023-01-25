@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.33.0
+- Correction sur le champ "total_tva" qui était nommé en "tva" en version antérieure à 14 
+
 ## 4.1.32.0
 - Correction de la synchronisation des produits depuis la liste des crochets web
 - Correction du passage de la facture au statut payée

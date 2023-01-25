@@ -4078,6 +4078,8 @@ class eCommerceSynchro
 		$this->warnings = array();
 		$error = 0;
 
+        $infV14 = (version_compare(DOL_VERSION, "14.0.0") < 0);
+
 		require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
 		$order = new Commande($this->db);
 
@@ -4570,7 +4572,7 @@ class eCommerceSynchro
 									// Force set amount if another amount paid
 									if (!$error && price2num($order_data['payment_amount_ttc']) != price2num($order->total_ttc)) {
 										$sql = "UPDATE " . MAIN_DB_PREFIX . $order->table_element .
-											" SET total_tva = " . $order_data['total_tva'] .
+                                            " SET " . ($infV14 ? "tva" : "total_tva") . " = " . $order_data['total_tva'] .
 											" , total_ttc = " . $order_data['payment_amount_ttc'] .
 											" WHERE rowid = " . $order->id;
 
@@ -4823,6 +4825,8 @@ class eCommerceSynchro
 		$this->error = '';
 		$this->errors = array();
 		$error = 0;
+
+        $infV14 = (version_compare(DOL_VERSION, "14.0.0") < 0);
 
 		require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
 		require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php';
@@ -5666,7 +5670,7 @@ class eCommerceSynchro
 										// Force set amount if another amount paid
 										if (!$error && price2num($order_data['payment_amount_ttc']) != price2num($invoice->total_ttc)) {
 											$sql = "UPDATE " . MAIN_DB_PREFIX . $invoice->table_element .
-												" SET total_tva = " . $order_data['total_tva'] .
+                                                " SET " . ($infV14 ? "tva" : "total_tva") . " = " . $order_data['total_tva'] .
 												" , total_ttc = " . $order_data['payment_amount_ttc'] .
 												" WHERE rowid = " . $invoice->id;
 
@@ -5773,7 +5777,7 @@ class eCommerceSynchro
 										// Force set amount if another amount paid
 										if (!$error && price2num($order_data['payment_amount_ttc']) != price2num($invoice->total_ttc)) {
 											$sql = "UPDATE " . MAIN_DB_PREFIX . $invoice->table_element .
-												" SET total_tva = " . $order_data['total_tva'] .
+                                                " SET " . ($infV14 ? "tva" : "total_tva") . " = " . $order_data['total_tva'] .
 												" , total_ttc = " . $order_data['payment_amount_ttc'] .
 												" WHERE rowid = " . $invoice->id;
 
