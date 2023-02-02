@@ -4094,6 +4094,7 @@ class eCommerceSynchro
 			$selected_payment_gateways = null;
 			$payment_method_id = 0;
 			$bypass = false;
+			$v14p = version_compare(DOL_VERSION, '14.0.0', '>=');
 
 			$this->db->begin();
 
@@ -4570,7 +4571,7 @@ class eCommerceSynchro
 									// Force set amount if another amount paid
 									if (!$error && price2num($order_data['payment_amount_ttc']) != price2num($order->total_ttc)) {
 										$sql = "UPDATE " . MAIN_DB_PREFIX . $order->table_element .
-											" SET total_tva = " . $order_data['total_tva'] .
+											" SET " . ($v14p ? "total_tva" : "tva") . " = " . $order_data['total_tva'] .
 											" , total_ttc = " . $order_data['payment_amount_ttc'] .
 											" WHERE rowid = " . $order->id;
 
@@ -4843,6 +4844,7 @@ class eCommerceSynchro
 			$selected_payment_gateways = null;
 			$payment_method_id = 0;
 			$bank_account_id = 0;
+			$v14p = version_compare(DOL_VERSION, '14.0.0', '>=');
 
 			$this->db->begin();
 
@@ -5666,7 +5668,7 @@ class eCommerceSynchro
 										// Force set amount if another amount paid
 										if (!$error && price2num($order_data['payment_amount_ttc']) != price2num($invoice->total_ttc)) {
 											$sql = "UPDATE " . MAIN_DB_PREFIX . $invoice->table_element .
-												" SET total_tva = " . $order_data['total_tva'] .
+												" SET " . ($v14p ? "total_tva" : "tva") . " = " . $order_data['total_tva'] .
 												" , total_ttc = " . $order_data['payment_amount_ttc'] .
 												" WHERE rowid = " . $invoice->id;
 
@@ -5773,7 +5775,7 @@ class eCommerceSynchro
 										// Force set amount if another amount paid
 										if (!$error && price2num($order_data['payment_amount_ttc']) != price2num($invoice->total_ttc)) {
 											$sql = "UPDATE " . MAIN_DB_PREFIX . $invoice->table_element .
-												" SET total_tva = " . $order_data['total_tva'] .
+												" SET " . ($v14p ? "total_tva" : "tva") . " = " . $order_data['total_tva'] .
 												" , total_ttc = " . $order_data['payment_amount_ttc'] .
 												" WHERE rowid = " . $invoice->id;
 

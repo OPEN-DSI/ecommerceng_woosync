@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.33.0
+- Correction support V13 ou moins (colonne tva sur commande/facture)
+
 ## 4.1.32.0
 - Correction de la synchronisation des produits depuis la liste des crochets web
 - Correction du passage de la facture au statut payée
