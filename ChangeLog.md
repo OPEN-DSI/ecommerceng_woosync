@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 4.1.34.0
+- Correction de la prise en compte de l'adresse de livraison
+ (si au moins le nom ou le prenom, et au moins un des 2 champs d'adresses, et le code postal et la ville sont renseignés alors on la traite comme adresse de livraison
+  sinon dans le cas contraire on prend l'adresse de l'expediteur) 
+
 ## 4.1.33.0
 - Correction sur le champ "total_tva" qui était nommé en "tva" en version antérieure à 14 
 

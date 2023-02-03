@@ -1790,9 +1790,9 @@ class eCommerceRemoteAccessWoocommerce
 
 		// Set shipping's address
 		$sContact = $remote_data->shipping;
-		if (!empty($sContact->address_1) || !empty($sContact->address_2) ||
-			!empty($sContact->postcode) || !empty($sContact->city) ||
-			!empty($sContact->country)
+		if ((!empty($sContact->first_name) || !empty($sContact->last_name)) &&
+			(!empty($sContact->address_1) || !empty($sContact->address_2)) &&
+			!empty($sContact->postcode) && !empty($sContact->city)
 		) {
 			if ($bContact->first_name != $sContact->first_name || $bContact->last_name != $sContact->last_name ||
 				$bContact->address_1 != $sContact->address_1 || $bContact->address_2 != $sContact->address_2 ||
