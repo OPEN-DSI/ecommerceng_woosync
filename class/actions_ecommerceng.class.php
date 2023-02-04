@@ -223,7 +223,7 @@ class ActionsECommerceNg
                     }
 
                     $site_ids = array_keys($sites);
-                    $params = count($sites) > 1 ? '&action=update_company_from_ecommerce' : '&action=confirm_update_company_from_ecommerce&confirm=yes&siteid=' . $site_ids[0];
+                    $params = count($sites) > 1 ? '&action=update_company_from_ecommerce' : '&action=confirm_update_company_from_ecommerce&token='.newToken().'&confirm=yes&siteid=' . $site_ids[0];
                     print '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . $params . '">' . $langs->trans("EcommerceUpdateCompanyFromECommerce") . '</a></div>';
                 }
             }
