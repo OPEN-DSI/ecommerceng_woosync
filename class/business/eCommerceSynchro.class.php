@@ -4471,11 +4471,34 @@ class eCommerceSynchro
 													if (empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD)) {
 														$this->initECommerceProduct();
 														$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
-														if ($result < 0 && !empty($this->eCommerceProduct->error)) {
-															$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $item['id_remote_product'], $this->eCommerceSite->id);
-															$this->errors[] = $this->eCommerceProduct->error;
-															$error++;
-															break;  // break on items
+														if ($result < 0) {
+															if (!empty($this->eCommerceProduct->error)) {
+																$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $item['id_remote_product'], $this->eCommerceSite->id);
+																$this->errors[] = $this->eCommerceProduct->error;
+																$error++;
+																break;  // break on items
+															} else { // if no product is found on the matching table, use ref instead, permits WPML products identification
+																$product_ref = trim($item['ref']);
+																if (!empty($product_ref)) {
+																	$product = new Product($this->db);
+																	$result = $product->fetch(0, $product_ref);
+																	if ($result < 0) {
+																		$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductByRef', $product_ref);
+																		$this->errors[] = $product->errorsToString();
+																		$error++;
+																		break;  // break on items
+																	} elseif ($result == 0) {
+																		$this->errors[] = $this->langs->trans('ECommerceErrorProductNotFoundByRef', $product_ref);
+																		$error++;
+																		break;  // break on items
+																	}
+																	$fk_product = $product->id;
+																} elseif (!empty($conf->global->ECOMMERCENG_PRODUCT_REF_MANDATORY)) {
+																	$this->errors[] = $this->langs->trans('ECommerceErrorProductRefMandatory2', $item['label']);
+																	$error++;
+																	break;  // break on items
+																}
+															}
 														} elseif ($result > 0) {
 															$fk_product = $this->eCommerceProduct->fk_product;
 														}
