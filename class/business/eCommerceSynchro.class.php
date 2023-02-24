@@ -4166,7 +4166,7 @@ class eCommerceSynchro
 								$third_party_id = null;
 							}
 						}
-						if ($third_party_id === 0) {
+						if (!$error && $third_party_id === 0) {
 							// This is an guest customer.
 							if ($this->eCommerceSite->fk_anonymous_thirdparty > 0) {
 								$third_party_id = $this->eCommerceSite->fk_anonymous_thirdparty;
