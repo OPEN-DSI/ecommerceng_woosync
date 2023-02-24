@@ -4523,7 +4523,7 @@ class eCommerceRemoteAccessWoocommerce
 		$nb_max_by_request = empty($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL) ? 100 : min($conf->global->ECOMMERCENG_MAXSIZE_MULTICALL, 100);
 
 		$taxClassesTable = [];
-		$idxPage = 0;
+		$idxPage = 1;
 		do {
 			$filters =  [
 				'page' => $idxPage++,
