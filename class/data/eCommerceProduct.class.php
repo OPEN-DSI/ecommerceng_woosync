@@ -20,17 +20,18 @@
 
 class eCommerceProduct // extends CommonObject
 {
-	var $db;							//!< To store db handler
-	var $error;							//!< To return error code (or message)
-	var $errors=array();				//!< To return several error codes (or messages)
-	//var $element='ecommerce_product';			//!< Id that identify managed objects
-	//var $table_element='ecommerce_product';	//!< Name of table without prefix where object is stored
+	public $db;							//!< To store db handler
+	public $error;							//!< To return error code (or message)
+	public $errors=array();				//!< To return several error codes (or messages)
+	//public $element='ecommerce_product';			//!< Id that identify managed objects
+	//public $table_element='ecommerce_product';	//!< Name of table without prefix where object is stored
 
-    var $id;
-    var $fk_product;
-    var $fk_site;
-    var $remote_id;
-    var $last_update;
+    public $id;
+    public $fk_product;
+    public $fk_site;
+    public $remote_id;
+    public $last_update;
+    public $last_update_stock;
 
     /**
      *    Constructor
@@ -59,7 +60,8 @@ class eCommerceProduct // extends CommonObject
 		if (isset($this->fk_product)) $this->fk_product=intval($this->fk_product);
 		if (isset($this->fk_site)) $this->fk_site=intval($this->fk_site);
 		if (isset($this->remote_id)) $this->remote_id=trim($this->remote_id);
-		if (isset($this->last_update)) $this->last_update=trim($this->last_update);
+        if (isset($this->last_update)) $this->last_update=trim($this->last_update);
+        if (isset($this->last_update_stock)) $this->last_update_stock=trim($this->last_update_stock);
 
 		// Check parameters
 		// Put here code to add control on parameters values
@@ -69,12 +71,14 @@ class eCommerceProduct // extends CommonObject
 		$sql.= "fk_product,";
 		$sql.= "fk_site,";
 		$sql.= "remote_id,";
-		$sql.= "last_update";
+		$sql.= "last_update,";
+        $sql.= "last_update_stock";
         $sql.= ") VALUES (";
 		$sql.= " ".(isset($this->fk_product)?intval($this->fk_product):0).",";
 		$sql.= " ".(isset($this->fk_site)?intval($this->fk_site):0).",";
 		$sql.= " ".(isset($this->remote_id)?"'".$this->db->escape($this->remote_id)."'":"").",";
-		$sql.= " ".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
+		$sql.= " ".(isset($this->last_update)?"'".$this->last_update."'" : 'null').",";
+        $sql.= " ".(isset($this->last_update_stock)?"'".$this->last_update_stock."'" : 'null')."";
 		$sql.= ")";
 
 		$this->db->begin();
@@ -134,7 +138,8 @@ class eCommerceProduct // extends CommonObject
 		$sql.= " t.fk_product,";
 		$sql.= " t.fk_site,";
 		$sql.= " t.remote_id,";
-		$sql.= " t.last_update";
+		$sql.= " t.last_update,";
+        $sql.= " t.last_update_stock";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_product as t";
         $sql.= " WHERE t.rowid = ".$id;
 
@@ -151,6 +156,7 @@ class eCommerceProduct // extends CommonObject
                 $this->fk_site = $obj->fk_site;
                 $this->remote_id = $obj->remote_id;
                 $this->last_update = $obj->last_update;
+                $this->last_update_stock = $obj->last_update_stock;
             }
             $this->db->free($resql);
             return 1;
@@ -181,6 +187,7 @@ class eCommerceProduct // extends CommonObject
 		if (isset($this->fk_site)) $this->fk_site=intval($this->fk_site);
 		if (isset($this->remote_id)) $this->remote_id=trim($this->remote_id);
 		if (isset($this->last_update)) $this->last_update=trim($this->last_update);
+        if (isset($this->last_update_stock)) $this->last_update_stock=trim($this->last_update_stock);
 
 		// Check parameters
 		// Put here code to add control on parameters values
@@ -191,7 +198,8 @@ class eCommerceProduct // extends CommonObject
 		$sql.= " fk_product=".(isset($this->fk_product)?intval($this->fk_product):0).",";
 		$sql.= " fk_site=".(isset($this->fk_site)?intval($this->fk_site):0).",";
 		$sql.= " remote_id='".$this->db->escape($this->remote_id)."',";
-		$sql.= " last_update=".(isset($this->last_update)?"'".$this->last_update."'" : 'null')."";
+		$sql.= " last_update=".(isset($this->last_update)?"'".$this->last_update."'" : 'null').",";
+        $sql.= " last_update_stock=".(isset($this->last_update_stock)?"'".$this->last_update_stock."'" : 'null')."";
 
         $sql.= " WHERE rowid=".$this->id;
 
@@ -340,7 +348,8 @@ class eCommerceProduct // extends CommonObject
 		$sql .= " t.fk_product,";
 		$sql .= " t.fk_site,";
 		$sql .= " t.remote_id,";
-		$sql .= " t.last_update";
+		$sql .= " t.last_update,";
+        $sql .= " t.last_update_stock";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "ecommerce_product as t";
 		$sql .= " WHERE t.fk_site = " . $siteId;
 		$sql .= " AND t.remote_id LIKE '" . $this->db->escape($remoteId) . "'";
@@ -355,6 +364,7 @@ class eCommerceProduct // extends CommonObject
 				$this->fk_site = $obj->fk_site;
 				$this->remote_id = $obj->remote_id;
 				$this->last_update = $obj->last_update;
+                $this->last_update_stock = $obj->last_update_stock;
 				$this->db->free($resql);
 				return 1;
 			} elseif ($num > 1) {
@@ -390,7 +400,8 @@ class eCommerceProduct // extends CommonObject
 		$sql.= " t.fk_product,";
 		$sql.= " t.fk_site,";
 		$sql.= " t.remote_id,";
-		$sql.= " t.last_update";
+		$sql.= " t.last_update,";
+        $sql.= " t.last_update_stock";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_product as t";
         $sql.= " WHERE t.fk_site = ".$siteId;
         $sql.= " AND t.fk_product = ".$productId;
@@ -406,6 +417,7 @@ class eCommerceProduct // extends CommonObject
                 $this->fk_site = $obj->fk_site;
                 $this->remote_id = $obj->remote_id;
                 $this->last_update = $obj->last_update;
+                $this->last_update_stock = $obj->last_update_stock;
            		$this->db->free($resql);
                 return 1;
             }

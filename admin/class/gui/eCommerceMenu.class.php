@@ -96,7 +96,7 @@ class eCommerceMenu
     					'type'=>'left',
     					'titre'=>'ECommerceMenuSetup',
     	                'leftmenu'=>'ecommerceng_setup',
-    					'url'=>'/ecommerceng/admin/eCommerceSetup.php',
+    					'url'=>'/ecommerceng/admin/setup.php',
     					'langs'=>'ecommerce@ecommerceng',
     					'position'=>120,
     					'enabled'=>'$conf->ecommerceng->enabled',

@@ -1,4 +1,6 @@
 {
     "name": "open-dsi/ecommerceng_woosync",
-    "require": {}
+    "require": {
+        "guzzlehttp/guzzle": "^6.3"
+    }
 }

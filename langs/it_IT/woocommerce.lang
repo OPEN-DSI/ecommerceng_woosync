@@ -2,32 +2,32 @@
 CHARSET=UTF-8
 
 ECommerceWoocommerceConnect=Errore di connessione allo shop '%s': %s
-ECommerceWoocommerceConvertRemoteObjectIntoDolibarrCommande=Errore durante il recupero degli ordini dallo shop '%s': %s
-ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct=Errore durante il recupero dei prodotti dallo shop '%s': %s
-ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProductVariations=Errore durante il recupero delle varianti del prodotto remoto 'id:%s' dallo shop '%s': %s
-ECommerceWoocommerceCheckRemoteProductExist                          =Erreur lors de la verification de l'existance du produit %s sur le site '%s': %s
-ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSociete=Errore durante il recupero dei soggetti terzi dallo shop '%s': %s
+ECommerceWoocommerceConvertRemoteObjectIntoDolibarrCommande=Errore durante il recupero degli ordini dallo shop '%s':
+ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct=Errore durante il recupero dei prodotti dallo shop '%s':
+ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProductVariations=Errore durante il recupero delle varianti del prodotto remoto 'id:%s' dallo shop '%s':
+ECommerceWoocommerceCheckRemoteProductExist                          =Erreur lors de la verification de l'existance du produit %s sur le site '%s':
+ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSociete=Errore durante il recupero dei soggetti terzi dallo shop '%s':
 ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSocpeople=Errore durante il recupero dei soggetti terzi (per i contatti / indirizzi) dallo shop '%s': %s
-ECommerceWoocommerceCreateRemoteProduct=Errore durante la creazione del prodotto 'id:%s' dallo shop '%s': %s
+ECommerceWoocommerceCreateRemoteProduct=Errore durante la creazione del prodotto 'id:%s' dallo shop '%s':
 ECommerceWoocommerceCreateRemoteProductLink=Errore di creazione del collegamento per il prodotto 'id:%s' per lo shop '%s': %s
-ECommerceWoocommerceGetCategoryData=Errore durante il recupero dei dati dalla categoria remota 'id:%s' per lo shop '%s': %s
-ECommerceWoocommerceGetCommandeToUpdate=Errore durante il recupero dell'elenco degli ordini da aggiornare sullo shop '%s': %s
-ECommerceWoocommerceGetProductToUpdate=Errore durante il recupero dell'elenco dei prodotti da aggiornare sullo shop '%s': %s
-ECommerceWoocommerceGetRemoteCategoryTree=Errore durante il recupero dell'elenco delle categorie da aggiornare sullo shop '%s': %s
-ECommerceWoocommerceGetSocieteToUpdate=Errore durante il recupero dell'elenco dei soggetti terzi da aggiornare sullo shop '%s': %s
-ECommerceWoocommerceSendFileForCommande=Errore durante il collegamento del file con l'ordine cliente remoto'id:%s' per lo shop '%s': %s
+ECommerceWoocommerceGetCategoryData=Errore durante il recupero dei dati dalla categoria remota 'id:%s' per lo shop '%s':
+ECommerceWoocommerceGetCommandeToUpdate=Errore durante il recupero dell'elenco degli ordini da aggiornare sullo shop '%s':
+ECommerceWoocommerceGetProductToUpdate=Errore durante il recupero dell'elenco dei prodotti da aggiornare sullo shop '%s':
+ECommerceWoocommerceGetRemoteCategoryTree=Errore durante il recupero dell'elenco delle categorie da aggiornare sullo shop '%s':
+ECommerceWoocommerceGetSocieteToUpdate=Errore durante il recupero dell'elenco dei soggetti terzi da aggiornare sullo shop '%s':
+ECommerceWoocommerceSendFileForCommande=Errore durante il collegamento del file con l'ordine cliente remoto'id:%s' per lo shop '%s':
 ECommerceWoocommerceSendFileForCommandeInWordpress=Errore durante l'invio del file per il comando remoto 'id:%s' nei media di Wordpress per lo shop '%s': %s
-ECommerceWoocommerceUpdateRemoteCommande=Errore durante l'aggiornamento dell'ordine cliente remoto 'id:%s' per lo shop '%s': %s
-ECommerceWoocommerceUpdateRemoteProduct=Errore durante l'aggiornamento del prodotto remoto 'id:%s' per lo shop '%s': %s
-ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct=Errore durante il recupero del prodotto remoto 'id:%s' per lo shop '%s': %s
+ECommerceWoocommerceUpdateRemoteCommande=Errore durante l'aggiornamento dell'ordine cliente remoto 'id:%s' per lo shop '%s':
+ECommerceWoocommerceUpdateRemoteProduct=Errore durante l'aggiornamento del prodotto remoto 'id:%s' per lo shop '%s':
+ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct=Errore durante il recupero del prodotto remoto 'id:%s' per lo shop '%s':
 ECommerceWoocommerceUpdateRemoteProductSendImage=Errore durante l'invio di un'immagine per il prodotto remoto 'id:%s' nei media di Wordpress per lo shop '%s': %s
-ECommerceWoocommerceUpdateRemoteProductVariation=Errore durante l'aggiornamento della variazione 'id:%s' del prodotto remoto 'id:%s' per lo shop '%s': %s
-ECommerceWoocommerceUpdateRemoteSociete=Errore durante l'aggiornamento dell'azienda remota 'id:%s' per lo shop '%s': %s
-ECommerceWoocommerceUpdateRemoteSocpeople=Errore durante l'aggiornamento dei contatti / indirizzi dell'azienda remota 'id:%s' per lo shop '%s': %s
+ECommerceWoocommerceUpdateRemoteProductVariation=Errore durante l'aggiornamento della variazione 'id:%s' del prodotto remoto 'id:%s' per lo shop '%s':
+ECommerceWoocommerceUpdateRemoteSociete=Errore durante l'aggiornamento dell'azienda remota 'id:%s' per lo shop '%s':
+ECommerceWoocommerceUpdateRemoteSocpeople=Errore durante l'aggiornamento dei contatti / indirizzi dell'azienda remota 'id:%s' per lo shop '%s':
 ECommerceWoocommerceUpdateRemoteStockProduct=Errore di aggiornamento delle scorte di magazzino (%s) del prodotto remoto 'id:%s' per lo shop '%s':
 ECommerceWoocommerceUpdateRemoteStockProductVariation=Errore di aggiornamento dello stock (%s) della variante 'id:%s' del prodotto remoto 'id:%s' per lo shop '%s':
-ECommerceWoocommerceGetAllWoocommerceTaxClass=Errore durante la raccolta dei dati sull'aliquota fiscale per lo shop '%s': %s
-ECommerceWoocommerceGetWoocommerceTaxes=Errore durante il recupero delle aliquote fiscali per lo shop '%s': %s
+ECommerceWoocommerceGetAllWoocommerceTaxClass=Errore durante la raccolta dei dati sull'aliquota fiscale per lo shop '%s':
+ECommerceWoocommerceGetWoocommerceTaxes=Errore durante il recupero delle aliquote fiscali per lo shop '%s':
 ECommerceWoocommerceCreateRemoteProductSendImage=Errore durante l'invio di un'immagine per il prodotto 'ref:%s' nei media di Wordpress per lo shop '%s': %s
 
 ECommercengWoocommerceStatus=Stato per lo shop [%s]
@@ -61,13 +61,14 @@ ECommercengWoocommerceOrderStatusRefunded=Rimborsato
 ECommercengWoocommerceOrderStatusFailed=Fallito
 
 ECommercengWoocommerceExtrafieldsCorrespondence                 = Abbina attributi aggiuntivi ai metadati di Woocommerce
+ECommercengWoocommerceExtrafieldsCorrespondenceOf               = Correspondance des attributs supplémentaires des "%s" avec les méta-données de Woocommerce
 ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription = Inserisci il nome dei metadati corrispondenti a questo attributo aggiuntivo: %s
 
 ECommerceWoocommerceCreateRemoteCategoryParentNotCreated    = Errore per lo shop '%s' durante la ricerca dell'ID principale della categoria '%s' (slug: '%s')
-ECommerceWoocommerceCreateRemoteBatchCategories             = Errore durante la creazione delle categorie lotto sullo shop '%s': %s
+ECommerceWoocommerceCreateRemoteBatchCategories             = Errore durante la creazione delle categorie lotto sullo shop '%s':
 ECommerceWoocommerceCreateRemoteBatchProducts               = Errore durante la creazione di lotti di prodotto sullo shop '%s': %s
 
-ECommerceWoocommerceCreateRemoteBatchCategory               = Errore durante la creazione della categoria (slug : %s) per lo shop '%s': %s
+ECommerceWoocommerceCreateRemoteBatchCategory               = Errore durante la creazione della categoria (slug : %s) per lo shop '%s':
 ECommerceWoocommerceCreateRemoteBatchProduct                = Errore durante la creazione del prodotto (sku : %s) per lo shop'%s': %s
 ECommerceWoocommerceUpdateRemoteBatchProduct                = Errore durante l'aggiornamento del prodotto (sku : %s) per lo shop'%s': %s
 

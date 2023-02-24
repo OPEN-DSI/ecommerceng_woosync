@@ -196,6 +196,7 @@ if ($max_sites > 0) {
 							$eCommerceProduct->fk_site = $site->id;
 							$eCommerceProduct->fk_product = $dbProduct->id;
 							$eCommerceProduct->last_update = dol_print_date(dol_now(), '%Y-%m-%d %H:%M:%S');
+							if ($site->stock_sync_direction == 'dolibarr2ecommerce') $eCommerceProduct->last_update_stock = $eCommerceProduct->last_update;
 							$result = $eCommerceProduct->create($user);
 							if ($result < 0) {
 								print "\nError: Create product link (ID: {$obj->product_id}): " . errorsToString($eCommerceProduct) . ".\n";
@@ -206,6 +207,7 @@ if ($max_sites > 0) {
 							$result = $eCommerceProduct->fetch($obj->link_id);
 							if ($result > 0) {
 								$eCommerceProduct->last_update = dol_print_date(dol_now(), '%Y-%m-%d %H:%M:%S');
+								if ($site->stock_sync_direction == 'dolibarr2ecommerce') $eCommerceProduct->last_update_stock = $eCommerceProduct->last_update;
 								$result = $eCommerceProduct->update($user);
 							}
 							if ($result < 0) {

@@ -364,13 +364,12 @@ class eCommerceRemoteAccess
 	 * Update remote stock of product
 	 *
 	 * @param  int     			$remote_product_id    Id of product on remote ecommerce
-	 * @param  MouvementStock	$object               Movement stock object
 	 * @param  Product			$product              Product object
 	 * @return bool
 	 */
-	public function updateRemoteStockProduct($remote_product_id, $object, $product)
+	public function updateRemoteStockProduct($remote_product_id, $product)
 	{
-	    $result=$this->class->updateRemoteStockProduct($remote_product_id, $object, $product);
+	    $result=$this->class->updateRemoteStockProduct($remote_product_id, $product);
 	    $this->error=$this->class->error;
 	    $this->errors=$this->class->errors;
 	    return $result;
@@ -525,6 +524,19 @@ class eCommerceRemoteAccess
     }
 
 	/**
+	 * Get all remote warehouses
+	 *
+	 * @return array|false    List of remote warehouses or false if error
+	 */
+	public function getAllRemoteWarehouses()
+	{
+		$result=$this->class->getAllRemoteWarehouses();
+		$this->error=$this->class->error;
+		$this->errors=$this->class->errors;
+		return $result;
+	}
+
+	/**
 	 * Get all webhooks
 	 *
 	 * @return array|false    List of webhooks or false if error
@@ -536,4 +548,15 @@ class eCommerceRemoteAccess
 		$this->errors=$this->class->errors;
 		return $result;
 	}
+
+    /**
+     * Method to output saved errors
+     *
+     * @param   string      $separator      Separator between each error
+     * @return	string		                String with errors
+     */
+    public function errorsToString($separator = ', ')
+    {
+        return $this->error . (is_array($this->errors) ? (!empty($this->error) ? $separator : '') . join($separator, $this->errors) : '');
+    }
 }

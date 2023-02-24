@@ -61,7 +61,7 @@ class modECommerceNg extends DolibarrModules
 		$this->editor_url = 'http://www.open-dsi.fr';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '4.1.34';
+		$this->version = '4.1.35';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_' . strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
@@ -100,7 +100,7 @@ class modECommerceNg extends DolibarrModules
 		$this->style_sheet = '';
 
 		// Config pages. Put here list of php page names stored in admmin directory used to setup module.
-		$this->config_page_url = array('eCommerceSetup.php@ecommerceng');
+		$this->config_page_url = array('setup.php@ecommerceng');
 
 		// Dependencies
 		$this->depends = array("modSociete", "modProduct", "modCategorie", "modWebServices");        // List of modules id that must be enabled if this module is enabled
@@ -227,6 +227,7 @@ class modECommerceNg extends DolibarrModules
 			1 => array('label' => 'ECommerceProcessPendingWebHooks', 'jobtype' => 'method', 'class' => '/ecommerceng/class/business/eCommercePendingWebHook.class.php', 'objectname' => 'eCommercePendingWebHook', 'method' => 'cronProcessPendingWebHooks', 'parameters' => '', 'comment' => 'Process all pending WebHooks.', 'frequency' => 15, 'unitfrequency' => 60, 'priority' => 90, 'status' => 1, 'test' => '$conf->ecommerceng->enabled'),
 			2 => array('label' => 'ECommerceCheckWebHooksStatus', 'jobtype' => 'method', 'class' => '/ecommerceng/class/business/eCommercePendingWebHook.class.php', 'objectname' => 'eCommercePendingWebHook', 'method' => 'cronCheckWebHooksStatus', 'parameters' => '', 'comment' => 'Check WebHooks status.', 'frequency' => 15, 'unitfrequency' => 60, 'priority' => 80, 'status' => 1, 'test' => '$conf->ecommerceng->enabled'),
 			3 => array('label' => 'ECommerceCheckWebHooksVolumetry', 'jobtype' => 'method', 'class' => '/ecommerceng/class/business/eCommercePendingWebHook.class.php', 'objectname' => 'eCommercePendingWebHook', 'method' => 'cronCheckWebHooksVolumetry', 'parameters' => '', 'comment' => 'Check WebHooks volumetry.', 'frequency' => 15, 'unitfrequency' => 60, 'priority' => 70, 'status' => 0, 'test' => '$conf->ecommerceng->enabled'),
+			4 => array('label' => 'ECommerceSynchronizeStocksToSite', 'jobtype' => 'method', 'class' => '/ecommerceng/class/business/eCommerceUtils.class.php', 'objectname' => 'eCommerceUtils', 'method' => 'cronSynchronizeStocksToSite', 'parameters' => '', 'comment' => 'Synchronize stock to site.', 'frequency' => 15, 'unitfrequency' => 60, 'priority' => 100, 'status' => 1, 'test' => '$conf->ecommerceng->enabled'),
 		);
 
 		// Permissions
@@ -306,7 +307,7 @@ class modECommerceNg extends DolibarrModules
 			'type' => 'left',
 			'titre' => 'ECommerceMenuSetup',
 			'leftmenu' => 'ecommerceng_setup',
-			'url' => '/ecommerceng/admin/eCommerceSetup.php',
+			'url' => '/ecommerceng/admin/setup.php',
 			'langs' => 'ecommerce@ecommerceng',
 			'position' => 120,
 			'enabled' => '$conf->ecommerceng->enabled',
@@ -458,7 +459,6 @@ WHERE c.rowid IS NOT NULL" ];
 		$result=$this->load_tables($options);
 		$this->addSettlementTerms();
 		$this->addAnonymousCompany();
-        $this->addFiles();
 		return $this->_init($sql, $options);
 	}
 
@@ -571,18 +571,5 @@ WHERE c.rowid IS NOT NULL" ];
 			}
 		}
 	}
-
-    /**
-   	 * Add files need for dolibarr
-   	 */
-   	private function addFiles()
-   	{
-        $srcFile = dol_buildpath('/ecommerceng/patchs/dolibarr/includes/OAuth/OAuth2/Service/WordPress.php');
-        $destFile = DOL_DOCUMENT_ROOT . '/includes/OAuth/OAuth2/Service/WordPress.php';
-
-        if (!file_exists($destFile) && dol_copy($srcFile, $destFile) < 0) {
-			setEventMessages("Error copy file '$srcFile' to '$destFile'", null, 'errors');
-		}
-   	}
 }
 

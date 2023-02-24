@@ -2,39 +2,40 @@
 CHARSET=UTF-8
 
 ECommerceWoocommerceConnect=Error connecting to site '%s': %s
-ECommerceWoocommerceConvertRemoteObjectIntoDolibarrCommande=Error retrieving orders on the site '%s': %s
-ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct=Error retrieving products on the site '%s': %s
-ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProductVariations=Error retrieving variations of remote product 'id:%s' on the site '%s': %s
-ECommerceWoocommerceCheckRemoteProductExist                          =Erreur lors de la verification de l'existance du produit %s sur le site '%s': %s
-ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSociete=Erreor retrieving companies on the site '%s': %s
+ECommerceWoocommerceConvertRemoteObjectIntoDolibarrCommande=Error retrieving orders on the site '%s':
+ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProduct=Error retrieving products on the site '%s':
+ECommerceWoocommerceConvertRemoteObjectIntoDolibarrProductVariations=Error retrieving variations of remote product 'id:%s' on the site '%s':
+ECommerceWoocommerceCheckRemoteProductExist                          =Erreur lors de la verification de l'existance du produit %s sur le site '%s':
+ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSociete=Erreor retrieving companies on the site '%s':
 ECommerceWoocommerceConvertRemoteObjectIntoDolibarrSocpeople=Error retrieving companies (for contact/adresses) on the site '%s': %s
-ECommerceWoocommerceCreateRemoteProduct=Error creating the product 'id:%s' on the site '%s': %s
+ECommerceWoocommerceCreateRemoteProduct=Error creating the product 'id:%s' on the site '%s':
 ECommerceWoocommerceCreateRemoteProductLink=Error creating the link for the product 'id:%s' on the site '%s': %s
-ECommerceWoocommerceGetCategoryData=Error retrieving data from the remote category 'id:%s' on the site '%s': %s
-ECommerceWoocommerceGetCommandeToUpdate=Error retrieving the list of orders to be updated on the site '%s': %s
-ECommerceWoocommerceGetProductToUpdate=Error retrieving the list of products to be updated on the site '%s': %s
-ECommerceWoocommerceGetRemoteCategoryTree=Error retrieving the list of categories to be updated on the site '%s': %s
-ECommerceWoocommerceGetSocieteToUpdate=Error retrieving the list of companies to be updated on the site '%s': %s
-ECommerceWoocommerceSendFileForCommande=Error linking the file with the remote order 'id:%s' on the site '%s': %s
+ECommerceWoocommerceGetCategoryData=Error retrieving data from the remote category 'id:%s' on the site '%s':
+ECommerceWoocommerceGetCommandeToUpdate=Error retrieving the list of orders to be updated on the site '%s':
+ECommerceWoocommerceGetProductToUpdate=Error retrieving the list of products to be updated on the site '%s':
+ECommerceWoocommerceGetRemoteCategoryTree=Error retrieving the list of categories to be updated on the site '%s':
+ECommerceWoocommerceGetSocieteToUpdate=Error retrieving the list of companies to be updated on the site '%s':
+ECommerceWoocommerceSendFileForCommande=Error linking the file with the remote order 'id:%s' on the site '%s':
 ECommerceWoocommerceSendFileForCommandeInWordpress=Error sending the file for the remote order 'id:%s' in the Wordpress media on the site '%s': %s
-ECommerceWoocommerceUpdateRemoteCommande=Error updating the remote order 'id:%s' on the site '%s': %s
-ECommerceWoocommerceUpdateRemoteProduct=Error updating the remote product 'id:%s' on the site '%s': %s
-ECommerceWoocommerceUpdateRemoteTranslatedProduct=Error updating the translation 'id:%s' of the remote product 'id:%s' on the site '%s': %s
-ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct=Error retrieving the remote product 'id:%s' on the site '%s': %s
+ECommerceWoocommerceUpdateRemoteCommande=Error updating the remote order 'id:%s' on the site '%s':
+ECommerceWoocommerceUpdateRemoteProduct=Error updating the remote product 'id:%s' on the site '%s':
+ECommerceWoocommerceUpdateRemoteTranslatedProduct=Error updating the translation 'id:%s' of the remote product 'id:%s' on the site '%s':
+ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct=Error retrieving the remote product 'id:%s' on the site '%s':
 ECommerceWoocommerceUpdateRemoteProductSendImage=Error sending an image for the product 'id:%s' in the Wordpress media on the site '%s': %s
-ECommerceWoocommerceUpdateRemoteProductVariation=Error updating the variant 'id:%s' of the remote product 'id:%s' on the site '%s': %s
+ECommerceWoocommerceUpdateRemoteProductVariation=Error updating the variant 'id:%s' of the remote product 'id:%s' on the site '%s':
 ECommerceWoocommerceUpdateRemoteTranslatedProductVariation=Error updating the translation 'id:%s' of the variant 'id:%s' of the remote product 'id:%s' on the site '%s'
-ECommerceWoocommerceUpdateRemoteSociete=Error updating the remote company 'id:%s' on the site '%s': %s
-ECommerceWoocommerceUpdateRemoteSocpeople=Error updating contacts/adresses of the remote company 'id:%s' on the site '%s': %s
+ECommerceWoocommerceUpdateRemoteSociete=Error updating the remote company 'id:%s' on the site '%s':
+ECommerceWoocommerceUpdateRemoteSocpeople=Error updating contacts/adresses of the remote company 'id:%s' on the site '%s':
 ECommerceWoocommerceUpdateRemoteStockProduct=Error updating inventory (%s) of the remote product 'id:%s' on the site '%s':
 ECommerceWoocommerceUpdateRemoteStockTranslatedProduct=Error updating inventory (%s) of the translation 'id:%s' of the remote product 'id:%s' on the site '%s':
 ECommerceWoocommerceUpdateRemoteStockProductVariation=Error updating inventory (%s) of the variant 'id:%s' of the remote product 'id:%s' on the site '%s':
 ECommerceWoocommerceUpdateRemoteStockTranslatedProductVariation=Error updating inventory (%s) of the translation 'id:%s' of the variant 'id:%s' of the remote product 'id:%s' on the site
-ECommerceWoocommerceGetAllWoocommerceAttributes                      =Erreur de récupération des données des attributs sur le site '%s': %s
-ECommerceWoocommerceGetAllWoocommerceTaxClass=Error retrieving tax class data from the site '%s': %s
-ECommerceWoocommerceGetWoocommerceTaxes=Erreur retrieving tax data from the site '%s': %s
+ECommerceWoocommerceGetAllWoocommerceAttributes                      =Erreur de récupération des données des attributs sur le site '%s':
+ECommerceWoocommerceGetAllWoocommerceAttributeTerms                  =Erreur de récupération des données de l'attribut '%s' sur le site '%s':
+ECommerceWoocommerceGetAllWoocommerceTaxClass=Error retrieving tax class data from the site '%s':
+ECommerceWoocommerceGetWoocommerceTaxes=Erreur retrieving tax data from the site '%s':
 ECommerceWoocommerceCreateRemoteProductSendImage=Error sending an image for the prodcut 'ref:%s' in the Wordpress media on the site '%s': %s
-ECommerceWoocommerceGetAllWoocommercePaymentGateways=Error retrieving tax class data from the site '%s': %s
+ECommerceWoocommerceGetAllWoocommercePaymentGateways=Error retrieving payment gateways data from the site '%s':
 ECommerceWoocommerceGetTranslatedProductVariation=Error retrieving the translation 'id:%s' of the variant 'id:%s' of the remote product 'id:%s' on the site '%s':
 
 ECommercengWoocommerceStatus=Site status [%s]
@@ -95,13 +96,14 @@ ECommercengWoocommerceProductExtrafieldsCorrespondenceAttributeSetupDescription 
 
 ECommerceWoocommerceCreateRemoteCategoryParentNotCreated             = Erreur pour le site '%s' lors de la recherche de l'ID parent da la catégorie '%s' (slug: '%s')
 ECommercengWoocommerceExtrafieldsCorrespondence                 = Match of additional attributes with Woocommerce metadata
+ECommercengWoocommerceExtrafieldsCorrespondenceOf               = Correspondance des attributs supplémentaires des "%s" avec les méta-données de Woocommerce
 ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription = Enter the name of the metadata corresponding to this additional attribute: %s
 
 ECommerceWoocommerceCreateRemoteCategoryParentNotCreated    = Error for the site '%s' when searching for the parent ID of the category '%s' (slug: '%s')
-ECommerceWoocommerceCreateRemoteBatchCategories             = Error creating categories by batch on the site '%s': %s
+ECommerceWoocommerceCreateRemoteBatchCategories             = Error creating categories by batch on the site '%s':
 ECommerceWoocommerceCreateRemoteBatchProducts               = Error creating products by batch on the site '%s': %s
 
-ECommerceWoocommerceCreateRemoteBatchCategory               = Error crating the category (slug : %s) on the site '%s': %s
+ECommerceWoocommerceCreateRemoteBatchCategory               = Error crating the category (slug : %s) on the site '%s':
 ECommerceWoocommerceCreateRemoteBatchProduct                = Error creating the product (sku : %s) on the site '%s': %s
 ECommerceWoocommerceUpdateRemoteBatchProduct                = Error updating the product (sku : %s) on the site '%s': %s
 
@@ -149,5 +151,5 @@ ECommerceWoocommerceErrorUpdateDictTaxRate          = Erreur updating the tax ra
 ECommerceWoocommerceErrorAddDictTaxRate             = Erreur adding the tax rate line (ID: %s): %s
 ECommerceWooCommerceErrorTaxNotFound                = Error the tax was not found in the synchronized one (ID: %s)
 ECommerceWooCommerceErrorDontSupportMultiTaxes      = The module does not currently support multi-taxation.
-ECommerceWoocommerceErrorGetWoocommerceWebHooks     = Error retrieving webhooks from the site '%s': %s
+ECommerceWoocommerceErrorGetWoocommerceWebHooks     = Error retrieving webhooks from the site '%s':
 ECommerceWoocommerceErrorTaxClassNotFoundFromTaxRate                 = La taxe '%s' n'est pas trouver dans le dictionnaire de taxe du module WooSync pour le site '%s' pour le produit '%s'

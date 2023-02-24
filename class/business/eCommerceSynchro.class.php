@@ -607,67 +607,61 @@ class eCommerceSynchro
      * @param   boolean     $force      Force analysis of list, even if array list $this->categoryToUpdate is already defined
      */
     public function getCategoriesToUpdate($force = false)
-    {
-        try {
-            if (!isset($this->categoryToUpdate) || $force == true)
-            {
-                $this->categoryToUpdate = array();
+	{
+		if (!isset($this->categoryToUpdate) || $force == true) {
+			$this->categoryToUpdate = array();
 
-                // get a magento category tree in a one-leveled array
-                $tmp=$this->eCommerceRemoteAccess->getRemoteCategoryTree();
-                if (is_array($tmp))
-                {
-                    $resanswer = array();
-                    eCommerceCategory::cuttingCategoryTreeFromMagentoToDolibarrNew($tmp, $resanswer);
+			// get a magento category tree in a one-leveled array
+			$tmp = $this->eCommerceRemoteAccess->getRemoteCategoryTree();
+			if (is_array($tmp)) {
+				$resanswer = array();
+				eCommerceCategory::cuttingCategoryTreeFromMagentoToDolibarrNew($tmp, $resanswer);
 
-                    $this->initECommerceCategory(); // Initialise 2 properties eCommerceCategory and eCommerceMotherCategory
+				$this->initECommerceCategory(); // Initialise 2 properties eCommerceCategory and eCommerceMotherCategory
 
-                    // $resanswer is array with all categories
-                    // We must loop on each categorie.
-                    foreach ($resanswer as $remoteCatToCheck) // Check update for each entry into $resanswer -> $remoteCatToCheck = array('category_id'=>, 'parent_id'=>...)
-                    {
-                        // Test if category is disabled or not
-                        if (isset($remoteCatToCheck['is_active']) && empty($remoteCatToCheck['is_active'])) // We keep because children may not be disabled.
-                        {
-                            dol_syslog("Category remote_id=".$remoteCatToCheck['category_id'].", category is disabled.");
-                        }
-                        //else
-                        //{
-                            if (! isset($remoteCatToCheck['updated_at'])) {   // The api that returns list of category did not return the updated_at property
-                                // This is very long if there is a lot of categories because we make a WS call to get the 'updated_at' info at each loop pass.
-                                dol_syslog("Process category remote_id=".$remoteCatToCheck['category_id'].", updated_at unknow.");
+				// $resanswer is array with all categories
+				// We must loop on each categorie.
+				foreach ($resanswer as $remoteCatToCheck) // Check update for each entry into $resanswer -> $remoteCatToCheck = array('category_id'=>, 'parent_id'=>...)
+				{
+					// Test if category is disabled or not
+					if (isset($remoteCatToCheck['is_active']) && empty($remoteCatToCheck['is_active'])) // We keep because children may not be disabled.
+					{
+						dol_syslog("Category remote_id=" . $remoteCatToCheck['category_id'] . ", category is disabled.");
+					}
+					//else
+					//{
+					if (!isset($remoteCatToCheck['updated_at'])) {   // The api that returns list of category did not return the updated_at property
+						// This is very long if there is a lot of categories because we make a WS call to get the 'updated_at' info at each loop pass.
+						dol_syslog("Process category remote_id=" . $remoteCatToCheck['category_id'] . ", updated_at unknow.");
 
-                                // Complete info of $remoteCatToCheck['category_id']
-                                $tmp=$this->eCommerceRemoteAccess->getCategoryData($remoteCatToCheck['category_id']);   // This make a SOAP call
+						// Complete info of $remoteCatToCheck['category_id']
+						$tmp = $this->eCommerceRemoteAccess->getCategoryData($remoteCatToCheck['category_id']);   // This make a SOAP call
 
-                                $remoteCatToCheck['updated_at']=$tmp['updated_at']; // Complete data we are missing
-                            }
-                            else
-                            {
-                                dol_syslog("Process category remote_id=".$remoteCatToCheck['category_id'].", updated_at is defined to ".$remoteCatToCheck['updated_at']);
-                            }
+						$remoteCatToCheck['updated_at'] = $tmp['updated_at']; // Complete data we are missing
+					} else {
+						dol_syslog("Process category remote_id=" . $remoteCatToCheck['category_id'] . ", updated_at is defined to " . $remoteCatToCheck['updated_at']);
+					}
 
-                            // If the category was updated before the max limit date this->toDate
-                            if (strtotime($remoteCatToCheck['updated_at']) <= $this->toDate)
-                            {
-                                // Check into link table ecommerce_category if record is older (so if has been modified on magento or not)
-                                if ($this->eCommerceCategory->checkForUpdate($this->eCommerceSite->id, $this->toDate, $remoteCatToCheck))   // compare date in remoteCatToCheck and date in sync table. $this->toDate is not used.
-                                    $this->categoryToUpdate[] = $remoteCatToCheck;
-                            }
-                        //}
-                    }
+					// If the category was updated before the max limit date this->toDate
+					if (strtotime($remoteCatToCheck['updated_at']) <= $this->toDate) {
+						// Check into link table ecommerce_category if record is older (so if has been modified on magento or not)
+						if ($this->eCommerceCategory->checkForUpdate($this->eCommerceSite->id, $this->toDate, $remoteCatToCheck))   // compare date in remoteCatToCheck and date in sync table. $this->toDate is not used.
+							$this->categoryToUpdate[] = $remoteCatToCheck;
+					}
+					//}
+				}
 
-                    //var_dump($this->categoryToUpdate);exit;
-                    dol_syslog("Now tree are in an array ordered by hierarchy. Nb of record = ".count($this->categoryToUpdate));
-                    return $this->categoryToUpdate;
-                }
-            }
-        } catch (Exception $e) {
-            dol_syslog($e->getMessage(), LOG_ERR);
-            $this->errors[] = $this->langs->trans('ECommerceErrorGetCategoryToUpdate');
-        }
-        return false;
-    }
+				//var_dump($this->categoryToUpdate);exit;
+				dol_syslog("Now tree are in an array ordered by hierarchy. Nb of record = " . count($this->categoryToUpdate));
+				return $this->categoryToUpdate;
+			} else {
+				$this->errors[] = $this->langs->trans('ECommerceErrorGetCategoryToUpdate');
+				$this->errors[] = $this->eCommerceRemoteAccess->errorsToString();
+			}
+		}
+
+		return false;
+	}
 
     /**
      * Get modified product since the last update
@@ -1973,7 +1967,7 @@ class eCommerceSynchro
      */
     public function synchDtoEProduct($toNb=0)
     {
-        global $langs, $user;
+        global $conf, $langs, $user;
 
 		$langs->load('ecommerceng@ecommerceng');
         $error = 0;
@@ -2033,6 +2027,7 @@ class eCommerceSynchro
 								$this->eCommerceProduct->fk_site = $this->eCommerceSite->id;
 								$this->eCommerceProduct->fk_product = $product_static->id;
 								$this->eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
+								if ($this->eCommerceSite->stock_sync_direction == 'dolibarr2ecommerce') $this->eCommerceProduct->last_update_stock = $this->eCommerceProduct->last_update;
 								if ($this->eCommerceProduct->create($user) < 0) {
 									$error++;
 									$error_msg = $langs->trans('ECommerceCreateRemoteProductLink', $product_static->id, $this->eCommerceSite->name, $this->eCommerceProduct->error);
@@ -2053,6 +2048,7 @@ class eCommerceSynchro
 							$now = dol_now();
 							$this->eCommerceProduct->fetchByRemoteId($obj->remote_id, $this->eCommerceSite->id);
 							$this->eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
+							if ($this->eCommerceSite->stock_sync_direction == 'dolibarr2ecommerce') $this->eCommerceProduct->last_update_stock = $this->eCommerceProduct->last_update;
 							if ($this->eCommerceProduct->update($user) < 0) {
 								$error++;
 								$error_msg = $langs->trans('ECommerceUpdateRemoteProductLink', $product_static->id, $this->eCommerceSite->name, $this->eCommerceProduct->error);
@@ -2516,7 +2512,27 @@ class eCommerceSynchro
 	 */
 	public function getAllPaymentGateways()
 	{
-		return $this->eCommerceRemoteAccess->getAllPaymentGateways();
+		$result = $this->eCommerceRemoteAccess->getAllPaymentGateways();
+		if (!$result) {
+			$this->error = $this->eCommerceRemoteAccess->error;
+			$this->errors = $this->eCommerceRemoteAccess->errors;
+		}
+		return $result;
+	}
+
+	/**
+	 * Get all remote warehouses
+	 *
+	 * @return array|false    List of payment gateways or false if error
+	 */
+	public function getAllRemoteWarehouses()
+	{
+		$result = $this->eCommerceRemoteAccess->getAllRemoteWarehouses();
+		if (!$result) {
+			$this->error = $this->eCommerceRemoteAccess->error;
+			$this->errors = $this->eCommerceRemoteAccess->errors;
+		}
+		return $result;
 	}
 
 	/**
@@ -2526,37 +2542,13 @@ class eCommerceSynchro
 	 */
 	public function getAllWebHooks()
 	{
-		return $this->eCommerceRemoteAccess->getAllWebHooks();
+		$result = $this->eCommerceRemoteAccess->getAllWebHooks();
+		if (!$result) {
+			$this->error = $this->eCommerceRemoteAccess->error;
+			$this->errors = $this->eCommerceRemoteAccess->errors;
+		}
+		return $result;
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 	/**
 	 * Synchronize order to update from raw data
@@ -3567,37 +3559,66 @@ class eCommerceSynchro
 							$this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr' && !empty($product->array_options["options_ecommerceng_wc_manage_stock_{$this->eCommerceSite->id}_{$conf->entity}"]) &&
 							empty($product->array_options["options_ecommerceng_wc_dont_update_stock_{$this->eCommerceSite->id}_{$conf->entity}"])
 						) {
-							if (empty($this->eCommerceSite->fk_warehouse)) {
-								$error++;
-								$this->errors[] = 'SetupOfWarehouseNotDefinedForThisSite';
-							} else {
-								$product->load_stock();
-								$current_stock = isset($product->stock_warehouse[$this->eCommerceSite->fk_warehouse]->real) ? $product->stock_warehouse[$this->eCommerceSite->fk_warehouse]->real : 0;
+                            $product->load_stock();
 
-								$new_stock = price2num($product_data['stock_qty'] - $current_stock);
-								if ($new_stock != 0) {
-									// Update/init stock
-									include_once DOL_DOCUMENT_ROOT . '/product/stock/class/mouvementstock.class.php';
-									$movement = new MouvementStock($this->db);
-									$movement->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+                            $new_warehouses_stock = array();
+                            if (!empty($this->eCommerceSite->parameters['enable_warehouse_plugin_sl_support'])) {
+                                dol_include_once('/ecommerceng/class/data/eCommerceRemoteWarehouses.class.php');
+                                $eCommerceRemoteWarehouses = new eCommerceRemoteWarehouses($this->db);
+                                $remote_warehouses = $eCommerceRemoteWarehouses->get_all($this->eCommerceSite->id);
+                                if (!is_array($remote_warehouses)) {
+                                    $error++;
+                                    $this->errors[] = $eCommerceRemoteWarehouses->errorsToString();
+                                }
 
-									if (isset($object_origin->element) && isset($object_origin->id) && $object_origin->id > 0) {
-										$movement->origin = $object_origin;
-									}
-									$lot = $product->status_batch ? '000000' : null;
-									if ($new_stock < 0) {
-										$result = $movement->livraison($this->user, $product->id, $this->eCommerceSite->fk_warehouse, abs($new_stock), 0, $langs->trans($new_product ? 'ECommerceStockInitFromWooSync' : 'ECommerceStockUpdateFromWooSync'), '', '', $lot);
-									} else {
-										$result = $movement->reception($this->user, $product->id, $this->eCommerceSite->fk_warehouse, $new_stock, 0, $langs->trans($new_product ? 'ECommerceStockInitFromWooSync' : 'ECommerceStockUpdateFromWooSync'), '', '', $lot);
-									}
-									if ($result <= 0) {
-										$this->errors[] = $this->langs->trans('ECommerceErrorUpdateProductStock');
-										if (!empty($movement->error)) $this->errors[] = $movement->error;
-										$this->errors = array_merge($this->errors, $movement->errors);
-										$error++;
-									}
-								}
-							}
+                                if (!$error && !empty($product_data['stock_by_warehouse'])) {
+                                    foreach ($product_data['stock_by_warehouse'] as $remote_warehouse_code => $stock) {
+                                        $local_warehouse_id = isset($remote_warehouses[$remote_warehouse_code]['warehouse_id']) && $remote_warehouses[$remote_warehouse_code]['warehouse_id'] > 0 ? $remote_warehouses[$remote_warehouse_code]['warehouse_id'] : 0;
+                                        if (empty($local_warehouse_id)) {
+                                            $error++;
+                                            $this->errors[] = 'Error - Unknown remote warehouse : ' . $remote_warehouse_code;
+                                        } else {
+                                            $current_stock = isset($product->stock_warehouse[$local_warehouse_id]->real) ? $product->stock_warehouse[$local_warehouse_id]->real : 0;
+                                            $new_warehouses_stock[$this->eCommerceSite->fk_warehouse] = price2num($stock - $current_stock);
+                                        }
+                                    }
+                                }
+                            } else {
+                                if ($this->eCommerceSite->fk_warehouse > 0) {
+                                    $current_stock = isset($product->stock_warehouse[$this->eCommerceSite->fk_warehouse]->real) ? $product->stock_warehouse[$this->eCommerceSite->fk_warehouse]->real : 0;
+                                    $new_warehouses_stock[$this->eCommerceSite->fk_warehouse] = price2num($product_data['stock_qty'] - $current_stock);
+                                } else {
+                                    $error++;
+                                    $this->errors[] = 'SetupOfWarehouseNotDefinedForThisSite';
+                                }
+                            }
+
+                            if (!$error) {
+                                foreach ($new_warehouses_stock as $warehouse_id => $new_stock_delta) {
+                                    if (empty($new_stock_delta)) continue;
+
+                                    // Update/init stock
+                                    include_once DOL_DOCUMENT_ROOT . '/product/stock/class/mouvementstock.class.php';
+                                    $movement = new MouvementStock($this->db);
+                                    $movement->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
+
+                                    if (isset($object_origin->element) && isset($object_origin->id) && $object_origin->id > 0) {
+                                        $movement->origin = $object_origin;
+                                    }
+                                    $lot = $product->status_batch ? '000000' : null;
+                                    if ($new_stock_delta < 0) {
+                                        $result = $movement->livraison($this->user, $product->id, $warehouse_id, abs($new_stock_delta), 0, $langs->trans($new_product ? 'ECommerceStockInitFromWooSync' : 'ECommerceStockUpdateFromWooSync'), '', '', $lot);
+                                    } else {
+                                        $result = $movement->reception($this->user, $product->id, $warehouse_id, $new_stock_delta, 0, $langs->trans($new_product ? 'ECommerceStockInitFromWooSync' : 'ECommerceStockUpdateFromWooSync'), '', '', $lot);
+                                    }
+                                    if ($result <= 0) {
+                                        $this->errors[] = $this->langs->trans('ECommerceErrorUpdateProductStock');
+                                        if (!empty($movement->error)) $this->errors[] = $movement->error;
+                                        $this->errors = array_merge($this->errors, $movement->errors);
+                                        $error++;
+                                    }
+                                }
+                            }
 						}
 
 						// Set update date of the product with last update date from site
@@ -3794,6 +3815,7 @@ class eCommerceSynchro
 						//--------------------------------------------
 						if (!$error && !empty($product_data['remote_id'])) {
 							$this->eCommerceProduct->last_update = $product_data['last_update'];
+							if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $this->eCommerceProduct->last_update_stock = $product_data['last_update'];
 							$this->eCommerceProduct->fk_product = $product->id > 0 ? $product->id : 0;
 							$this->eCommerceProduct->remote_id = $product_data['remote_id'];
 
@@ -5752,7 +5774,7 @@ class eCommerceSynchro
 										}
 
 										// Get warehouse ID
-										$warehouse_id = $this->eCommerceSite->parameters['order_actions']['valid_order_fk_warehouse'] > 0 ? $this->eCommerceSite->parameters['order_actions']['valid_order_fk_warehouse'] : 0;
+										$warehouse_id = $this->eCommerceSite->parameters['order_actions']['valid_invoice_fk_warehouse'] > 0 ? $this->eCommerceSite->parameters['order_actions']['valid_invoice_fk_warehouse'] : 0;
 
 										if ($isDepositType) {
 											$save_WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER = $conf->global->WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER;
@@ -5927,9 +5949,12 @@ class eCommerceSynchro
 													}
 												}
 
-												// Validate invoice
+												// Validate supplier invoice
 												if (!$error) {
-													$result = $supplier_invoice->validate($this->user);
+													// Get warehouse ID
+													$warehouse_id = $this->eCommerceSite->parameters['order_actions']['valid_supplier_invoice_fk_warehouse'] > 0 ? $this->eCommerceSite->parameters['order_actions']['valid_supplier_invoice_fk_warehouse'] : 0;
+
+													$result = $supplier_invoice->validate($this->user, '', $warehouse_id);
 													if ($result < 0) {
 														$this->errors[] = $this->langs->trans('ECommerceErrorSupplierInvoiceValidate');
 														if (!empty($supplier_invoice->error)) $this->errors[] = $supplier_invoice->error;

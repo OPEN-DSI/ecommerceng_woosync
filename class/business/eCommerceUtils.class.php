@@ -35,7 +35,9 @@ class eCommerceUtils
     public $langs;
     public $user;
 
-    //Data access
+    /**
+     * @var DoliDB    Database handler
+     */
 	public $db;
 
 	/**
@@ -47,10 +49,7 @@ class eCommerceUtils
     /**
      * Constructor
      *
-     * @param Database          $db           Database handler
-     * @param eCommerceSite     $site         Object eCommerceSite
-     * @param datetime          $toDate       Ending date to synch all data modified before this date (null by default = until now)
-     * @param int               $toNb         Max nb of record to count or synch (Used only for synch, not for count for the moment !)
+     * @param DoliDB            $db           Database handler
      */
     function __construct($db)
     {
@@ -61,6 +60,120 @@ class eCommerceUtils
         $this->db = $db;
     }
 
+    /**
+     *  Synchronize all new movement stocks from dolibarr to site (cron)
+     *
+     *  @return	int				0 if OK, < 0 if KO (this function is used also by cron so only 0 is OK)
+     */
+    public function cronSynchronizeStocksToSite()
+    {
+        global $conf, $user, $langs;
+
+        $langs->load('ecommerceng@ecommerceng');
+        $error = 0;
+        $output = '';
+
+        $stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__);
+
+        $sql = "SELECT sm.fk_product, MAX(sm.datem) AS update_date, GROUP_CONCAT(CONCAT(ep.rowid, ':', ep.fk_site, ':', ep.remote_id) SEPARATOR ';') AS links";
+        $sql .= " FROM " . MAIN_DB_PREFIX . "stock_mouvement AS sm";
+		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_product AS ep ON ep.fk_product = sm.fk_product";
+        $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_site AS es ON es.rowid = ep.fk_site";
+        $sql .= " WHERE es.entity IN (" . getEntity('ecommerceng') . ")";
+        $sql .= " AND (ep.last_update_stock IS NULL OR sm.datem > ep.last_update_stock)";
+        $sql .= " GROUP BY sm.fk_product";
+
+        $resql = $this->db->query($sql);
+        if (!$resql) {
+            $output .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $this->db->lasterror() . '</span>' . "<br>";
+            $error++;
+        } elseif ($this->db->num_rows($resql) > 0) {
+            $eCommerceSite = new eCommerceSite($this->db);
+            $sites = $eCommerceSite->listSites('object');
+
+            while ($obj = $this->db->fetch_object($resql)) {
+                $update_date = $obj->update_date;
+                $links = explode(';', $obj->links);
+
+                $product = new Product($this->db);
+                $product->fetch($obj->fk_product);
+
+                foreach ($links as $link) {
+                    $sub_error = 0;
+                    $link_info = explode(':', $link);
+                    $link_id = $link_info[0];
+                    $site_id = $link_info[1];
+                    $remote_id = $link_info[2];
+
+                    if (isset($sites[$site_id])) {
+                        $site = $sites[$site_id];
+
+						if ($site->stock_sync_direction == 'dolibarr2ecommerce') {
+							try {
+								// Connect to site
+								$eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+								$eCommerceSynchro->connect();
+								if (count($eCommerceSynchro->errors)) {
+									$output .= '<span style="color: red;">' . $langs->trans('Error') . ' - Connect to site ' . $site->name . ' : ' . $eCommerceSynchro->errorsToString() . '</span>' . "<br>";
+									$sub_error++;
+								}
+
+								if (!$sub_error) {
+									$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteStockProduct($remote_id, $product);
+									if (!$result) {
+										$output .= '<span style="color: red;">' . $langs->trans('Error') . ' - Update stock of ' . $product->ref . ' to site ' . $site->name . ' : ' . $eCommerceSynchro->eCommerceRemoteAccess->errorsToString() . '</span>' . "<br>";
+										$sub_error++;
+									}
+								}
+							} catch (Exception $e) {
+								$output .= '<span style="color: red;">' . $langs->trans('Error') . ' - Update stock of ' . $product->ref . ' to site ' . $site->name . ' : ' . $e->getMessage() . '</span>' . "<br>";
+								$sub_error++;
+							}
+
+							if (!$sub_error) {
+								// Update link
+								$eCommerceProduct = new eCommerceProduct($this->db);
+								$result = $eCommerceProduct->fetch($link_id);
+								if ($result > 0) {
+									$eCommerceProduct->last_update_stock = $update_date;
+									$result = $eCommerceProduct->update($user);
+								}
+								if ($result < 0) {
+									$output .= '<span style="color: red;">' . $langs->trans('ECommerceUpdateRemoteProductLink', $product->id, $site->name) . ': ' . $eCommerceProduct->error . '</span>' . "<br>";
+									$sub_error++;
+								}
+							}
+						}
+                    } else {
+                        $output .= '<span style="color: red;">' . $langs->trans('Error') . ': Site not found (ID: ' . $site_id . ')</span>' . "<br>";
+                        $sub_error++;
+                    }
+
+                    if ($sub_error) $error++;
+                }
+            }
+            $this->db->free($resql);
+        }
+
+        eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
+
+        if (!$error) {
+            $output .= $langs->trans('ECommerceSynchronizeStocksToSiteSuccess');
+            $this->error = "";
+            $this->errors = array();
+            $this->output = $output;
+            $this->result = array("commandbackuplastdone" => "", "commandbackuptorun" => "");
+
+            return 0;
+        } else {
+            $output = $langs->trans('ECommerceErrorWhenSynchronizeStocksToSite') . ":<br>" . $output;
+            dol_syslog(__METHOD__ . " Error: " . $output, LOG_ERR);
+
+            $this->error = $output;
+            $this->errors = array();
+            return -1;
+        }
+    }
 
     /**
      * 	Sync all

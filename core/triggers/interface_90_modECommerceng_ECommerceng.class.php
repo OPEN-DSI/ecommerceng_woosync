@@ -437,6 +437,7 @@ class InterfaceECommerceng
 						if (!$error) {
 							//eCommerce update link
 							$eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
+							if ($site->stock_sync_direction == 'dolibarr2ecommerce') $eCommerceProduct->last_update_stock = $eCommerceProduct->last_update;
 							if ($eCommerceProduct->update($user) < 0) {
 								$error++;
 								$error_msg = $langs->trans('ECommerceUpdateRemoteProductLink', $object->id, $site->name, $eCommerceProduct->error);
@@ -485,6 +486,7 @@ class InterfaceECommerceng
 						if (!$error) {
 							// Create remote link
 							$eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
+							if ($site->stock_sync_direction == 'dolibarr2ecommerce') $eCommerceProduct->last_update_stock = $eCommerceProduct->last_update;
 							$eCommerceProduct->fk_product = $object->id;
 							$eCommerceProduct->fk_site = $site->id;
 							$eCommerceProduct->remote_id = $remote_id;
@@ -1004,114 +1006,6 @@ class InterfaceECommerceng
 			if (isset($site)) $site->setEntityValues($save_entity);
 
 			if ($error) {
-				$this->db->rollback();
-				return -1;
-			} else {
-				$this->db->commit();
-				return 1;
-			}
-		}
-
-
-		// Stock Movement
-		if ($action == 'STOCK_MOVEMENT') {
-			if ($object->element != 'stockmouvement') {
-				$error_msg = "Trigger : Object element (" . $object->element . ") is not a stockmouvement for the action " . $action;
-				dol_syslog($error_msg, LOG_ERR);
-				$this->errors[] = $error_msg;
-				return -1;
-			}
-			dol_syslog("Trigger '" . $this->name . "' for action '$action' launched by " . __FILE__ . ". id=" . $object->id);
-
-			$this->db->begin();
-
-			$save_entity = $conf->entity;
-			$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__ . " - Action {$action} (ID: {$object->id})");
-
-			$eCommerceSite = new eCommerceSite($this->db);
-			$sites = $eCommerceSite->listSites('object');
-			$entities = explode(',', getEntity('stock'));
-
-			foreach ($sites as $site) {
-				if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id) {
-					dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
-					continue;
-				}
-
-				if (!in_array($site->entity, $entities)) {
-					dol_syslog("Site '{$site->name}' not in the shared entities");
-					continue;
-				}
-
-				try {
-					$supported_warehouses = is_array($site->parameters['fk_warehouse_to_ecommerce']) ? $site->parameters['fk_warehouse_to_ecommerce'] : array();
-
-					// Do we sync the stock ?
-					if (!$error && $site->stock_sync_direction == 'dolibarr2ecommerce' && in_array($object->entrepot_id, $supported_warehouses)) {
-						$site->setEntityValues($site->entity);
-
-						$eCommerceProduct = new eCommerceProduct($this->db);
-						$eCommerceProduct->fetchByProductId($object->product_id, $site->id);
-
-						// Get new qty. We read stock_reel of product. Trigger is called after creating movement and updating table product, so we get total after move.
-						$dbProduct = new Product($this->db);
-						$dbProduct->fetch($object->product_id);
-						$dbProduct->load_stock();
-
-						$object->qty_after = 0;
-						foreach ($supported_warehouses as $warehouse_id) {
-							$object->qty_after += isset($dbProduct->stock_warehouse[$warehouse_id]->real) ? $dbProduct->stock_warehouse[$warehouse_id]->real : 0;
-						}
-
-						if ($eCommerceProduct->remote_id > 0) {
-							// Connect to magento
-							$eCommerceSynchro = new eCommerceSynchro($this->db, $site);
-							dol_syslog("Trigger " . $action . " try to connect to eCommerce site " . $site->name);
-							$eCommerceSynchro->connect();
-							if (count($eCommerceSynchro->errors)) {
-								$error++;
-								$object->errors[] = $eCommerceSynchro->errorsToString();
-								setEventMessages($eCommerceSynchro->error, $eCommerceSynchro->errors, 'errors');
-							}
-
-							if (!$error) {
-								$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteStockProduct($eCommerceProduct->remote_id, $object, $dbProduct);
-								$now = dol_now();
-								if (!$result) {
-									$error++;
-									$this->errors[] = $eCommerceSynchro->eCommerceRemoteAccess->error;
-									$object->errors = array_merge($this->errors, $eCommerceSynchro->eCommerceRemoteAccess->errors);
-								}
-							}
-
-							if (!$error) {
-								//eCommerce update link
-								$eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
-								if ($eCommerceProduct->update($user) < 0) {
-									$error++;
-									$error_msg = $langs->trans('ECommerceUpdateRemoteProductLink', $object->id, $site->name, $eCommerceProduct->error);
-									$this->errors[] = $error_msg;
-									$object->errors = array_merge($this->errors, $eCommerceProduct->errors);
-									dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
-								}
-							}
-						} else {
-							dol_syslog("Product with id " . $object->id . " is not linked to an ecommerce record and does not has category flag to push on eCommerce.");
-						}
-					}
-				} catch (Exception $e) {
-					$error++;
-					$object->errors[] = 'Trigger exception : ' . $e->getMessage();
-					dol_syslog("Trigger '" . $this->name . "' for action '$action' launched by " . __FILE__ . ". id=" . $object->id . " " . 'Trigger exception : ' . $e->getMessage());
-					break;
-				}
-			}
-
-			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
-			if (isset($site)) $site->setEntityValues($save_entity);
-
-			if ($error) {
-				$this->errors[] = 'Product ID: ' . $object->product_id;
 				$this->db->rollback();
 				return -1;
 			} else {

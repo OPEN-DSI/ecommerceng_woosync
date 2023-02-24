@@ -23,6 +23,71 @@ dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
 dol_include_once('/ecommerceng/class/data/woocommerce/eCommerceRemoteAccessWoocommerce.class.php');
 
 /**
+ * Prepare array with list of tabs for configuration of sites
+ *
+ * @param	eCommerceSite	$object		Site handler
+ * @return  array						Array of tabs to show
+ */
+function ecommercengConfigSitePrepareHead($object)
+{
+	global $langs, $conf, $user;
+	$h = 0;
+	$head = array();
+
+	$head[$h][0] = dol_buildpath("/ecommerceng/admin/setup.php", 1) . ($object->id > 0 ? '?id=' . $object->id : '');
+	$head[$h][1] = $langs->trans("Parameters");
+	$head[$h][2] = 'settings';
+	$h++;
+
+	if ($object->id > 0) {
+		if (!empty($conf->societe->enabled)) {
+            $langs->load('companies');
+            $head[$h][0] = dol_buildpath("/ecommerceng/admin/thirdparty.php", 1) . '?id=' . $object->id;
+			$head[$h][1] = $langs->trans("ThirdParty");
+			$head[$h][2] = 'thirdparty';
+			$h++;
+		}
+
+		if (!empty($conf->product->enabled)) {
+            $langs->load('products');
+			$head[$h][0] = dol_buildpath("/ecommerceng/admin/product.php", 1) . '?id=' . $object->id;
+			$head[$h][1] = $langs->trans("Product");
+			$head[$h][2] = 'product';
+			$h++;
+		}
+
+		if (!empty($conf->stock->enabled)) {
+            $langs->load('products');
+			$head[$h][0] = dol_buildpath("/ecommerceng/admin/stock.php", 1) . '?id=' . $object->id;
+			$head[$h][1] = $langs->trans("Stock");
+			$head[$h][2] = 'stock';
+			$h++;
+		}
+
+		if (!empty($conf->commande->enabled) || !empty($conf->facture->enabled)) {
+            $langs->loadLangs(array('orders','bills'));
+			$labels = array();
+			if (!empty($conf->commande->enabled)) $labels[] = $langs->trans("Order");
+			if (!empty($conf->facture->enabled)) $labels[] = $langs->trans("Invoice");
+			$head[$h][0] = dol_buildpath("/ecommerceng/admin/order.php", 1) . '?id=' . $object->id;
+			$head[$h][1] = implode(' / ', $labels);
+			$head[$h][2] = 'order_invoice';
+			$h++;
+		}
+	}
+
+	// Show more tabs from modules
+	// Entries must be declared in modules descriptor with line
+	// $this->tabs = array('entity:+tabname:Title:@mymodule:/mymodule/mypage.php?id=__ID__');   to add new tab
+	// $this->tabs = array('entity:-tabname:Title:@mymodule:/mymodule/mypage.php?id=__ID__');   to remove a tab
+	complete_head_from_modules($conf, $langs, null, $head, $h, 'ecommerceng_config_site');
+
+	complete_head_from_modules($conf, $langs, null, $head, $h, 'ecommerceng_config_site', 'remove');
+
+	return $head;
+}
+
+/**
  * Update the price for all product in the ecommerce product category for this site price level
  * @param eCommerceSite  $siteDb    Object eCommerceSite
  *
@@ -494,35 +559,35 @@ function ecommerceng_update_woocommerce_attribute($db, $site)
 		} else {
 			$attribute = $attributes[$line['attribute_id']];
 			$result = $eCommerceDict->update([
-				'attribute_name' => ['value'=>$attribute->name,'type'=>'string'],
-				'attribute_slug' => ['value'=>$attribute->slug,'type'=>'string'],
-				'attribute_type' => ['value'=>$attribute->type,'type'=>'string'],
-				'attribute_order_by' => ['value'=>$attribute->order_by,'type'=>'string'],
-				'attribute_has_archives' => ['value'=>$attribute->has_archives?1:0],
+				'attribute_name' => ['value'=>$attribute['name'],'type'=>'string'],
+				'attribute_slug' => ['value'=>$attribute['slug'],'type'=>'string'],
+				'attribute_type' => ['value'=>$attribute['type'],'type'=>'string'],
+				'attribute_order_by' => ['value'=>$attribute['order_by'],'type'=>'string'],
+				'attribute_has_archives' => ['value'=>$attribute['has_archives']?1:0],
 			], ['rowid' => ['value' => $line['rowid']]]);
 			if ($result == false) {
 				setEventMessage($langs->trans('ECommerceWoocommerceErrorUpdateDictAttribute', $line['attribute_slug'], $db->error()), 'errors');
 				$db->rollback();
 				return false;
 			}
-			$attributes[$line['attribute_id']]->founded = true;
+			$attributes[$line['attribute_id']]['founded'] = true;
 		}
 	}
 
 	// Add new attribute from woocommerce
 	foreach ($attributes as $attribute) {
-		if (!isset($attribute->founded)) {
+		if (!isset($attribute['founded'])) {
 			// Add new attribute
 			$result = $eCommerceDict->insert(['site_id','attribute_id','attribute_name','attribute_slug','attribute_type','attribute_order_by','attribute_has_archives','entity','active'], ['site_id'=>['value'=>$site->id],
-				'attribute_id'=>['value'=>$attribute->id],
-				'attribute_name'=>['value'=>$attribute->name,'type'=>'string'],
-				'attribute_slug'=>['value'=>$attribute->slug,'type'=>'string'],
-				'attribute_type'=>['value'=>$attribute->type,'type'=>'string'],
-				'attribute_order_by'=>['value'=>$attribute->order_by,'type'=>'string'],
-				'attribute_has_archives'=>['value'=>$attribute->has_archives?1:0],
+				'attribute_id'=>['value'=>$attribute['id']],
+				'attribute_name'=>['value'=>$attribute['name'],'type'=>'string'],
+				'attribute_slug'=>['value'=>$attribute['slug'],'type'=>'string'],
+				'attribute_type'=>['value'=>$attribute['type'],'type'=>'string'],
+				'attribute_order_by'=>['value'=>$attribute['order_by'],'type'=>'string'],
+				'attribute_has_archives'=>['value'=>$attribute['has_archives']?1:0],
 				'entity'=>['value'=>$conf->entity],'active'=>['value'=>1]]);
 			if ($result == false) {
-				setEventMessage($langs->trans('ECommerceWoocommerceErrorAddDictAttribute', $attribute->slug, $attribute->name, $db->error()), 'errors');
+				setEventMessage($langs->trans('ECommerceWoocommerceErrorAddDictAttribute', $attribute['slug'], $attribute['name'], $db->error()), 'errors');
 				$db->rollback();
 				return false;
 			}
@@ -571,23 +636,23 @@ function ecommerceng_update_woocommerce_dict_tax($db, $site)
 				return false;
 			}
 		} else {
-			$result = $eCommerceDict->update(['label' => ['value'=>$taxClasses[$line['code']]->name,'type'=>'string']], ['rowid' => ['value' => $line['rowid']]]);
+			$result = $eCommerceDict->update(['label' => ['value'=>$taxClasses[$line['code']]['name'],'type'=>'string']], ['rowid' => ['value' => $line['rowid']]]);
 			if ($result == false) {
 				setEventMessage($langs->trans('ECommerceWoocommerceErrorUpdateDictTaxClass', $line['code'], $db->error()), 'errors');
 				$db->rollback();
 				return false;
 			}
-			$taxClasses[$line['code']]->founded = true;
+			$taxClasses[$line['code']]['founded'] = true;
 		}
 	}
 
 	// Add new code from woocommerce
 	foreach ($taxClasses as $taxClass) {
-		if (!isset($taxClass->founded)) {
+		if (!isset($taxClass['founded'])) {
 			// Add new tax class code
-			$result = $eCommerceDict->insert(['site_id','code','label','entity','active'], ['site_id'=>['value'=>$site->id],'code'=>['value'=>$taxClass->slug,'type'=>'string'],'label'=>['value'=>$taxClass->name,'type'=>'string'],'entity'=>['value'=>$conf->entity],'active'=>['value'=>1]]);
+			$result = $eCommerceDict->insert(['site_id','code','label','entity','active'], ['site_id'=>['value'=>$site->id],'code'=>['value'=>$taxClass['slug'],'type'=>'string'],'label'=>['value'=>$taxClass['name'],'type'=>'string'],'entity'=>['value'=>$conf->entity],'active'=>['value'=>1]]);
 			if ($result == false) {
-				setEventMessage($langs->trans('ECommerceWoocommerceErrorAddDictTaxClass', $taxClass->slug, $taxClass->name, $db->error()), 'errors');
+				setEventMessage($langs->trans('ECommerceWoocommerceErrorAddDictTaxClass', $taxClass['slug'], $taxClass['name']) . ' ' . $db->error(), 'errors');
 				$db->rollback();
 				return false;
 			}
@@ -618,35 +683,35 @@ function ecommerceng_update_woocommerce_dict_tax($db, $site)
 			}
 		} else {
 			$taxRate = $taxRates[$line['tax_id']];
-			$rate = price2num($taxRate->rate);
+			$rate = price2num($taxRate['rate']);
 			if (strpos((string)$rate, '.') === false) $rate = $rate . '.0';
-			$result = $eCommerceDict->update(['tax_country'=>['value'=>$taxRate->country,'type'=>'string'],'tax_state'=>['value'=>$taxRate->state,'type'=>'string'],
-				'tax_postcode'=>['value'=>$taxRate->postcode,'type'=>'string'],'tax_city'=>['value'=>$taxRate->city,'type'=>'string'],'tax_rate'=>['value'=>$rate,'type'=>'string'],
-				'tax_name'=>['value'=>$taxRate->name,'type'=>'string'],'tax_priority'=>['value'=>$taxRate->priority],'tax_compound'=>['value'=>$taxRate->compound?1:0],
-				'tax_shipping'=>['value'=>$taxRate->shipping?1:0],'tax_order'=>['value'=>$taxRate->order],'tax_class'=>['value'=>$taxRate->class,'type'=>'string']], ['rowid' => ['value' => $line['rowid']]]);
+			$result = $eCommerceDict->update(['tax_country'=>['value'=>$taxRate['country'],'type'=>'string'],'tax_state'=>['value'=>$taxRate['state'],'type'=>'string'],
+				'tax_postcode'=>['value'=>$taxRate['postcode'],'type'=>'string'],'tax_city'=>['value'=>$taxRate['city'],'type'=>'string'],'tax_rate'=>['value'=>$rate,'type'=>'string'],
+				'tax_name'=>['value'=>$taxRate['name'],'type'=>'string'],'tax_priority'=>['value'=>$taxRate['priority']],'tax_compound'=>['value'=>$taxRate['compound']?1:0],
+				'tax_shipping'=>['value'=>$taxRate['shipping']?1:0],'tax_order'=>['value'=>$taxRate['order']],'tax_class'=>['value'=>$taxRate['class'],'type'=>'string']], ['rowid' => ['value' => $line['rowid']]]);
 			if ($result == false) {
 				setEventMessage($langs->trans('ECommerceWoocommerceErrorUpdateDictTaxRate', $line['tax_id'], $db->error()), 'errors');
 				$db->rollback();
 				return false;
 			}
-			$taxRates[$line['tax_id']]->founded = true;
+			$taxRates[$line['tax_id']]['founded'] = true;
 		}
 	}
 
 	// Add new tax rate from woocommerce
 	foreach ($taxRates as $taxRate) {
-		if (!isset($taxRate->founded)) {
-			$rate = price2num($taxRate->rate);
+		if (!isset($taxRate['founded'])) {
+			$rate = price2num($taxRate['rate']);
 			if (strpos((string)$rate, '.') === false) $rate = $rate . '.0';
 			// Add new tax rate
 			$result = $eCommerceDict->insert(['site_id','tax_id','tax_country','tax_state','tax_postcode','tax_city','tax_rate','tax_name','tax_priority','tax_compound','tax_shipping','tax_order','tax_class','entity','active'],
-				['site_id'=>['value'=>$site->id],'tax_id'=>['value'=>$taxRate->id],'tax_country'=>['value'=>$taxRate->country,'type'=>'string'],'tax_state'=>['value'=>$taxRate->state,'type'=>'string'],
-					'tax_postcode'=>['value'=>$taxRate->postcode,'type'=>'string'],'tax_city'=>['value'=>$taxRate->city,'type'=>'string'],'tax_rate'=>['value'=>$rate,'type'=>'string'],
-					'tax_name'=>['value'=>$taxRate->name,'type'=>'string'],'tax_priority'=>['value'=>$taxRate->priority],'tax_compound'=>['value'=>$taxRate->compound?1:0],
-					'tax_shipping'=>['value'=>$taxRate->shipping?1:0],'tax_order'=>['value'=>$taxRate->order],'tax_class'=>['value'=>$taxRate->class,'type'=>'string']
+				['site_id'=>['value'=>$site->id],'tax_id'=>['value'=>$taxRate['id']],'tax_country'=>['value'=>$taxRate['country'],'type'=>'string'],'tax_state'=>['value'=>$taxRate['state'],'type'=>'string'],
+					'tax_postcode'=>['value'=>$taxRate['postcode'],'type'=>'string'],'tax_city'=>['value'=>$taxRate['city'],'type'=>'string'],'tax_rate'=>['value'=>$rate,'type'=>'string'],
+					'tax_name'=>['value'=>$taxRate['name'],'type'=>'string'],'tax_priority'=>['value'=>$taxRate['priority']],'tax_compound'=>['value'=>$taxRate['compound']?1:0],
+					'tax_shipping'=>['value'=>$taxRate['shipping']?1:0],'tax_order'=>['value'=>$taxRate['order']],'tax_class'=>['value'=>$taxRate['class'],'type'=>'string']
 					,'entity'=>['value'=>$conf->entity],'active'=>['value'=>1]]);
 			if ($result == false) {
-				setEventMessage($langs->trans('ECommerceWoocommerceErrorAddDictTaxRate', $taxRate->slug, $db->error()), 'errors');
+				setEventMessage($langs->trans('ECommerceWoocommerceErrorAddDictTaxRate', $taxRate['slug'], $db->error()), 'errors');
 				$db->rollback();
 				return false;
 			}
@@ -705,6 +770,71 @@ function ecommerceng_update_payment_gateways($db, $site)
     }
 
     return true;
+}
+
+function ecommerceng_update_remote_warehouses($db, $site)
+{
+	global $conf, $langs;
+	$langs->load('woocommerce@ecommerceng');
+
+	dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
+	$synchro = new eCommerceSynchro($db, $site, 0, 0);
+
+	dol_syslog("site.php Try to connect to eCommerce site " . $site->name);
+	$result = $synchro->connect();
+	if (!$result) {
+		setEventMessages($synchro->error, $synchro->errors, 'errors');
+		return false;
+	}
+
+	$remote_warehouses_list = $synchro->getAllRemoteWarehouses();
+	if ($remote_warehouses_list === false) {
+		setEventMessages($synchro->error, $synchro->errors, 'errors');
+		return false;
+	}
+
+	// Get all payment gateways
+	dol_include_once('/ecommerceng/class/data/eCommerceRemoteWarehousesPluginSlSupport.class.php');
+	$remote_warehouses = new eCommerceRemoteWarehouses($db);
+	$currentRemoteWarehouses = $remote_warehouses->get_all($site->id);
+	if (!is_array($currentRemoteWarehouses) && $currentRemoteWarehouses < 0) {
+		setEventMessages($remote_warehouses->error, $remote_warehouses->errors, 'errors');
+		return false;
+	}
+
+	$finalRemoteWarehouses = array();
+
+	// Add remotes warehouses
+	foreach ($remote_warehouses_list as $remote_code => $infos) {
+		$finalRemoteWarehouses[$remote_code] = array(
+			'remote_id' => $infos['remote_id'],
+            'remote_name' => $infos['name'],
+			'warehouse_id' => $currentRemoteWarehouses[$remote_code]['warehouse_id'] > 0 ? $currentRemoteWarehouses[$remote_code]['warehouse_id'] : 0,
+			'set_even_if_empty_stock' => $currentRemoteWarehouses[$remote_code]['set_even_if_empty_stock'] > 0 ? $currentRemoteWarehouses[$remote_code]['set_even_if_empty_stock'] : 0,
+			'old_entry' => 0,
+		);
+	}
+
+	// Add current warehouses who has been deleted
+	foreach ($currentRemoteWarehouses as $remote_code => $infos) {
+		if (!isset($finalRemoteWarehouses[$remote_code])) {
+			$finalRemoteWarehouses[$remote_code] = array(
+				'remote_id' => $infos['remote_id'],
+                'remote_name' => $infos['name'],
+				'warehouse_id' => $infos['warehouse_id'],
+				'set_even_if_empty_stock' => $infos['set_even_if_empty_stock'],
+				'old_entry' => 1,
+			);
+		}
+	}
+
+	$result = $remote_warehouses->set($site->id, $finalRemoteWarehouses);
+	if ($result < 0) {
+		setEventMessages($remote_warehouses->error, $remote_warehouses->errors, 'errors');
+		return false;
+	}
+
+	return true;
 }
 
 function get_company_by_email($db, $email, $site=0)

@@ -18,6 +18,7 @@ ECommerceMenuSites                                                              
 ECommerceMenuSetup                                                                                  =Configuration des sites
 
 ##SETUP##
+ECommerceNgSelectSite                                                                               =Selection du site
 magento                                                                                             =Magento
 woocommerce                                                                                         =WooCommerce
 ECommerceToDolibarr                                                                                 =De E-Commerce vers Dolibarr
@@ -41,9 +42,19 @@ ECommerceFilterLabel                                                            
 ECommerceFilterValue                                                                                =Valeur du filtre
 ECommerceSiteType                                                                                   =Type de site
 ECommerceSiteAddress                                                                                =Adresse du site
+ECommerceAuthenticationType                                                                         =Type d'authentification
+ECommerceAuthenticationTypeDescription                                                              =Choissiez le type de connexion à WooCommerce<br>- Oauth 1 (Entête) (Les informations de connection sont passées dans l'entête de la requête)<br>- Oauth 1 (Url) (Les informations de connection sont passées en clair dans l'url de la requête)<br>- Basic (Les informations de connection sont passées dans l'entête de la requête)<br>- Url (Les informations de connection sont passées en clair dans l'url de la requête)
+ECommerceAuthenticationTypeOauth1Header                                                             =Oauth 1 (Entête)
+ECommerceAuthenticationTypeOauth1Query                                                              =Oauth 1 (Url)
+ECommerceAuthenticationTypeBasic                                                                    =Basic
+ECommerceAuthenticationTypeQuery                                                                    =Url
 ECommerceUserName                                                                                   =Clé client API WooCommerce
 ECommerceUserPassword                                                                               =Clé secret API WooCommerce
 ECommerceUserPasswordRetype                                                                         =Clé secret API WooCommerce - confirmation
+ECommerceTimeout                                                                                    =Timeout des accès à l'API de WooCommerce
+ECommerceTimeoutDescription                                                                         =Timeout des accès à l'API de WooCommerce, en secondes (30 secondes si vide)
+ECommerceDebug                                                                                      =Debug
+ECommerceDebugDescription                                                                           =Activer le debug détaillé lors d'une connection à l'API de WooCommerce
 ECommerceConfirmDelete                                                                              =Êtes vous sûre de vouloir supprimer ce site ?
 ECommerceConfirmReset                                                                               =Êtes vous sûre de vouloir purger les données synchronisées liées à ce site ? (<strong>Attention<strong> : cette action est irréversible, toute les données synchronisées seront perdues)
 ECommerceSetupSaved                                                                                 =La configuration a bien été enregistrée.
@@ -123,11 +134,7 @@ ECommerceSynchCommandeSuccess                                                   
 ECommerceSynchFactureSuccess                                                                        =factures ont bien été synchronisées.
 ECommerceSynchSocieteFailed                                                                         =%s erreurs se sont produites lors de la synchronisation.
 ECommerceSynchECommerceSocpeopleCreateError                                                         =Une erreur est survenue lors de l'enregistrement du contact (Tiers ID : %s; prénom: %s; nom: %s).
-ECommerceTimeout                                                                                    =Timeout des accès aux APIs
 ECommerceClickUrlToTestUrl                                                                          =Cliquez ici pour tester l'URL (un fichier XML ou JSON doit s'afficher)
-ECommerceTimeoutDescription                                                                         =Timeout des accès aux APIs, en secondes
-ECommerceSetupTimeoutEmpty                                                                          =Durée de connexion vide
-ECommerceSetupTimeoutMustBeInt                                                                      =La durée de connexion doit-être un entier
 ECommerceCategoriesProducts                                                                         =Catégories de produits
 SyncCategFirst                                                                                      =Synchroniser d'abord les catégories
 ECommerceSynchCommandeError                                                                         =Erreur durant la synchronisation des commandes
@@ -156,8 +163,12 @@ SoapCacheIsOff                                                                  
 SetupOfWarehouseNotDefinedForThisSite                                                               =Un nouveau produit ou un produit modifié a été trouvé sur la boutique E-Commerce avec un niveau de stock différent de celui de Dolibarr. Afin de pouvoir les créer/mettre à jour dans Dolibarr, vous devez mettre en place l'entrepôt à initialiser.
 ECommerceStockSyncDirection                                                                         =Synchronisation des stocks
 ECommerceStockSyncDirectionDescription                                                              =Ce paramètre détermine :<br/>- Si le stock doit être décrémenté dans Dolibarr suite à une décrémentation du stock E-Commerce (rare) ou <br/>- Si le stock E-Commerce doit être remplacé par le stock Dolibarr suite à sa modification (choix commun)
-ECommerceValidOrderWarehouse                                                                        =Validation d'une commande/facture
-ECommerceValidOrderWarehouseDescription                                                             =Entrepot utilisé lors de la validation d'une commande ou facture pendant une synchronisation de E-Commerce vers Dolibarr
+ECommerceValidOrderWarehouse                                                                        =Validation d'une commande
+ECommerceValidOrderWarehouseDescription                                                             =Entrepot utilisé lors de la validation d'une commande pendant une synchronisation de E-Commerce vers Dolibarr
+ECommerceValidInvoiceWarehouse                                                                      =Validation d'une facture
+ECommerceValidInvoiceWarehouseDescription                                                           =Entrepot utilisé lors de la validation d'une facture pendant une synchronisation de E-Commerce vers Dolibarr
+ECommerceValidSupplierInvoiceWarehouse                                                              =Validation d'une facture fournisseur
+ECommerceValidSupplierInvoiceWarehouseDescription                                                   =Entrepot utilisé lors de la validation d'une facture fournisseur pendant une synchronisation de E-Commerce vers Dolibarr
 MainSyncSetup                                                                                       =Synchronisation générale
 StockSyncSetup                                                                                      =Synchronisation des stocks
 ErrorModuleSoapRequired                                                                             =Erreur: le module PHP SOAP est requis pour le bon fonctionnement du module.
@@ -167,21 +178,28 @@ ShowDebugTools                                                                  
 ECommerceShipping                                                                                   =Frais de port
 ECommercePriceLevel                                                                                 =Niveau de prix
 ECommercePriceLevelDescription                                                                      =Seul ce niveau de prix sera synchronisé entre Dolibarr et E-Commerce
+ECommerceUpdateLevelPrice                                                                           =Mise à jour du niveau de prix
 ECommerceConfirmUpdatePriceLevel                                                                    =Vous avez modifié le niveau de prix. Les produits sur le site E-Commerce vont être mis à jour.\nCette opération peut être longue, merci de confirmer.
 ThirdPartyForNonLoggedUsers                                                                         =Tiers générique de recueil des clients sans compte créé
 SynchUnkownCustomersOnThirdParty                                                                    =Tiers générique auquel seront rattachées les commandes de clients sans compte
 ECommerceDontUpdateDolibarrCompany                                                                  =Mise à jour du tiers
 ECommerceDontUpdateDolibarrCompanyDescription                                                       =Ne pas mettre à jour le tiers de Dolibarr lorsqu'il existe déja dans dolibarr
 
-## OAuth Setup ##
-ECommerceOAuthWordpressSetup                                                                        =Connexion OAuth2 sur WordPress (Allez sur <a class="notasortlink" href="%s" target="_blank">cette page</a> , puis "Ajouter un nouveau client" pour créer les informations d'identification OAuth2)
-ECommerceSiteOAuthRedirectUri                                                                       =URL de redirection
-ECommerceSiteOAuthRedirectUriDescription                                                            =Utilisez l'URL suivante comme URI de redirection (Callback) quand vous créez une nouvelle application (ou un nouveau client)
-ECommerceSiteOAuthId                                                                                =OAuth ID
-ECommerceSiteOAuthIdDescription                                                                     =Id de connexion au service OAuth
-ECommerceSiteOAuthSecret                                                                            =OAuth secret
-ECommerceSiteOAuthSecretDescription                                                                 =Secret de connexion au service OAuth
-ECommerceOAuthCheckToken                                                                            =Allez sur <a class="notasortlink" href="%s" target="_blank">cette page</a> pour vérifier/effacer les autorisations sauvées par le fournisseur OAuth2.
+## Wordpress Setup ##
+ECommerceWordpressAuthenticationOptions                                                             =Paramètres de connexion à WordPress
+ECommerceWordpressAuthenticationSetup                                                               =(Allez sur <a class="notasortlink" href="%s" target="_blank">cette page</a> , puis configurer la connexion)
+ECommerceWordpressAuthenticationType                                                                =Type d'authentification
+ECommerceWordpressAuthenticationTypeDescription                                                     =Choissiez entre la connexion interne Wordpress avec un mot de passe d'application situé sur un utilisateur<br>Ou une authentification JWT grâçe à l'extension "WordPress REST API Authentication" de miniOrange
+ECommerceWordpressAuthenticationTypeWordpressApplication                                            =Mot de passe d'application (Wordpress)
+ECommerceWordpressAuthenticationTypeJWTAuthentication                                               =Authentification JWT
+ECommerceWordpressAuthenticationLogin                                                               =Identifiant
+ECommerceWordpressAuthenticationLoginDescription                                                    =Identifiant de connexion
+ECommerceWordpressAuthenticationPassword                                                            =Mot de passe
+ECommerceWordpressAuthenticationPasswordDescription                                                 =Mot de passe de connexion
+ECommerceWordpressTimeout                                                                           =Timeout des accès à l'API de Wordpress
+ECommerceWordpressTimeoutDescription                                                                =Timeout des accès à l'API de Wordpress, en secondes (30 secondes si vide)
+ECommerceWordpressDebug                                                                             =Debug
+ECommerceWordpressDebugDescription                                                                  =Activer le debug détaillé lors d'une connection à l'API de Wordpress
 
 ECommerceOrderStatusSetup                                                                           =Synchronisation des statuts des commandes
 ECommerceOrderStatusSetupDescription                                                                =Choisissez le statut correspondant lors de la synchronisation.
@@ -227,12 +245,14 @@ ECommerceCreateRemoteProductLink                                                
 ECommerceUpdateRemoteOrderLink                                                                      =Erreur de mise à jour du lien de la commande 'id:%s' sur le site '%s': %s
 ECommerceUpdateRemoteInvoiceLink                                                                    =Erreur de mise à jour du lien de la facture 'id:%s' sur le site '%s': %s
 
-ECommerceRealTimeSynchroDolibarrToECommerceSetup                                                    =Synchronisation en temps réel de Dolibarr vers E-Commerce
-ECommerceThirdParty                                                                                 =Tiers
-ECommerceContact                                                                                    =Contacts
-ECommerceProduct                                                                                    =Produits
-ECommerceOrder                                                                                      =Commandes
-ECommerceRealTimeSynchroDolibarrToECommerceSetupDescription                                         =Synchronisation de l'élément dans le site E-Commerce à la modification de celui lié dans Dolibarr
+ECommerceRealTimeSynchroDolibarrToECommerceThirdParty                                               =Synchronisation du tiers en temps réel de Dolibarr vers E-Commerce
+ECommerceRealTimeSynchroDolibarrToECommerceThirdPartyDescription                                    =Synchronisation du tiers dans le site E-Commerce à la modification de celui lié dans Dolibarr
+ECommerceRealTimeSynchroDolibarrToECommerceContact                                                  =Synchronisation du contact en temps réel de Dolibarr vers E-Commerce
+ECommerceRealTimeSynchroDolibarrToECommerceContactDescription                                       =Synchronisation du contact dans le site E-Commerce à la modification de celui lié dans Dolibarr
+ECommerceRealTimeSynchroDolibarrToECommerceProduct                                                  =Synchronisation du produit en temps réel de Dolibarr vers E-Commerce
+ECommerceRealTimeSynchroDolibarrToECommerceProductDescription                                       =Synchronisation du produit dans le site E-Commerce à la modification de celui lié dans Dolibarr
+ECommerceRealTimeSynchroDolibarrToECommerceOrder                                                    =Synchronisation de la commande en temps réel de Dolibarr vers E-Commerce
+ECommerceRealTimeSynchroDolibarrToECommerceOrderDescription                                         =Synchronisation de la commande dans le site E-Commerce à la modification de celui lié dans Dolibarr
 
 ECommercePaymentCondition                                                                           =Conditions de règlement
 ECommercePaymentConditionDescription                                                                =Conditions de règlement par défaut lors de la récupération de la commande depuis le site E-Commerce
@@ -287,14 +307,29 @@ ECommerceOnlyNew                                                                
 ECommerceUpdateRemoteCompanyLinkWhenMergeCompany                                                    =Erreur de mise à jour des lien de la société 'id:%s' lors de la fusion avec la société 'id:%s': %s
 ECommerceSynchronizeStockToECommerce                                                                =Synchronisation du stock du produit sur le site %s.
 
-ECommerceCreateOrderInvoiceWhenSyncOrder                                                            =Actions lors de la récupération des commandes WooCommerce
 ECommerceCreateOrder                                                                                =Créer la commande
+ECommerceCreateOrderDescription                                                                     =Activer la création de la commande a la synchronisation de la commande
 ECommerceCreateInvoice                                                                              =Créer la facture
+ECommerceCreateInvoiceDescription                                                                   =Activer la création de la facture a la synchronisation de la commande
+ECommerceCreateInvoiceType                                                                          =Type la facture
+ECommerceCreateInvoiceTypeDescription                                                               =Type la facture créée a la synchronisation de la commande
 ECommerceCreateSupplierInvoiceFromFee                                                               =Créer la facture fournisseur à partir des frais
+ECommerceCreateSupplierInvoiceFromFeeDescription                                                    =Créer la facture fournisseur à partir des frais lors de la creation de la facture
 ECommerceFeeLineAsItemLine                                                                          =Considérer les lignes de frais comme des lignes de services
+ECommerceFeeLineAsItemLineDescription                                                               =Considérer les lignes de frais comme des lignes de services lors de la création de la commande/facture
 ECommerceSendInvoiceByMail                                                                          =Envoyer la facture par courriel
+ECommerceSendInvoiceByMailDescription                                                               =Envoyer la facture par courriel après la création avec succes de la facture
 ECommerceCreateOrderDescription                                                                     =Actions associées lors de la récupération des commandes WooCommerce (renseigner les modes de paiements associés à WooCommerce)
 ECommerceCreateInvoiceIfAmount0                                                                     =Créer la facture même si le montant est nul
+ECommerceCreateInvoiceIfAmount0Description                                                          =Créer la facture même si le montant est nul lors de la synchronisation de la commande
+
+ECommerceRemoteWarehousesCorrespondence                                                             =Correspondance des entrpôts avec le site
+ECommerceWarehouseSetToZeroEvenIfEmptyStock                                                         =Definie le stock même si la quantité est à zero
+ECommerceWarehouseOldEntry                                                                          =Ancien entrepôt
+ECommerceUpdateRemoteWarehouses                                                                     =Mise à jour des entrepôts distants
+ECommerceConfirmUpdateRemoteWarehouses                                                              =Confirmer la mise à jour des entrepôts distants pour ce site ?
+ECommerceRemoteWarehousesUpdated                                                                    =Les entrepôts distants depuis le site ont été mise à jour.
+ECommerceRemoteID                                                                                   =ID distant
 
 ECommercePaymentGatewaysCorrespondence                                                              =Correspondance des modes de paiements avec le site
 ECommercePaymentGatewayLabel                                                                        =Mode de paiement sur le site
@@ -424,6 +459,24 @@ ECommerceErrorCheckWebHooksVolumetry                                            
 ECommerceSendEmailErrorCheckWebHooksVolumetry                                                       =Envoi du courriel de notification des dépassements de volumétrie des crochets Web (WebHooks)
 ECommerceSendEmailErrorCheckWebHooksVolumetryErrorSubject                                           =[WooSync] Erreur lors de la vérification de la volumétrie des crochets Web (WebHooks)
 ECommerceCheckWebHooksVolumetrySuccess                                                              =La vérification de la volumétrie des crochets Web (WebHooks) s'est terminée avec succès
+
+#######################################################################
+# API
+#######################################################################
+ECommerceRequestData               = Données de la requête
+ECommerceRequestProtocolVersion    = Version du protocole
+ECommerceRequestUri                = Url
+ECommerceRequestMethod             = Méthode
+ECommerceRequestTarget             = Cible
+ECommerceRequestHeaders            = En-têtes
+ECommerceRequestBody               = Corps
+ECommerceResponseData              = Données de la réponse
+ECommerceResponseProtocolVersion   = Version du protocole
+ECommerceResponseCode              = Code
+ECommerceResponseReasonPhrase      = Raison
+ECommerceResponseHeaders           = En-têtes
+ECommerceResponseBody              = Corps
+ECommerceErrorBadConvertResult     = Mauvais format de la réponse d'une requête sur l'API
 
 ############################################################################################
 # Errors
@@ -555,6 +608,7 @@ ECommerceErrorUpdateProductComponent                                            
 ECommerceErrorDelProductComponent                                                                   =Erreur lors de la suppression du composant (ID: %s) constituant le produit (ID: %s)
 ECommerceErrorSetOrderCorrectAmount                                                                 =Erreur lors du forçage du prix TTC de la commande
 ECommerceErrorSetInvoiceCorrectAmount                                                               =Erreur lors du forçage du prix TTC de la facture
+ECommerceErrorConnectAPI                                                                            =Erreur de connexion au site '%s'
 
 ############################################################################################
 # Warnings

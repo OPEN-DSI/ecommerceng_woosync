@@ -162,6 +162,7 @@ ShowDebugTools=Mostra gli strumenti init / purge / debug
 ECommerceShipping=Spese di spedizione
 ECommercePriceLevel=Livello dei prezzi
 ECommercePriceLevelDescription=Solo questo livello di prezzo sarà sincronizzato tra Dolibarr ed E-commerce
+ECommerceUpdateLevelPrice                                                                           =Mise à jour du niveau de prix
 ECommerceConfirmUpdatePriceLevel=Hai modificato il livello dei prezzi. I prodotti sul sito di e-commerce verranno aggiornati. Potrebbe essere necessario molto tempo, confermare.
 SeeECommerceConfFileIfKo=See content of file <strong>%s</strong>, on your eCommerce server, if this URL does not work.
 RestrictNbInSync=Restrict number of record of same object to synchronize in same request
@@ -171,14 +172,15 @@ ECommerceDontUpdateDolibarrCompany                                              
 ECommerceDontUpdateDolibarrCompanyDescription                                                       =Ne pas mettre à jour le tiers sur Dolibarr lorsqu'il existe déja dans dolibarr
 
 ## OAuth Setup ##
-ECommerceOAuthWordpressSetup=Connessione OAuth2 su WordPress (continua su <a class="notasortlink" href="%s" target="_blank">questa pagina</a>, quindi "Aggiungi un nuovo client" per creare le credenziali OAuth2)
-ECommerceSiteOAuthRedirectUri=URL di reindirizzamento
-ECommerceSiteOAuthRedirectUriDescription=Utilizzare il seguente URL come URI di richiamata quando si crea una nuova applicazione (o un nuovo client)
-ECommerceSiteOAuthId=OAuth ID
-ECommerceSiteOAuthIdDescription=ID connessione servizio OAuth
-ECommerceSiteOAuthSecret=OAuth secret
-ECommerceSiteOAuthSecretDescription=Client Secret della connessione al servizio OAuth
-ECommerceOAuthCheckToken=continua <a class="notasortlink" href="%s" target="_blank">questa pagina</a> per controllare / cancellare le autorizzazioni salvate dal provider OAuth2.
+ECommerceWordpressAuthenticationSetup                                                               =Connexion sur WordPress (Allez sur <a class="notasortlink" href="%s" target="_blank">cette page</a> , puis configurer la connexion)
+ECommerceWordpressAuthenticationType                                                                =Type d'authentification
+ECommerceWordpressAuthenticationTypeDescription                                                     =Choissiez entre la connexion interne Wordpress avec un mot de passe d'application situé sur un utilisateur<br>Ou une authentification JWT grâçe à l'extension "WordPress REST API Authentication" de miniOrange
+ECommerceWordpressAuthenticationTypeWordpressApplication                                            =Mot de passe d'application (Wordpress)
+ECommerceWordpressAuthenticationTypeJWTAuthentication                                               =Authentification JWT
+ECommerceWordpressAuthenticationLogin                                                               =Identifiant
+ECommerceWordpressAuthenticationLoginDescription                                                    =Identifiant de connexion
+ECommerceWordpressAuthenticationPassword                                                            =Mot de passe
+ECommerceWordpressAuthenticationPasswordDescription                                                 =Mot de passe de connexion
 
 ECommerceOrderStatusSetup=Sincronizzazione degli stati degli ordini
 ECommerceOrderStatusSetupDescription=Scegli lo stato corrispondente durante la sincronizzazione.
@@ -224,12 +226,14 @@ ECommerceCreateRemoteProductLink=Errore durante la creazione del collegamento al
 ECommerceUpdateRemoteOrderLink=Errore durante l'aggiornamento del collegamento dell'ordine cliente 'id:%s' per lo shop '%s': %s
 ECommerceUpdateRemoteInvoiceLink=Errore durante l'aggiornamento del collegamento alla fattura 'id:%s' per lo shop '%s': %s
 
-ECommerceRealTimeSynchroDolibarrToECommerceSetup            = Sincronizzazione in tempo reale da Dolibarr allo Shop
-ECommerceThirdParty                                         = Soggetti terzi
-ECommerceContact                                            = Contatti
-ECommerceProduct                                            = Prodotti
-ECommerceOrder                                              = Ordini clienti
-ECommerceRealTimeSynchroDolibarrToECommerceSetupDescription = Sincronizza l'articolo nello shop dopo la modifica dell'articolo collegato in Dolibarr
+ECommerceRealTimeSynchroDolibarrToECommerceThirdParty                                               =Synchronisation du tiers en temps réel de Dolibarr vers E-Commerce
+ECommerceRealTimeSynchroDolibarrToECommerceThirdPartyDescription                                    =Synchronisation du tiers dans le site E-Commerce à la modification de celui lié dans Dolibarr
+ECommerceRealTimeSynchroDolibarrToECommerceContact                                                  =Synchronisation du contact en temps réel de Dolibarr vers E-Commerce
+ECommerceRealTimeSynchroDolibarrToECommerceContactDescription                                       =Synchronisation du contact dans le site E-Commerce à la modification de celui lié dans Dolibarr
+ECommerceRealTimeSynchroDolibarrToECommerceProduct                                                  =Synchronisation du produit en temps réel de Dolibarr vers E-Commerce
+ECommerceRealTimeSynchroDolibarrToECommerceProductDescription                                       =Synchronisation du produit dans le site E-Commerce à la modification de celui lié dans Dolibarr
+ECommerceRealTimeSynchroDolibarrToECommerceOrder                                                    =Synchronisation de la commande en temps réel de Dolibarr vers E-Commerce
+ECommerceRealTimeSynchroDolibarrToECommerceOrderDescription                                         =Synchronisation de la commande dans le site E-Commerce à la modification de celui lié dans Dolibarr
 
 ECommerceSyncheCommerceMotherCategoryCreateError=Erreur de création du lien de la catégorie racine pour la catégorie distante '%s' 'id:%s' sur le site '%s'.
 ECommerceNGUpdateElementDateMoreRecent=Inclus aussi les éléments dont la date de mise à jour est plus récente que celle de synchronisation
@@ -312,14 +316,21 @@ ECommerceOnlyNew = Only the new ones
 ECommerceUpdateRemoteCompanyLinkWhenMergeCompany    = Errore durante l'aggiornamento del collegamento della società "id: %s" durante l'unione con la società 'id:%s': %s
 ECommerceSynchronizeStockToECommerce=Synchronization of the product stock on the site %s.
 
-ECommerceCreateOrderInvoiceWhenSyncOrder    = Actions when retrieving WooCommerce orders
 ECommerceCreateOrder                        = Create the order
+ECommerceCreateOrderDescription             = Activer la création de la commande a la synchronisation de la commande
 ECommerceCreateInvoice                      = Create the bill
+ECommerceCreateInvoiceDescription                                                                   =Activer la création de la facture a la synchronisation de la commande
+ECommerceCreateInvoiceType                                                                          =Type la facture
+ECommerceCreateInvoiceTypeDescription                                                               =Type la facture créée a la synchronisation de la commande
 ECommerceCreateSupplierInvoiceFromFee       = Create the supplier bill from the charges
+ECommerceCreateSupplierInvoiceFromFeeDescription                                                    =Créer la facture fournisseur à partir des frais lors de la creation de la facture
 ECommerceFeeLineAsItemLine                  = The fee line is as the service line
+ECommerceFeeLineAsItemLineDescription                                                               =Considérer les lignes de frais comme des lignes de services lors de la création de la commande/facture
 ECommerceSendInvoiceByMail                  = Send the bill by email
+ECommerceSendInvoiceByMailDescription                                                               =Envoyer la facture par courriel après la création avec succes de la facture
 ECommerceCreateOrderDescription             = Related actions when retrieving WooCommerce orders (Enter the payment methods associated with WooCommerce)
 ECommerceCreateInvoiceIfAmount0                                                                     =Créer la facture même si le montant est égale à 0
+ECommerceCreateInvoiceIfAmount0Description                                                          =Créer la facture même si le montant est nul lors de la synchronisation de la commande
 
 ECommercePaymentGatewaysCorrespondence              = Correspondence of the payment methods with the site
 ECommercePaymentGatewayLabel                        = Payment method on the site

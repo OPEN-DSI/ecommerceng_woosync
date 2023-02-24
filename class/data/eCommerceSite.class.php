@@ -24,37 +24,42 @@ dol_include_once('/ecommerceng/class/business/eCommerceUtils.class.php');
 
 class eCommerceSite // extends CommonObject
 {
-	var $db;							//!< To store db handler
-	var $error;							//!< To return error code (or message)
-	var $errors=array();				//!< To return several error codes (or messages)
-	//var $element='ecommerce_site';			//!< Id that identify managed objects
-	//var $table_element='ecommerce_site';	//!< Name of table without prefix where object is stored
+	public $db;							//!< To store db handler
+	public $error;							//!< To return error code (or message)
+	public $errors=array();				//!< To return several error codes (or messages)
+	//public $element='ecommerce_site';			//!< Id that identify managed objects
+	//public $table_element='ecommerce_site';	//!< Name of table without prefix where object is stored
 
-    var $id;
+	public $id;
 
-	var $name;
-	var $type;
-	var $webservice_address;
-	var $user_name;
-	var $user_password;
-	var $price_level;
-	var $filter_label;
-	var $filter_value;
-	var $fk_cat_societe;
-	var $fk_cat_product;
-    var $fk_anonymous_thirdparty;
-	var $fk_warehouse;
-	var $stock_sync_direction;
-	var $last_update;
-	var $timeout;
-	var $magento_use_special_price;
-    var $ecommerce_price_type;
-	var $entity;
+	public $name;
+	public $type;
+	public $webservice_address;
+	public $authentication_type;
+	public $user_name;
+	public $user_password;
+	public $price_level;
+	public $filter_label;
+	public $filter_value;
+	public $fk_cat_societe;
+	public $fk_cat_product;
+    public $fk_anonymous_thirdparty;
+	public $fk_warehouse;
+	public $stock_sync_direction;
+	public $last_update;
+	public $timeout;
+	public $debug;
+	public $magento_use_special_price;
+    public $ecommerce_price_type;
+	public $entity;
 
-	var $oauth_id;
-	var $oauth_secret;
+	public $wordpress_authentication_type;
+	public $wordpress_authentication_login;
+	public $wordpress_authentication_password;
+	public $wordpress_timeout;
+	public $wordpress_debug;
 
-    var $parameters;
+    public $parameters;
 
 	//The site type name is used to define class name in eCommerceRemoteAccess class
     private $siteTypes = array(2=>'woocommerce');
@@ -139,6 +144,7 @@ class eCommerceSite // extends CommonObject
 		if (isset($this->name)) $this->name=trim($this->name);
 		if (isset($this->type)) $this->type=trim($this->type);
 		if (isset($this->webservice_address)) $this->webservice_address=trim($this->webservice_address);
+		if (isset($this->authentication_type)) $this->authentication_type=trim($this->authentication_type);
 		if (isset($this->user_name)) $this->user_name=trim($this->user_name);
 		if (isset($this->user_password)) $this->user_password=trim($this->user_password);
         if (isset($this->price_level)) $this->price_level=trim($this->price_level);
@@ -151,8 +157,10 @@ class eCommerceSite // extends CommonObject
 		if (isset($this->stock_sync_direction)) $this->stock_sync_direction=trim($this->stock_sync_direction);
 		if (isset($this->timeout)) $this->timeout=trim($this->timeout);
 
-		if (isset($this->oauth_id)) $this->oauth_id=trim($this->oauth_id);
-		if (isset($this->oauth_secret)) $this->oauth_secret=trim($this->oauth_secret);
+		if (isset($this->wordpress_authentication_type)) $this->wordpress_authentication_type=trim($this->wordpress_authentication_type);
+		if (isset($this->wordpress_authentication_login)) $this->wordpress_authentication_login=trim($this->wordpress_authentication_login);
+		if (isset($this->wordpress_authentication_password)) $this->wordpress_authentication_password=trim($this->wordpress_authentication_password);
+		if (isset($this->wordpress_timeout)) $this->wordpress_timeout=trim($this->wordpress_timeout);
 
 		// Check parameters
 		// Put here code to add control on parameters values
@@ -162,6 +170,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= "name,";
 		$sql.= "type,";
 		$sql.= "webservice_address,";
+		$sql.= "authentication_type,";
 		$sql.= "user_name,";
 		$sql.= "user_password,";
         $sql.= "price_level,";
@@ -174,32 +183,41 @@ class eCommerceSite // extends CommonObject
 		$sql.= "stock_sync_direction,";
 		$sql.= "last_update,";
 		$sql.= "timeout,";
+		$sql.= "debug,";
 		$sql.= "magento_use_special_price,";
 		$sql.= "ecommerce_price_type,";
-		$sql.= "oauth_id,";
-		$sql.= "oauth_secret,";
+		$sql.= "wordpress_authentication_type,";
+		$sql.= "wordpress_authentication_login,";
+		$sql.= "wordpress_authentication_password,";
+		$sql.= "wordpress_timeout,";
+		$sql.= "wordpress_debug,";
         $sql.= "parameters,";
 		$sql.= "entity";
         $sql.= ") VALUES (";
 		$sql.= " ".(! isset($this->name)?'NULL':"'".$this->db->escape($this->name)."'").",";
 		$sql.= " ".(! isset($this->type)?'NULL':"'".$this->type."'").",";
 		$sql.= " ".(! isset($this->webservice_address)?'NULL':"'".$this->db->escape($this->webservice_address)."'").",";
+		$sql.= " ".(! isset($this->authentication_type)?'NULL':"'".$this->db->escape($this->authentication_type)."'").",";
 		$sql.= " ".(! isset($this->user_name)?'NULL':"'".$this->db->escape($this->user_name)."'").",";
 		$sql.= " ".(! isset($this->user_password)?'NULL':"'".$this->db->escape($this->user_password)."'").",";
         $sql.= " ".(! isset($this->price_level)?'1':"'".$this->db->escape($this->price_level)."'").",";
 		$sql.= " ".(! isset($this->filter_label)?'NULL':"'".$this->db->escape($this->filter_label)."'").",";
 		$sql.= " ".(! isset($this->filter_value)?'NULL':"'".$this->db->escape($this->filter_value)."'").",";
-		$sql.= " ".($this->fk_cat_societe > 0 ? $this->fk_cat_societe : "NULL").",";
-		$sql.= " ".($this->fk_cat_product > 0 ? $this->fk_cat_product : "NULL").",";
+		$sql.= " ".($this->fk_cat_societe > 0 ? $this->fk_cat_societe : "0").",";
+		$sql.= " ".($this->fk_cat_product > 0 ? $this->fk_cat_product : "0").",";
         $sql.= " ".($this->fk_anonymous_thirdparty > 0 ? $this->fk_anonymous_thirdparty : "NULL").",";
 		$sql.= " ".($this->fk_warehouse > 0 ? $this->fk_warehouse : "NULL").",";
 		$sql.= " ".($this->stock_sync_direction ? "'".$this->stock_sync_direction."'" : "'none'").",";
 		$sql.= " ".(! isset($this->last_update) || strlen($this->last_update)==0?'NULL':"'".$this->db->idate($this->last_update)."'").",";
-		$sql.= " ".(! isset($this->timeout)?'300':"'".intval($this->timeout)."'").",";
+		$sql.= " ".(! isset($this->timeout)?'30':"'".intval($this->timeout)."'").",";
+		$sql.= " ".(! empty($this->debug)?'1':"NULL").",";
 		$sql.= " ".(! isset($this->magento_use_special_price)?'0':"'".intval($this->magento_use_special_price)."'").",";
-		$sql.= " ".(! isset($this->ecommerce_price_type)?'HT':"'".$this->ecommerce_price_type."'").",";
-		$sql.= " ".(! isset($this->oauth_id)?"NULL":"'".$this->db->escape($this->oauth_id)."'").",";
-		$sql.= " ".(! isset($this->oauth_secret)?"NULL":"'".$this->db->escape($this->oauth_secret)."'").",";
+		$sql.= " ".(! isset($this->ecommerce_price_type)?"'HT'":"'".$this->ecommerce_price_type."'").",";
+		$sql.= " ".(! isset($this->wordpress_authentication_type)?"NULL":"'".$this->db->escape($this->wordpress_authentication_type)."'").",";
+		$sql.= " ".(! isset($this->wordpress_authentication_login)?"NULL":"'".$this->db->escape($this->wordpress_authentication_login)."'").",";
+		$sql.= " ".(! isset($this->wordpress_authentication_password)?"NULL":"'".$this->db->escape($this->wordpress_authentication_password)."'").",";
+		$sql.= " ".(! isset($this->wordpress_timeout)?'30':"'".intval($this->wordpress_timeout)."'").",";
+		$sql.= " ".(! empty($this->wordpress_debug)?'1':"NULL").",";
         $sql.= " ".(! isset($this->parameters)?"NULL":"'".$this->db->escape(json_encode($this->parameters))."'").",";
 		$sql.= " ".$conf->entity."";
 		$sql.= ")";
@@ -259,6 +277,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " t.name,";
 		$sql.= " t.type,";
 		$sql.= " t.webservice_address,";
+		$sql.= " t.authentication_type,";
 		$sql.= " t.user_name,";
 		$sql.= " t.user_password,";
         $sql.= " t.price_level,";
@@ -271,10 +290,14 @@ class eCommerceSite // extends CommonObject
 		$sql.= " t.stock_sync_direction,";
 		$sql.= " t.last_update,";
 		$sql.= " t.timeout,";
+		$sql.= " t.debug,";
 		$sql.= " t.magento_use_special_price,";
 		$sql.= " t.ecommerce_price_type,";
-		$sql.= " t.oauth_id,";
-		$sql.= " t.oauth_secret,";
+		$sql.= " t.wordpress_authentication_type,";
+		$sql.= " t.wordpress_authentication_login,";
+		$sql.= " t.wordpress_authentication_password,";
+		$sql.= " t.wordpress_timeout,";
+		$sql.= " t.wordpress_debug,";
 		$sql.= " t.parameters,";
 		$sql.= " t.entity";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_site as t";
@@ -293,6 +316,7 @@ class eCommerceSite // extends CommonObject
 				$this->name = $obj->name;
 				$this->type = $obj->type;
 				$this->webservice_address = $obj->webservice_address;
+				$this->authentication_type = $obj->authentication_type;
 				$this->user_name = $obj->user_name;
 				$this->user_password = $obj->user_password;
                 $this->price_level = $obj->price_level;
@@ -304,13 +328,17 @@ class eCommerceSite // extends CommonObject
 				$this->fk_warehouse = $obj->fk_warehouse;
 				$this->stock_sync_direction = $obj->stock_sync_direction;
 				$this->last_update = $this->db->jdate($obj->last_update);
-				$this->timeout = $obj->timeout;
+				$this->timeout = $obj->timeout > 0 ? $obj->timeout : '';
+				$this->debug = !empty($obj->debug);
 				$this->magento_use_special_price = $obj->magento_use_special_price;
 				$this->ecommerce_price_type = $obj->ecommerce_price_type;
 				$this->entity = $obj->entity;
 
-				$this->oauth_id = $obj->oauth_id;
-				$this->oauth_secret = $obj->oauth_secret;
+				$this->wordpress_authentication_type = $obj->wordpress_authentication_type;
+				$this->wordpress_authentication_login = $obj->wordpress_authentication_login;
+				$this->wordpress_authentication_password = $obj->wordpress_authentication_password;
+				$this->wordpress_timeout = $obj->wordpress_timeout > 0 ? $obj->wordpress_timeout : '';
+				$this->wordpress_debug = !empty($obj->wordpress_debug);
 
                 $this->parameters = json_decode($obj->parameters, true);
 
@@ -346,6 +374,7 @@ class eCommerceSite // extends CommonObject
 		if (isset($this->name)) $this->name=trim($this->name);
 		if (isset($this->type)) $this->type=trim($this->type);
 		if (isset($this->webservice_address)) $this->webservice_address=trim($this->webservice_address);
+		if (isset($this->authentication_type)) $this->authentication_type=trim($this->authentication_type);
 		if (isset($this->user_name)) $this->user_name=trim($this->user_name);
 		if (isset($this->user_password)) $this->user_password=trim($this->user_password);
         if (isset($this->price_level)) $this->price_level=trim($this->price_level);
@@ -356,8 +385,10 @@ class eCommerceSite // extends CommonObject
         if (isset($this->fk_anonymous_thirdparty)) $this->fk_anonymous_thirdparty=trim($this->fk_anonymous_thirdparty);
 		if (isset($this->fk_warehouse)) $this->fk_warehouse=trim($this->fk_warehouse);
 		if (isset($this->timeout)) $this->timeout=trim($this->timeout);
-		if (isset($this->oauth_id)) $this->oauth_id=trim($this->oauth_id);
-		if (isset($this->oauth_secret)) $this->oauth_secret=trim($this->oauth_secret);
+		if (isset($this->wordpress_authentication_type)) $this->wordpress_authentication_type=trim($this->wordpress_authentication_type);
+		if (isset($this->wordpress_authentication_login)) $this->wordpress_authentication_login=trim($this->wordpress_authentication_login);
+		if (isset($this->wordpress_authentication_password)) $this->wordpress_authentication_password=trim($this->wordpress_authentication_password);
+		if (isset($this->wordpress_timeout)) $this->wordpress_timeout=trim($this->wordpress_timeout);
 
 		// Check parameters
 		// Put here code to add control on parameters values
@@ -368,22 +399,27 @@ class eCommerceSite // extends CommonObject
 		$sql.= " name=".(isset($this->name)?"'".$this->db->escape($this->name)."'":"null").",";
 		$sql.= " type=".(isset($this->type)?$this->type:"null").",";
 		$sql.= " webservice_address=".(isset($this->webservice_address)?"'".$this->db->escape($this->webservice_address)."'":"null").",";
+		$sql.= " authentication_type=".(isset($this->authentication_type)?"'".$this->db->escape($this->authentication_type)."'":"null").",";
 		$sql.= " user_name=".(isset($this->user_name)?"'".$this->db->escape($this->user_name)."'":"null").",";
 		$sql.= " user_password=".(isset($this->user_password)?"'".$this->db->escape($this->user_password)."'":"null").",";
         $sql.= " price_level=".(isset($this->price_level)?"'".$this->db->escape($this->price_level)."'":"1").",";
 		$sql.= " filter_label=".(isset($this->filter_label)?"'".$this->db->escape($this->filter_label)."'":"null").",";
 		$sql.= " filter_value=".(isset($this->filter_value)?"'".$this->db->escape($this->filter_value)."'":"null").",";
-		$sql.= " fk_cat_societe=".($this->fk_cat_societe > 0 ? $this->fk_cat_societe:"null").",";
-		$sql.= " fk_cat_product=".($this->fk_cat_product > 0 ? $this->fk_cat_product:"null").",";
+		$sql.= " fk_cat_societe=".($this->fk_cat_societe > 0 ? $this->fk_cat_societe:"0").",";
+		$sql.= " fk_cat_product=".($this->fk_cat_product > 0 ? $this->fk_cat_product:"0").",";
         $sql.= " fk_anonymous_thirdparty=".($this->fk_anonymous_thirdparty > 0 ? $this->fk_anonymous_thirdparty:"null").",";
 		$sql.= " fk_warehouse=".($this->fk_warehouse > 0 ? $this->fk_warehouse:"null").",";
 		$sql.= " stock_sync_direction=".($this->stock_sync_direction ? "'".$this->stock_sync_direction."'":"'none'").",";
 		$sql.= " last_update=".((isset($this->last_update) && $this->last_update != '') ? "'".$this->db->idate($this->last_update)."'" : 'null').",";
-		$sql.= " timeout=".(isset($this->timeout)? "'".intval($this->timeout)."'" : '300').",";
+		$sql.= " timeout=".(isset($this->timeout)? "'".intval($this->timeout)."'" : '30').",";
+		$sql.= " debug=".(!empty($this->debug)? "1" : 'NULL').",";
 		$sql.= " magento_use_special_price=".(isset($this->magento_use_special_price)? "'".intval($this->magento_use_special_price)."'" : '0').",";
 		$sql.= " ecommerce_price_type=".(isset($this->ecommerce_price_type)? "'".$this->ecommerce_price_type."'" : 'HT').",";
-		$sql.= " oauth_id=".(isset($this->oauth_id)?"'".$this->db->escape($this->oauth_id)."'":"NULL").",";
-		$sql.= " oauth_secret=".(isset($this->oauth_secret)?"'".$this->db->escape($this->oauth_secret)."'":"NULL").",";
+		$sql.= " wordpress_authentication_type=".(isset($this->wordpress_authentication_type)?"'".$this->db->escape($this->wordpress_authentication_type)."'":"NULL").",";
+		$sql.= " wordpress_authentication_login=".(isset($this->wordpress_authentication_login)?"'".$this->db->escape($this->wordpress_authentication_login)."'":"NULL").",";
+		$sql.= " wordpress_authentication_password=".(isset($this->wordpress_authentication_password)?"'".$this->db->escape($this->wordpress_authentication_password)."'":"NULL").",";
+		$sql.= " wordpress_timeout=".(isset($this->wordpress_timeout)? "'".intval($this->wordpress_timeout)."'" : '30').",";
+		$sql.= " wordpress_debug=".(!empty($this->wordpress_debug)? "1" : 'NULL').",";
         $sql.= " parameters=".(isset($this->parameters)?"'".$this->db->escape(json_encode($this->parameters))."'":"NULL")."";
         $sql.= " WHERE rowid=".$this->id;
 
@@ -582,6 +618,7 @@ class eCommerceSite // extends CommonObject
 		$this->name='';
 		$this->type='';
 		$this->webservice_address='';
+		$this->authentication_type='';
 		$this->user_name='';
 		$this->user_password='';
         $this->price_level='';
@@ -594,11 +631,15 @@ class eCommerceSite // extends CommonObject
 		$this->stock_sync_direction='none';
 		$this->last_update='';
 		$this->timeout='';
+		$this->debug='';
 		$this->magento_use_special_price='';
 		$this->ecommerce_price_type='';
-		$this->oauth_id='';
-		$this->oauth_secret='';
-        $this->parameters='';
+		$this->wordpress_authentication_type='';
+		$this->wordpress_authentication_login='';
+		$this->wordpress_authentication_password='';
+		$this->wordpress_timeout='';
+		$this->wordpress_debug='';
+		$this->parameters='';
 	}
 
 	/**
@@ -630,13 +671,13 @@ class eCommerceSite // extends CommonObject
 				$obj = $this->db->fetch_object($result);
 				if ($mode == 'array')
 				{
-					$list[$i]=array('id'=>$obj->rowid, 'name'=>$obj->name, 'last_update'=>$this->db->jdate($obj->last_update));
+					$list[$obj->rowid]=array('id'=>$obj->rowid, 'name'=>$obj->name, 'last_update'=>$this->db->jdate($obj->last_update));
 				}
 				else
 				{
 					$tmpsite=new eCommerceSite($this->db);
 					$tmpsite->fetch($obj->rowid);
-					$list[$i]=$tmpsite;
+					$list[$obj->rowid]=$tmpsite;
 				}
 				$i++;
 			}

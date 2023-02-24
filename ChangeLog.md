@@ -1,5 +1,12 @@
 # ChangeLog
 
+## 4.1.35.0
+- Prise en compte de la synchronisation des entrepots de WooCommerce vers Dolibarr (Support du module Woocommerce "Stock Locations for WooCommerce" v2.4.2)
+- Refonte de la page de configuration des sites
+- Suppression de la variable global ECOMMERCENG_WOOCOMMERCE_ORDER_STATUS_LVL_CHECK, l'option est maintenant par site
+- Ajout de la synchronisation asynchrone des stocks vers le site
+- Refonte des appels aux API. Utilisation de la librarie GuzzleHTTP pour se connecter à Wordpress et WooCommerce
+
 ## 4.1.34.0
 - Correction de la prise en compte de l'adresse de livraison
  (si au moins le nom ou le prenom, et au moins un des 2 champs d'adresses, et le code postal et la ville sont renseignés alors on la traite comme adresse de livraison
