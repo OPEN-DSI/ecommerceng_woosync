@@ -484,7 +484,7 @@ if (!empty($object->parameters['order_actions']['create_order'])) {
 		print '</td></tr>' . "\n";
 
 		foreach ($order_dtoe_status as $d_status => $d_label) {
-			$selected = isset($object->parameters['order_status_dtoe'][$d_status]['selected']) ? $object->parameters['order_status_dtoe'][$d_status]['selected'] : '';
+			$selected = isset($object->parameters['order_status_dtoe'][$d_status]) ? $object->parameters['order_status_dtoe'][$d_status] : '';
 
 			print '<tr class="oddeven">' . "\n";
 			print '<td>' . $d_label . '</td>' . "\n";
