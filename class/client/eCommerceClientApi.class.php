@@ -247,7 +247,7 @@ class eCommerceClientApi
 		if (is_array($body)) {
 			$out .= '<ul>';
 			foreach ($body as $name => $values) {
-				$out .= '<li><b>' . $name . ': </b>' . (is_array($values) || is_object($values) ? json_encode($values) : $values) . '</li>';
+				$out .= '<li><b>' . $name . ': </b>' . (is_array($values) || is_object($values) ? json_encode($values, JSON_UNESCAPED_UNICODE) : $values) . '</li>';
 			}
 			$out .= '</ul>';
 		} else {
