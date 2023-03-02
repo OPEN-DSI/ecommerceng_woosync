@@ -4226,9 +4226,7 @@ class eCommerceSynchro
 										if (!empty($conf->global->THIRDPARTY_PROPAGATE_EXTRAFIELDS_TO_ORDER) && $order->socid > 0 && $order->fetch_thirdparty() > 0) {
 											// Only on create
 											foreach ($order->thirdparty->array_options as $key => $value) {
-												if (!isset($order->array_options[$key])) {
-													$order->array_options[$key] = $value;
-												}
+												$order->array_options[$key] = $value;
 											}
 										}
 									}
@@ -5024,9 +5022,7 @@ class eCommerceSynchro
 										$invoice->array_options = $this->getDefaultExtraFields($invoice->table_element, $this->eCommerceSite);
 										if ($order->id > 0) {
 											foreach ($order->array_options as $key => $value) {
-												if (!isset($invoice->array_options[$key])) {
-													$invoice->array_options[$key] = $value;
-												}
+												$invoice->array_options[$key] = $value;
 											}
 										} elseif (is_array($order_data['extrafields'])) {
 											foreach ($order_data['extrafields'] as $key => $value) {
@@ -5209,9 +5205,7 @@ class eCommerceSynchro
 																$array_options = $this->getDefaultExtraFields('facturedet', $this->eCommerceSite);
 																if (empty($conf->global->MAIN_EXTRAFIELDS_DISABLED)) {
 																	foreach ($line->array_options as $k => $v) {
-																		if (!isset($array_options[$k])) {
-																			$array_options[$k] = $v;
-																		}
+																		$array_options[$k] = $v;
 																	}
 																}
 
