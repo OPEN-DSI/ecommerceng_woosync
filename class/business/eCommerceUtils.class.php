@@ -20,8 +20,10 @@
  * File of class with method used by scheduled job to launch automatic synchronization
  */
 
+require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
 dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
 dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
+dol_include_once('/ecommerceng/class/data/eCommerceProduct.class.php');
 
 
 /**

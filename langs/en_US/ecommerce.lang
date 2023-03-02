@@ -454,6 +454,10 @@ ECommerceSendEmailErrorCheckWebHooksVolumetry                                   
 ECommerceSendEmailErrorCheckWebHooksVolumetryErrorSubject                                           =[WooSync] Erreur lors de la vérification de la volumétrie des crochet Web (WebHooks)
 ECommerceCheckWebHooksVolumetrySuccess                                                              =La vérification de la volumétrie des crochet Web (WebHooks) s'est terminé avec succes
 
+ECommerceSynchronizeStocksToSite                = Mise à jour des stocks réalisées
+ECommerceSynchronizeStocksToSiteSuccess         = Mise à jour des stocks terminée avec succès
+ECommerceErrorWhenSynchronizeStocksToSite       = Des erreurs ce sont produites lors de la mise à jour des stocks
+
 ############################################################################################
 # Errors
 ############################################################################################
