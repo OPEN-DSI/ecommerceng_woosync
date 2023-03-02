@@ -85,9 +85,9 @@ foreach ($extrafields_contact_labels as $key => $label) {
 	$extrafields_contact_labels_clean[$key] = $label;
 }
 
-$extrafields_list = array(
-	$thirdparty_static->table_element => array('label' => 'ThirdParty', 'extrafields' => $extrafields_thirdparty_labels_clean),
-	$contact_static->table_element => array('label' => 'Contact', 'extrafields' => $extrafields_contact_labels_clean),
+$extra_fields_list = array(
+	$thirdparty_static->table_element => array('label' => 'ThirdParty', 'extra_fields' => $extrafields_thirdparty_labels_clean, 'default'=> true, 'metadata'=> true, 'attribute'=> []),
+	$contact_static->table_element => array('label' => 'Contact', 'extra_fields' => $extrafields_contact_labels_clean, 'default'=> true, 'metadata'=> false, 'attribute'=> []),
 );
 
 
@@ -95,6 +95,8 @@ $extrafields_list = array(
  *	Actions
  */
 $error = 0;
+
+include dol_buildpath('/ecommerceng/admin/actions_extrafields.inc.php');
 
 if ($action == 'set_options') {
 	$object->oldcopy = clone $object;
@@ -123,36 +125,6 @@ if ($action == 'set_options') {
 			header("Location: " . $_SERVER["PHP_SELF"] . '?id=' . $object->id);
 			exit;
 		}
-	}
-} elseif ($action == 'set_metadata_matching_extrafields_options') {
-	$table_element = GETPOST('table_element', 'alphanohtml');
-	if (isset($extrafields_list[$table_element])) {
-		$object->oldcopy = clone $object;
-
-		$values = array();
-		foreach ($extrafields_list[$table_element]['extrafields'] as $key => $label) {
-			$activated = GETPOST("act_ef_crp_{$table_element}_{$key}", 'int') ? 1 : 0;
-			$correspondences = $activated ? GETPOST("ef_crp_{$table_element}_{$key}", 'alphanohtml') :
-				(!empty($object->parameters['ef_crp'][$table_element][$key]['correspondences']) ? $object->parameters['ef_crp'][$table_element][$key]['correspondences'] : $key);
-
-			$values[$key] = [
-				'correspondences' => $correspondences,
-				'activated' => $activated,
-			];
-		}
-		$object->parameters['ef_crp'][$table_element] = $values;
-
-		$result = $object->update($user);
-
-		if ($result < 0) {
-			setEventMessages($object->error, $object->errors, 'errors');
-		} else {
-			setEventMessage($langs->trans("SetupSaved"));
-			header("Location: " . $_SERVER["PHP_SELF"] . '?id=' . $object->id);
-			exit;
-		}
-	} else {
-		setEventMessage("Wrong table element", 'errors');
 	}
 }
 
@@ -260,54 +232,9 @@ print '</div>';
 print '</form>';
 
 /**
- * Remote meta data with extra fields.
+ * Extra fields.
  */
-
-foreach ($extrafields_list as $table_element => $info) {
-	if (!empty($info['extrafields'])) {
-		print '<div id="metadata_matching_extrafields_' . $table_element . '_options"></div>';
-		print load_fiche_titre($langs->trans('ECommercengWoocommerceExtrafieldsCorrespondenceOf', $langs->transnoentitiesnoconv($info['label'])), '', '');
-
-		print '<form method="post" action="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '#metadata_matching_extrafields_' . $table_element . '_options">';
-		print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
-		print '<input type="hidden" name="action" value="set_metadata_matching_extrafields_options">';
-		print '<input type="hidden" name="table_element" value="' . $table_element . '">';
-
-		print '<table class="noborder centpercent">';
-		print '<tr class="liste_titre">';
-		print '<td class="20p">' . $langs->trans("ExtraFields") . '</td>' . "\n";
-		print '<td>' . $langs->trans("Description") . '</td>' . "\n";
-		print '<td class="right">' . $langs->trans("Value") . '</td>' . "\n";
-		print '<td width="5%" class="center"><input type="checkbox" class="ef_crp_all" name="act_all_ef_crp_' . $table_element . '" value="1" title="' . $langs->trans('Enabled') . '"/></td>' . "\n";
-		print "</tr>\n";
-
-		foreach ($info['extrafields'] as $key => $label) {
-			if (!empty($extrafields->attributes[$table_element]['langfile'][$key])) $langs->load($extrafields->attributes[$table_element]['langfile'][$key]);
-			elseif (!empty($extrafields->attribute_langfile[$key])) $langs->load($extrafields->attribute_langfile[$key]);
-
-			$options_saved = $object->parameters['ef_crp'][$table_element][$key];
-			print '<tr class="oddeven">' . "\n";
-			print '<td>' . $langs->trans($label) . '</td>' . "\n";
-			print '<td>' . $langs->transnoentities('ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription', $key) . '</td>' . "\n";
-			print '<td class="right">' . "\n";
-			$value = !empty($options_saved['correspondences']) ? $options_saved['correspondences'] : $key;
-			print '<input type="text" class="ef_crp_value centpercent" name="ef_crp_' . $table_element . '_' . $key . '" value="' . dol_escape_htmltag($value) . '"' . (empty($options_saved['activated']) ? ' disabled' : '') . ' />';
-			print '</td>' . "\n";
-			print '<td width="5%" class="center">' . "\n";
-			print '<input type="checkbox" class="ef_crp_state" name="act_ef_crp_' . $table_element . '_' . $key . '" value="1"' . (!empty($options_saved['activated']) ? ' checked' : '') . ' title="' . $langs->trans('Enabled') . '" />' . "\n";
-			print '</td></tr>' . "\n";
-		}
-
-		print '</table>' . "\n";
-
-		print '<br>';
-		print '<div align="center">';
-		print '<input type="submit" class="button" value="' . $langs->trans('Modify') . '" />';
-		print '</div>';
-
-		print '</form>';
-	}
-}
+include dol_buildpath('/ecommerceng/admin/tpl/extrafields.tpl.php');
 
 print dol_get_fiche_end();
 

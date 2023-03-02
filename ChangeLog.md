@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.1.36.0
+- Refonte des options liées aux champs complémentaires
+- Ajout de la posibilité d'attribuer des valeurs par défaut pour les champs complémentaires à la creation d'un element
+
 ## 4.1.35.0
 - Prise en compte de la synchronisation des entrepots de WooCommerce vers Dolibarr (Support du module Woocommerce "Stock Locations for WooCommerce" v2.4.2)
 - Refonte de la page de configuration des sites

@@ -91,13 +91,12 @@ ECommercengWoocommerceOrderStatusTrash                               =Corbeille
 
 ECommercengWoocommerceOrderLink                                      =Lien vers la commande du site [%s]
 
-ECommercengWoocommerceProductExtrafieldsCorrespondenceAttribute                 = Correspondance des attributs supplémentaires avec les attributs de Woocommerce
-ECommercengWoocommerceProductAttribute                                          = Attribut WooCommerce
-ECommercengWoocommerceProductExtrafieldsCorrespondenceAttributeSetupDescription = Code champ dolibarr : %s. Les valeurs du champ complémentaire Dolibarr doit être sous la forme "Nom,Nom" exemple: "Jaune,Jaune"
-
-ECommercengWoocommerceExtrafieldsCorrespondence                      = Correspondance des attributs supplémentaires avec les méta-données de Woocommerce
-ECommercengWoocommerceExtrafieldsCorrespondenceOf                    = Correspondance des attributs supplémentaires des "%s" avec les méta-données de Woocommerce
-ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription      = Renseigner le nom de la méta-donnée correspondant à cet attribut supplémentaire : %s
+ECommercengWoocommerceExtrafieldsOptionsOf                           = Paramètrage des attributs supplémentaires : %s
+ECommercengWoocommerceExtrafieldsMetaData                            = Méta-données de Woocommerce
+ECommercengWoocommerceExtrafieldsAttribute                           = Attribut WooCommerce
+ECommercengWoocommerceExtrafieldsOptionsDefaultValueDescription      = Valeur par default de l'attribut supplémentaire (Si vide celui définie dans la configuration de celui-ci)
+ECommercengWoocommerceExtrafieldsOptionsMetaDataDescription          = Renseigner le nom de la méta-donnée correspondant à cet attribut supplémentaire
+ECommercengWoocommerceExtrafieldsOptionsAttributeDescription         = Les valeurs du champ complémentaire Dolibarr doit être sous la forme "Nom,Nom" exemple: "Jaune,Jaune"
 
 ECommerceWoocommerceCreateRemoteCategoryParentNotCreated             = Erreur pour le site '%s' lors de la recherche de l'ID parent da la catégorie '%s' (slug: '%s')
 ECommerceWoocommerceCreateRemoteBatchCategories                      = Erreur lors de la création des catégories par lot sur le site '%s':

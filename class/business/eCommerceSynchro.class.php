@@ -189,19 +189,27 @@ class eCommerceSynchro
 	/**
 	 * Get default extrafields
 	 *
-	 * @param	string		$table_element		Table element
+	 * @param	string			$table_element	Table element
+	 * @param	eCommerceSite	$site			Site handler
 	 * @return	array							List of extrafields values by default
 	 */
-	public function getDefaultExtraFields($table_element)
+	public function getDefaultExtraFields($table_element, $site)
 	{
-		if (!isset(self::$default_extra_fields_cached[$table_element])) {
+		if (!isset(self::$default_extra_fields_cached[$table_element][$site->id])) {
 			require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 			$extra_fields = new Extrafields($this->db);
 			$extra_fields->fetch_name_optionals_label($table_element);
 
 			$values = [];
-			foreach ($extra_fields->attributes[$table_element]['default'] as $key => $value) {
-				if (!empty($value)) $values['options_' . $key] = $value;
+			foreach ($extra_fields->attributes[$table_element]['label'] as $key => $value) {
+				if (preg_match('/^ecommerceng_/', $key)) continue;
+
+				$value = null;
+				if (!empty($site->parameters['extra_fields'][$table_element]['activated']['dft'][$key])) {
+					$value = $site->parameters['extra_fields'][$table_element]['values']['dft'][$key];
+				}
+				if (!isset($value)) $value = $extra_fields->attributes[$table_element]['default'][$key];
+				$values['options_' . $key] = $value;
 			}
 
 			self::$default_extra_fields_cached[$table_element] = $values;
@@ -998,7 +1006,7 @@ class eCommerceSynchro
                         $dBCategorie->fk_parent = ($fk_parent != $dBCategorie->id) ? $fk_parent : 0;
                         $dBCategorie->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
 
-						if (!($eCommerceCatExists > 0)) $dBCategorie->array_options = $this->getDefaultExtraFields($dBCategorie->table_element);
+						if (!($eCommerceCatExists > 0)) $dBCategorie->array_options = $this->getDefaultExtraFields($dBCategorie->table_element, $this->eCommerceSite);
 
 						if ($eCommerceCatExists > 0)
                         {
@@ -1219,7 +1227,7 @@ class eCommerceSynchro
                 }
             }
 
-			if ($contactExists == 0) $dBContact->array_options = $this->getDefaultExtraFields($dBContact->table_element);
+			if ($contactExists == 0) $dBContact->array_options = $this->getDefaultExtraFields($dBContact->table_element, $this->eCommerceSite);
 
             if ($contactExists > 0) {
                 $result = $dBContact->update($dBContact->id, $this->user);
@@ -1567,7 +1575,7 @@ class eCommerceSynchro
                                 $dBFacture->origin = $origin;
                                 $dBFacture->origin_id = $originid;
                                 $dBFacture->linked_objects[$dBFacture->origin] = $dBFacture->origin_id;
-								$dBFacture->array_options = $this->getDefaultExtraFields($dBFacture->table_element);
+								$dBFacture->array_options = $this->getDefaultExtraFields($dBFacture->table_element, $this->eCommerceSite);
 
                                 // Now we create invoice
                                 $result = $dBFacture->create($this->user);
@@ -2972,7 +2980,7 @@ class eCommerceSynchro
 						}
 						if (isset($customer_data['country_id'])) $third_party->country_id = $customer_data['country_id'];
 						if (isset($customer_data['default_lang'])) $third_party->default_lang = $customer_data['default_lang'];
-						if (!($third_party->id > 0)) $third_party->array_options = $this->getDefaultExtraFields($third_party->table_element);
+						if (!($third_party->id > 0)) $third_party->array_options = $this->getDefaultExtraFields($third_party->table_element, $this->eCommerceSite);
 						if (is_array($customer_data['extrafields'])) {
 							foreach ($customer_data['extrafields'] as $key => $value) {
 								$third_party->array_options['options_' . $key] = $value;
@@ -3422,7 +3430,7 @@ class eCommerceSynchro
 
 						if (!isset($product->stock_reel)) $product->stock_reel = 0;
 
-						if (!($product->id > 0)) $product->array_options = $this->getDefaultExtraFields($product->table_element);
+						if (!($product->id > 0)) $product->array_options = $this->getDefaultExtraFields($product->table_element, $this->eCommerceSite);
 						if (is_array($product_data['extrafields'])) {
 							foreach ($product_data['extrafields'] as $key => $value) {
 								$product->array_options['options_' . $key] = $value;
@@ -4214,11 +4222,13 @@ class eCommerceSynchro
 									$order->date_livraison = strtotime($order_data['date_livraison']);
 
 									if (!($order->id > 0)) {
-										$order->array_options = $this->getDefaultExtraFields($order->table_element);
+										$order->array_options = $this->getDefaultExtraFields($order->table_element, $this->eCommerceSite);
 										if (!empty($conf->global->THIRDPARTY_PROPAGATE_EXTRAFIELDS_TO_ORDER) && $order->socid > 0 && $order->fetch_thirdparty() > 0) {
 											// Only on create
 											foreach ($order->thirdparty->array_options as $key => $value) {
-												$order->array_options[$key] = $value;
+												if (!isset($order->array_options[$key])) {
+													$order->array_options[$key] = $value;
+												}
 											}
 										}
 									}
@@ -4562,7 +4572,7 @@ class eCommerceSynchro
 													$description = dol_concatdesc($description, $item['additional_description']);
 													$product_type = $item['product_type'] != "simple" ? 1 : 0;
 
-													$array_options = $this->getDefaultExtraFields('product');
+													$array_options = $this->getDefaultExtraFields('commandedet', $this->eCommerceSite);
 													if (is_array($item['extrafields'])) {
 														foreach ($item['extrafields'] as $extrafield => $extrafield_value) {
 															$array_options['options_' . $extrafield] = $extrafield_value;
@@ -5011,10 +5021,14 @@ class eCommerceSynchro
 											$invoice->linkedObjectsIds[$order->element] = $order->id;
 										}
 
+										$invoice->array_options = $this->getDefaultExtraFields($invoice->table_element, $this->eCommerceSite);
 										if ($order->id > 0) {
-											$invoice->array_options = $order->array_options;
+											foreach ($order->array_options as $key => $value) {
+												if (!isset($invoice->array_options[$key])) {
+													$invoice->array_options[$key] = $value;
+												}
+											}
 										} elseif (is_array($order_data['extrafields'])) {
-											$invoice->array_options = $this->getDefaultExtraFields($invoice->table_element);
 											foreach ($order_data['extrafields'] as $key => $value) {
 												$invoice->array_options['options_' . $key] = $value;
 											}
@@ -5192,9 +5206,13 @@ class eCommerceSynchro
 																}
 
 																// Extrafields
-																$array_options = $this->getDefaultExtraFields('product');
+																$array_options = $this->getDefaultExtraFields('facturedet', $this->eCommerceSite);
 																if (empty($conf->global->MAIN_EXTRAFIELDS_DISABLED)) {
-																	$array_options = $line->array_options;
+																	foreach ($line->array_options as $k => $v) {
+																		if (!isset($array_options[$k])) {
+																			$array_options[$k] = $v;
+																		}
+																	}
 																}
 
 																$tva_tx = $line->tva_tx;
@@ -5478,7 +5496,7 @@ class eCommerceSynchro
 																		$discount = $item['discount'];
 																		$product_type = $item['product_type'] != "simple" ? 1 : 0;
 
-																		$array_options = $this->getDefaultExtraFields('product');
+																		$array_options = $this->getDefaultExtraFields('facturedet', $this->eCommerceSite);
 																		if (is_array($item['extrafields'])) {
 																			foreach ($item['extrafields'] as $extrafield => $extrafield_value) {
 																				$array_options['options_' . $extrafield] = $extrafield_value;
@@ -5906,7 +5924,7 @@ class eCommerceSynchro
 												$supplier_invoice->cond_reglement_id = 0;
 												$supplier_invoice->mode_reglement_id = $invoice->mode_reglement_id;
 												$supplier_invoice->fk_account = $bank_account_id;
-												$supplier_invoice->array_options = $this->getDefaultExtraFields($supplier_invoice->table_element);
+												$supplier_invoice->array_options = $this->getDefaultExtraFields($supplier_invoice->table_element, $this->eCommerceSite);
 
 												if (!empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE)) {
 													$supplier_invoice->note_private = dol_concatdesc($supplier_invoice->note_private, $this->langs->trans('ECommerceCreateSupplierInvoiceFromSiteNote', $this->eCommerceSite->name) . " :\n" . json_encode($order_data['remote_order']));
@@ -5929,6 +5947,7 @@ class eCommerceSynchro
 												// Add lines
 												if (!$error) {
 													$product_id = $selected_payment_gateways['product_id_for_fee'] > 0 ? $selected_payment_gateways['product_id_for_fee'] : 0;
+													$array_options = $this->getDefaultExtraFields('facture_fourn_det', $this->eCommerceSite);
 													foreach ($order_data['fee_lines'] as $fee_line) {
 														if (floatval(DOL_VERSION) < 8) $this->db->begin(); // Not exist in addline function but commit and rollback exist
 														$result = $supplier_invoice->addline(
@@ -5938,7 +5957,8 @@ class eCommerceSynchro
 															$fee_line['local_tax1_tx'],
 															$fee_line['local_tax2_tx'],
 															$fee_line['qty'],
-															$product_id);
+															$product_id,
+															0, '', '', 0, '','HT', 0, -1, false, $array_options);
 														if ($result < 0) {
 															$this->errors[] = $this->langs->trans('ECommerceErrorSupplierInvoiceAddLine');
 															if (!empty($supplier_invoice->error)) $this->errors[] = $supplier_invoice->error;
@@ -6558,7 +6578,7 @@ class eCommerceSynchro
 		$third_party->fax = $fax;
 		$third_party->code_client = -1;           // Automatic code
 		$third_party->code_fournisseur = -1;      // Automatic code
-		$third_party->array_options = $this->getDefaultExtraFields($third_party->table_element);
+		$third_party->array_options = $this->getDefaultExtraFields($third_party->table_element, $this->eCommerceSite);
 
 		$result = $third_party->create($this->user);
 		if ($result < 0) {

@@ -663,11 +663,12 @@ class eCommerceRemoteAccessWoocommerce
 		}
 
 		// Synchronize metadata to extra fields
-		if (!empty($this->site->parameters['ef_crp']['societe']) && !empty($metas_data)) {
+		if (!empty($this->site->parameters['extra_fields']['societe']['activated']['mdt']) && !empty($metas_data)) {
 			$correspondences = array();
-			foreach ($this->site->parameters['ef_crp']['societe'] as $key => $options_saved) {
-				if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
-					$correspondences[$options_saved['correspondences']] = $key;
+			foreach ($this->site->parameters['extra_fields']['societe']['activated']['mdt'] as $key => $v) {
+				$data_key = $this->site->parameters['extra_fields']['societe']['values']['mdt'][$key];
+				if (!empty($data_key)) {
+					$correspondences[$data_key] = $key;
 				}
 			}
 			foreach ($metas_data as $meta) {
@@ -1159,7 +1160,8 @@ class eCommerceRemoteAccessWoocommerce
 
 		// Get metadata
 		$metas_data = array();
-		if (!empty($this->site->parameters['ef_crp']['product']) ||
+		if (!empty($this->site->parameters['extra_fields']['product']['activated']['mdt']) ||
+			!empty($this->site->parameters['extra_fields']['product']['activated']['att']) ||
 			$remote_data['type'] == 'woosb'
 		) {
 			if (is_array($remote_data['meta_data'])) {
@@ -1177,11 +1179,12 @@ class eCommerceRemoteAccessWoocommerce
 		}
 
 		// Synchronize metadata to extra fields
-		if (!empty($this->site->parameters['ef_crp']['product']) && !empty($metas_data)) {
+		if (!empty($this->site->parameters['extra_fields']['product']['activated']['mdt']) && !empty($metas_data)) {
 			$correspondences = array();
-			foreach ($this->site->parameters['ef_crp']['product'] as $key => $options_saved) {
-				if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
-					$correspondences[$options_saved['correspondences']] = $key;
+			foreach ($this->site->parameters['extra_fields']['product']['activated']['mdt'] as $key => $v) {
+				$data_key = $this->site->parameters['extra_fields']['product']['values']['mdt'][$key];
+				if (!empty($data_key)) {
+					$correspondences[$data_key] = $key;
 				}
 			}
 			foreach ($metas_data as $meta) {
@@ -1192,7 +1195,7 @@ class eCommerceRemoteAccessWoocommerce
 		}
 
 		// Synchronize attribute to extra fields
-		if (!empty($this->site->parameters['ef_crp_attribute'])) {
+		if (!empty($this->site->parameters['extra_fields']['product']['activated']['att'])) {
 			$attributes = array();
 			if (is_array($remote_data['attributes'])) {
 				foreach ($remote_data['attributes'] as $attribute) {
@@ -1209,9 +1212,10 @@ class eCommerceRemoteAccessWoocommerce
 
 			if (!empty($attributes)) {
 				$correspondences = array();
-				foreach ($this->site->parameters['ef_crp_attribute'] as $key => $options_saved) {
-					if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
-						$correspondences[$options_saved['correspondences']] = $key;
+				foreach ($this->site->parameters['extra_fields']['product']['activated']['att'] as $key => $v) {
+					$data_key = $this->site->parameters['extra_fields']['product']['values']['att'][$key];
+					if (!empty($data_key)) {
+						$correspondences[$data_key] = $key;
 					}
 				}
 				foreach ($attributes as $attribute) {
@@ -1429,11 +1433,12 @@ class eCommerceRemoteAccessWoocommerce
 
 				if (!empty($item['meta_data'])) {
 					// Synch extrafields <=> metadatas
-					if (!empty($this->site->parameters['ef_crp']['commandedet'])) {
+					if (!empty($this->site->parameters['extra_fields']['commandedet']['activated']['mdt'])) {
 						$correspondences = array();
-						foreach ($this->site->parameters['ef_crp']['commandedet'] as $key => $options_saved) {
-							if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
-								$correspondences[$options_saved['correspondences']] = $key;
+						foreach ($this->site->parameters['extra_fields']['commandedet']['activated']['mdt'] as $key => $v) {
+							$data_key = $this->site->parameters['extra_fields']['commandedet']['values']['mdt'][$key];
+							if (!empty($data_key)) {
+								$correspondences[$data_key] = $key;
 							}
 						}
 						foreach ($item['meta_data'] as $meta) {
@@ -1493,11 +1498,12 @@ class eCommerceRemoteAccessWoocommerce
 				$item_data['buy_price'] = $item_data['price'];
 
 				// Synch extrafields <=> metadatas
-				if (!empty($item['meta_data']) && !empty($this->site->parameters['ef_crp']['commandedet'])) {
+				if (!empty($item['meta_data']) && !empty($this->site->parameters['extra_fields']['commandedet']['activated']['mdt'])) {
 					$correspondences = array();
-					foreach ($this->site->parameters['ef_crp']['commandedet'] as $key => $options_saved) {
-						if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
-							$correspondences[$options_saved['correspondences']] = $key;
+					foreach ($this->site->parameters['extra_fields']['commandedet']['activated']['mdt'] as $key => $v) {
+						$data_key = $this->site->parameters['extra_fields']['commandedet']['values']['mdt'][$key];
+						if (!empty($data_key)) {
+							$correspondences[$data_key] = $key;
 						}
 					}
 					foreach ($item['meta_data'] as $meta) {
@@ -1552,11 +1558,12 @@ class eCommerceRemoteAccessWoocommerce
 				$item_data['total_ttc'] = -$ttc;
 
 				// Synch extrafields <=> metadatas
-				if (!empty($item['meta_data']) && !empty($this->site->parameters['ef_crp']['commandedet'])) {
+				if (!empty($item['meta_data']) && !empty($this->site->parameters['extra_fields']['commandedet']['activated']['mdt'])) {
 					$correspondences = array();
-					foreach ($this->site->parameters['ef_crp']['commandedet'] as $key => $options_saved) {
-						if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
-							$correspondences[$options_saved['correspondences']] = $key;
+					foreach ($this->site->parameters['extra_fields']['commandedet']['activated']['mdt'] as $key => $v) {
+						$data_key = $this->site->parameters['extra_fields']['commandedet']['values']['mdt'][$key];
+						if (!empty($data_key)) {
+							$correspondences[$data_key] = $key;
 						}
 					}
 					foreach ($item['meta_data'] as $meta) {
@@ -1606,6 +1613,8 @@ class eCommerceRemoteAccessWoocommerce
 			foreach ($remote_data['fee_lines'] as $fee_line) {
 				$line = [
 					'label' => $fee_line['name'],
+					'price' => $fee_line['total'],
+					'qty' => 1,
 					'total_ht' => $fee_line['total'],
 					'total_tva' => $fee_line['total_tax'],
 					'total_ttc' => ($fee_line['total'] + $fee_line['total_tax']),
@@ -1624,8 +1633,6 @@ class eCommerceRemoteAccessWoocommerce
 					$line['product_type'] = 'service';
 					$line['id_product'] = 0;
 					$line['description'] = $fee_line['name'];
-					$line['price'] = $fee_line['total'];
-					$line['qty'] = 1;
 					$line['discount'] = 0;
 					$line['buy_price'] = 0;
 
@@ -1840,11 +1847,12 @@ class eCommerceRemoteAccessWoocommerce
 		];
 
 		// Synch extrafields <=> metadatas
-		if (!empty($remote_data['meta_data']) && !empty($this->site->parameters['ef_crp']['commande'])) {
+		if (!empty($remote_data['meta_data']) && !empty($this->site->parameters['extra_fields']['commande']['activated']['mdt'])) {
 			$correspondences = array();
-			foreach ($this->site->parameters['ef_crp']['commande'] as $key => $options_saved) {
-				if ($options_saved['activated'] && !empty($options_saved['correspondences'])) {
-					$correspondences[$options_saved['correspondences']] = $key;
+			foreach ($this->site->parameters['extra_fields']['commande']['activated']['mdt'] as $key => $v) {
+				$data_key = $this->site->parameters['extra_fields']['commande']['values']['mdt'][$key];
+				if (!empty($data_key)) {
+					$correspondences[$data_key] = $key;
 				}
 			}
 			foreach ($remote_data['meta_data'] as $meta) {
@@ -2481,19 +2489,20 @@ class eCommerceRemoteAccessWoocommerce
 					$cr_key = substr($key, 8);
 					if (preg_match('/^ecommerceng_/', $cr_key)) continue;
 
-					// Synch extrafields <=> attributes
-					$options_saved = $this->site->parameters['ef_crp_attribute'][$cr_key];
-					if ($options_saved['activated'] && !empty($value)) {
-						$rm_key = isset($options_saved['correspondences']) ? $options_saved['correspondences'] : '';
-						$variationData['attributes'][] = array('id' => $rm_key, 'options' => explode(',', $value));
+					// Synch extrafields <=> metadatas
+					if (!empty($this->site->parameters['extra_fields']['product']['activated']['mdt'][$cr_key])) {
+						$data_key = $this->site->parameters['extra_fields']['product']['values']['mdt'][$cr_key];
+						if (!empty($data_key)) {
+							$variationData['meta_data'][] = array('key' => $data_key, 'value' => $value);
+						}
 					}
 
-					// Synch extrafields <=> metadatas
-					$options_saved = $this->site->parameters['ef_crp']['product'][$cr_key];
-					if ($options_saved['activated']) {
-						$rm_key = $cr_key;
-						if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
-						$variationData['meta_data'][] = array('key' => $rm_key, 'value' => $value);
+					// Synch extrafields <=> attributes
+					if (!empty($this->site->parameters['extra_fields']['product']['activated']['mdt'][$cr_key])) {
+						$data_key = $this->site->parameters['extra_fields']['product']['values']['mdt'][$cr_key];
+						if (!empty($data_key)) {
+							$variationData['attributes'][] = array('id' => $data_key, 'options' => !empty($value) ? explode(',', $value) : array());
+						}
 					}
 				}
 			}
@@ -2745,20 +2754,21 @@ class eCommerceRemoteAccessWoocommerce
                     $cr_key = substr($key, 8);
                     if (preg_match('/^ecommerceng_/', $cr_key)) continue;
 
-					// Synch extrafields <=> attributes
-					$options_saved = $this->site->parameters['ef_crp_attribute'][$cr_key];
-					if ($options_saved['activated'] && !empty($value)) {
-						$rm_key = isset($options_saved['correspondences']) ? $options_saved['correspondences'] : '';
-						$productData['attributes'][] = array('id' => $rm_key, 'options' => explode(',', $value));
+					// Synch extrafields <=> metadatas
+					if (!empty($this->site->parameters['extra_fields']['product']['activated']['mdt'][$cr_key])) {
+						$data_key = $this->site->parameters['extra_fields']['product']['values']['mdt'][$cr_key];
+						if (!empty($data_key)) {
+							$productData['meta_data'][] = array('key' => $data_key, 'value' => $value);
+						}
 					}
 
-					// Synch extrafields <=> metadatas
-					$options_saved = $this->site->parameters['ef_crp']['product'][$cr_key];
-                    if ($options_saved['activated']) {
-                        $rm_key = $cr_key;
-                        if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
-                        $productData['meta_data'][] = array('key' => $rm_key, 'value' => $value);
-                    }
+					// Synch extrafields <=> attributes
+					if (!empty($this->site->parameters['extra_fields']['product']['activated']['mdt'][$cr_key])) {
+						$data_key = $this->site->parameters['extra_fields']['product']['values']['mdt'][$cr_key];
+						if (!empty($data_key)) {
+							$productData['attributes'][] = array('id' => $data_key, 'options' => !empty($value) ? explode(',', $value) : array());
+						}
+					}
                 }
             }
 
@@ -3081,11 +3091,11 @@ class eCommerceRemoteAccessWoocommerce
 				if (preg_match('/^ecommerceng_/', $cr_key)) continue;
 
 				// Synch extrafields <=> metadatas
-				$options_saved = $this->site->parameters['ef_crp']['societe'][$cr_key];
-				if ($options_saved['activated']) {
-					$rm_key = $cr_key;
-					if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
-					$companyData['meta_data'][] = array('key' => $rm_key, 'value' => $value);
+				if (!empty($this->site->parameters['extra_fields']['societe']['activated']['mdt'][$cr_key])) {
+					$data_key = $this->site->parameters['extra_fields']['societe']['values']['mdt'][$cr_key];
+					if (!empty($data_key)) {
+						$variationData['meta_data'][] = array('key' => $data_key, 'value' => $value);
+					}
 				}
 			}
 		}
@@ -3230,19 +3240,19 @@ class eCommerceRemoteAccessWoocommerce
                 foreach ($object->array_options as $key => $value) {
                     $cr_key = substr($key, 8);
                     if (preg_match('/^ecommerceng_/', $cr_key)) continue;
-                    $options_saved = $this->site->parameters['ef_crp']['commande'][$cr_key];
-                    if ($options_saved['activated']) {
-                        $extrafield_value = $value;
-                        // Specific Altairis - Begin
-                        if (!empty($extrafield_value) && ($cr_key == 'rental_start' || $cr_key == 'rental_end')) {
-                            $extrafield_value = dol_print_date($extrafield_value, 'day');
-                        }
-                        // Specific Altairis - End
 
-                        $rm_key = $cr_key;
-                        if (isset($options_saved['correspondences'])) $rm_key = $options_saved['correspondences'];
-                        $orderData['meta_data'][] = array('key' => $rm_key, 'value' => $extrafield_value);
-                    }
+					if (!empty($this->site->parameters['extra_fields']['commande']['activated']['dft'][$cr_key])) {
+						$data_key = $this->site->parameters['extra_fields']['commande']['values']['dft'][$cr_key];
+						if (!empty($data_key)) {
+							// Specific Altairis - Begin
+							if (!empty($value) && ($cr_key == 'rental_start' || $cr_key == 'rental_end')) {
+								$value = dol_print_date($value, 'day');
+							}
+							// Specific Altairis - End
+
+							$variationData['meta_data'][] = array('key' => $data_key, 'value' => $value);
+						}
+					}
                 }
             }
 
