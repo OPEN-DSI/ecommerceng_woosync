@@ -66,40 +66,85 @@ if (empty($conf->facture->enabled) && empty($conf->facture->enabled)) {
 	accessforbidden($langs->trans('ModuleDisabled'));
 }
 
-$order_static = new Commande($db);
-$order_lines_static = new OrderLine($db);
+$extra_fields_list = array();
 $extrafields = new ExtraFields($db);
-$extrafields_order_labels = $extrafields->fetch_name_optionals_label($order_static->table_element);
-$extrafields_order_labels_clean = array();
-foreach ($extrafields_order_labels as $key => $label) {
-	if (preg_match('/^ecommerceng_/', $key)) continue;
-	$extrafields_order_labels_clean[$key] = $label;
-}
-if (isset($extrafields->attributes['commande']['param']["ecommerceng_wc_status_{$object->id}_{$conf->entity}"]['options'])) {
-	$status_extra_fields_options = $extrafields->attributes['commande']['param']["ecommerceng_wc_status_{$object->id}_{$conf->entity}"]['options'];
-} elseif (isset($extrafields->attribute_param["ecommerceng_wc_status_{$object->id}_{$conf->entity}"]['options'])) {
-	$status_extra_fields_options = $extrafields->attribute_param["ecommerceng_wc_status_{$object->id}_{$conf->entity}"]['options'];
-} else {
-	$status_extra_fields_options = array();
-}
-$extrafields_order_lines_labels = $extrafields->fetch_name_optionals_label($order_lines_static->table_element);
-$extrafields_order_lines_labels_clean = array();
-foreach ($extrafields_order_lines_labels as $key => $label) {
-	if (preg_match('/^ecommerceng_/', $key)) continue;
-	$extrafields_order_lines_labels_clean[$key] = $label;
-}
+if (!empty($object->parameters['order_actions']['create_order'])) {
+	$order_static = new Commande($db);
+	$order_lines_static = new OrderLine($db);
+	$extrafields_order_labels = $extrafields->fetch_name_optionals_label($order_static->table_element);
+	$extrafields_order_labels_clean = array();
+	foreach ($extrafields_order_labels as $key => $label) {
+		if (preg_match('/^ecommerceng_/', $key)) continue;
+		$extrafields_order_labels_clean[$key] = $label;
+	}
+	if (isset($extrafields->attributes['commande']['param']["ecommerceng_wc_status_{$object->id}_{$conf->entity}"]['options'])) {
+		$status_extra_fields_options = $extrafields->attributes['commande']['param']["ecommerceng_wc_status_{$object->id}_{$conf->entity}"]['options'];
+	} elseif (isset($extrafields->attribute_param["ecommerceng_wc_status_{$object->id}_{$conf->entity}"]['options'])) {
+		$status_extra_fields_options = $extrafields->attribute_param["ecommerceng_wc_status_{$object->id}_{$conf->entity}"]['options'];
+	} else {
+		$status_extra_fields_options = array();
+	}
+	$extrafields_order_lines_labels = $extrafields->fetch_name_optionals_label($order_lines_static->table_element);
+	$extrafields_order_lines_labels_clean = array();
+	foreach ($extrafields_order_lines_labels as $key => $label) {
+		if (preg_match('/^ecommerceng_/', $key)) continue;
+		$extrafields_order_lines_labels_clean[$key] = $label;
+	}
 
-$extrafields_list = array(
-	$order_static->table_element => array('label' => 'Order', 'extrafields' => $extrafields_order_labels_clean),
-	$order_lines_static->table_element => array('label' => 'OrderLine', 'extrafields' => $extrafields_order_lines_labels_clean),
-);
+	$extra_fields_list = array_merge($extra_fields_list, array(
+		$order_static->table_element => array('label' => 'Order', 'extra_fields' => $extrafields_order_labels_clean, 'default' => true, 'metadata' => true, 'attribute' => []),
+		$order_lines_static->table_element => array('label' => 'OrderLine', 'extra_fields' => $extrafields_order_lines_labels_clean, 'default' => true, 'metadata' => true, 'attribute' => []),
+	));
+}
+if (!empty($object->parameters['order_actions']['create_invoice'])) {
+	$invoice_static = new Facture($db);
+	$invoice_lines_static = new FactureLigne($db);
+	$extrafields_invoice_labels = $extrafields->fetch_name_optionals_label($invoice_static->table_element);
+	$extrafields_invoice_labels_clean = array();
+	foreach ($extrafields_invoice_labels as $key => $label) {
+		if (preg_match('/^ecommerceng_/', $key)) continue;
+		$extrafields_invoice_labels_clean[$key] = $label;
+	}
+	$extrafields_invoice_lines_labels = $extrafields->fetch_name_optionals_label($invoice_lines_static->table_element);
+	$extrafields_invoice_lines_labels_clean = array();
+	foreach ($extrafields_invoice_lines_labels as $key => $label) {
+		if (preg_match('/^ecommerceng_/', $key)) continue;
+		$extrafields_invoice_lines_labels_clean[$key] = $label;
+	}
+
+	$extra_fields_list = array_merge($extra_fields_list, array(
+		$invoice_static->table_element => array('label' => 'Invoice', 'extra_fields' => $extrafields_invoice_labels_clean, 'default' => true, 'metadata' => false, 'attribute' => []),
+		$invoice_lines_static->table_element => array('label' => 'InvoiceLine', 'extra_fields' => $extrafields_invoice_lines_labels_clean, 'default' => true, 'metadata' => false, 'attribute' => []),
+	));
+}
+if (!empty($object->parameters['order_actions']['create_supplier_invoice'])) {
+	$supplier_invoice_static = new FactureFournisseur($db);
+	$supplier_invoice_lines_static = new SupplierInvoiceLine($db);
+	$extrafields_supplier_invoice_labels = $extrafields->fetch_name_optionals_label($supplier_invoice_static->table_element);
+	$extrafields_supplier_invoice_labels_clean = array();
+	foreach ($extrafields_supplier_invoice_labels as $key => $label) {
+		if (preg_match('/^ecommerceng_/', $key)) continue;
+		$extrafields_supplier_invoice_labels_clean[$key] = $label;
+	}
+	$extrafields_supplier_invoice_lines_labels = $extrafields->fetch_name_optionals_label($supplier_invoice_lines_static->table_element);
+	$extrafields_supplier_invoice_lines_labels_clean = array();
+	foreach ($extrafields_supplier_invoice_lines_labels as $key => $label) {
+		if (preg_match('/^ecommerceng_/', $key)) continue;
+		$extrafields_supplier_invoice_lines_labels_clean[$key] = $label;
+	}
+
+	$extra_fields_list = array_merge($extra_fields_list, array(
+		$supplier_invoice_static->table_element => array('label' => 'SupplierInvoice', 'extra_fields' => $extrafields_supplier_invoice_labels_clean, 'default' => true, 'metadata' => false, 'attribute' => []),
+		$supplier_invoice_lines_static->table_element => array('label' => 'SupplierInvoiceLines', 'extra_fields' => $extrafields_supplier_invoice_lines_labels_clean, 'default' => true, 'metadata' => false, 'attribute' => []),
+	));
+}
 
 $order_dtoe_status = array(
-	Commande::STATUS_CANCELED			=> $langs->trans('StatusOrderCanceled'),
-	Commande::STATUS_DRAFT				=> $langs->trans('StatusOrderDraft'),
-	Commande::STATUS_VALIDATED			=> $langs->trans('StatusOrderValidated'),
-	Commande::STATUS_SHIPMENTONPROCESS	=> $langs->trans('StatusOrderSent'),
-	Commande::STATUS_CLOSED				=> $langs->trans('StatusOrderProcessed'),
+	Commande::STATUS_CANCELED => $langs->trans('StatusOrderCanceled'),
+	Commande::STATUS_DRAFT => $langs->trans('StatusOrderDraft'),
+	Commande::STATUS_VALIDATED => $langs->trans('StatusOrderValidated'),
+	Commande::STATUS_SHIPMENTONPROCESS => $langs->trans('StatusOrderSent'),
+	Commande::STATUS_CLOSED => $langs->trans('StatusOrderProcessed'),
 );
 
 $eCommercePaymentGateways = new eCommercePaymentGateways($db);
@@ -111,6 +156,8 @@ if (!is_array($payment_gateways)) {
 /*
  *	Actions
  */
+
+include dol_buildpath('/ecommerceng/admin/actions_extrafields.inc.php');
 
 if ($action == 'set_options') {
 	$object->oldcopy = clone $object;
@@ -169,36 +216,6 @@ if ($action == 'set_options') {
 		setEventMessage($langs->trans("SetupSaved"));
 		header("Location: " . $_SERVER["PHP_SELF"] . '?id=' . $object->id);
 		exit;
-	}
-} elseif ($action == 'set_metadata_matching_extrafields_options') {
-	$table_element = GETPOST('table_element', 'alphanohtml');
-	if (isset($extrafields_list[$table_element])) {
-		$object->oldcopy = clone $object;
-
-		$values = array();
-		foreach ($extrafields_list[$table_element]['extrafields'] as $key => $label) {
-			$activated = GETPOST("act_ef_crp_{$table_element}_{$key}", 'int') ? 1 : 0;
-			$correspondences = $activated ? GETPOST("ef_crp_{$table_element}_{$key}", 'alphanohtml') :
-				(!empty($object->parameters['ef_crp'][$table_element][$key]['correspondences']) ? $object->parameters['ef_crp'][$table_element][$key]['correspondences'] : $key);
-
-			$values[$key] = [
-				'correspondences' => $correspondences,
-				'activated' => $activated,
-			];
-		}
-		$object->parameters['ef_crp'][$table_element] = $values;
-
-		$result = $object->update($user);
-
-		if ($result < 0) {
-			setEventMessages($object->error, $object->errors, 'errors');
-		} else {
-			setEventMessage($langs->trans("SetupSaved"));
-			header("Location: " . $_SERVER["PHP_SELF"] . '?id=' . $object->id);
-			exit;
-		}
-	} else {
-		setEventMessage("Wrong table element", 'errors');
 	}
 } elseif ($action == 'set_payment_gateways_options') {
 	foreach ($payment_gateways as $key => $infos) {
@@ -546,56 +563,6 @@ if (!empty($object->parameters['order_actions']['create_order']) ||
 	!empty($object->parameters['order_actions']['create_invoice'])
 ) {
 	/**
-	 * Remote meta data with extra fields.
-	 */
-
-	foreach ($extrafields_list as $table_element => $info) {
-		if (!empty($info['extrafields'])) {
-			print '<div id="metadata_matching_extrafields_' . $table_element . '_options"></div>';
-			print load_fiche_titre($langs->trans('ECommercengWoocommerceExtrafieldsCorrespondenceOf', $langs->transnoentitiesnoconv($info['label'])), '', '');
-
-			print '<form method="post" action="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '#metadata_matching_extrafields_' . $table_element . '_options">';
-			print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
-			print '<input type="hidden" name="action" value="set_metadata_matching_extrafields_options">';
-			print '<input type="hidden" name="table_element" value="' . $table_element . '">';
-
-			print '<table class="noborder centpercent">';
-			print '<tr class="liste_titre">';
-			print '<td class="20p">' . $langs->trans("ExtraFields") . '</td>' . "\n";
-			print '<td>' . $langs->trans("Description") . '</td>' . "\n";
-			print '<td class="right">' . $langs->trans("Value") . '</td>' . "\n";
-			print '<td width="5%" class="center"><input type="checkbox" class="ef_crp_all" name="act_all_ef_crp_' . $table_element . '" value="1" title="' . $langs->trans('Enabled') . '"/></td>' . "\n";
-			print "</tr>\n";
-
-			foreach ($info['extrafields'] as $key => $label) {
-				if (!empty($extrafields->attributes[$table_element]['langfile'][$key])) $langs->load($extrafields->attributes[$table_element]['langfile'][$key]);
-				elseif (!empty($extrafields->attribute_langfile[$key])) $langs->load($extrafields->attribute_langfile[$key]);
-
-				$options_saved = $object->parameters['ef_crp'][$table_element][$key];
-				print '<tr class="oddeven">' . "\n";
-				print '<td>' . $langs->trans($label) . '</td>' . "\n";
-				print '<td>' . $langs->transnoentities('ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription', $key) . '</td>' . "\n";
-				print '<td class="right">' . "\n";
-				$value = !empty($options_saved['correspondences']) ? $options_saved['correspondences'] : $key;
-				print '<input type="text" class="ef_crp_value centpercent" name="ef_crp_' . $table_element . '_' . $key . '" value="' . dol_escape_htmltag($value) . '"' . (empty($options_saved['activated']) ? ' disabled' : '') . ' />';
-				print '</td>' . "\n";
-				print '<td width="5%" class="center">' . "\n";
-				print '<input type="checkbox" class="ef_crp_state" name="act_ef_crp_' . $table_element . '_' . $key . '" value="1"' . (!empty($options_saved['activated']) ? ' checked' : '') . ' title="' . $langs->trans('Enabled') . '" />' . "\n";
-				print '</td></tr>' . "\n";
-			}
-
-			print '</table>' . "\n";
-
-			print '<br>';
-			print '<div align="center">';
-			print '<input type="submit" class="button" value="' . $langs->trans('Modify') . '" />';
-			print '</div>';
-
-			print '</form>';
-		}
-	}
-
-	/**
 	 * Payment gateways.
 	 */
 	print '<div id="payment_gateways_options"></div>';
@@ -682,6 +649,11 @@ if (!empty($object->parameters['order_actions']['create_order']) ||
 
 	print '</form>';
 }
+
+/**
+ * Extra fields.
+ */
+include dol_buildpath('/ecommerceng/admin/tpl/extrafields.tpl.php');
 
 print dol_get_fiche_end();
 

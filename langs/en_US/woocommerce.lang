@@ -87,17 +87,12 @@ ECommercengWoocommerceOrderStatusTrash=Trash
 
 ECommercengWoocommerceOrderLink=Link to the site order [%s]
 
-ECommercengWoocommerceProductExtrafieldsCorrespondenceAttribute                 = Correspondance des attributs supplémentaires avec les attributs de Woocommerce
-ECommercengWoocommerceProductAttribute                                          = Attribut WooCommerce
-ECommercengWoocommerceProductExtrafieldsCorrespondenceAttributeSetupDescription = Code champ dolibarr : %s. Les valeurs du champs complémentaire Dolibarr doit être sous la forme "Nom,Nom" exemple: "Jaune,Jaune"
-
-ECommercengWoocommerceProductExtrafieldsCorrespondenceAttribute                 = Match of additional attributes with Woocommerce attribute
-ECommercengWoocommerceProductExtrafieldsCorrespondenceAttributeSetupDescription = Enter the name of the attribute corresponding to this additional attribute: %s
-
-ECommerceWoocommerceCreateRemoteCategoryParentNotCreated             = Erreur pour le site '%s' lors de la recherche de l'ID parent da la catégorie '%s' (slug: '%s')
-ECommercengWoocommerceExtrafieldsCorrespondence                 = Match of additional attributes with Woocommerce metadata
-ECommercengWoocommerceExtrafieldsCorrespondenceOf               = Correspondance des attributs supplémentaires des "%s" avec les méta-données de Woocommerce
-ECommercengWoocommerceExtrafieldsCorrespondenceSetupDescription = Enter the name of the metadata corresponding to this additional attribute: %s
+ECommercengWoocommerceExtrafieldsOptionsOf                           = Paramètrage des attributs supplémentaires : %s
+ECommercengWoocommerceExtrafieldsMetaData                            = Méta-données de Woocommerce
+ECommercengWoocommerceExtrafieldsAttribute                           = Attribut WooCommerce
+ECommercengWoocommerceExtrafieldsOptionsDefaultValueDescription      = Valeur par default de l'attribut supplémentaire (Si vide celui définie dans la configuration de celui-ci)
+ECommercengWoocommerceExtrafieldsOptionsMetaDataDescription          = Renseigner le nom de la méta-donnée correspondant à cet attribut supplémentaire
+ECommercengWoocommerceExtrafieldsOptionsAttributeDescription         = Les valeurs du champ complémentaire Dolibarr doit être sous la forme "Nom,Nom" exemple: "Jaune,Jaune"
 
 ECommerceWoocommerceCreateRemoteCategoryParentNotCreated    = Error for the site '%s' when searching for the parent ID of the category '%s' (slug: '%s')
 ECommerceWoocommerceCreateRemoteBatchCategories             = Error creating categories by batch on the site '%s':
