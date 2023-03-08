@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.37.0
+- Correction de la prise en compte de liens multiples de plusieurs clients sur un même tiers dolibarr
+
 ## 4.1.36.0
 - Refonte des options liées aux champs complémentaires
 - Ajout de la posibilité d'attribuer des valeurs par défaut pour les champs complémentaires à la creation d'un element

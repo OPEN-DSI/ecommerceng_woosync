@@ -61,7 +61,7 @@ class modECommerceNg extends DolibarrModules
 		$this->editor_url = 'http://www.open-dsi.fr';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '4.1.36';
+		$this->version = '4.1.37';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_' . strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
@@ -416,9 +416,9 @@ LEFT JOIN (
 	FROM " . MAIN_DB_PREFIX . "ecommerce_societe as t
 	GROUP BY t.fk_societe, t.fk_site, t.remote_id
 	HAVING COUNT(*) > 1
-) AS c ON c.rowid != " . MAIN_DB_PREFIX . "ecommerce_societe.rowid AND c.fk_societe = " . MAIN_DB_PREFIX . "ecommerce_societe.fk_societe AND c.fk_site = " . MAIN_DB_PREFIX . "ecommerce_societe.fk_site AND c.remote_id = " . MAIN_DB_PREFIX . "ecommerce_societe.remote_id
+) AS c ON c.rowid != " . MAIN_DB_PREFIX . "ecommerce_societe.rowid AND c.fk_site = " . MAIN_DB_PREFIX . "ecommerce_societe.fk_site AND c.remote_id = " . MAIN_DB_PREFIX . "ecommerce_societe.remote_id
 WHERE c.rowid IS NOT NULL" ];
-		$sql[] = [ 'sql' => "ALTER TABLE " . MAIN_DB_PREFIX . "ecommerce_societe  ADD UNIQUE KEY uk_ecommerce_societe_fk_site_fk_societe ( fk_site, fk_societe );", 'ignoreerror' => 1 ];
+//		$sql[] = [ 'sql' => "ALTER TABLE " . MAIN_DB_PREFIX . "ecommerce_societe  ADD UNIQUE KEY uk_ecommerce_societe_fk_site_fk_societe ( fk_site, fk_societe );", 'ignoreerror' => 1 ];
 		$sql[] = [ 'sql' => "ALTER TABLE " . MAIN_DB_PREFIX . "ecommerce_societe  ADD UNIQUE KEY uk_ecommerce_societe_fk_site_remote_id ( fk_site, remote_id );", 'ignoreerror' => 1 ];
 		// Contacts
 		$sql[] = [ 'sql' => "DELETE " . MAIN_DB_PREFIX . "ecommerce_socpeople FROM " . MAIN_DB_PREFIX . "ecommerce_socpeople

@@ -4165,19 +4165,26 @@ class eCommerceRemoteAccessWoocommerce
      * Send a file for remote order
      *
      * @param   int         $order_remote_id        Id of order on remote ecommerce
-     * @param   int         $company_remote_id      Id of company on remote ecommerce
      * @param   Object      $object                 Object (invoice or shipping)
      * @param   string      $file                   File path
      * @param   Translate   $outputlangs            Lang output object
      *
      * @return  bool
      */
-    public function sendFileForCommande($order_remote_id, $company_remote_id, $object, $file, $outputlangs)
+    public function sendFileForCommande($order_remote_id, $object, $file, $outputlangs)
     {
         dol_syslog(__METHOD__ . ": Send file '$file' for remote order ID $order_remote_id for site ID {$this->site->id}", LOG_DEBUG);
         global $langs;
 
 		$this->errors = array();
+
+		$order_data = $this->client->sendToApi(eCommerceClientApi::METHOD_GET, "orders/{$order_remote_id}");
+		if (!isset($order_data)) {
+			$this->errors[] = $langs->trans('ECommerceWoocommerceErrorGetOrderData', $order_remote_id, $this->site->name);
+			$this->errors[] = $this->client->errorsToString();
+			dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
+			return false;
+		}
 
 		$data = [
 			[
@@ -4186,7 +4193,7 @@ class eCommerceRemoteAccessWoocommerce
 			],
 			[
 				'name'     => 'author',
-				'contents' => $company_remote_id,
+				'contents' => $order_data['customer_id'],
 			],
 			[
 				'name'     => 'post',

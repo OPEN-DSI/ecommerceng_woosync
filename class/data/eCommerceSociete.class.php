@@ -387,48 +387,48 @@ class eCommerceSociete // extends CommonObject
     }
 
 	/**
-     *    Load object in memory from database by fk_societe
-     *    @param	$fkSociete int fk_societe
-     *    @param	$siteId int fk_site
-     *    @return	int <0 if KO, >0 if OK
+     * Load object in memory from database by fk_societe
+	 *
+     * @param	int			$fkSociete		fk_societe
+     * @param	int			$siteId			fk_site
+     * @return	int|array					<0 if KO, list of links if OK
      */
-	public function fetchByFkSociete($fkSociete, $siteId)
-    {
-    	global $langs;
-        $sql = "SELECT";
-		$sql.= " t.rowid,";
-		$sql.= " t.fk_societe,";
-		$sql.= " t.fk_site,";
-		$sql.= " t.remote_id,";
-		$sql.= " t.last_update";
-        $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_societe as t";
-        $sql.= " WHERE t.fk_site = ".$siteId;
-        $sql.= " AND t.fk_societe = ".$fkSociete;
-    	dol_syslog(get_class($this)."::fetchByFkSociete sql=".$sql, LOG_DEBUG);
-        $resql=$this->db->query($sql);
-        if ($resql)
-        {
-            if ($this->db->num_rows($resql)==1)
-            {
-                $obj = $this->db->fetch_object($resql);
-                $this->id    = $obj->rowid;
-                $this->fk_societe = $obj->fk_societe;
-                $this->fk_site = $obj->fk_site;
-                $this->remote_id = $obj->remote_id;
-                $this->last_update = $obj->last_update;
-           		$this->db->free($resql);
-                return 1;
-            }
-            $this->db->free($resql);
-            return -1;
-        }
-        else
-        {
-      	    $this->error="Error ".$this->db->lasterror();
-            dol_syslog(get_class($this)."::fetchByFkSociete ".$this->error, LOG_ERR);
-            return -1;
-        }
-    }
+	public function getAllLinksByFkSociete($fkSociete, $siteId)
+	{
+		global $langs;
+		$sql = "SELECT";
+		$sql .= " t.rowid,";
+		$sql .= " t.fk_societe,";
+		$sql .= " t.fk_site,";
+		$sql .= " t.remote_id,";
+		$sql .= " t.last_update";
+		$sql .= " FROM " . MAIN_DB_PREFIX . "ecommerce_societe as t";
+		$sql .= " WHERE t.fk_site = " . $siteId;
+		$sql .= " AND t.fk_societe = " . $fkSociete;
+		dol_syslog(get_class($this) . "::fetchByFkSociete sql=" . $sql, LOG_DEBUG);
+		$resql = $this->db->query($sql);
+		if ($resql) {
+			$list = array();
+
+			while ($obj = $this->db->fetch_object($resql)) {
+				$tmp = new self($this->db);
+				$tmp->id = $obj->rowid;
+				$tmp->fk_societe = $obj->fk_societe;
+				$tmp->fk_site = $obj->fk_site;
+				$tmp->remote_id = $obj->remote_id;
+				$tmp->last_update = $obj->last_update;
+				$list[$tmp->id] = $tmp;
+			}
+
+			$this->db->free($resql);
+
+			return $list;
+		} else {
+			$this->error = "Error " . $this->db->lasterror();
+			dol_syslog(get_class($this) . "::fetchByFkSociete " . $this->error, LOG_ERR);
+			return -1;
+		}
+	}
 
 	/**
      * 		Select all the ids from eCommerceSociete for a site

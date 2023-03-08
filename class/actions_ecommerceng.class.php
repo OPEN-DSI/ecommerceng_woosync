@@ -138,13 +138,22 @@ class ActionsECommerceNg
 
                 if (!$error) {
                     $eCommerceSociete = new eCommerceSociete($object->db);
-                    $eCommerceSociete->fetchByFkSociete($object->id, $siteDb->id);
+                    $links_list = $eCommerceSociete->getAllLinksByFkSociete($object->id, $siteDb->id);
+                    if (!is_array($links_list)) {
+						setEventMessages($eCommerceSociete->error, $eCommerceSociete->errors, 'errors');
+						$error++;
+					}
 
-                    $result = $synchro->synchronizeCustomers(null, null, array($eCommerceSociete->remote_id), 1, false, false, true);
-                    if ($result <= 0) {
-                        setEventMessages($synchro->error, $synchro->errors, 'errors');
-                        $error++;
-                    }
+					if (!$error) {
+						foreach ($links_list as $link) {
+							$result = $synchro->synchronizeCustomers(null, null, array($link->remote_id), 1, false, false, true);
+							if ($result <= 0) {
+								setEventMessages($synchro->error, $synchro->errors, 'errors');
+								$error++;
+								break;
+							}
+						}
+					}
                 }
 
                 $action = '';
@@ -280,13 +289,11 @@ class ActionsECommerceNg
         ) {
             if (!empty($conf->global->ECOMMERCENG_ENABLE_SEND_FILE_TO_ORDER)) {
                 $commande_id = 0;
-                $societe_id = 0;
                 $object_src = $parameters['object'];
                 $object_src->fetchObjectLinked('', 'commande', $object_src->id, $object_src->element);
                 if (!empty($object_src->linkedObjects)) {
                     foreach ($object_src->linkedObjects['commande'] as $element) {
                         $commande_id = $element->id;
-                        $societe_id = $element->socid;
                     }
                 }
 
@@ -302,10 +309,7 @@ class ActionsECommerceNg
                             $eCommerceCommande = new eCommerceCommande($db);
                             $eCommerceCommande->fetchByCommandeId($commande_id, $site->id); // TODO $eCommerceCommande->remote_societe_id a rajouter a la table
 
-                            $eCommerceSociete = new eCommerceSociete($db);
-                            $eCommerceSociete->fetchByFkSociete($societe_id, $site->id); // TODO a qui donnée l'auteur du media si plusieur utilisateur lié a la societe
-
-                            if ($eCommerceCommande->remote_id > 0 && $eCommerceSociete->remote_id > 0) {
+                            if ($eCommerceCommande->remote_id > 0) {
                                 $eCommerceSynchro = new eCommerceSynchro($db, $site);
                                 dol_syslog("Hook ActionsECommerceNg::afterPDFCreation try to connect to eCommerce site " . $site->name);
                                 $eCommerceSynchro->connect();
@@ -315,7 +319,7 @@ class ActionsECommerceNg
                                 }
 
                                 if (!$error) {
-                                    $result = $eCommerceSynchro->eCommerceRemoteAccess->sendFileForCommande($eCommerceCommande->remote_id, $eCommerceSociete->remote_id, $object_src, $parameters['file'], $parameters['outputlangs']);
+                                    $result = $eCommerceSynchro->eCommerceRemoteAccess->sendFileForCommande($eCommerceCommande->remote_id, $object_src, $parameters['file'], $parameters['outputlangs']);
                                     if (!$result) {
                                         $error++;
                                         $this->errors[] = $eCommerceSynchro->eCommerceRemoteAccess->error;
@@ -359,13 +363,11 @@ class ActionsECommerceNg
         ) {
             if (!empty($conf->global->ECOMMERCENG_ENABLE_SEND_FILE_TO_ORDER)) {
                 $commande_id = 0;
-                $societe_id = 0;
                 $object_src = $parameters['object'];
                 $object_src->fetchObjectLinked('', 'commande', $object_src->id, $object_src->element);
                 if (!empty($object_src->linkedObjects)) {
                     foreach ($object_src->linkedObjects['commande'] as $element) {
                         $commande_id = $element->id;
-                        $societe_id = $element->socid;
                     }
                 }
 
@@ -381,10 +383,7 @@ class ActionsECommerceNg
                             $eCommerceCommande = new eCommerceCommande($db);
                             $eCommerceCommande->fetchByCommandeId($commande_id, $site->id); // TODO $eCommerceCommande->remote_societe_id a rajouter a la table
 
-                            $eCommerceSociete = new eCommerceSociete($db);
-                            $eCommerceSociete->fetchByFkSociete($societe_id, $site->id); // TODO a qui donnée l'auteur du media si plusieur utilisateur lié a la societe
-
-                            if ($eCommerceCommande->remote_id > 0 && $eCommerceSociete->remote_id > 0) {
+                            if ($eCommerceCommande->remote_id > 0) {
                                 $eCommerceSynchro = new eCommerceSynchro($db, $site);
                                 dol_syslog("Hook ActionsECommerceNg::afterPDFCreation try to connect to eCommerce site " . $site->name);
                                 $eCommerceSynchro->connect();
@@ -394,7 +393,7 @@ class ActionsECommerceNg
                                 }
 
                                 if (!$error) {
-                                    $result = $eCommerceSynchro->eCommerceRemoteAccess->sendFileForCommande($eCommerceCommande->remote_id, $eCommerceSociete->remote_id, $object_src, $parameters['file'], $parameters['outputlangs']);
+                                    $result = $eCommerceSynchro->eCommerceRemoteAccess->sendFileForCommande($eCommerceCommande->remote_id, $object_src, $parameters['file'], $parameters['outputlangs']);
                                     if (!$result) {
                                         $error++;
                                         $this->errors[] = $eCommerceSynchro->eCommerceRemoteAccess->error;
@@ -504,12 +503,15 @@ class ActionsECommerceNg
         foreach ($sites as $site) {
             if (in_array($site->fk_cat_societe, $categories)) {
                 $eCommerceSociete = new eCommerceSociete($object->db);
-                $eCommerceSociete->fetchByFkSociete($object->id, $site->id);
-
-                if ($eCommerceSociete->remote_id > 0) {
-                    $isLinkedToECommerce = true;
-                    break;
-                }
+				$links_list = $eCommerceSociete->getAllLinksByFkSociete($object->id, $site->id);
+				if (is_array($links_list)) {
+					foreach ($links_list as $link) {
+						if (!empty($link->remote_id)) {
+							$isLinkedToECommerce = true;
+							break;
+						}
+					}
+				}
             }
         }
 
@@ -599,12 +601,15 @@ class ActionsECommerceNg
         foreach ($sites as $site) {
             if (in_array($site->fk_cat_societe, $categories)) {
                 $eCommerceSociete = new eCommerceSociete($object->db);
-                $eCommerceSociete->fetchByFkSociete($object->id, $site->id);
-
-                if ($eCommerceSociete->remote_id > 0) {
-                    $linkedToECommerce[$site->id] = $site;
-                    break;
-                }
+				$links_list = $eCommerceSociete->getAllLinksByFkSociete($object->id, $site->id);
+				if (is_array($links_list)) {
+					foreach ($links_list as $link) {
+						if (!empty($link->remote_id)) {
+							$linkedToECommerce[$site->id] = $site;
+							break;
+						}
+					}
+				}
             }
         }
 

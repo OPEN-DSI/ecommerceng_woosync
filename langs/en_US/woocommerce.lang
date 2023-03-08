@@ -148,3 +148,4 @@ ECommerceWooCommerceErrorTaxNotFound                = Error the tax was not foun
 ECommerceWooCommerceErrorDontSupportMultiTaxes      = The module does not currently support multi-taxation.
 ECommerceWoocommerceErrorGetWoocommerceWebHooks     = Error retrieving webhooks from the site '%s':
 ECommerceWoocommerceErrorTaxClassNotFoundFromTaxRate                 = La taxe '%s' n'est pas trouver dans le dictionnaire de taxe du module WooSync pour le site '%s' pour le produit '%s'
+ECommerceWoocommerceErrorGetOrderData                                = Erreur lors de la récupération des données de la commande distante '%s' du site '%s'

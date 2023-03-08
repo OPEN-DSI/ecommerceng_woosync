@@ -18,7 +18,7 @@
 
 ALTER TABLE llx_ecommerce_societe  ADD INDEX idx_ecommerce_societe_fk_societe ( fk_societe );
 ALTER TABLE llx_ecommerce_societe  ADD INDEX idx_ecommerce_societe_fk_site ( fk_site );
-ALTER TABLE llx_ecommerce_societe  ADD UNIQUE KEY uk_ecommerce_societe_fk_site_fk_societe ( fk_site, fk_societe );
+-- ALTER TABLE llx_ecommerce_societe  ADD UNIQUE KEY uk_ecommerce_societe_fk_site_fk_societe ( fk_site, fk_societe );
 ALTER TABLE llx_ecommerce_societe  ADD UNIQUE KEY uk_ecommerce_societe_fk_site_remote_id ( fk_site, remote_id );
 
 --ALTER TABLE llx_ecommerce_societe  ADD CONSTRAINT fk_ecommerce_societe_fk_societe FOREIGN KEY (fk_societe) REFERENCES llx_societe(rowid);

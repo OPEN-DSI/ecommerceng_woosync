@@ -2134,6 +2134,7 @@ class eCommerceSynchro
         }
         if ($dbAnonymousExists > 0)
         {
+    		Todo fetchByFkSociete modified to getAllLinksByFkSociete
             $eCommerceSocieteAnonymous = new eCommerceSociete($this->db);
             $eCommerceAnonymousExists = $eCommerceSocieteAnonymous->fetchByFkSociete($anonymousId, $this->eCommerceSite->id);   // search into llx_ecommerce_societe
             if ($eCommerceAnonymousExists < 0)  // If entry not found into llx_ecommerce_site, we create it.

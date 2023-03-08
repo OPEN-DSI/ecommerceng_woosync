@@ -496,15 +496,14 @@ class eCommerceRemoteAccess
      * Send a file for remote commande
      *
      * @param   int         $order_remote_id    Id of order on remote ecommerce
-     * @param   int         $societe_remote_id  Id of societe on remote ecommerce
      * @param   Object      $object             Object product
      * @param   string      $file               File path
      * @param   Translate   $outputlangs		Lang output object
      * @return  bool
      */
-    public function sendFileForCommande($order_remote_id, $societe_remote_id, $object, $file, $outputlangs)
+    public function sendFileForCommande($order_remote_id, $object, $file, $outputlangs)
     {
-        $result=$this->class->sendFileForCommande($order_remote_id, $societe_remote_id, $object, $file, $outputlangs);
+        $result=$this->class->sendFileForCommande($order_remote_id, $object, $file, $outputlangs);
         $this->error=$this->class->error;
         $this->errors=$this->class->errors;
         return $result;
