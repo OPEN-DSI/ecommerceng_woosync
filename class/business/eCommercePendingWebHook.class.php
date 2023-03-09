@@ -512,7 +512,7 @@ class eCommercePendingWebHook
 					return -2;
 				}
 			} elseif ($webhook_event == 'deleted') {
-				$result = $synchro->deleteProductLink($data->id);
+				$result = $synchro->deleteProductLink($data['id']);
 				if ($result == 0 && !empty($synchro->warnings)) {
 					$this->warnings = array_merge($synchro->warnings, $this->warnings);
 					$site->setEntityValues($save_entity);
@@ -589,7 +589,7 @@ class eCommercePendingWebHook
 				$stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__);
 
 				while ($obj = $this->db->fetch_object($resql)) {
-					$result = $this->synchronize($obj->site_id, $obj->webhook_topic, $obj->webhook_resource, $obj->webhook_event, json_decode($obj->webhook_data));
+					$result = $this->synchronize($obj->site_id, $obj->webhook_topic, $obj->webhook_resource, $obj->webhook_event, json_decode($obj->webhook_data, true));
 					if ($result > 0) $result = $this->setStatusProcessed($obj->rowid);
 					elseif ($result == -2) $this->setStatusWarning($obj->rowid, $this->warningsToString());
 					else $this->setStatusError($obj->rowid, $this->errorsToString());
