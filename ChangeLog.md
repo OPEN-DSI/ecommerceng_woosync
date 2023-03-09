@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.38.0
+- Correction du .gitignore qui ignorait le dossier /vendor/ utilisé par le module
+
 ## 4.1.37.0
 - Correction de la prise en compte de liens multiples de plusieurs clients sur un même tiers dolibarr
 
