@@ -676,8 +676,12 @@ class eCommerceSite // extends CommonObject
 				else
 				{
 					$tmpsite=new eCommerceSite($this->db);
-					$tmpsite->fetch($obj->rowid);
-					$list[$obj->rowid]=$tmpsite;
+					$result = $tmpsite->fetch($obj->rowid);
+					if ($result > 0) {
+						$list[$obj->rowid] = $tmpsite;
+					} elseif ($result < 0) {
+						dol_syslog(__METHOD__ . " - Error when fetch site (ID: " . $obj->rowid . ") :" . $tmpsite->errorsToString(), LOG_ERR);
+					}
 				}
 				$i++;
 			}

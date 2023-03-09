@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.39.0
+- Optimisation et correction de la tache planifiée de mise à jour des stocks
+
 ## 4.1.38.0
 - Correction du .gitignore qui ignorait le dossier /vendor/ utilisé par le module
 - Correction fichiers manquants

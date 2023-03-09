@@ -2898,6 +2898,13 @@ class eCommerceRemoteAccessWoocommerce
 
 		$this->errors = array();
 
+		if (empty($remote_id)) {
+			$langs->load('errors');
+			$this->errors[] = $langs->trans('ErrorBadParameters') . ' - remote_id is empty';
+			dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
+			return false;
+		}
+
 		$update_stock = false;
 		$productData = array();
 		if ($this->site->stock_sync_direction == 'dolibarr2ecommerce') {

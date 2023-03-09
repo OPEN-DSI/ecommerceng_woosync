@@ -77,7 +77,7 @@ class eCommerceUtils
 
         $stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__);
 
-        $sql = "SELECT sm.fk_product, MAX(sm.datem) AS update_date, GROUP_CONCAT(CONCAT(ep.rowid, ':', ep.fk_site, ':', ep.remote_id) SEPARATOR ';') AS links";
+        $sql = "SELECT sm.fk_product, MAX(sm.datem) AS update_date, GROUP_CONCAT(DISTINCT CONCAT(ep.rowid, ':', ep.fk_site, ':', ep.remote_id) SEPARATOR ';') AS links";
         $sql .= " FROM " . MAIN_DB_PREFIX . "stock_mouvement AS sm";
 		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_product AS ep ON ep.fk_product = sm.fk_product";
         $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_site AS es ON es.rowid = ep.fk_site";
@@ -107,7 +107,7 @@ class eCommerceUtils
                     $site_id = $link_info[1];
                     $remote_id = $link_info[2];
 
-                    if (isset($sites[$site_id])) {
+                    if (isset($sites[$site_id]) && $sites[$site_id]->id > 0) {
                         $site = $sites[$site_id];
 
 						if ($site->stock_sync_direction == 'dolibarr2ecommerce') {
