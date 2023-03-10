@@ -454,9 +454,22 @@ WHERE c.rowid IS NOT NULL" ];
 		// Delete semaphore token for cron jobs
 		require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 		dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION', 0);
-		dolibarr_del_const($this->db, 'ECOMMERCE_CHECK_WEBHOOKS_STATUS', 0);
 
 		$result=$this->load_tables($options);
+
+		// Upgrade site configuration to new setup cards
+		$eCommerceSite = new eCommerceSite($this->db);
+		$sites = $eCommerceSite->listSites('object');
+		if (is_array($sites)) {
+			foreach ($sites as $site) {
+				$result = $site->upgradeParameters();
+				if ($result < 0) {
+					setEventMessages($site->error, $site->errors, 'errors');
+					return 0;
+				}
+			}
+		}
+
 		$this->addSettlementTerms();
 		$this->addAnonymousCompany();
 		return $this->_init($sql, $options);

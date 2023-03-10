@@ -848,6 +848,44 @@ class eCommerceSite // extends CommonObject
 	}
 
 	/**
+	 * Upgrade the parameters configuration to the new setup
+	 *
+	 * @return int						<0 if KO, >0 if OK
+	 */
+	public function upgradeParameters()
+	{
+		global $user;
+
+		// setup
+		if (!isset($this->authentication_type)) $this->authentication_type = 'oauth1_header';
+		// stock
+		if (!isset($this->parameters['order_actions']['valid_invoice_fk_warehouse'])) $this->parameters['order_actions']['valid_invoice_fk_warehouse'] = $this->parameters['order_actions']['valid_order_fk_warehouse'];
+		if (!isset($this->parameters['order_actions']['valid_supplier_invoice_fk_warehouse'])) $this->parameters['order_actions']['valid_supplier_invoice_fk_warehouse'] = $this->parameters['order_actions']['valid_order_fk_warehouse'];
+		// extra fields
+		$table_elements = [ 'societe', 'product', 'commande', 'commandedet' ];
+		foreach ($table_elements as $table_element) {
+			if (!isset($this->parameters['extra_fields'][$table_element])) {
+				if (isset($this->parameters['ef_crp'][$table_element])) {
+					foreach ($this->parameters['ef_crp'][$table_element] as $key => $info) {
+						$this->parameters['extra_fields'][$table_element]['activated']['mdt'][$key] = $info['activated'];
+						$this->parameters['extra_fields'][$table_element]['values']['mdt'][$key] = $info['correspondences'];
+					}
+				}
+				if ($table_element == 'product' && isset($this->parameters['ef_crp_attribute'])) {
+					foreach ($this->parameters['ef_crp_attribute'] as $key => $info) {
+						$this->parameters['extra_fields'][$table_element]['activated']['att'][$key] = $info['activated'];
+						$this->parameters['extra_fields'][$table_element]['values']['att'][$key] = $info['correspondences'];
+					}
+				}
+			}
+		}
+		if (isset($this->parameters['ef_crp'])) unset($this->parameters['ef_crp']);
+		if (isset($this->parameters['ef_crp_attribute'])) unset($this->parameters['ef_crp_attribute']);
+
+		return $this->update($user);
+	}
+
+	/**
 	 * Method to output saved errors
 	 *
 	 * @return	string		String with errors
