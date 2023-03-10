@@ -194,7 +194,7 @@ if ($action == 'set_options') {
 
 	$values = array();
 	foreach ($order_dtoe_status as $d_status => $d_label) {
-		$values[$d_status]['selected'] = GETPOST('order_status_dtoe_' . $d_status, 'alphanohtml');
+		$values[$d_status] = GETPOST('order_status_dtoe_' . $d_status, 'alphanohtml');
 	}
 	$object->parameters['order_status_dtoe'] = $values;
 

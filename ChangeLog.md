@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.40.0
+- Correction de l'enregistrement des correspondances entre statuts des commandes de dolibarr vers WooCommerce
+
 ## 4.1.39.0
 - Optimisation et correction de la tache planifiée de mise à jour des stocks
 
