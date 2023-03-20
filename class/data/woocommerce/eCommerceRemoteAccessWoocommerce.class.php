@@ -2951,10 +2951,7 @@ class eCommerceRemoteAccessWoocommerce
 						foreach ($remote_product['locations'] as $location) {
 							if (!isset($stock_by_location[$location['id']])) {
 								$total_stock += $location['quantity'];
-								$stock_by_location[$location['id']] = [
-									'id' => $location['id'],
-									'quantity' => $location['quantity'],
-								];
+								$stock_by_location[$location['id']] = $location;
 							}
 						}
 					}

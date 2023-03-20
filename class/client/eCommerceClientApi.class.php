@@ -151,6 +151,7 @@ class eCommerceClientApi
 					$this->errors[] = $langs->trans('ECommerceErrorBadConvertResult') . " - Error: " . json_last_error_msg();
 				}
 			}
+			dol_syslog(__METHOD__ . " - method=" . $method . " url=" . $url . " options=" . json_encode($options) . " without_prefix=" . $without_prefix . " - Data=" . json_encode($data), LOG_NOTICE);
 			return $data;
 		} catch (RequestException $e) {
 			eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
