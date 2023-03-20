@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.41.0
+- Correction de Mise à jour des stocks de dolibarr vers WooCommerce avec le support "Stock Locations for WooCommerce" activé (lorsque tout les entrepots ne sont pas forcement associés)
+
 ## 4.1.40.0
 - Correction de l'enregistrement des correspondances entre statuts des commandes de dolibarr vers WooCommerce
 - Mise à jour de la configuration à l'activation du module

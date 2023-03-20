@@ -37,6 +37,7 @@ ECommerceWoocommerceGetWoocommerceTaxes=Erreur retrieving tax data from the site
 ECommerceWoocommerceCreateRemoteProductSendImage=Error sending an image for the prodcut 'ref:%s' in the Wordpress media on the site '%s': %s
 ECommerceWoocommerceGetAllWoocommercePaymentGateways=Error retrieving payment gateways data from the site '%s':
 ECommerceWoocommerceGetTranslatedProductVariation=Error retrieving the translation 'id:%s' of the variant 'id:%s' of the remote product 'id:%s' on the site '%s':
+ECommerceWoocommerceErrorGetRemoteProduct                            =Erreur de récupération du produit distant 'id:%s' sur le site '%s':
 
 ECommercengWoocommerceStatus=Site status [%s]
 ECommercengWoocommerceDescription=Store description

@@ -2916,6 +2916,20 @@ class eCommerceRemoteAccessWoocommerce
 
 				$total_stock = 0;
 				if (!empty($this->site->parameters['enable_warehouse_plugin_sl_support'])) {
+					$idsProduct = explode('|', $remote_id);
+					$remote_product_id = $idsProduct[0];
+					if (count($idsProduct) > 1) {
+						$remote_product_variation_id = $idsProduct[1];
+					}
+
+					$remote_product = $this->client->sendToApi(eCommerceClientApi::METHOD_GET, "products/{$remote_product_id}" . (!empty($remote_product_variation_id) ? "/variations/{$remote_product_variation_id}" : ""));
+					if (!isset($remote_product)) {
+						$this->errors[] = $langs->trans('ECommerceWoocommerceGetRemoteProduct', $remote_id, $this->site->name);
+						$this->errors[] = $this->client->errorsToString();
+						dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
+						return false;
+					}
+
 					dol_include_once('/ecommerceng/class/data/eCommerceRemoteWarehouses.class.php');
 					$eCommerceRemoteWarehouses = new eCommerceRemoteWarehouses($this->db);
 					$remote_warehouses = $eCommerceRemoteWarehouses->get_all($this->site->id);
@@ -2928,13 +2942,24 @@ class eCommerceRemoteAccessWoocommerce
 					foreach ($remote_warehouses as $remote_code => $info) {
 						$stock = isset($product->stock_warehouse[$info['warehouse_id']]->real) ? $product->stock_warehouse[$info['warehouse_id']]->real : 0;
 						$total_stock += $stock;
-						$stock_by_location[] = [
+						$stock_by_location[$info['remote_id']] = [
 							'id' => $info['remote_id'],
 							'quantity' => $stock,
 						];
 					}
+					if (is_array($remote_product['locations'])) {
+						foreach ($remote_product['locations'] as $location) {
+							if (!isset($stock_by_location[$location['id']])) {
+								$total_stock += $location['quantity'];
+								$stock_by_location[$location['id']] = [
+									'id' => $location['id'],
+									'quantity' => $location['quantity'],
+								];
+							}
+						}
+					}
 					if (!empty($stock_by_location)) {
-						$productData['locations'] = $stock_by_location;
+						$productData['locations'] = array_values($stock_by_location);
 					}
 				} else {
 					$supported_warehouses = is_array($this->site->parameters['fk_warehouse_to_ecommerce']) ? $this->site->parameters['fk_warehouse_to_ecommerce'] : array();

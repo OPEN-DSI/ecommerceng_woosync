@@ -38,6 +38,7 @@ ECommerceWoocommerceCreateRemoteProductSendImage                     =Erreur de 
 ECommerceWoocommerceGetAllWoocommercePaymentGateways                 =Erreur de récupération des données des modes de paiement sur le site '%s':
 ECommerceWoocommerceGetAllWoocommerceRemoteWarehouses                =Erreur de récupération des données des entrepots distants sur le site '%s':
 ECommerceWoocommerceGetTranslatedProductVariation                    =Erreur de récupération de la traduction 'id:%s' de la variation 'id:%s' du produit distant 'id:%s' sur le site '%s':
+ECommerceWoocommerceErrorGetRemoteProduct                            =Erreur de récupération du produit distant 'id:%s' sur le site '%s':
 
 ECommercengWoocommerceStatus                                         =Statut pour le site [%s]
 ECommercengWoocommerceDescription                                    =Description boutique
