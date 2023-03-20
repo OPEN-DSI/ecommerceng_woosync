@@ -2940,7 +2940,7 @@ class eCommerceRemoteAccessWoocommerce
 
 					$stock_by_location = array();
 					foreach ($remote_warehouses as $remote_code => $info) {
-						if (!$info['warehouse_id'] > 0) continue;
+						if (!($info['warehouse_id'] > 0)) continue;
 						$stock = isset($product->stock_warehouse[$info['warehouse_id']]->real) ? $product->stock_warehouse[$info['warehouse_id']]->real : 0;
 						$total_stock += $stock;
 						$stock_by_location[$info['remote_id']] = [
