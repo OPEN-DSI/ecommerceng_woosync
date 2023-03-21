@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.42.0
+- Prend en compte la date de modification du produit parent si elle est plus récente que celle de la variation lors d'une synchronisation du site vers dolibarr
+
 ## 4.1.41.0
 - Correction de Mise à jour des stocks de dolibarr vers WooCommerce avec le support "Stock Locations for WooCommerce" activé (lorsque tout les entrepots ne sont pas forcement associés)
 

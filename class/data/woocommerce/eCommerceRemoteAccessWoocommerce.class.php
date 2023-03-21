@@ -1007,6 +1007,12 @@ class eCommerceRemoteAccessWoocommerce
 		}
 
 		$last_update_product = $this->getDateTimeFromGMTDateTime(!empty($remote_data['date_modified_gmt']) ? $remote_data['date_modified_gmt'] : $remote_data['date_created_gmt']);
+		if (isset($parent_remote_data)) {
+			$parent_last_update_product = $this->getDateTimeFromGMTDateTime(!empty($parent_remote_data['date_modified_gmt']) ? $parent_remote_data['date_modified_gmt'] : $parent_remote_data['date_created_gmt']);
+			if ($parent_last_update_product > $last_update_product) {
+				$last_update_product = $parent_last_update_product;
+			}
+		}
 		$last_update = $last_update_product->format('Y-m-d H:i:s');
 
 		$price = $productSynchPrice == 'selling' ? $remote_data['price'] : $remote_data['regular_price'];
