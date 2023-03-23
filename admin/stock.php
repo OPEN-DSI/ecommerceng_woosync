@@ -88,6 +88,7 @@ if ($action == 'set_options') {
 	$object->fk_warehouse = $object->stock_sync_direction == 'ecommerce2dolibarr' && empty($object->parameters['enable_warehouse_plugin_sl_support']) ? GETPOST('fk_warehouse', 'int') : 0;
 	$object->fk_warehouse = $object->fk_warehouse > 0 ? $object->fk_warehouse : 0;
 	$object->parameters['fk_warehouse_to_ecommerce'] = $object->stock_sync_direction == 'dolibarr2ecommerce' && empty($object->parameters['enable_warehouse_plugin_sl_support']) ? GETPOST('fk_warehouse_to_ecommerce', 'array') : array();
+	$object->parameters['force_stock_to_zero'] = in_array($object->stock_sync_direction, [ 'dolibarr2ecommerce', 'ecommerce2dolibarr' ]) && GETPOST('force_stock_to_zero', 'int') ? 1 : 0;
 
 	$result = $object->update($user);
 
@@ -229,6 +230,14 @@ print $form->selectarray('stock_sync_direction', $synchronize_sens, $object->sto
 print '</td></tr>' . "\n";
 
 if (in_array($object->stock_sync_direction, [ 'dolibarr2ecommerce', 'ecommerce2dolibarr' ])) {
+	// Force stock to zero
+	print '<tr class="oddeven">' . "\n";
+	print '<td>' . $langs->trans("ECommerceForceStockToZero") . '</td>' . "\n";
+	print '<td>' . $langs->transnoentities("ECommerceForceStockToZeroDescription") . '</td>' . "\n";
+	print '<td class="right">' . "\n";
+	print '<input type="checkbox" name="force_stock_to_zero" value="1"' . (!empty($object->parameters['force_stock_to_zero']) ? ' checked' : '') . ' />' . "\n";
+	print '</td></tr>' . "\n";
+
 	// Support of WooCommerce plugin : Stock Locations for WooCommerce
 	print '<tr class="oddeven">' . "\n";
 	print '<td>' . $langs->trans("ECommerceWoocommerceEnableWarehouseSlPluginSupport") . '</td>' . "\n";

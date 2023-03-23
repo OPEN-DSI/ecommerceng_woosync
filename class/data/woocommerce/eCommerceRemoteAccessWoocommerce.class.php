@@ -1088,7 +1088,7 @@ class eCommerceRemoteAccessWoocommerce
 			'fk_country' => '',
 			'url' => $isVariation && $product_variation_mode_all_to_one ? $parent_remote_data['permalink'] : $remote_data['permalink'],
 			// Stock
-			'stock_qty' => $remote_data['stock_quantity'],
+			'stock_qty' => !empty($this->site->parameters['force_stock_to_zero']) && $remote_data['stock_quantity'] < 0 ? 0 : $remote_data['stock_quantity'],
 			'is_in_stock' => $remote_data['in_stock'],   // not used
 			'variations' => $variations,
 			'has_variations' => !empty($remote_data['variations']),
@@ -2467,6 +2467,7 @@ class eCommerceRemoteAccessWoocommerce
                         $stock_by_location = array();
                         foreach ($remote_warehouses as $remote_code => $info) {
                             $stock = isset($object->stock_warehouse[$info['warehouse_id']]->real) ? $object->stock_warehouse[$info['warehouse_id']]->real : 0;
+							$stock = !empty($this->site->parameters['force_stock_to_zero']) && $stock < 0 ? 0 : $stock;
                             $total_stock += $stock;
                             $stock_by_location[] = [
                                 'id' => $info['remote_id'],
@@ -2479,7 +2480,9 @@ class eCommerceRemoteAccessWoocommerce
                     } else {
                         $supported_warehouses = is_array($this->site->parameters['fk_warehouse_to_ecommerce']) ? $this->site->parameters['fk_warehouse_to_ecommerce'] : array();
                         foreach ($supported_warehouses as $warehouse_id) {
-                            $total_stock += isset($object->stock_warehouse[$warehouse_id]->real) ? $object->stock_warehouse[$warehouse_id]->real : 0;
+							$stock = isset($object->stock_warehouse[$warehouse_id]->real) ? $object->stock_warehouse[$warehouse_id]->real : 0;
+							$stock = !empty($this->site->parameters['force_stock_to_zero']) && $stock < 0 ? 0 : $stock;
+							$total_stock += $stock;
                         }
                         $total_stock = floor($total_stock);
                     }
@@ -2732,6 +2735,7 @@ class eCommerceRemoteAccessWoocommerce
                         $stock_by_location = array();
                         foreach ($remote_warehouses as $remote_code => $info) {
                             $stock = isset($object->stock_warehouse[$info['warehouse_id']]->real) ? $object->stock_warehouse[$info['warehouse_id']]->real : 0;
+							$stock = !empty($this->site->parameters['force_stock_to_zero']) && $stock < 0 ? 0 : $stock;
                             $total_stock += $stock;
                             $stock_by_location[] = [
                                 'id' => $info['remote_id'],
@@ -2744,7 +2748,9 @@ class eCommerceRemoteAccessWoocommerce
                     } else {
                         $supported_warehouses = is_array($this->site->parameters['fk_warehouse_to_ecommerce']) ? $this->site->parameters['fk_warehouse_to_ecommerce'] : array();
                         foreach ($supported_warehouses as $warehouse_id) {
-                            $total_stock += isset($object->stock_warehouse[$warehouse_id]->real) ? $object->stock_warehouse[$warehouse_id]->real : 0;
+							$stock = isset($object->stock_warehouse[$warehouse_id]->real) ? $object->stock_warehouse[$warehouse_id]->real : 0;
+							$stock = !empty($this->site->parameters['force_stock_to_zero']) && $stock < 0 ? 0 : $stock;
+							$total_stock += $stock;
                         }
                         $total_stock = floor($total_stock);
                     }
@@ -2948,6 +2954,7 @@ class eCommerceRemoteAccessWoocommerce
 					foreach ($remote_warehouses as $remote_code => $info) {
 						if (!($info['warehouse_id'] > 0)) continue;
 						$stock = isset($product->stock_warehouse[$info['warehouse_id']]->real) ? $product->stock_warehouse[$info['warehouse_id']]->real : 0;
+						$stock = !empty($this->site->parameters['force_stock_to_zero']) && $stock < 0 ? 0 : $stock;
 						$total_stock += $stock;
 						$stock_by_location[$info['remote_id']] = [
 							'id' => $info['remote_id'],
@@ -2968,7 +2975,9 @@ class eCommerceRemoteAccessWoocommerce
 				} else {
 					$supported_warehouses = is_array($this->site->parameters['fk_warehouse_to_ecommerce']) ? $this->site->parameters['fk_warehouse_to_ecommerce'] : array();
 					foreach ($supported_warehouses as $warehouse_id) {
-						$total_stock += isset($product->stock_warehouse[$warehouse_id]->real) ? $product->stock_warehouse[$warehouse_id]->real : 0;
+						$stock = isset($product->stock_warehouse[$warehouse_id]->real) ? $product->stock_warehouse[$warehouse_id]->real : 0;
+						$stock = !empty($this->site->parameters['force_stock_to_zero']) && $stock < 0 ? 0 : $stock;
+						$total_stock += $stock;
 					}
 					$total_stock = floor($total_stock);
 				}
