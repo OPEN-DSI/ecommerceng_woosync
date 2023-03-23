@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.43.0
+- Correction de la synchronisation des images et categories des produits de WooCommerce vers Dolibarr
+
 ## 4.1.42.0
 - Prend en compte la date de modification du produit parent si elle est plus récente que celle de la variation lors d'une synchronisation du site vers dolibarr
 

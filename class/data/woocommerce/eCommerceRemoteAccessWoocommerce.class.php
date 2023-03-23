@@ -991,7 +991,7 @@ class eCommerceRemoteAccessWoocommerce
 		$categories_data = is_array($remote_data['categories']) ? $remote_data['categories'] : array();
 		$categories_data = array_merge($categories_data, $parent_categories);
 		foreach ($categories_data as $category) {
-			$categories[$category->id] = $category->id;
+			$categories[$category['id']] = $category['id'];
 		}
 
 		// Label
@@ -1151,11 +1151,11 @@ class eCommerceRemoteAccessWoocommerce
 				$media_url = $this->site->webservice_address . (substr($this->site->webservice_address, -1, 1) != '/' ? '/' : '') . 'wp-content/uploads/';
 
 				foreach ($images_data as $image) {
-					$last_update = $this->getDateTimeFromGMTDateTime(!empty($image->date_modified_gmt) ? $image->date_modified_gmt : $image->date_created_gmt);
-					$image_url = $this->getCleanedRelativeUrl($media_url, $image->src);
+					$last_update = $this->getDateTimeFromGMTDateTime(!empty($image['date_modified_gmt']) ? $image['date_modified_gmt'] : $image['date_created_gmt']);
+					$image_url = $this->getCleanedRelativeUrl($media_url, $image['src']);
 					$images[] = [
 						'filename' => dol_sanitizeFileName($image_url),
-						'url' => $image->src,
+						'url' => $image['src'],
 						'date_modified' => $last_update->format('Y-m-d H:i:s'),
 					];
 				}
