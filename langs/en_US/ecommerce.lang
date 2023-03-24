@@ -169,8 +169,6 @@ ECommerceValidInvoiceWarehouse                                                  
 ECommerceValidInvoiceWarehouseDescription                                                           =Entrepot utilisé lors de la validation d'une facture pendant une synchronisation de E-Commerce vers Dolibarr
 ECommerceValidSupplierInvoiceWarehouse                                                              =Validation d'une facture fournisseur
 ECommerceValidSupplierInvoiceWarehouseDescription                                                   =Entrepot utilisé lors de la validation d'une facture fournisseur pendant une synchronisation de E-Commerce vers Dolibarr
-ECommerceForceStockToZero                                                                           =Force le stock à zéro
-ECommerceForceStockToZeroDescription                                                                =Force le stock synchronisé à zéro lorsque l'on synchronise un stock négatif
 MainSyncSetup=Main synchronization setup
 StockSyncSetup=Stock synchronization setup
 ErrorModuleSoapRequired=Error: PHP module SOAP is required to have this module working.

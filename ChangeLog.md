@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.1.44.0
+- Correction de l'enregistrement du parametrage de correspondance entre les attributs et les champs complémentaires
+- Suppression de l'option pour forcé la synchronisation du stock à 0 si le stock synchronisé est négatif (elle est active en permanance)
+
 ## 4.1.43.0
 - Correction de la synchronisation des images et categories des produits de WooCommerce vers Dolibarr
 - Ajout d'une option pour forcé la synchronisation du stock à 0 si le stock synchronisé est négatif
