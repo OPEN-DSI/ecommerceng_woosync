@@ -109,8 +109,8 @@ if (is_array($extra_fields_list)) {
 					print '</td>';
 				}
 				if (!empty($info['attributes'])) {
-					$value = isset($values_info['mdt'][$key]) ? $values_info['mdt'][$key] : (isset($remote_attributes_label[$label]) ? $remote_attributes_label[$label] : $key);
-					$activated = !empty($activated_info['mdt'][$key]);
+					$value = isset($values_info['att'][$key]) ? $values_info['att'][$key] : (isset($remote_attributes_label[$label]) ? $remote_attributes_label[$label] : $key);
+					$activated = !empty($activated_info['att'][$key]);
 					print '<td>' . "\n";
 					print $form->selectarray('ef_att_value_' . $key, $info['attributes'], $value, 1, 0, 0, '', 0, 0, $activated ? 0 : 1, '', 'minwidth300');
 					print '</td>' . "\n";
