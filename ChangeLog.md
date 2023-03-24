@@ -4,6 +4,7 @@
 - Correction de l'enregistrement du parametrage de correspondance entre les attributs et les champs complémentaires
 - Suppression de l'option pour forcé la synchronisation du stock à 0 si le stock synchronisé est négatif (elle est active en permanance)
 - Supprimer les liens des produits / tiers qui ne sont plus présents ou qui n'ont pas la catégorie racine d'un site
+- Correction de la récuperation de l'id distant et de l'url lors de la creation d'un produit sur WooCommerce lors de la synchro de Dolibarr vers WooCommerce
 
 ## 4.1.43.0
 - Correction de la synchronisation des images et categories des produits de WooCommerce vers Dolibarr

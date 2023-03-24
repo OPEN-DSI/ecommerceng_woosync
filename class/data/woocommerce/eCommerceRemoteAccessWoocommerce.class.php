@@ -3398,6 +3398,9 @@ class eCommerceRemoteAccessWoocommerce
 					dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
 					return false;
 				}
+
+				$remote_id = $result['id'];
+				$remote_url = $result['permalink'];
 			}
         }
 
