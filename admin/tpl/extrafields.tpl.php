@@ -112,7 +112,7 @@ if (is_array($extra_fields_list)) {
 					$value = isset($values_info['att'][$key]) ? $values_info['att'][$key] : (isset($remote_attributes_label[$label]) ? $remote_attributes_label[$label] : $key);
 					$activated = !empty($activated_info['att'][$key]);
 					print '<td>' . "\n";
-					print $form->selectarray('ef_att_value_' . $key, $info['attributes'], $value, 1, 0, 0, '', 0, 0, $activated ? 0 : 1, '', 'minwidth300');
+					print $form->selectarray('ef_att_value_' . $table_element . '_' . $key, $info['attributes'], $value, 1, 0, 0, '', 0, 0, $activated ? 0 : 1, '', 'minwidth300');
 					print '</td>' . "\n";
 					print '<td class="center">' . "\n";
 					print '<input type="checkbox" class="ef_state ef_att_state_' . $table_element . '" name="ef_att_state_' . $table_element . '_' . $key . '" value="1" data-target="ef_att_value_' . $table_element . '_' . $key . '"' . ($activated ? ' checked' : '') . ' title="' . $langs->trans('Enabled') . '" />' . "\n";
