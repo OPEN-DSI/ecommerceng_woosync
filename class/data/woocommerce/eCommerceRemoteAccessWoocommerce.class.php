@@ -3373,8 +3373,8 @@ class eCommerceRemoteAccessWoocommerce
 		$remote_id = '';
 		$remote_url = '';
         if (is_array($results) && count($results) > 0) {
-			$remote_id = $results[0]->id;
-			$remote_url = $results[0]->permalink;
+			$remote_id = $results[0]['id'];
+			$remote_url = $results[0]['permalink'];
            if (!$this->updateRemoteProduct($remote_id, $object))
                 return false;
         } else {
