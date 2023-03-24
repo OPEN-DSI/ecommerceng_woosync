@@ -90,9 +90,9 @@ class eCommerceSite // extends CommonObject
 		 $this->db->query($sql);*/
 		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_category WHERE fk_category NOT IN (select rowid from " . MAIN_DB_PREFIX . "categorie)";
 		$this->db->query($sql);
-		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_product WHERE fk_product NOT IN (select DISTINCT p.rowid from " . MAIN_DB_PREFIX . "product AS p LEFT JOIN " . MAIN_DB_PREFIX . "categorie_product AS cp ON cp.fk_product = p.rowid WHERE cp.fk_categorie IN (SELECT DISTINCT fk_cat_product FROM " . MAIN_DB_PREFIX . "ecommerce_site))";
+		$sql = "DELETE " . MAIN_DB_PREFIX . "ecommerce_product FROM " . MAIN_DB_PREFIX . "ecommerce_product LEFT JOIN (SELECT DISTINCT p.rowid AS product_id, es.rowid AS site_id FROM " . MAIN_DB_PREFIX . "product AS p LEFT JOIN " . MAIN_DB_PREFIX . "categorie_product AS cp ON cp.fk_product = p.rowid LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_site AS es ON es.fk_cat_product = cp.fk_categorie WHERE es.rowid IS NOT NULL) AS pl ON pl.product_id = " . MAIN_DB_PREFIX . "ecommerce_product.fk_product AND pl.site_id = " . MAIN_DB_PREFIX . "ecommerce_product.fk_site WHERE pl.product_id IS NULL";
 		$this->db->query($sql);
-		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_societe WHERE fk_societe NOT IN (select DISTINCT s.rowid from " . MAIN_DB_PREFIX . "societe AS s LEFT JOIN " . MAIN_DB_PREFIX . "categorie_societe AS cs ON cs.fk_soc = s.rowid WHERE cs.fk_categorie IN (SELECT DISTINCT fk_cat_societe FROM " . MAIN_DB_PREFIX . "ecommerce_site))";
+		$sql = "DELETE " . MAIN_DB_PREFIX . "ecommerce_societe FROM " . MAIN_DB_PREFIX . "ecommerce_societe LEFT JOIN (SELECT DISTINCT s.rowid AS company_id, es.rowid AS site_id FROM " . MAIN_DB_PREFIX . "societe AS s LEFT JOIN " . MAIN_DB_PREFIX . "categorie_societe AS cs ON cs.fk_soc = s.rowid LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_site AS es ON es.fk_cat_societe = cs.fk_categorie WHERE es.rowid IS NOT NULL) AS sl ON sl.company_id = " . MAIN_DB_PREFIX . "ecommerce_societe.fk_societe AND sl.site_id = " . MAIN_DB_PREFIX . "ecommerce_societe.fk_site WHERE sl.company_id IS NULL";
 		$this->db->query($sql);
 		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_socpeople WHERE fk_socpeople NOT IN (select rowid from " . MAIN_DB_PREFIX . "socpeople)";
 		$this->db->query($sql);
