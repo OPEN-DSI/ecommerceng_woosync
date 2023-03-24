@@ -90,9 +90,9 @@ class eCommerceSite // extends CommonObject
 		 $this->db->query($sql);*/
 		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_category WHERE fk_category NOT IN (select rowid from " . MAIN_DB_PREFIX . "categorie)";
 		$this->db->query($sql);
-		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_product WHERE fk_product NOT IN (select rowid from " . MAIN_DB_PREFIX . "product)";
+		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_product WHERE fk_product NOT IN (select DISTINCT p.rowid from " . MAIN_DB_PREFIX . "product AS p LEFT JOIN " . MAIN_DB_PREFIX . "categorie_product AS cp ON cp.fk_product = p.rowid WHERE cp.fk_categorie IN (SELECT DISTINCT fk_cat_product FROM " . MAIN_DB_PREFIX . "ecommerce_site))";
 		$this->db->query($sql);
-		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_societe WHERE fk_societe NOT IN (select rowid from " . MAIN_DB_PREFIX . "societe)";
+		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_societe WHERE fk_societe NOT IN (select DISTINCT s.rowid from " . MAIN_DB_PREFIX . "societe AS s LEFT JOIN " . MAIN_DB_PREFIX . "categorie_societe AS cs ON cs.fk_soc = s.rowid WHERE cs.fk_categorie IN (SELECT DISTINCT fk_cat_societe FROM " . MAIN_DB_PREFIX . "ecommerce_site))";
 		$this->db->query($sql);
 		$sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecommerce_socpeople WHERE fk_socpeople NOT IN (select rowid from " . MAIN_DB_PREFIX . "socpeople)";
 		$this->db->query($sql);
