@@ -48,3 +48,6 @@ ALTER TABLE llx_ecommerce_site ADD COLUMN wordpress_authentication_password varc
 ALTER TABLE llx_ecommerce_site ADD COLUMN wordpress_timeout integer NOT NULL DEFAULT 30 after wordpress_authentication_password;
 ALTER TABLE llx_ecommerce_site ADD COLUMN wordpress_debug integer(1) NULL after wordpress_timeout;
 ALTER TABLE llx_ecommerce_product ADD COLUMN last_update_stock datetime default NULL after last_update;
+
+-- v4.1.45
+ALTER TABLE llx_ecommerce_site ADD COLUMN api_version varchar(255) NULL after webservice_address;

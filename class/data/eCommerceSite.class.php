@@ -35,6 +35,7 @@ class eCommerceSite // extends CommonObject
 	public $name;
 	public $type;
 	public $webservice_address;
+	public $api_version;
 	public $authentication_type;
 	public $user_name;
 	public $user_password;
@@ -144,6 +145,7 @@ class eCommerceSite // extends CommonObject
 		if (isset($this->name)) $this->name=trim($this->name);
 		if (isset($this->type)) $this->type=trim($this->type);
 		if (isset($this->webservice_address)) $this->webservice_address=trim($this->webservice_address);
+		if (isset($this->api_version)) $this->api_version=trim($this->api_version);
 		if (isset($this->authentication_type)) $this->authentication_type=trim($this->authentication_type);
 		if (isset($this->user_name)) $this->user_name=trim($this->user_name);
 		if (isset($this->user_password)) $this->user_password=trim($this->user_password);
@@ -170,6 +172,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= "name,";
 		$sql.= "type,";
 		$sql.= "webservice_address,";
+		$sql.= "api_version,";
 		$sql.= "authentication_type,";
 		$sql.= "user_name,";
 		$sql.= "user_password,";
@@ -197,6 +200,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " ".(! isset($this->name)?'NULL':"'".$this->db->escape($this->name)."'").",";
 		$sql.= " ".(! isset($this->type)?'NULL':"'".$this->type."'").",";
 		$sql.= " ".(! isset($this->webservice_address)?'NULL':"'".$this->db->escape($this->webservice_address)."'").",";
+		$sql.= " ".(! isset($this->api_version)?'NULL':"'".$this->db->escape($this->api_version)."'").",";
 		$sql.= " ".(! isset($this->authentication_type)?'NULL':"'".$this->db->escape($this->authentication_type)."'").",";
 		$sql.= " ".(! isset($this->user_name)?'NULL':"'".$this->db->escape($this->user_name)."'").",";
 		$sql.= " ".(! isset($this->user_password)?'NULL':"'".$this->db->escape($this->user_password)."'").",";
@@ -277,6 +281,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " t.name,";
 		$sql.= " t.type,";
 		$sql.= " t.webservice_address,";
+		$sql.= " t.api_version,";
 		$sql.= " t.authentication_type,";
 		$sql.= " t.user_name,";
 		$sql.= " t.user_password,";
@@ -316,6 +321,7 @@ class eCommerceSite // extends CommonObject
 				$this->name = $obj->name;
 				$this->type = $obj->type;
 				$this->webservice_address = $obj->webservice_address;
+				$this->api_version = $obj->api_version;
 				$this->authentication_type = $obj->authentication_type;
 				$this->user_name = $obj->user_name;
 				$this->user_password = $obj->user_password;
@@ -374,6 +380,7 @@ class eCommerceSite // extends CommonObject
 		if (isset($this->name)) $this->name=trim($this->name);
 		if (isset($this->type)) $this->type=trim($this->type);
 		if (isset($this->webservice_address)) $this->webservice_address=trim($this->webservice_address);
+		if (isset($this->api_version)) $this->api_version=trim($this->api_version);
 		if (isset($this->authentication_type)) $this->authentication_type=trim($this->authentication_type);
 		if (isset($this->user_name)) $this->user_name=trim($this->user_name);
 		if (isset($this->user_password)) $this->user_password=trim($this->user_password);
@@ -399,6 +406,7 @@ class eCommerceSite // extends CommonObject
 		$sql.= " name=".(isset($this->name)?"'".$this->db->escape($this->name)."'":"null").",";
 		$sql.= " type=".(isset($this->type)?$this->type:"null").",";
 		$sql.= " webservice_address=".(isset($this->webservice_address)?"'".$this->db->escape($this->webservice_address)."'":"null").",";
+		$sql.= " api_version=".(isset($this->api_version)?"'".$this->db->escape($this->api_version)."'":"null").",";
 		$sql.= " authentication_type=".(isset($this->authentication_type)?"'".$this->db->escape($this->authentication_type)."'":"null").",";
 		$sql.= " user_name=".(isset($this->user_name)?"'".$this->db->escape($this->user_name)."'":"null").",";
 		$sql.= " user_password=".(isset($this->user_password)?"'".$this->db->escape($this->user_password)."'":"null").",";
@@ -618,6 +626,7 @@ class eCommerceSite // extends CommonObject
 		$this->name='';
 		$this->type='';
 		$this->webservice_address='';
+		$this->api_version='';
 		$this->authentication_type='';
 		$this->user_name='';
 		$this->user_password='';
@@ -857,6 +866,7 @@ class eCommerceSite // extends CommonObject
 		global $user;
 
 		// setup
+		if (!isset($this->api_version)) $this->api_version = 'v3';
 		if (!isset($this->authentication_type)) $this->authentication_type = 'oauth1_header';
 		// stock
 		if (!isset($this->parameters['order_actions']['valid_invoice_fk_warehouse'])) $this->parameters['order_actions']['valid_invoice_fk_warehouse'] = $this->parameters['order_actions']['valid_order_fk_warehouse'];

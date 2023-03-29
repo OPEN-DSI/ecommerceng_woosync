@@ -42,6 +42,8 @@ ECommerceFilterLabel                                                            
 ECommerceFilterValue                                                                                =Valeur du filtre
 ECommerceSiteType                                                                                   =Type de site
 ECommerceSiteAddress                                                                                =Adresse du site
+ECommerceApiVersion                                                                                 =Version API
+ECommerceApiVersionDescription                                                                      =Choisissez la version de l'API
 ECommerceAuthenticationType                                                                         =Type d'authentification
 ECommerceAuthenticationTypeDescription                                                              =Choissiez le type de connexion à WooCommerce<br>- Oauth 1 (Entête) (Les informations de connection sont passées dans l'entête de la requête)<br>- Oauth 1 (Url) (Les informations de connection sont passées en clair dans l'url de la requête)<br>- Basic (Les informations de connection sont passées dans l'entête de la requête)<br>- Url (Les informations de connection sont passées en clair dans l'url de la requête)
 ECommerceAuthenticationTypeOauth1Header                                                             =Oauth 1 (Entête)

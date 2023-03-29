@@ -33,6 +33,10 @@ use GuzzleHttp\Subscriber\Oauth\Oauth1;
 class eCommerceClientWooCommerceApi extends eCommerceClientApi
 {
 	/**
+	 * @var string  API version
+	 */
+	public $api_version;
+	/**
 	 * @var string  Authentication type
 	 */
 	public $authentication_type;
@@ -57,13 +61,14 @@ class eCommerceClientWooCommerceApi extends eCommerceClientApi
 		dol_syslog(__METHOD__ . " - authentication_type={$site->authentication_type}, user_name={$site->user_name}, user_password={$site->user_password}, timeout={$site->timeout}", LOG_DEBUG);
 		$this->errors = array();
 
-		$this->api_url = rtrim($site->webservice_address, '/');
-		$this->api_url_prefix = '/wp-json/wc/v3';
-
-		$this->authentication_type = $site->authentication_type;
+		$this->api_version = !empty($site->api_version) ? $site->api_version : 'v3';
+		$this->authentication_type = !empty($site->authentication_type) ? $site->authentication_type : 'oauth1_header';
 		$this->authentication_login = $site->user_name;
 		$this->authentication_password = $site->user_password;
 		$timeout = $site->timeout > 0 ? $site->timeout : 30;
+
+		$this->api_url = rtrim($site->webservice_address, '/');
+		$this->api_url_prefix = '/wp-json/wc/' . $this->api_version;
 
 		try {
 			$options = [
@@ -81,7 +86,8 @@ class eCommerceClientWooCommerceApi extends eCommerceClientApi
 					'consumer_key'    => $this->authentication_login,
 					'consumer_secret' => $this->authentication_password,
 					'request_method' => $this->authentication_type == 'oauth1_header' ? Oauth1::REQUEST_METHOD_HEADER : Oauth1::REQUEST_METHOD_QUERY,
-					'signature_method' => Oauth1::SIGNATURE_METHOD_HMACSHA256
+					'signature_method' => Oauth1::SIGNATURE_METHOD_HMACSHA256,
+					'api_version' => $this->api_version,
 				]);
 				$stack->push($middleware);
 

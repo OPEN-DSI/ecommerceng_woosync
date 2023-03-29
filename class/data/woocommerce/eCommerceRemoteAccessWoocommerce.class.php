@@ -3368,7 +3368,7 @@ class eCommerceRemoteAccessWoocommerce
 			dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
 			return false;
 		}
-        $results = isset($results['products']) ? $results['products'] : is_array($results) ? $results : [];
+        $results = isset($results['products']) ? $results['products'] : (is_array($results) ? $results : []);
 
 		$remote_id = '';
 		$remote_url = '';

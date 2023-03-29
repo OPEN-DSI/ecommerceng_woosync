@@ -71,6 +71,7 @@ if ($action == 'set_options') {
 
 	$object->type = 2; // WooCommerce
 	$object->name = GETPOST('site_name', 'alphanohtml');
+	$object->api_version = GETPOST('site_api_version', 'alphanohtml');
 	$object->webservice_address = GETPOST('site_webservice_address', 'alphanohtml');
 	$object->authentication_type = GETPOST('site_authentication_type', 'az09');
 	$object->user_name = GETPOST('site_user_name', 'alphanohtml');
@@ -344,6 +345,20 @@ print '<td class="fieldrequired">'.$langs->trans("ECommerceSiteAddress").'</td>'
 print '<td>'.$langs->transnoentities("ECommerceSiteAddressDescription").(!empty($test_url) ? '<br><a href="'.$test_url.'" target="_blank">'.$langs->trans("ECommerceClickUrlToTestUrl").'</a>' : '') . '</td>'."\n";
 print '<td class="right">' . "\n";
 print '<input type="text" class="flat centpercent" name="site_webservice_address" value="' . dol_escape_htmltag($object->webservice_address) . '">' . "\n";
+print '</td></tr>' . "\n";
+
+// Site API version
+print '<tr class="oddeven">' . "\n";
+print '<td class="fieldrequired">'.$langs->trans("ECommerceApiVersion").'</td>'."\n";
+print '<td>' . $langs->transnoentities("ECommerceApiVersionDescription") . '</td>' . "\n";
+print '<td class="right">' . "\n";
+$api_versions = array(
+	'v1' => 'V1',
+	'v2' => 'V2',
+	'v3' => 'V3',
+);
+if (!in_array($object->api_version, array_keys($api_versions))) $object->api_version = 'v3';
+print $form->selectarray('site_api_version', $api_versions, $object->api_version, 0, 0, 0, '', 1, 0, 0, '', 'minwidth200 centpercent') . "\n";
 print '</td></tr>' . "\n";
 
 // Site API authentication type

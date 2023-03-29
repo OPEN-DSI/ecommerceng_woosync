@@ -173,6 +173,9 @@ class eCommerceClientApi
 			} else {
 				if (isset($response)) {
                     $boby = strip_tags($response->getBody());
+					$boby = preg_replace_callback('/\\\\u([0-9a-fA-F]{4})/', function ($match) {
+						return mb_convert_encoding(pack('H*', $match[1]), 'UTF-8', 'UCS-2BE');
+					}, $boby);
 					$this->errors[] = '<b>' . $langs->trans('ECommerceResponseCode') . ': </b>' . $response->getStatusCode() . '<br>' .
 						'<b>' . $langs->trans('ECommerceResponseReasonPhrase') . ': </b>' . $response->getReasonPhrase() .
 						(!empty($boby) ? '<br><em>' . $boby . '</em>' : '');

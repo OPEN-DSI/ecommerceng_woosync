@@ -21,6 +21,7 @@ CREATE TABLE llx_ecommerce_site (
   name varchar(255) NOT NULL,
   type integer NOT NULL DEFAULT 1,
   webservice_address varchar(255) NOT NULL,
+  api_version varchar(255) NULL,
   authentication_type varchar(255) NULL,
   user_name varchar(255) DEFAULT NULL,
   user_password varchar(255) DEFAULT NULL,

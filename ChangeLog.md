@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.1.45.0
+- Correction bug
+- Ajout du choix de la version de l'API dans le parametrage
+
 ## 4.1.44.0
 - Correction de l'enregistrement du parametrage de correspondance entre les attributs et les champs complémentaires
 - Suppression de l'option pour forcé la synchronisation du stock à 0 si le stock synchronisé est négatif (elle est active en permanance)
