@@ -48,7 +48,9 @@ include dol_buildpath('/ecommerceng/admin/actions_selectsite.inc.php');
 $object = new eCommerceSite($db);
 if (!($id > 0)) {
 	$sites = $object->listSites();
-	$id = array_values($sites)[0]['id'];
+	if (!empty($sites)) {
+		$id = array_values($sites)[0]['id'];
+	}
 	$action = '';
 }
 if ($id > 0) {

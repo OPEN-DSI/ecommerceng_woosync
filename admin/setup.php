@@ -44,7 +44,9 @@ $confirm = GETPOST('confirm', 'aZ09');
 $object = new eCommerceSite($db);
 if (empty($action) && !($id > 0) && strlen($id) == 0) {
 	$sites = $object->listSites();
-	$id = array_values($sites)[0]['id'];
+	if (!empty($sites)) {
+		$id = array_values($sites)[0]['id'];
+	}
 }
 if ($id > 0) {
 	$result = $object->fetch($id);
@@ -285,7 +287,7 @@ if ($action == 'delete') {
 }
 
 // Call Hook formConfirm
-$parameters = array('formConfirm' => $formconfirm, 'lineid' => $lineid);
+$parameters = array('formConfirm' => $formconfirm);
 $reshook = $hookmanager->executeHooks('formConfirm', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
 if (empty($reshook)) {
 	$formconfirm .= $hookmanager->resPrint;

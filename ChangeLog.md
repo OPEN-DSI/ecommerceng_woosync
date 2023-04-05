@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.46.0
+- Correction bug
+
 ## 4.1.45.0
 - Correction bug
 - Ajout du choix de la version de l'API dans le parametrage
