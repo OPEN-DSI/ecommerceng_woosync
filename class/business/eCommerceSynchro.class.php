@@ -4265,7 +4265,14 @@ class eCommerceSynchro
 										$order->statut = Commande::STATUS_DRAFT;             // STATUS_DRAFT by default at creation
 										$order->cond_reglement_id = $third_party->cond_reglement_id > 0 ? $third_party->cond_reglement_id : (isset($this->eCommerceSite->parameters['payment_cond']) ? $this->eCommerceSite->parameters['payment_cond'] : null);
 										$order->source = dol_getIdFromCode($this->db, 'OrderByWWW', 'c_input_method', 'code', 'rowid'); // Order mode. Not visible with some Dolibarr versions
-										$order->note_private = isset($order_data['note']) ? $order_data['note'] : "";
+										$order->note_private = "";
+										if (isset($order_data['note'])) {
+											if (!empty($this->eCommerceSite->parameters['order_actions']['order_note_into_public_note'])) {
+												$order->note_public = $order_data['note'];
+											} else {
+												$order->note_private = $order_data['note'];
+											}
+										}
 										if (!empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE)) {
 											$order->note_private = dol_concatdesc($order->note_private, $this->langs->trans('ECommerceCreateOrderFromSiteNote', $this->eCommerceSite->name) . " :\n" . json_encode($order_data['remote_order']));
 										}
@@ -5011,7 +5018,14 @@ class eCommerceSynchro
 										$invoice->entity = $conf->entity;
 										$invoice->statut = Facture::STATUS_DRAFT;
 
-										$invoice->note_private = isset($order_data['note']) ? $order_data['note'] : "";
+										$invoice->note_private = "";
+										if (isset($order_data['note'])) {
+											if (!empty($this->eCommerceSite->parameters['order_actions']['order_note_into_public_note'])) {
+												$invoice->note_public = $order_data['note'];
+											} else {
+												$invoice->note_private = $order_data['note'];
+											}
+										}
 										if (!empty($conf->global->ECOMMERCENG_ENABLE_LOG_IN_NOTE)) {
 											$invoice->note_private = dol_concatdesc($invoice->note_private, $this->langs->trans('ECommerceCreateInvoiceFromSiteNote', $this->eCommerceSite->name) . " :\n" . json_encode($order_data['remote_order']));
 										}

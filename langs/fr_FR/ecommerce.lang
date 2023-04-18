@@ -342,6 +342,8 @@ ECommerceCreateAssociatePaymentForInvoice                                       
 ECommerceSelectMailModelForSendInvoice                                                              =Choix du modèle de courriel pour l'envoi de la facture
 ECommerceProductForFee                                                                              =Produit pour les frais de la facture fournisseur
 ECommerceCreateAssociatePaymentForSupplierInvoice                                                   =Créer le règlement associé pour la facture fournisseur
+ECommerceOrderNoteIntoPublicNote                                                                    =Note de la commande
+ECommerceOrderNoteIntoPublicNoteDescription                                                         =L'insérer dans la note publique au lieu de la note privée (par défaut)
 
 ECommerceCreateOrderSalesRepresentativeFollowByDefault                                              =Responsable suivi client
 ECommerceCreateOrderSalesRepresentativeFollowByDefaultDescription                                   =Utilisateur de type "Responsable suivi commande/facture/... client" par défaut affecté lors de la synchronisation d'une commande depuis le site E-Commerce

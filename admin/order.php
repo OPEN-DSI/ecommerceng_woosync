@@ -179,6 +179,7 @@ if ($action == 'set_options') {
 	$object->parameters['order_metadata_product_lines_to_description_etod'] = GETPOST('order_metadata_product_lines_to_description_etod', 'int') ? 1 : 0;
 	$object->parameters['order_filter_mode_metadata_product_lines_to_description_etod'] = GETPOST('order_filter_mode_metadata_product_lines_to_description_etod', 'az09');
 	$object->parameters['order_filter_keys_metadata_product_lines_to_description_etod'] = GETPOST('order_filter_keys_metadata_product_lines_to_description_etod', 'alphanohtml');
+	$object->parameters['order_actions']['order_note_into_public_note'] = GETPOST('order_note_into_public_note', 'int') ? 1 : 0;
 
 	$result = $object->update($user);
 
@@ -410,6 +411,14 @@ if (!empty($object->parameters['order_actions']['create_invoice'])) {
 if (!empty($object->parameters['order_actions']['create_order']) ||
 	!empty($object->parameters['order_actions']['create_invoice'])
 ) {
+	// Order note into public note
+	print '<tr class="oddeven">' . "\n";
+	print '<td>' . $langs->trans("ECommerceOrderNoteIntoPublicNote") . '</td>' . "\n";
+	print '<td>' . $langs->trans("ECommerceOrderNoteIntoPublicNoteDescription") . '</td>' . "\n";
+	print '<td class="right">' . "\n";
+	print '<input type="checkbox" name="order_note_into_public_note" value="1"' . (!empty($object->parameters['order_actions']['order_note_into_public_note']) ? ' checked' : '') . ' />' . "\n";
+	print '</td></tr>' . "\n";
+
 	// Default sale representative
 	print '<tr class="oddeven">' . "\n";
 	print '<td>' . $langs->trans("ECommerceCreateOrderSalesRepresentativeFollowByDefault") . '</td>' . "\n";

@@ -334,6 +334,8 @@ ECommerceCreateAssociatePaymentForInvoice           = Create the associated paym
 ECommerceSelectMailModelForSendInvoice              = Choice of email template for bill sending
 ECommerceProductForFee                              = Product for the supplier bill fees
 ECommerceCreateAssociatePaymentForSupplierInvoice   = Create the associated payment for the supplier bill
+ECommerceOrderNoteIntoPublicNote                                                                    =Note de la commande
+ECommerceOrderNoteIntoPublicNoteDescription                                                         =L'insérer dans la note publique au lieu de la note privée (par défaut)
 
 ECommerceCreateOrderSalesRepresentativeFollowByDefault              = Customer care manager
 ECommerceCreateOrderSalesRepresentativeFollowByDefaultDescription   = User type "Manager of the tracking of order/bill/... client" assigned by default when synchronizing an order from the site
