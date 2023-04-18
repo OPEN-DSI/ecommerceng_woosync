@@ -1,9 +1,7 @@
 # ChangeLog
 
-## 4.1.47.0
-- Ajout d'une option pour insérer la note de la commande WooCommerce dans la note publique de la commande/facture dolibarr au lieu de la note privée (par défaut)
-
 ## 4.1.46.0
+- Ajout d'une option pour insérer la note de la commande WooCommerce dans la note publique de la commande/facture dolibarr au lieu de la note privée (par défaut)
 - Correction bug
 
 ## 4.1.45.0
