@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.47.0
+- Ajout la creation de facture d'avoir si il y a des remboursements (suis la configuration des factures)
+
 ## 4.1.46.0
 - Ajout d'une option pour insérer la note de la commande WooCommerce dans la note publique de la commande/facture dolibarr au lieu de la note privée (par défaut)
 - Correction bug

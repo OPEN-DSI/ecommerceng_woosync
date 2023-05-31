@@ -1410,6 +1410,7 @@ class eCommerceRemoteAccessWoocommerce
 				}
 
 				$item_data = [
+					'type' => 'product',
 					'parent_item_id' => isset($item_id) ? $item_id : (isset($parent_match[$item['id']]) ? $parent_match[$item['id']] : 0),
 					'item_id' => $item['id'],
 					'ref' => $item['sku'],
@@ -1478,6 +1479,7 @@ class eCommerceRemoteAccessWoocommerce
 			$shipment_service_id = $this->site->parameters['shipping_service'] > 0 ? $this->site->parameters['shipping_service'] : 0;
 			foreach ($remote_data['shipping_lines'] as $item) {
 				$item_data = [
+					'type' => 'shipping',
 					'item_id' => $item['id'],
 					'id_product' => $shipment_service_id,
 					'label' => $langs->trans('ECommerceShipping') . (!empty($item['method_title']) ? ' - ' . $item['method_title'] : ''),
@@ -1532,6 +1534,7 @@ class eCommerceRemoteAccessWoocommerce
 //			}
 			foreach ($remote_data['coupon_lines'] as $item) {
 				$item_data = [
+					'type' => 'discount',
 					'item_id' => $item['id'],
 					'id_product' => $discount_code_service_id,
 					'label' => $item['code'],
@@ -1592,6 +1595,7 @@ class eCommerceRemoteAccessWoocommerce
 //			}
 			foreach ($remote_data['pw_gift_cards_redeemed'] as $gift_cards) {
 				$items[] = [
+					'type' => 'gift_card',
 					'product_type' => 'pw_gift_cards',
 					'id_product' => $gift_cards_service_id,
 					'description' => $gift_cards['number'],
@@ -1636,6 +1640,7 @@ class eCommerceRemoteAccessWoocommerce
 				$line['total_local_tax2'] = $taxes['total_local_tax2'];
 
 				if ($fee_line_as_item_line) {
+					$line['type'] = 'fee';
 					$line['product_type'] = 'service';
 					$line['id_product'] = 0;
 					$line['description'] = $fee_line['name'];
@@ -1667,6 +1672,25 @@ class eCommerceRemoteAccessWoocommerce
 					];
 					break;
 				}
+			}
+		}
+
+		// Set refunds lines
+		$refunds = array();
+		if (!empty($remote_data['refunds'])) {
+			foreach ($remote_data['refunds'] as $item) {
+				$remote_refund_data = $this->client->sendToApi(eCommerceClientApi::METHOD_GET, 'orders/' . $remote_data['id'] . '/refunds/' . $item['id']);
+				if (!isset($remote_refund_data)) {
+					$this->errors[] = $langs->trans('ECommerceWoocommerceErrorGetRemoteRefund', $item['id'], $this->site->name);
+					$this->errors[] = $this->client->errorsToString();
+					dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
+					return false;
+				}
+				$item_data = $this->convertRefundDataIntoProcessedData($remote_refund_data);
+				if ($item_data === false) {
+					return false;
+				}
+				$refunds[] = $item_data;
 			}
 		}
 
@@ -1845,6 +1869,7 @@ class eCommerceRemoteAccessWoocommerce
 			'payment_method_id' => $remote_data['payment_method'],
 			'payment_amount_ttc' => $remote_data['total'],
 			'fee_lines' => $fee_lines,
+			'refunds' => $refunds,
 			'extrafields' => [
 				"ecommerceng_online_payment_{$conf->entity}" => empty($remote_data['transaction_id']) ? 0 : 1,
 				"ecommerceng_wc_status_{$this->site->id}_{$conf->entity}" => $orderStatus,
@@ -1890,6 +1915,313 @@ class eCommerceRemoteAccessWoocommerce
 		// Specific Altairis - End
 
 		return $order;
+	}
+
+	/**
+	 * Call Woocommerce API to get order datas and put into dolibarr order class.
+	 *
+	 * @param	array			$remote_data	Remote data
+	 * @return  array|bool						FALSE if KO otherwise data processed.
+	 */
+	public function convertRefundDataIntoProcessedData($remote_data)
+	{
+		dol_syslog(__METHOD__ . " remote_data=" . json_encode($remote_data), LOG_DEBUG);
+		global $langs;
+
+		$this->errors = array();
+
+		// Get provided taxes info
+		$tax_list = array();
+		if (!empty($remote_data['tax_lines'])) {
+			foreach ($remote_data['tax_lines'] as $tax) {
+				if (!empty($tax['rate_percent'])) $tax_list[$tax['rate_id']] = price2num($tax['rate_percent']);
+			}
+		}
+
+		$sum_total_ht = 0;
+
+		// Set product lines
+		$items = [];
+		if (!empty($remote_data['line_items'])) {
+			$product_variation_mode_all_to_one = !empty($this->site->parameters['product_variation_mode']) && $this->site->parameters['product_variation_mode'] == 'all_to_one';
+
+			$bundles_ids = [];
+			$parent_match = array();
+			foreach ($remote_data['line_items'] as $item) {
+				// Get metadata
+				$metas_data = array();
+				if (is_array($item['meta_data'])) {
+					foreach ($item['meta_data'] as $meta) {
+						$metas_data[$meta['key']] = $meta;
+					}
+				}
+
+				$item_qty = abs($item['quantity']);
+
+				// Set prices
+				$price = $item['subtotal'] != $item['total'] ? ($item['subtotal'] / $item_qty) : $item['price'];
+				$total_ht = $item['subtotal'];
+				$total_tva = $item['subtotal_tax'];
+				$total_ttc = $item['subtotal'] + $item['subtotal_tax'];
+
+				// Support module bundle to virtual product
+				$item_id = null;
+				if (!empty($metas_data['_woosb_ids'])) {
+					$bundles_ids[$item['product_id']] = $item['id'];
+					if ($item['subtotal'] != 0) {
+						$total_ht = $metas_data['_woosb_price']['value'] / (1 + ($item['subtotal_tax'] / $item['subtotal']));
+						$total_tva = $metas_data['_woosb_price']['value'] - $total_ht;
+						$total_ttc = $metas_data['_woosb_price']['value'];
+						$price = $total_ht / $item_qty;
+					} else {
+						$total_ht = 0;
+						$total_tva = 0;
+						$total_ttc = 0;
+						$price = 0;
+					}
+				}
+				if (!empty($metas_data['_woosb_parent_id']) && isset($bundles_ids[$metas_data['_woosb_parent_id']['value']])) {
+					$item_id = $bundles_ids[$metas_data['_woosb_parent_id']['value']];
+					if (!isset($items[$item_id]['additional_description'])) $items[$item_id]['additional_description'] = $langs->trans('ECommerceWooCommerceBundleComposite');
+					$items[$item_id]['additional_description'] .= "\n - " . $item_qty . ' x ' . $item['name'];
+//					continue;
+					$total_ht = 0;
+					$total_tva = 0;
+					$total_ttc = 0;
+					$price = 0;
+				}
+
+				// Support produits composés
+				if (!empty($item['composite_children']) && is_array($item['composite_children'])) {
+					foreach ($item['composite_children'] as $child_id) {
+						$parent_match[$child_id] = $item['id'];
+					}
+				}
+
+				$item_data = [
+					'refund_item_id' => $metas_data['_refunded_item_id']['value'],
+					'parent_item_id' => isset($item_id) ? $item_id : (isset($parent_match[$item['id']]) ? $parent_match[$item['id']] : 0),
+					'item_id' => $item['id'],
+					'ref' => $item['sku'],
+					'label' => $item['name'],
+					'id_remote_product' => !empty($item['variation_id']) ? (!$product_variation_mode_all_to_one ? $item['product_id'] . '|' . $item['variation_id'] : $item['product_id'] . '|%') : $item['product_id'],
+					'product_type' => 'simple',
+					'price' => $price,
+					'total_ht' => $total_ht,
+					'total_tva' => $total_tva,
+					'total_ttc' => $total_ttc,
+					'qty' => $item_qty,
+					'discount' => 0,
+					'buy_price' => null,
+				];
+
+				// Taxes
+				$taxes = $this->getTaxesInfoFromRemoteData($item['taxes'], $tax_list);
+				if ($taxes === false) return false;
+				$item_data['tva_tx'] = $taxes['tva_tx'];
+				$item_data['local_tax1_tx'] = $taxes['local_tax1_tx'];
+				$item_data['local_tax2_tx'] = $taxes['local_tax2_tx'];
+				$item_data['total_local_tax1'] = $taxes['total_local_tax1'];
+				$item_data['total_local_tax2'] = $taxes['total_local_tax2'];
+
+				if (isset($item['cog_item_cost'])) $item_data['buy_price'] = $this->site->ecommerce_price_type == 'TTC' ? 100 * $item['cog_item_cost'] / (100 + $item_data['tva_tx']) : $item['cog_item_cost'];
+				if ($this->site->ecommerce_price_type == 'TTC') $item_data['price'] = (100 * $total_ttc / (100 + $item_data['tva_tx'])) / $item_qty;
+
+				$sum_total_ht += $item_data['total_ht'];
+
+				$items[$item['id']] = $item_data;
+			}
+		}
+
+		// Set shipping lines
+		if (!empty($remote_data['shipping_lines'])) {
+			$shipment_service_id = $this->site->parameters['shipping_service'] > 0 ? $this->site->parameters['shipping_service'] : 0;
+			foreach ($remote_data['shipping_lines'] as $item) {
+				// Get metadata
+				$metas_data = array();
+				if (is_array($item['meta_data'])) {
+					foreach ($item['meta_data'] as $meta) {
+						$metas_data[$meta['key']] = $meta;
+					}
+				}
+
+				$item_data = [
+					'refund_item_id' => $metas_data['_refunded_item_id']['value'],
+					'item_id' => $item['id'],
+					'id_product' => $shipment_service_id,
+					'label' => $langs->trans('ECommerceShipping') . (!empty($item['method_title']) ? ' - ' . $item['method_title'] : ''),
+					'description' => $langs->trans('ECommerceShipping') . (!empty($item['method_title']) ? ' - ' . $item['method_title'] : ''),
+					'product_type' => 'shipment',
+					'price' => $item['total'],
+					'total_ht' => $item['total'],
+					'total_tva' => $item['total_tax'],
+					'total_ttc' => ($item['total'] + $item['total_tax']),
+					'qty' => 1,
+					'discount' => 0,
+				];
+
+				// Taxes
+				$taxes = $this->getTaxesInfoFromRemoteData($item['taxes'], $tax_list);
+				if ($taxes === false) return false;
+				$item_data['tva_tx'] = $taxes['tva_tx'];
+				$item_data['local_tax1_tx'] = $taxes['local_tax1_tx'];
+				$item_data['local_tax2_tx'] = $taxes['local_tax2_tx'];
+				$item_data['total_local_tax1'] = $taxes['total_local_tax1'];
+				$item_data['total_local_tax2'] = $taxes['total_local_tax2'];
+
+				if ($this->site->ecommerce_price_type == 'TTC') $item_data['price'] = 100 * ($item['total'] + $item['total_tax']) / (100 + $item_data['tva_tx']);
+				$item_data['buy_price'] = $item_data['price'];
+
+				$sum_total_ht += $item_data['total_ht'];
+
+				$items[] = $item_data;
+			}
+		}
+
+		// Set discount code lines
+		if (!empty($remote_data['coupon_lines'])) {
+			$discount_code_service_id = $this->site->parameters['discount_code_service'] > 0 ? $this->site->parameters['discount_code_service'] : 0;
+			foreach ($remote_data['coupon_lines'] as $item) {
+				$item_data = [
+					'item_id' => $item['id'],
+					'id_product' => $discount_code_service_id,
+					'label' => $item['code'],
+					'description' => $item['code'],
+					'product_type' => 'discount_code',
+					'qty' => 1,
+					'discount' => 0,
+					'buy_price' => 0,
+					'local_tax1_tx' => 0,
+					'local_tax2_tx' => 0,
+					'total_local_tax1' => 0,
+					'total_local_tax2' => 0,
+				];
+
+				// Taxes
+				$tax_rate = 0;
+				foreach ($remote_data['tax_lines'] as $data) {
+					if (empty($data['tax_total'])) continue;
+					if ($data['rate_percent'] > $tax_rate) $tax_rate = $data['rate_percent'];
+				}
+
+				$ttc = $item['discount'] + $item['discount_tax'];
+				$tva = $tax_rate * $ttc / ($tax_rate + 100);
+				$ht = 100 * $ttc / ($tax_rate + 100);
+
+				$item_data['tva_tx'] = $tax_rate;
+				$item_data['price'] = -$ht;
+				$item_data['total_ht'] = -$ht;
+				$item_data['total_tva'] = -$tva;
+				$item_data['total_ttc'] = -$ttc;
+
+				$sum_total_ht += $item_data['total_ht'];
+
+				$items[] = $item_data;
+			}
+		}
+
+		// Set gift card lines
+		if (!empty($remote_data['pw_gift_cards_redeemed'])) {
+			$gift_cards_service_id = $this->site->parameters['pw_gift_cards_service'] > 0 ? $this->site->parameters['pw_gift_cards_service'] : 0;
+			foreach ($remote_data['pw_gift_cards_redeemed'] as $gift_cards) {
+				$items[] = [
+					'product_type' => 'pw_gift_cards',
+					'id_product' => $gift_cards_service_id,
+					'description' => $gift_cards['number'],
+					'label' => $gift_cards['number'],
+					'price' => - $gift_cards['amount'],
+					'total_ht' => - $gift_cards['amount'],
+					'total_tva' => 0,
+					'total_ttc' => - $gift_cards['amount'],
+					'qty' => 1,
+					'discount' => 0,
+					'buy_price' => 0,
+					'tva_tx' => 0,
+					'local_tax1_tx' => 0,
+					'local_tax2_tx' => 0,
+					'total_local_tax1' => 0,
+					'total_local_tax2' => 0,
+				];
+				$sum_total_ht += - $gift_cards['amount'];
+			}
+		}
+
+		// Set fee lines
+		$fee_lines = [];
+		$fee_line_as_item_line = !empty($this->site->parameters['order_actions']['fee_line_as_item_line']);
+		if (!empty($remote_data['fee_lines'])) {
+			foreach ($remote_data['fee_lines'] as $fee_line) {
+				$line = [
+					'label' => $fee_line['name'],
+					'price' => $fee_line['total'],
+					'qty' => 1,
+					'total_ht' => $fee_line['total'],
+					'total_tva' => $fee_line['total_tax'],
+					'total_ttc' => ($fee_line['total'] + $fee_line['total_tax']),
+				];
+
+				// Taxes
+				$taxes = $this->getTaxesInfoFromRemoteData($fee_line['taxes'], $tax_list);
+				if ($taxes === false) return false;
+				$line['tva_tx'] = $taxes['tva_tx'];
+				$line['local_tax1_tx'] = $taxes['local_tax1_tx'];
+				$line['local_tax2_tx'] = $taxes['local_tax2_tx'];
+				$line['total_local_tax1'] = $taxes['total_local_tax1'];
+				$line['total_local_tax2'] = $taxes['total_local_tax2'];
+
+				if ($fee_line_as_item_line) {
+					$line['product_type'] = 'service';
+					$line['id_product'] = 0;
+					$line['description'] = $fee_line['name'];
+					$line['discount'] = 0;
+					$line['buy_price'] = 0;
+
+					$sum_total_ht += $line['total_ht'];
+
+					$items[] = $line;
+				} else {
+					$fee_lines[] = $line;
+				}
+			}
+		}
+		// Manage fees in meta data (stripe payment, ...)
+		if (!empty($remote_data['meta_data'])) {
+			foreach ($remote_data['meta_data'] as $meta) {
+				if ($meta['key'] == '_stripe_fee') {
+					$fee_lines[] = [
+						'label' => 'Stripe',
+						'qty' => 1,
+						'price' => $meta['value'],
+						'total_ht' => $meta['value'],
+						'total_tva' => 0,
+						'total_ttc' => $meta['value'],
+						'tva_tx' => 0,
+						'local_tax1_tx' => 0,
+						'local_tax2_tx' => 0,
+						'total_local_tax1' => 0,
+						'total_local_tax2' => 0,
+					];
+					break;
+				}
+			}
+		}
+
+		$create_date = $this->getDateTimeFromGMTDateTime($remote_data['date_created_gmt']);
+
+		// Add refund content to array
+		$refund = [
+			'create_date' => $create_date->getTimestamp(),
+			'last_update' => $create_date->format('Y-m-d H:i:s'),
+			'remote_id' => $remote_data['id'],
+			'reason' => $remote_data['reason'],
+			'total_ht' => $sum_total_ht,
+			'total_tva' => - $remote_data['amount'] - $sum_total_ht,
+			'total_ttc' => - $remote_data['amount'],
+			'items' => $items,
+			'fee_lines' => $fee_lines,
+		];
+
+		return $refund;
 	}
 
     /**

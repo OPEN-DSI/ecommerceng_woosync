@@ -585,7 +585,8 @@ if (!empty($object->parameters['order_actions']['create_order']) ||
 
 	print '<table class="noborder centpercent">';
 	print '<tr class="liste_titre">';
-	print '<td class="20p">' . $langs->trans("ECommercePaymentGatewayLabel") . '</td>' . "\n";
+	print '<td>' . $langs->trans("Code") . '</td>' . "\n";
+	print '<td>' . $langs->trans("ECommercePaymentGatewayLabel") . '</td>' . "\n";
 	print '<td>' . $langs->trans("PaymentMode") . '</td>' . "\n";
 	print '<td>' . $langs->trans("BankAccount") . '</td>' . "\n";
 	if (!empty($object->parameters['order_actions']['create_invoice'])) {
@@ -620,6 +621,7 @@ if (!empty($object->parameters['order_actions']['create_order']) ||
 
 	foreach ($payment_gateways as $key => $infos) {
 		print '<tr class="oddeven">' . "\n";
+		print '<td>' . $key . '</td>' . "\n";
 		print '<td>' . $infos['payment_gateway_label'] . '</td>' . "\n";
 		print '<td>';
 		$form->select_types_paiements($infos['payment_mode_id'], 'payment_mode_id_' . $key);
