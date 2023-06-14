@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.48.0
+- Correction compatibilité propriété model_pdf sur facture
+
 ## 4.1.47.0
 - Ajout la creation de facture d'avoir si il y a des remboursements (suis la configuration des factures)
 

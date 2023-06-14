@@ -5019,6 +5019,7 @@ class eCommerceSynchro
 										$invoice->ref_client = $order->id > 0 ? $order->ref_client : $order_data['ref_client'];
 										$invoice->ref_ext = $invoice_ref_ext;
 										$invoice->modelpdf = $conf->global->FACTURE_ADDON_PDF;
+										$invoice->model_pdf = $conf->global->FACTURE_ADDON_PDF;
 										$invoice->cond_reglement_id = $order->id > 0 ? $order->cond_reglement_id : ($third_party->cond_reglement_id > 0 ? $third_party->cond_reglement_id : (isset($this->eCommerceSite->parameters['payment_cond']) ? $this->eCommerceSite->parameters['payment_cond'] : null));
 										$invoice->multicurrency_code = $order->id > 0 ? $order->multicurrency_code : null;
 										$invoice->multicurrency_tx = $order->id > 0 ? $order->multicurrency_tx : null;
