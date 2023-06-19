@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.49.0
+- Correction de la recuperation de la liste des sites
+
 ## 4.1.48.0
 - Correction compatibilité propriété model_pdf sur facture
 
