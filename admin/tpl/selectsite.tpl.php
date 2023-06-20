@@ -32,9 +32,10 @@ if (empty($conf) || !is_object($conf)) {
  * @global eCommerceSite	$object
  * @global string			$self_url
  */
+dol_include_once("/ecommerceng/lib/eCommerce.lib.php");
 
 print '<form id="select_site" action="' . $_SERVER['PHP_SELF'] . '" method="post">';
-print '<input type="hidden" name="token" value="' . newToken() . '" />';
+print '<input type="hidden" name="token" value="' . ecommercengNewToken() . '" />';
 print '<input type="hidden" name="action" value="select_site" />';
 print $langs->trans('ECommerceNgSelectSite') . ' : ';
 $sites = $object->listSites();

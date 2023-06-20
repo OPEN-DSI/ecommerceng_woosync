@@ -157,9 +157,10 @@ class eCommerceProduct // extends CommonObject
                 $this->remote_id = $obj->remote_id;
                 $this->last_update = $obj->last_update;
                 $this->last_update_stock = $obj->last_update_stock;
-            }
+				return 1;
+			}
             $this->db->free($resql);
-            return 1;
+            return 0;
         }
         else
         {
@@ -467,4 +468,15 @@ class eCommerceProduct // extends CommonObject
             return -1;
         }
     }
+
+	/**
+	 * Method to output saved errors
+	 *
+	 * @param   string      $separator      Separator between each error
+	 * @return	string		                String with errors
+	 */
+	public function errorsToString($separator = ', ')
+	{
+		return $this->error . (is_array($this->errors) ? (!empty($this->error) ? $separator : '') . join($separator, $this->errors) : '');
+	}
 }

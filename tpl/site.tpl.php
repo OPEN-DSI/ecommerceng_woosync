@@ -3,6 +3,7 @@
 llxHeader();
 
 if (is_object($site)) {
+	dol_include_once("/ecommerceng/lib/eCommerce.lib.php");
 	$linkback = '<a href="index.php">' . $langs->trans("BackToListOfSites") . '</a>';
 
 	print_fiche_titre($langs->trans('ECommerceSiteSynchro') . ' ' . $site->name, $linkback, 'eCommerceTitle@ecommerceng');
@@ -19,7 +20,7 @@ if (is_object($site)) {
 	$disabled = $synchRights != true && empty($conf->global->ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION);
 
 	print '<form name="form_count" id="form_count" action="' . $_SERVER['PHP_SELF'] . '?id=' . $site->id . '" method="post">';
-	print '<input type="hidden" name="token" value="' . newToken() . '">';
+	print '<input type="hidden" name="token" value="' . ecommercengNewToken() . '">';
 	//print '<input type="hidden" name="id" value="'.$site->id.'">';
 	if (GETPOST('test_with_no_categ_count', 'alpha')) print '<input type="hidden" name="test_with_no_categ_count" value="' . GETPOST('test_with_no_categ_count', 'alpha') . '">';
 	if (GETPOST('test_with_no_product_count', 'alpha')) print '<input type="hidden" name="test_with_no_product_count" value="' . GETPOST('test_with_no_product_count', 'alpha') . '">';
@@ -39,8 +40,8 @@ if (is_object($site)) {
 	if ($site->last_update) print '<strong>' . dol_print_date($site->last_update, 'dayhoursec') . '</strong>';
 	else print '<strong>' . $langs->trans("ECommerceNoUpdateSite") . '</strong>';
 	print '</td><td rowspan="'.(!empty($site->fk_anonymous_thirdparty) ? '4' : '3').'" class="center">';
-	if (empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) print '<input type="submit" class="button" name="refresh" style="margin-right: 15px" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&action=refresh" value="' . $langs->trans('RefreshCount') . '">';
-	if (!empty($conf->global->ECOMMERCENG_SHOW_SYNCHRONIZE_ALL_BUTTON)) print '<input type="submit" class="button' . ($disabled ? ' buttonRefused' : '') . '" name="submit_synchro_all" href="' . ($disabled ? '#' : $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&action=submit_synchro_all&submit_synchro_all=1') . '" value="' . $langs->trans('SyncAll') . '">';
+	if (empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) print '<input type="submit" class="button" name="refresh" style="margin-right: 15px" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&action=refresh&token='.ecommercengNewToken().'" value="' . $langs->trans('RefreshCount') . '">';
+	if (!empty($conf->global->ECOMMERCENG_SHOW_SYNCHRONIZE_ALL_BUTTON)) print '<input type="submit" class="button' . ($disabled ? ' buttonRefused' : '') . '" name="submit_synchro_all" href="' . ($disabled ? '#' : $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&action=submit_synchro_all&submit_synchro_all=1&token='.ecommercengNewToken()) . '" value="' . $langs->trans('SyncAll') . '">';
 	print '</td>';
 	print '</tr>';
 
@@ -118,8 +119,8 @@ if (is_object($site)) {
 					?> *
 					<?php
 					if (!empty($conf->global->ECOMMERCENG_SHOW_DEBUG_TOOLS)) {
-						print '<div class="debugtools inline-block">(<a class="submit_reset_data_links" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=categories_links">' . $langs->trans("ClearLinks") . '</a>';
-						print ' - <a class="submit_reset_data_all" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=categories_all">' . $langs->trans("ClearData") . '</a>';
+						print '<div class="debugtools inline-block">(<a class="submit_reset_data_links" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=categories_links&token='.ecommercengNewToken().'">' . $langs->trans("ClearLinks") . '</a>';
+						print ' - <a class="submit_reset_data_all" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=categories_all&token='.ecommercengNewToken().'">' . $langs->trans("ClearData") . '</a>';
 						print ')</div>';
 					}
 					?>
@@ -144,8 +145,8 @@ if (is_object($site)) {
 				<td><?php print $nbProductInDolibarrLinkedToE; ?> **
 					<?php
 					if (!empty($conf->global->ECOMMERCENG_SHOW_DEBUG_TOOLS)) {
-						print '<div class="debugtools inline-block"> (<a class="submit_reset_data_links" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=products_links">' . $langs->trans("ClearLinks") . '</a>';
-						print ' - <a class="submit_reset_data_all" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=products_all">' . $langs->trans("ClearData") . '</a>';
+						print '<div class="debugtools inline-block"> (<a class="submit_reset_data_links" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=products_links&token='.ecommercengNewToken().'">' . $langs->trans("ClearLinks") . '</a>';
+						print ' - <a class="submit_reset_data_all" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=products_all&token='.ecommercengNewToken().'">' . $langs->trans("ClearData") . '</a>';
 						print ')</div>';
 					}
 					?>
@@ -178,8 +179,8 @@ if (is_object($site)) {
 				<td><?php print $nbSocieteInDolibarrLinkedToE; ?> ***
 					<?php
 					if (!empty($conf->global->ECOMMERCENG_SHOW_DEBUG_TOOLS)) {
-						print '<div class="debugtools inline-block"> (<a class="submit_reset_data_links" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=thirdparties_links">' . $langs->trans("ClearLinks") . '</a>';
-						print ' - <a class="submit_reset_data_all" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=thirdparties_all">' . $langs->trans("ClearData") . '</a>';
+						print '<div class="debugtools inline-block"> (<a class="submit_reset_data_links" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=thirdparties_links&token='.ecommercengNewToken().'">' . $langs->trans("ClearLinks") . '</a>';
+						print ' - <a class="submit_reset_data_all" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=thirdparties_all&token='.ecommercengNewToken().'">' . $langs->trans("ClearData") . '</a>';
 						print ')</div>';
 					}
 					?>
@@ -210,8 +211,8 @@ if (is_object($site)) {
 					<td><?php print $nbCommandeInDolibarrLinkedToE; ?>
 						<?php
 						if (!empty($conf->global->ECOMMERCENG_SHOW_DEBUG_TOOLS)) {
-							print '<div class="debugtools inline-block"> (<a class="submit_reset_data_links" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=orders_links">' . $langs->trans("ClearLinks") . '</a>';
-							print ' - <a class="submit_reset_data_all" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=orders_all">' . $langs->trans("ClearData") . '</a>';
+							print '<div class="debugtools inline-block"> (<a class="submit_reset_data_links" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=orders_links&token='.ecommercengNewToken().'">' . $langs->trans("ClearLinks") . '</a>';
+							print ' - <a class="submit_reset_data_all" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=orders_all&token='.ecommercengNewToken().'">' . $langs->trans("ClearData") . '</a>';
 							print ')</div>';
 						}
 						?>
@@ -244,8 +245,8 @@ if (is_object($site)) {
 					<td><?php print $nbFactureInDolibarrLinkedToE; ?>
 						<?php
 						if (!empty($conf->global->ECOMMERCENG_SHOW_DEBUG_TOOLS)) {
-							print '<div class="debugtools inline-block"> (<a class="submit_reset_data_links" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=invoices_links">' . $langs->trans("ClearLinks") . '</a>';
-							print ' - <a class="submit_reset_data_all" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=invoices_all">' . $langs->trans("ClearData") . '</a>';
+							print '<div class="debugtools inline-block"> (<a class="submit_reset_data_links" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=invoices_links&token='.ecommercengNewToken().'">' . $langs->trans("ClearLinks") . '</a>';
+							print ' - <a class="submit_reset_data_all" style="color: #600" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&reset_data=invoices_all&token='.ecommercengNewToken().'">' . $langs->trans("ClearData") . '</a>';
 							print ')</div>';
 						}
 						?>
@@ -305,7 +306,7 @@ if (is_object($site)) {
 	print $langs->trans("SyncIsAutomaticInRealTime", $site->name) . "\n";
 
 	print '<form name="form_count" id="form_count" action="' . $_SERVER['PHP_SELF'] . '?id=' . $site->id . '" method="post">';
-	print '<input type="hidden" name="token" value="' . newToken() . '">';
+	print '<input type="hidden" name="token" value="' . ecommercengNewToken() . '">';
 	//print '<input type="hidden" name="id" value="'.$site->id.'">';
 
 	print '<table class="centpercent nobordernopadding">';
@@ -317,10 +318,10 @@ if (is_object($site)) {
 	print $langs->trans("RestrictNbInSync") . ' ';
 	print '<input type="text" name="dtoe_to_nb" placeholder="0" value="' . dol_escape_htmltag($dtoe_to_nb) . '">';
 	print '</td><td>';
-	if (empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) print '<input type="submit" class="button" name="refresh" style="margin-right: 15px" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&action=refresh" value="' . $langs->trans('RefreshCount') . '">';
+	if (empty($conf->global->ECOMMERCENG_NO_COUNT_UPDATE)) print '<input type="submit" class="button" name="refresh" style="margin-right: 15px" href="' . $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&action=refresh&token='.ecommercengNewToken().'" value="' . $langs->trans('RefreshCount') . '">';
 	$disabled = $synchRights != true;
 //	if ($synchRights != true || (($nbCategoriesToUpdateDToE > 0 || $nbProductToUpdateDToE > 0) && !($nbCategoriesToUpdate > 0 || $nbProductToUpdate > 0))) $disabled = false;
-	print '<input type="submit" class="button' . ($disabled ? ' buttonRefused' : '') . '" name="submit_dtoe_synchro_all" href="' . ($disabled ? '#' : $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&action=submit_dtoe_synchro_all') . '" value="' . $langs->trans('SyncAll') . '">';
+	print '<input type="submit" class="button' . ($disabled ? ' buttonRefused' : '') . '" name="submit_dtoe_synchro_all" href="' . ($disabled ? '#' : $_SERVER["PHP_SELF"] . '?id=' . $site->id . '&action=submit_dtoe_synchro_all&token='.ecommercengNewToken().'') . '" value="' . $langs->trans('SyncAll') . '">';
 	print '</td></tr>';
 
 	print '</table>';
@@ -404,9 +405,9 @@ if (is_object($site)) {
 		print '<a style="color: #600" id="showtools">' . $langs->trans("ShowDebugTools") . '</a>';
 		print '</div>';
 		print '<div class="debugtools">';
-		print '<a style="color: #600" class="submit_reset_data_links" href="' . $_SERVER['PHP_SELF'] . '?id=' . $site->id . '&to_date=' . $to_date . '&reset_data=links">' . $langs->trans('ECommerceResetLink') . '</a>';
+		print '<a style="color: #600" class="submit_reset_data_links" href="' . $_SERVER['PHP_SELF'] . '?id=' . $site->id . '&to_date=' . $to_date . '&reset_data=links&token='.ecommercengNewToken().'">' . $langs->trans('ECommerceResetLink') . '</a>';
 		print '<br><br>';
-		print '<a style="color: #600" class="submit_reset_data_all" href="' . $_SERVER['PHP_SELF'] . '?id=' . $site->id . '&to_date=' . $to_date . '&reset_data=all">' . $langs->trans('ECommerceReset') . '</a>';
+		print '<a style="color: #600" class="submit_reset_data_all" href="' . $_SERVER['PHP_SELF'] . '?id=' . $site->id . '&to_date=' . $to_date . '&reset_data=all&token='.ecommercengNewToken().'">' . $langs->trans('ECommerceReset') . '</a>';
 		dol_fiche_end();
 		print '</div>';
 

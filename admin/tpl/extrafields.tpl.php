@@ -38,13 +38,14 @@ if (empty($conf) || !is_object($conf)) {
  */
 
 if (is_array($extra_fields_list)) {
+	dol_include_once("/ecommerceng/lib/eCommerce.lib.php");
 	foreach ($extra_fields_list as $table_element => $info) {
 		if (!empty($info['extra_fields'])) {
 			print '<div id="extra_fields_options"></div>';
 			print load_fiche_titre($langs->trans("ECommercengWoocommerceExtrafieldsOptionsOf", $langs->transnoentitiesnoconv($info['label'])), '', '');
 
 			print '<form method="post" action="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '#extra_fields_options">';
-			print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
+			print '<input type="hidden" name="token" value="' . ecommercengNewToken() . '">';
 			print '<input type="hidden" name="action" value="set_extra_fields_options">';
 			print '<input type="hidden" name="table_element" value="' . $table_element . '">';
 

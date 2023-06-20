@@ -294,7 +294,7 @@ $head=ecommercengConfigSitePrepareHead($object);
 dol_fiche_head($head, 'order_invoice', $langs->trans("Module107100Name"), 0, 'eCommerce@ecommerceng');
 
 print '<div class="tabsAction tabsActionNoBottom">';
-print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=synchronize_payment_gateways">'.$langs->trans('ECommerceUpdatePaymentGateways').'</a>';
+print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=synchronize_payment_gateways&token='.ecommercengNewToken().'">'.$langs->trans('ECommerceUpdatePaymentGateways').'</a>';
 print '</div>';
 
 /**
@@ -305,7 +305,7 @@ print '<div id="options"></div>';
 print load_fiche_titre($langs->trans("Parameters"), '', '');
 
 print '<form method="post" action="'.$_SERVER["PHP_SELF"] . '?id=' . $object->id . '#options">';
-print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+print '<input type="hidden" name="token" value="'.ecommercengNewToken().'">';
 print '<input type="hidden" name="action" value="set_options">';
 
 print '<table class="noborder centpercent">';
@@ -487,7 +487,7 @@ if (!empty($object->parameters['order_actions']['create_order'])) {
 	print load_fiche_titre($langs->trans("ECommerceOrderStatusSetup"), '', '');
 
 	print '<form method="post" action="'.$_SERVER["PHP_SELF"] . '?id=' . $object->id . '#status_options">';
-	print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+	print '<input type="hidden" name="token" value="'.ecommercengNewToken().'">';
 	print '<input type="hidden" name="action" value="set_status_options">';
 
 	print '<table class="noborder centpercent">';
@@ -580,7 +580,7 @@ if (!empty($object->parameters['order_actions']['create_order']) ||
 	print load_fiche_titre($langs->trans('ECommercePaymentGatewaysCorrespondence'), '', '');
 
 	print '<form method="post" action="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '#payment_gateways_options">';
-	print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
+	print '<input type="hidden" name="token" value="' . ecommercengNewToken() . '">';
 	print '<input type="hidden" name="action" value="set_payment_gateways_options">';
 
 	print '<table class="noborder centpercent">';

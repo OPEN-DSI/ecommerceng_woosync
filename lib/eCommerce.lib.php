@@ -868,3 +868,8 @@ function get_company_by_email($db, $email, $site=0)
 
 	return $result;
 }
+
+function ecommercengNewToken()
+{
+	return function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
+}
