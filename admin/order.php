@@ -267,6 +267,7 @@ llxHeader('', $langs->trans("ECommerceSetup"), $wikihelp, '', 0, 0, array(
 ));
 
 $formconfirm = '';
+$lineid = '';
 
 if ($action == 'synchronize_payment_gateways') {
 	$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"].'?id='.$object->id, $langs->trans('ECommerceUpdatePaymentGateways'), $langs->trans('ECommerceConfirmUpdatePaymentGateways'), 'confirm_synchronize_payment_gateways', '', 0, 1, 200, 800);

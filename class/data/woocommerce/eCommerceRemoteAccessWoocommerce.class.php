@@ -98,6 +98,8 @@ class eCommerceRemoteAccessWoocommerce
      */
     public $errors;
 
+	public $error;
+
     /**
      * GMT timezone.
      *

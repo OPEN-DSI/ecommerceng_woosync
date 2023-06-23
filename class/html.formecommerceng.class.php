@@ -86,7 +86,7 @@ class FormECommerceNg
 
 		$save_conf = $conf->use_javascript_ajax;
 		$conf->use_javascript_ajax = 0;
-		$out .= self::$formproduct->selectWarehouses(array(), $htmlname, $filterstatus, 0, $disabled, $fk_product, $empty_label, $showstock, $forcecombo, $events, $morecss, $exclude, $showfullpath, $stockMin, $orderBy);
+		$out .= self::$formproduct->selectWarehouses('', $htmlname, $filterstatus, 0, $disabled, $fk_product, $empty_label, $showstock, $forcecombo, $events, $morecss, $exclude, $showfullpath, $stockMin, $orderBy);
 		$conf->use_javascript_ajax = $save_conf;
 
 		return $out;

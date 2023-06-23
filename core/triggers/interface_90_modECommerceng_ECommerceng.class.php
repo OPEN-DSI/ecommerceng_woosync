@@ -670,9 +670,8 @@ class InterfaceECommerceng
 			$eCommerceSite = new eCommerceSite($this->db);
 			$sites = $eCommerceSite->listSites('object');
 			$entities = explode(',', getEntity('facture'));
-
 			foreach ($sites as $site) {
-				if ($object->context['fromsyncofecommerceid'] && $object->context['fromsyncofecommerceid'] == $site->id) {
+				if (isset($object->context['fromsyncofecommerceid']) && $object->context['fromsyncofecommerceid'] == $site->id) {
 					dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
 					continue;
 				}

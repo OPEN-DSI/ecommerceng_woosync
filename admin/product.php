@@ -265,6 +265,7 @@ llxHeader('', $langs->trans("ECommerceSetup"), $wikihelp, '', 0, 0, array(
 ));
 
 $formconfirm = '';
+$lineid = '';
 
 if ($action == 'synchronize_attributes') {
 	$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"].'?id='.$object->id, $langs->trans('ECommerceWoocommerceUpdateDictAttributes'), $langs->trans('ECommerceWoocommerceConfirmUpdateDictAttributes'), 'confirm_synchronize_attributes', '', 0, 1, 200, 800);

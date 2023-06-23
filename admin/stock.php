@@ -137,6 +137,7 @@ $wikihelp='';
 llxHeader('', $langs->trans("ECommerceSetup"), $wikihelp);
 
 $formconfirm = '';
+$lineid = '';
 
 if ($action == 'update_remote_warehouses' && !empty($object->parameters['enable_warehouse_plugin_sl_support'])) {
 	$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id . '&plugin=' . $plugin, $langs->trans('ECommerceUpdateRemoteWarehouses'), $langs->trans('ECommerceConfirmUpdateRemoteWarehouses'), 'confirm_update_remote_warehouses', '', 0, 1, 200, 800);

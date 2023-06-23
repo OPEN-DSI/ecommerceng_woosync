@@ -248,8 +248,11 @@ class Oauth1
         $key = rawurlencode($this->config['consumer_secret']);
 
 		// Add token only if present to avoid wrong encoding due to the superflous ampersand (&)
-		if((isset($this->config['token_secret']) && !empty($this->config['token_secret'])) || !\in_array($this->apiVersion, ['v1', 'v2'])) {
-            $key .= '&' . rawurlencode($this->config['token_secret']);
+		// if((isset($this->config['token_secret']) && !empty($this->config['token_secret'])) || !\in_array($this->apiVersion, ['v1', 'v2'])) {
+
+        if((isset($this->config['token_secret']) && !empty($this->config['token_secret'])) || !\in_array($this->config['api_version'], ['v1', 'v2'])) {
+            // $key .= '&' . rawurlencode($this->config['token_secret']);
+            $key .= '&' . rawurlencode(isset($this->config['token_secret']) && !empty($this->config['token_secret']));
         }
 
         return hash_hmac($algo, $baseString, $key, true);

@@ -107,7 +107,7 @@ class eCommerceDict
 		if (is_array($keys) && count($keys) > 0) {
             $fields = array();
             foreach ($keys as $field => $value) {
-                switch ($value['type']) {
+                switch (isset($value['type'])) {
                     case 'string':
                         $key = "= '".$this->db->escape($value['value'])."'";
                         break;
@@ -148,7 +148,7 @@ class eCommerceDict
         if (is_array($values) && count($values) > 0) {
             $fields = array();
             foreach ($values as $field => $value) {
-                switch ($value['type']) {
+                switch (isset($value['type'])) {
                     case 'string':
                         $key = "= '" . $this->db->escape($value['value']) . "'";
                         break;
@@ -166,7 +166,7 @@ class eCommerceDict
         if (is_array($keys) && count($keys) > 0) {
             $fields = array();
             foreach ($keys as $field => $value) {
-                switch ($value['type']) {
+                switch (isset($value['type'])) {
                     case 'string':
                         $key = "= '" . $this->db->escape($value['value']) . "'";
                         break;
