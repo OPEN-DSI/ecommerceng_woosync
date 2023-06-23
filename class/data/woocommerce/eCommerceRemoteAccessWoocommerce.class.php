@@ -91,14 +91,19 @@ class eCommerceRemoteAccessWoocommerce
      */
     private $db;
 
+	/**
+	 * Error.
+	 *
+	 * @var string
+	 */
+	public $error;
+
     /**
      * Errors list.
      *
      * @var array
      */
     public $errors;
-
-	public $error;
 
     /**
      * GMT timezone.
@@ -160,7 +165,8 @@ class eCommerceRemoteAccessWoocommerce
 
         $this->db = $db;
         $this->site = $site;
-        $this->errors = [];
+		$this->error = '';
+		$this->errors = [];
 
         $this->gmtTimeZone = new DateTimeZone('GMT');
         $this->currentTimeZone = new DateTimeZone(date_default_timezone_get());

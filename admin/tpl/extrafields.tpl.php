@@ -82,8 +82,9 @@ if (is_array($extra_fields_list)) {
 				if (!empty($info['default'])) {
 					$not_supported = in_array($extrafields->attributes[$table_element]['type'][$key], [ 'date', 'datetime' ]);
 
+					$default_value = '';
 					if (isset($extrafields->attributes[$table_element]['default'][$key])) $default_value = $extrafields->attributes[$table_element]['default'][$key];
-					$value = isset($values_info['dft'][$key]) ? $values_info['dft'][$key] : isset($default_value);
+					$value = isset($values_info['dft'][$key]) ? $values_info['dft'][$key] : $default_value;
 					$activated = !empty($activated_info['dft'][$key]);
 					print '<td>' . "\n";
 					if ($not_supported) {

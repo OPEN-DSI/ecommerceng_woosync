@@ -265,7 +265,6 @@ llxHeader('', $langs->trans("ECommerceSetup"), $wikihelp, '', 0, 0, array(
 ));
 
 $formconfirm = '';
-$lineid = '';
 
 if ($action == 'synchronize_attributes') {
 	$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"].'?id='.$object->id, $langs->trans('ECommerceWoocommerceUpdateDictAttributes'), $langs->trans('ECommerceWoocommerceConfirmUpdateDictAttributes'), 'confirm_synchronize_attributes', '', 0, 1, 200, 800);
@@ -276,7 +275,7 @@ if ($action == 'synchronize_attributes') {
 }
 
 // Call Hook formConfirm
-$parameters = array('formConfirm' => $formconfirm, 'lineid' => $lineid);
+$parameters = array('formConfirm' => $formconfirm);
 $reshook = $hookmanager->executeHooks('formConfirm', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
 if (empty($reshook)) {
 	$formconfirm .= $hookmanager->resPrint;

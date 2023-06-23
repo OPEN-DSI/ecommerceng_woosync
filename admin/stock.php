@@ -137,14 +137,13 @@ $wikihelp='';
 llxHeader('', $langs->trans("ECommerceSetup"), $wikihelp);
 
 $formconfirm = '';
-$lineid = '';
 
 if ($action == 'update_remote_warehouses' && !empty($object->parameters['enable_warehouse_plugin_sl_support'])) {
 	$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id . '&plugin=' . $plugin, $langs->trans('ECommerceUpdateRemoteWarehouses'), $langs->trans('ECommerceConfirmUpdateRemoteWarehouses'), 'confirm_update_remote_warehouses', '', 0, 1, 200, 800);
 }
 
 // Call Hook formConfirm
-$parameters = array('formConfirm' => $formconfirm, 'lineid' => $lineid);
+$parameters = array('formConfirm' => $formconfirm);
 $reshook = $hookmanager->executeHooks('formConfirm', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
 if (empty($reshook)) {
 	$formconfirm .= $hookmanager->resPrint;

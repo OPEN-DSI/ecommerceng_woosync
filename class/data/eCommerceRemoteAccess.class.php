@@ -29,8 +29,8 @@ class eCommerceRemoteAccess
 	private $class;
 	private $db;
 
-    var $error;
-	var $errors;
+    public $error;
+	public $errors;
 
     /**
      * Class for access remote sites
@@ -74,9 +74,7 @@ class eCommerceRemoteAccess
     public function connect()
     {
 		$result = $this->class->connect();
-		// $this->error=$this->class->error;
-		$error = 0;
-		$this->error=$error;
+		$this->error=$this->class->error;
 		$this->errors=$this->class->errors;
     	return $result;
     }
