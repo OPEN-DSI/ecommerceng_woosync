@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.51.0
+- Compatibilité PHP8.1
+
 ## 4.1.50.0
 - Correction CSRF
 - Correction compatibilité v16+
