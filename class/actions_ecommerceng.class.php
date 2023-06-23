@@ -16,6 +16,7 @@
  */
 
 dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
+dol_include_once("/ecommerceng/lib/eCommerce.lib.php");
 
 /**
  *  \file       htdocs/ecommerceng/class/actions_ecommerceng.class.php
@@ -207,7 +208,7 @@ class ActionsECommerceNg
 
                     $site_ids = array_keys($sites);
                     $params = count($sites) > 1 ? '&action=unlink_product_to_ecommerce' : '&action=confirm_unlink_product_to_ecommerce&confirm=yes&siteid=' . $site_ids[0];
-                    print '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . $params . '">' . $langs->trans("EcommerceNGUnlinkToECommerce") . '</a></div>';
+                    print '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . $params . '&token='.ecommercengNewToken().'">' . $langs->trans("EcommerceNGUnlinkToECommerce") . '</a></div>';
                 }
             }
         } elseif (in_array('thirdpartycard', explode(':', $parameters['context']))) {
@@ -233,7 +234,7 @@ class ActionsECommerceNg
 
                     $site_ids = array_keys($sites);
                     $params = count($sites) > 1 ? '&action=update_company_from_ecommerce' : '&action=confirm_update_company_from_ecommerce&confirm=yes&siteid=' . $site_ids[0];
-                    print '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . $params . '">' . $langs->trans("EcommerceUpdateCompanyFromECommerce") . '</a></div>';
+                    print '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . $params . '&token='.ecommercengNewToken().'">' . $langs->trans("EcommerceUpdateCompanyFromECommerce") . '</a></div>';
                 }
             }
         }
@@ -257,7 +258,7 @@ class ActionsECommerceNg
         if (in_array('productdocuments', explode(':', $parameters['context']))) {
             if ($this->isImageSync($object) && $this->isProductLinkedToECommerce($object)) {
                 $buttons = '<div class="tabsAction">';
-                $buttons .= '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?action=synchronize_images&amp;id=' . $object->id . '">' . $langs->trans("ECommerceSynchronizeProductImages") . '</a></div>';
+                $buttons .= '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?action=synchronize_images&amp;id=' . $object->id . '&token='.ecommercengNewToken().'">' . $langs->trans("ECommerceSynchronizeProductImages") . '</a></div>';
                 $buttons .= '</div>';
 
                 print '<script type="text/javascript" language="javascript">';

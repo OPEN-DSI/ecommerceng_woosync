@@ -29,6 +29,7 @@ if (! $res) die("Include of main fails");
 include_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
 dol_include_once("/ecommerceng/class/business/eCommercePendingWebHook.class.php");
 dol_include_once("/ecommerceng/class/business/eCommerceSynchro.class.php");
+dol_include_once("/ecommerceng/lib/eCommerce.lib.php");
 
 $langs->load("ecommerce@ecommerceng");
 
@@ -295,7 +296,7 @@ if ($resql) {
 	// Fields title search
 	print '<form method="POST" id="searchFormList" action="' . $_SERVER["PHP_SELF"] . '">';
 	if ($optioncss != '') print '<input type="hidden" name="optioncss" value="' . $optioncss . '">';
-	print '<input type="hidden" name="token" value="' . newToken() . '">';
+	print '<input type="hidden" name="token" value="' . ecommercengNewToken() . '">';
 	print '<input type="hidden" name="formfilteraction" id="formfilteraction" value="list">';
 	print '<input type="hidden" name="action" value="list">';
 	print '<input type="hidden" name="sortfield" value="' . $sortfield . '">';

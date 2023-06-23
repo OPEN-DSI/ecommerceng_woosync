@@ -659,32 +659,22 @@ class eCommerceSite // extends CommonObject
 	 */
 	function listSites($mode='array')
 	{
-		global $langs;
-
 		$list = array();
 
-        $sql = "SELECT";
-		$sql.= " t.rowid,";
-		$sql.= " t.name,";
-		$sql.= " t.last_update";
-		$sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_site as t";
-		$sql.= " WHERE t.entity IN (" . getEntity('ecommerceng') . ")";
+		$sql = "SELECT";
+		$sql .= " t.rowid,";
+		$sql .= " t.name,";
+		$sql .= " t.last_update";
+		$sql .= " FROM " . MAIN_DB_PREFIX . "ecommerce_site as t";
+		$sql .= " WHERE t.entity IN (" . getEntity('ecommerceng') . ")";
 
-    	$result = $this->db->query($sql);
-		if ($result)
-		{
-			$num = $this->db->num_rows($result);
-			$i=0;
-			while ($i < $num)
-			{
-				$obj = $this->db->fetch_object($result);
-				if ($mode == 'array')
-				{
-					$list[$obj->rowid]=array('id'=>$obj->rowid, 'name'=>$obj->name, 'last_update'=>$this->db->jdate($obj->last_update));
-				}
-				else
-				{
-					$tmpsite=new eCommerceSite($this->db);
+		$resql = $this->db->query($sql);
+		if ($resql) {
+			while ($obj = $this->db->fetch_object($resql)) {
+				if ($mode == 'array') {
+					$list[$obj->rowid] = array('id' => $obj->rowid, 'name' => $obj->name, 'last_update' => $this->db->jdate($obj->last_update));
+				} else {
+					$tmpsite = new eCommerceSite($this->db);
 					$result = $tmpsite->fetch($obj->rowid);
 					if ($result > 0) {
 						$list[$obj->rowid] = $tmpsite;
@@ -692,8 +682,8 @@ class eCommerceSite // extends CommonObject
 						dol_syslog(__METHOD__ . " - Error when fetch site (ID: " . $obj->rowid . ") :" . $tmpsite->errorsToString(), LOG_ERR);
 					}
 				}
-				$i++;
 			}
+			$this->db->free($resql);
 		}
 		return $list;
 	}

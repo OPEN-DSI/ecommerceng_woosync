@@ -1,6 +1,7 @@
 <?php
 llxHeader();
 
+dol_include_once("/ecommerceng/lib/eCommerce.lib.php");
 $form = new Form($db);
 
 $linkback='';
@@ -35,12 +36,12 @@ $var=!$var;
 			</td>
 			<td><div style="inline-block">
 				<form class="inline-block" style="margin-right: 10px" name="form_index" id="form_detailed" action="<?php print dol_buildpath('/ecommerceng/site.php',1); ?>?id=<?php echo $site->id ?><?php echo GETPOST('to_date','int')?'&to_date='.GETPOST('to_date','int'):''; ?>" method="post">
-					<input type="hidden" name="token" value="<?php print newToken(); ?>">
+					<input type="hidden" name="token" value="<?php print ecommercengNewToken() ?>">
 					<input type="hidden" name="id" value="<?php print $site->id ?>">
 					<input class="button" type="submit" name="submit_detailed" value="<?php print $langs->trans('ECommerceUpdateSite') ?>">
 				</form>
 				<form class="inline-block" name="form_index" id="form_global" action="<?php print dol_buildpath('/ecommerceng/site.php', 1); ?>?id=<?php echo $site->id; ?><?php echo GETPOST('to_date','int')?'&to_date='.GETPOST('to_date','int'):''; ?>" method="post">
-					<input type="hidden" name="token" value="<?php print newToken(); ?>">
+					<input type="hidden" name="token" value="<?php print ecommercengNewToken() ?>">
 					<input type="hidden" name="id" value="<?php print $site->id ?>">
 					<input class="button" type="submit" name="submit_synchro_all" value="<?php print $langs->trans('ECommerceUpdateAll') ?>">
 				</form>

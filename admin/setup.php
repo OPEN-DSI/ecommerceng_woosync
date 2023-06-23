@@ -309,7 +309,7 @@ dol_fiche_head($head, 'settings', $langs->trans("Module107100Name"), 0, 'eCommer
 
 if ($object->id > 0) {
 	print '<div class="tabsAction tabsActionNoBottom">';
-	print '<a class="butAction butActionDelete" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&amp;action=delete">' . $langs->trans('Delete') . '</a>';
+	print '<a class="butAction butActionDelete" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&amp;action=delete&token='.ecommercengNewToken().'">' . $langs->trans('Delete') . '</a>';
 	print '</div>';
 }
 
@@ -321,7 +321,7 @@ print '<div id="options"></div>';
 print load_fiche_titre($langs->trans("Parameters"), '', '');
 
 print '<form method="post" action="'.$_SERVER["PHP_SELF"] . ($object->id > 0 ? '?id=' . $object->id : '') . '#options">';
-print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+print '<input type="hidden" name="token" value="'.ecommercengNewToken().'">';
 print '<input type="hidden" name="action" value="set_options">';
 
 print '<table class="noborder centpercent">';
@@ -427,7 +427,7 @@ if ($object->id > 0) {
 	print load_fiche_titre($langs->trans("ECommerceSiteWebHooksSetup"), '', '');
 
 	print '<form method="post" action="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '#web_hooks_options">';
-	print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
+	print '<input type="hidden" name="token" value="' . ecommercengNewToken() . '">';
 	print '<input type="hidden" name="action" value="set_web_hooks_options">';
 
 	print '<table class="noborder centpercent">';
@@ -506,7 +506,7 @@ if ($object->id > 0) {
 		print load_fiche_titre($langs->trans("ECommerceWordpressAuthenticationOptions") . $setup_help, '', '');
 
 		print '<form method="post" action="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '#wordpress_api_options">';
-		print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
+		print '<input type="hidden" name="token" value="' . ecommercengNewToken() . '">';
 		print '<input type="hidden" name="action" value="set_wordpress_api_options">';
 
 		print '<table class="noborder centpercent">';

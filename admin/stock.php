@@ -165,7 +165,7 @@ dol_fiche_head($head, 'stock', $langs->trans("Module107100Name"), 0, 'eCommerce@
 
 if (!empty($object->parameters['enable_warehouse_plugin_sl_support'])) {
 	print '<div class="tabsAction tabsActionNoBottom">';
-	print '<a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&amp;action=update_remote_warehouses">' . $langs->trans('ECommerceUpdateRemoteWarehouses') . '</a>';
+	print '<a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&amp;action=update_remote_warehouses&token='.ecommercengNewToken().'">' . $langs->trans('ECommerceUpdateRemoteWarehouses') . '</a>';
 	print '</div>';
 }
 
@@ -177,7 +177,7 @@ print '<div id="options"></div>';
 print load_fiche_titre($langs->trans("Parameters"), '', '');
 
 print '<form method="post" action="'.$_SERVER["PHP_SELF"] . '?id=' . $object->id . '#options">';
-print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+print '<input type="hidden" name="token" value="'.ecommercengNewToken().'">';
 print '<input type="hidden" name="action" value="set_options">';
 
 print '<table class="noborder centpercent">';
@@ -272,7 +272,7 @@ if (!empty($object->parameters['enable_warehouse_plugin_sl_support'])) {
 	print load_fiche_titre($langs->trans('ECommerceRemoteWarehousesCorrespondence'), '', '');
 
 	print '<form method="post" action="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '#remote_warehouse_options">';
-	print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
+	print '<input type="hidden" name="token" value="' . ecommercengNewToken() . '">';
 	print '<input type="hidden" name="action" value="set_remote_warehouse_options">';
 
 	print '<table class="noborder centpercent">';

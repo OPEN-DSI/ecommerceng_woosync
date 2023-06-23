@@ -1,5 +1,13 @@
 # ChangeLog
 
+## 4.1.50.0
+- Correction CSRF
+- Correction compatibilité v16+
+- Suppression du lien automatiquement lors de la mise a jour des stocks si le produit n'existe plus sur le site
+
+## 4.1.49.0
+- Correction de la recuperation de la liste des sites
+
 ## 4.1.48.0
 - Correction compatibilité propriété model_pdf sur facture
 

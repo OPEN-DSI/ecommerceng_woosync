@@ -111,35 +111,42 @@ class eCommerceUtils
                         $site = $sites[$site_id];
 
 						if ($site->stock_sync_direction == 'dolibarr2ecommerce') {
-							try {
-								// Connect to site
-								$eCommerceSynchro = new eCommerceSynchro($this->db, $site);
-								$eCommerceSynchro->connect();
-								if (count($eCommerceSynchro->errors)) {
-									$output .= '<span style="color: red;">' . $langs->trans('Error') . ' - Connect to site ' . $site->name . ' : ' . $eCommerceSynchro->errorsToString() . '</span>' . "<br>";
-									$sub_error++;
-								}
-
-								if (!$sub_error) {
-									$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteStockProduct($remote_id, $product);
-									if (!$result) {
-										$output .= '<span style="color: red;">' . $langs->trans('Error') . ' - Update stock of ' . $product->ref . ' to site ' . $site->name . ' : ' . $eCommerceSynchro->eCommerceRemoteAccess->errorsToString() . '</span>' . "<br>";
-										$sub_error++;
-									}
-								}
-							} catch (Exception $e) {
-								$output .= '<span style="color: red;">' . $langs->trans('Error') . ' - Update stock of ' . $product->ref . ' to site ' . $site->name . ' : ' . $e->getMessage() . '</span>' . "<br>";
+							$eCommerceProduct = new eCommerceProduct($this->db);
+							$result = $eCommerceProduct->fetch($link_id);
+							if ($result < 0) {
+								$output .= '<span style="color: red;">' . $langs->trans('ECommerceUpdateRemoteProductLink', $product->id, $site->name) . ': ' . $eCommerceProduct->error . '</span>' . "<br>";
 								$sub_error++;
+							} elseif ($result == 0) {
+								continue;
 							}
 
 							if (!$sub_error) {
-								// Update link
-								$eCommerceProduct = new eCommerceProduct($this->db);
-								$result = $eCommerceProduct->fetch($link_id);
-								if ($result > 0) {
-									$eCommerceProduct->last_update_stock = $update_date;
-									$result = $eCommerceProduct->update($user);
+								try {
+									// Connect to site
+									$eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+									$eCommerceSynchro->connect();
+									if (count($eCommerceSynchro->errors)) {
+										$output .= '<span style="color: red;">' . $langs->trans('Error') . ' - Connect to site ' . $site->name . ' : ' . $eCommerceSynchro->errorsToString() . '</span>' . "<br>";
+										$sub_error++;
+									}
+
+									if (!$sub_error) {
+										$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteStockProduct($remote_id, $product, $eCommerceProduct);
+										if (!$result) {
+											$output .= '<span style="color: red;">' . $langs->trans('Error') . ' - Update stock of ' . $product->ref . ' to site ' . $site->name . ' : ' . $eCommerceSynchro->eCommerceRemoteAccess->errorsToString() . '</span>' . "<br>";
+											$sub_error++;
+										}
+									}
+								} catch (Exception $e) {
+									$output .= '<span style="color: red;">' . $langs->trans('Error') . ' - Update stock of ' . $product->ref . ' to site ' . $site->name . ' : ' . $e->getMessage() . '</span>' . "<br>";
+									$sub_error++;
 								}
+							}
+
+							if (!$sub_error && $eCommerceProduct->id > 0) { // test for when the link is deleted because the product in WooCommerce is not found
+								// Update link
+								$eCommerceProduct->last_update_stock = $update_date;
+								$result = $eCommerceProduct->update($user);
 								if ($result < 0) {
 									$output .= '<span style="color: red;">' . $langs->trans('ECommerceUpdateRemoteProductLink', $product->id, $site->name) . ': ' . $eCommerceProduct->error . '</span>' . "<br>";
 									$sub_error++;

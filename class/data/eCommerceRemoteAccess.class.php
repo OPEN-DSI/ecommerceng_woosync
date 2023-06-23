@@ -368,11 +368,12 @@ class eCommerceRemoteAccess
 	 *
 	 * @param  int     			$remote_product_id    Id of product on remote ecommerce
 	 * @param  Product			$product              Product object
+	 * @param  eCommerceProduct	$eCommerceProduct     Product link
 	 * @return bool
 	 */
-	public function updateRemoteStockProduct($remote_product_id, $product)
+	public function updateRemoteStockProduct($remote_product_id, $product, &$eCommerceProduct)
 	{
-	    $result=$this->class->updateRemoteStockProduct($remote_product_id, $product);
+	    $result=$this->class->updateRemoteStockProduct($remote_product_id, $product, $eCommerceProduct);
 	    $this->error=$this->class->error;
 	    $this->errors=$this->class->errors;
 	    return $result;

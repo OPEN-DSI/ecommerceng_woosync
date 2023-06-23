@@ -296,8 +296,8 @@ $head=ecommercengConfigSitePrepareHead($object);
 dol_fiche_head($head, 'product', $langs->trans("Module107100Name"), 0, 'eCommerce@ecommerceng');
 
 print '<div class="tabsAction tabsActionNoBottom">';
-print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=synchronize_attributes">'.$langs->trans('ECommerceWoocommerceUpdateDictAttributes').'</a>';
-print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=synchronize_taxes">'.$langs->trans('ECommerceWoocommerceUpdateDictTaxClasses').'</a>';
+print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=synchronize_attributes&token='.ecommercengNewToken().'">'.$langs->trans('ECommerceWoocommerceUpdateDictAttributes').'</a>';
+print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=synchronize_taxes&token='.ecommercengNewToken().'">'.$langs->trans('ECommerceWoocommerceUpdateDictTaxClasses').'</a>';
 print '</div>';
 
 /**
@@ -308,7 +308,7 @@ print '<div id="options"></div>';
 print load_fiche_titre($langs->trans("Parameters"), '', '');
 
 print '<form method="post" action="'.$_SERVER["PHP_SELF"] . '?id=' . $object->id . '#options">';
-print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+print '<input type="hidden" name="token" value="'.ecommercengNewToken().'">';
 print '<input type="hidden" name="action" value="set_options">';
 
 print '<table class="noborder centpercent">';
@@ -463,7 +463,7 @@ print '<div id="synchronize_sens_options"></div>';
 print load_fiche_titre($langs->trans("ProductsSyncSetup"), '', '');
 
 print '<form method="post" action="'.$_SERVER["PHP_SELF"] . '?id=' . $object->id . '#synchronize_sens_options">';
-print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+print '<input type="hidden" name="token" value="'.ecommercengNewToken().'">';
 print '<input type="hidden" name="action" value="set_synchronize_sens_options">';
 
 print '<table class="noborder centpercent">';
@@ -579,7 +579,7 @@ if (!empty($conf->accounting->enabled)) {
 	print load_fiche_titre($langs->trans("MenuDefaultAccounts"), '', '');
 
 	print '<form method="post" action="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '#accounting_codes_options">';
-	print '<input type="hidden" name="token" value="' . $_SESSION['newtoken'] . '">';
+	print '<input type="hidden" name="token" value="' . ecommercengNewToken() . '">';
 	print '<input type="hidden" name="action" value="set_accounting_codes_options">';
 
 	print '<table class="noborder centpercent">';

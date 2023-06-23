@@ -3238,12 +3238,13 @@ class eCommerceRemoteAccessWoocommerce
     /**
      * Update the remote stock of product
      *
-     * @param   int             $remote_id      Id of product on remote ecommerce
-	 * @param   Product			$product        Product object
+     * @param   int             	$remote_id      	Id of product on remote ecommerce
+	 * @param   Product				$product        	Product object
+	 * @param   eCommerceProduct	$eCommerceProduct   Product link
 	 *
      * @return  boolean                         True or false
      */
-    public function updateRemoteStockProduct($remote_id, $product)
+    public function updateRemoteStockProduct($remote_id, $product, &$eCommerceProduct)
     {
         dol_syslog(__METHOD__ . ": Update stock of the remote product ID $remote_id for product ID {$product->id} for site ID {$this->site->id}", LOG_DEBUG);
         global $conf, $langs, $user;
@@ -3338,51 +3339,141 @@ class eCommerceRemoteAccessWoocommerce
 		$isProductVariation = false;
 		$isProductVariationHasOne = false;
 		$remote_product_id = $remote_id;
-		$remote_product_variation_ids = array();
-		if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsProduct) == 1) { // Variations
-			$isProductVariation = true;
-			$remote_product_id = $idsProduct[1];
-			$remote_product_variation_ids[] = $idsProduct[2];
-		}
+		$remote_product_variation_id = 0;
 
 		$product_variation_mode_all_to_one = !empty($this->site->parameters['product_variation_mode']) && $this->site->parameters['product_variation_mode'] == 'all_to_one';
-
 		if ($product_variation_mode_all_to_one) {
 			$idsProduct = explode('|', $remote_id);
 			if (count($idsProduct) > 1) {
 				$isProductVariationHasOne = true;
 				$remote_product_id = $idsProduct[0];
-				$remote_product_variation_ids = array_splice($idsProduct, 1);
+			}
+		} else {
+			if (preg_match('/^(\d+)\|(\d+)$/', $remote_id, $idsProduct) == 1) { // Variations
+				$isProductVariation = true;
+				$remote_product_id = $idsProduct[1];
+				$remote_product_variation_id = $idsProduct[2];
 			}
 		}
 
+		$not_found = false;
+
 		// Variation
-		if ($isProductVariation || $isProductVariationHasOne) {
-			foreach ($remote_product_variation_ids as $remote_product_variation_id) {
-				$result = $this->client->sendToApi(eCommerceClientApi::METHOD_PUT, "products/{$remote_product_id}/variations/{$remote_product_variation_id}", [GuzzleHttp\RequestOptions::FORM_PARAMS => $productData]);
-				if (!isset($result)) {
+		$new_variations = array();
+		if ($isProductVariation) {
+			$status_code = 0;
+			$error_info = array();
+			$result = $this->client->sendToApi(eCommerceClientApi::METHOD_PUT, "products/{$remote_product_id}/variations/{$remote_product_variation_id}", [GuzzleHttp\RequestOptions::FORM_PARAMS => $productData], false, $status_code, $error_info);
+			if (!isset($result)) {
+				if ($status_code == 400 && $error_info['code'] == 'woocommerce_rest_product_variation_invalid_id') {
+					$not_found = true;
+				} else {
 					$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProductVariation', $productData['stock_quantity'], $remote_product_variation_id, $remote_product_id, $this->site->name);
 					$this->errors[] = $this->client->errorsToString();
 					dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
 					return false;
 				}
 			}
-        }
-		// Product
-		if (!$isProductVariation || $isProductVariationHasOne) {
-			$result = $this->client->sendToApi(eCommerceClientApi::METHOD_PUT, "products/{$remote_product_id}", [GuzzleHttp\RequestOptions::FORM_PARAMS => $productData]);
-			if (!isset($result)) {
-				$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProduct', $productData['stock_quantity'], $remote_product_id, $this->site->name);
+			$new_variations[] = $remote_product_variation_id;
+		} elseif ($isProductVariationHasOne) {
+			$remote_product = $this->client->sendToApi(eCommerceClientApi::METHOD_GET, "products/{$remote_product_id}");
+			if (!isset($remote_product)) {
+				$this->errors[] = $langs->trans('ECommerceWoocommerceGetRemoteProduct', $remote_id, $this->site->name);
 				$this->errors[] = $this->client->errorsToString();
 				dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
 				return false;
 			}
-        }
+
+			if (!empty($remote_product['variations'])) {
+				foreach ($remote_product['variations'] as $remote_product_variation_id) {
+					$status_code = 0;
+					$error_info = array();
+					$result = $this->client->sendToApi(eCommerceClientApi::METHOD_PUT, "products/{$remote_product_id}/variations/{$remote_product_variation_id}", [GuzzleHttp\RequestOptions::FORM_PARAMS => $productData], false, $status_code, $error_info);
+					if (!isset($result)) {
+						if ($status_code == 400 && $error_info['code'] == 'woocommerce_rest_product_variation_invalid_id') {
+							continue;
+						} else {
+							$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProductVariation', $productData['stock_quantity'], $remote_product_variation_id, $remote_product_id, $this->site->name);
+							$this->errors[] = $this->client->errorsToString();
+							dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
+							return false;
+						}
+					}
+					$new_variations[] = $remote_product_variation_id;
+				}
+			}
+
+			if (empty($new_variations)) {
+				$not_found = true;
+			} else {
+				$eCommerceProduct->remote_id = $remote_product_id . '|' . implode('|', $new_variations);
+			}
+		}
+		// Product
+		if (!$not_found && (!$isProductVariation || $isProductVariationHasOne)) {
+			$status_code = 0;
+			$error_info = array();
+			$result = $this->client->sendToApi(eCommerceClientApi::METHOD_PUT, "products/{$remote_product_id}", [GuzzleHttp\RequestOptions::FORM_PARAMS => $productData], false, $status_code, $error_info);
+			if (!isset($result)) {
+				if ($status_code == 400 && $error_info['code'] == 'woocommerce_rest_product_invalid_id') {
+					$not_found = true;
+				} else {
+					$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteStockProduct', $productData['stock_quantity'], $remote_product_id, $this->site->name);
+					$this->errors[] = $this->client->errorsToString();
+					dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
+					return false;
+				}
+			}
+		}
+
+		if ($not_found) {
+			$this->db->begin();
+
+			$result = $eCommerceProduct->delete($user);
+			if ($result < 0) {
+				$this->errors[] = $eCommerceProduct->errorsToString();
+				$this->db->rollback();
+				return false;
+			}
+
+			// Delete all categories of the ecommerce
+			if (empty($conf->global->ECOMMERCE_DONT_UNSET_CATEGORIE_OF_PRODUCT_WHEN_DELINK)) {
+				require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+				$cat = new Categorie($this->db);
+				$cat_root = $this->site->fk_cat_product;
+				$all_cat_full_arbo = $cat->get_full_arbo('product');
+				$cats_full_arbo = array();
+				foreach ($all_cat_full_arbo as $category) {
+					$cats_full_arbo[$category['id']] = $category['fullpath'];
+				}
+				$categories = $cat->containing($product->id, 'product', 'id');
+				foreach ($categories as $cat_id) {
+					if (isset($cats_full_arbo[$cat_id]) &&
+						(
+							preg_match("/^{$cat_root}$/", $cats_full_arbo[$cat_id]) || preg_match("/^{$cat_root}_/", $cats_full_arbo[$cat_id]) ||
+							preg_match("/_{$cat_root}_/", $cats_full_arbo[$cat_id]) || preg_match("/_{$cat_root}$/", $cats_full_arbo[$cat_id])
+						)
+					) {
+						if ($cat->fetch($cat_id) > 0) {
+							if ($cat->del_type($product, 'product') < 0) {
+								$this->errors[] = $cat->errorsToString();
+								$this->db->rollback();
+								return false;
+							}
+						}
+					}
+				}
+			}
+
+			$this->db->commit();
+			$eCommerceProduct->id = 0;
+			return true;
+		}
 
 		// Support for WPML (Update stocks infos on translated post)
 		if (!empty($conf->global->ECOMMERCENG_WOOCOMMERCE_WPML_SUPPORT)) {
 			if ($isProductVariation || $isProductVariationHasOne) {
-				foreach ($remote_product_variation_ids as $remote_product_variation_id) {
+				foreach ($new_variations as $remote_product_variation_id) {
 					$result = $this->client->sendToApi(eCommerceClientApi::METHOD_GET, "products/{$remote_product_variation_id}");
 					if (!isset($result)) {
 						$this->errors[] = $langs->trans('ECommerceWoocommerceGetProductVariation', $remote_product_variation_id, $remote_product_id, $this->site->name);
