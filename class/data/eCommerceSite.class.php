@@ -655,9 +655,10 @@ class eCommerceSite // extends CommonObject
 	 *    Return list of all defined ecommerce sites
 	 *
 	 *    @param	string		$mode		'array' or 'object'
+	 *    @param	boolean		$all_entity	List site from all entities
 	 *    @return 	array					List of sites
 	 */
-	function listSites($mode='array')
+	function listSites($mode='array', $all_entity = false)
 	{
 		$list = array();
 
@@ -666,7 +667,7 @@ class eCommerceSite // extends CommonObject
 		$sql .= " t.name,";
 		$sql .= " t.last_update";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "ecommerce_site as t";
-		$sql .= " WHERE t.entity IN (" . getEntity('ecommerceng') . ")";
+		if (!$all_entity) $sql .= " WHERE t.entity IN (" . getEntity('ecommerceng') . ")";
 
 		$resql = $this->db->query($sql);
 		if ($resql) {

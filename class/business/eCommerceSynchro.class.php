@@ -4683,12 +4683,18 @@ class eCommerceSynchro
 
 										// Valid the order if the distant order is not at the draft status but the order is draft. For set the order ref.
 										if ($order_data['status'] != Commande::STATUS_DRAFT && $order->statut == Commande::STATUS_DRAFT) {
-											$result = $order->valid($this->user, $warehouse_id);
-											if ($result < 0) {
+											if (empty($warehouse_id) && !empty($conf->global->STOCK_CALCULATE_ON_VALIDATE_ORDER) && $conf->global->STOCK_CALCULATE_ON_VALIDATE_ORDER == 1) {
 												$this->errors[] = $this->langs->trans('ECommerceErrorValidOrder');
-												if (!empty($order->error)) $this->errors[] = $order->error;
-												$this->errors = array_merge($this->errors, $order->errors);
+												$this->errors[] = $this->langs->trans('ECommerceErrorValidOrderWarehouseNotConfigured');
 												$error++;
+											} else {
+												$result = $order->valid($this->user, $warehouse_id);
+												if ($result < 0) {
+													$this->errors[] = $this->langs->trans('ECommerceErrorValidOrder');
+													if (!empty($order->error)) $this->errors[] = $order->error;
+													$this->errors = array_merge($this->errors, $order->errors);
+													$error++;
+												}
 											}
 										}
 
@@ -5822,12 +5828,18 @@ class eCommerceSynchro
 
 										// Validate invoice
 										if (!$error) {
-											$result = $invoice->validate($this->user, '', $warehouse_id);
-											if ($result < 0) {
+											if (empty($warehouse_id) && !empty($conf->global->STOCK_CALCULATE_ON_BILL)) {
 												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceValidate');
-												if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-												$this->errors = array_merge($this->errors, $invoice->errors);
+												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceValidateWarehouseNotConfigured');
 												$error++;
+											} else {
+												$result = $invoice->validate($this->user, '', $warehouse_id);
+												if ($result < 0) {
+													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceValidate');
+													if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+													$this->errors = array_merge($this->errors, $invoice->errors);
+													$error++;
+												}
 											}
 										}
 
