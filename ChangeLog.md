@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.53.0
+- Correction warning
+
 ## 4.1.52.0
 - Genere une erreur si la décrementation des stock se passe a la validation de la commande ou de la facture et que l'entrepot n'a pas été paramétré dans le site
 - Ajout d'un script pour decrementer les stocks a la validation pour les commandes qui n'avais pas été traitées correctement lors de la validation

@@ -201,16 +201,18 @@ class eCommerceSynchro
 			$extra_fields->fetch_name_optionals_label($table_element);
 
 			$values = [];
-			foreach ($extra_fields->attributes[$table_element]['label'] as $key => $value) {
-				if (preg_match('/^ecommerceng_/', $key)) continue;
+            if (is_array($extra_fields->attributes[$table_element]['label'])) {
+                foreach ($extra_fields->attributes[$table_element]['label'] as $key => $value) {
+                    if (preg_match('/^ecommerceng_/', $key)) continue;
 
-				$value = null;
-				if (!empty($site->parameters['extra_fields'][$table_element]['activated']['dft'][$key])) {
-					$value = $site->parameters['extra_fields'][$table_element]['values']['dft'][$key];
-				}
-				if (!isset($value)) $value = $extra_fields->attributes[$table_element]['default'][$key];
-				$values['options_' . $key] = $value;
-			}
+                    $value = null;
+                    if (!empty($site->parameters['extra_fields'][$table_element]['activated']['dft'][$key])) {
+                        $value = $site->parameters['extra_fields'][$table_element]['values']['dft'][$key];
+                    }
+                    if (!isset($value)) $value = $extra_fields->attributes[$table_element]['default'][$key];
+                    $values['options_' . $key] = $value;
+                }
+            }
 
 			self::$default_extra_fields_cached[$table_element] = $values;
 		}
