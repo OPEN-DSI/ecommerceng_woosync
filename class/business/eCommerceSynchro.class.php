@@ -52,7 +52,7 @@ class eCommerceSynchro
 {
     public $error;
     public $errors=array();
-    public $success;
+    public $success=array();
 	public $warnings=array();
     public $langs;
     public $user;
