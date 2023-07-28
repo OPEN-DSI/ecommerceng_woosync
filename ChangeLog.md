@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.54.0
+- Correction redescente des prix du bundles lorsquel le module ne nous fournit pas le prix du pack via la meta-donnée (on prend maintenant celui fournit par l'API de base si il n'est pas fournit)
+
 ## 4.1.53.0
 - Correction warning
 
