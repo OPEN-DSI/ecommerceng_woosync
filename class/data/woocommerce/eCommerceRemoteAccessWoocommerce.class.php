@@ -2444,7 +2444,7 @@ class eCommerceRemoteAccessWoocommerce
 
 		// Convert Dimension
 		$from_unit = $object->width_units;
-		$to_unit = isset($this->site->parameters['product_direction_units']) ? $this->site->parameters['product_direction_units'] : -2; // -2 = cm
+		$to_unit = isset($this->site->parameters['product_dimension_units']) ? $this->site->parameters['product_dimension_units'] : -2; // -2 = cm
 		$totalWidth = weight_convert((double)$object->width, $from_unit, $to_unit);
 		$from_unit = $object->height_units;
 		$totalHeight = weight_convert((double)$object->height, $from_unit, $to_unit);
