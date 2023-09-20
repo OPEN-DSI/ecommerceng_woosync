@@ -231,7 +231,7 @@ class eCommerceCategory // extends CommonObject
         $sql.= " fk_site=" . (isset($this->fk_site) ? intval($this->fk_site) : 0) . ",";
         $sql.= " remote_id=" . (isset($this->remote_id) ? intval($this->remote_id) : 0) . ",";
         $sql.= " remote_parent_id=" . (isset($this->remote_parent_id) ? intval($this->remote_parent_id) : 0) . ",";
-        $sql.= " last_update=" . (isset($this->last_update) ? "'" . $this->db->idate($this->last_update) . "'" : "null") . "";
+        $sql.= " last_update=" . ($this->last_update > 0 ? "'" . $this->db->idate($this->last_update) . "'" : "null") . "";
         $sql.= " WHERE rowid=" . $this->id;
 
         $this->db->begin();

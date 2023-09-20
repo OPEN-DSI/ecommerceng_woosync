@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.55.0
+- Correction d'une erreur lors de la mise a jour d'une catégorie synchronisée
+
 ## 4.1.54.0
 - Correction redescente des prix du bundles lorsquel le module ne nous fournit pas le prix du pack via la meta-donnée (on prend maintenant celui fournit par l'API de base si il n'est pas fournit)
 
