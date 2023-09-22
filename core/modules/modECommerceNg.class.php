@@ -149,46 +149,55 @@ class modECommerceNg extends DolibarrModules
 				MAIN_DB_PREFIX . "c_ecommerceng_tax_class",
 				MAIN_DB_PREFIX . "c_ecommerceng_tax_rate",
 				MAIN_DB_PREFIX . "c_ecommerceng_attribute",
+                MAIN_DB_PREFIX . "c_ecommerceng_lang",
 			),
 			'tablib' => array(
 				"ECommercengWoocommerceDictTaxClass",
 				"ECommercengWoocommerceDictTaxRate",
 				"ECommercengWoocommerceDictAttribute",
+                "ECommercengWoocommerceDictLang",
 			),
 			'tabsql' => array(
 				'SELECT f.rowid as rowid, f.site_id, f.code, f.label, f.entity, f.active FROM ' . MAIN_DB_PREFIX . 'c_ecommerceng_tax_class as f WHERE f.entity=' . $conf->entity,
 				'SELECT f.rowid as rowid, f.site_id, f.tax_id, f.tax_country, f.tax_state, f.tax_postcode, f.tax_city, f.tax_rate, f.tax_name, f.tax_priority, f.tax_compound, f.tax_shipping, f.tax_order, f.tax_class, f.entity, f.active FROM ' . MAIN_DB_PREFIX . 'c_ecommerceng_tax_rate as f WHERE f.entity=' . $conf->entity,
 				'SELECT f.rowid as rowid, f.site_id, f.attribute_id, f.attribute_name, f.attribute_slug, f.attribute_type, f.attribute_order_by, f.attribute_has_archives, f.entity, f.active FROM ' . MAIN_DB_PREFIX . 'c_ecommerceng_attribute as f WHERE f.entity=' . $conf->entity,
+                'SELECT f.rowid as rowid, f.site_id, f.code, f.label, f.lang, f.entity, f.active FROM ' . MAIN_DB_PREFIX . 'c_ecommerceng_lang as f WHERE f.entity=' . $conf->entity,
 			),
 			'tabsqlsort' => array(
 				"site_id ASC, label ASC",
 				"site_id ASC, tax_id ASC",
 				"site_id ASC, attribute_id ASC",
+                "site_id ASC, code ASC",
 			),
 			'tabfield' => array(
 				"code,label,site_id",
 				"tax_id,tax_country,tax_state,tax_postcode,tax_city,tax_rate,tax_name,tax_priority,tax_compound,tax_shipping,tax_order,tax_class,site_id",
 				"attribute_id,attribute_name,attribute_slug,attribute_type,attribute_order_by,attribute_has_archives,site_id",
+                "code,label,lang,site_id",
 			),
 			'tabfieldvalue' => array(
 				"code,label,site_id",
 				"tax_id,tax_country,tax_state,tax_postcode,tax_city,tax_rate,tax_name,tax_priority,tax_compound,tax_shipping,tax_order,tax_class,site_id",
 				"attribute_id,attribute_name,attribute_slug,attribute_type,attribute_order_by,attribute_has_archives,site_id",
+                "code,label,lang,site_id",
 			),
 			'tabfieldinsert' => array(
 				"code,label,site_id",
 				"tax_id,tax_country,tax_state,tax_postcode,tax_city,tax_rate,tax_name,tax_priority,tax_compound,tax_shipping,tax_order,tax_class,site_id",
 				"attribute_id,attribute_name,attribute_slug,attribute_type,attribute_order_by,attribute_has_archives,site_id",
+                "code,label,lang,site_id",
 			),
 			'tabrowid' => array(
 				"rowid",
 				"rowid",
 				"rowid",
+                "rowid",
 			),
 			'tabcond' => array(
 				$conf->ecommerceng->enabled && $eCommerceSite->hasTypeSite(2),
 				$conf->ecommerceng->enabled && $eCommerceSite->hasTypeSite(2),
 				$conf->ecommerceng->enabled && $eCommerceSite->hasTypeSite(2),
+                $conf->ecommerceng->enabled && $eCommerceSite->hasTypeSite(2) && !empty($conf->global->MAIN_MULTILANGS),
 			),
 		);
 
@@ -468,6 +477,7 @@ WHERE c.rowid IS NOT NULL" ];
 					return 0;
 				}
 			}
+            if (!empty($conf->global->ECOMMERCENG_WOOCOMMERCE_WPML_SUPPORT)) dolibarr_del_const($this->db, 'ECOMMERCENG_WOOCOMMERCE_WPML_SUPPORT', $conf->entity);
 		}
 
 		$this->addSettlementTerms();

@@ -2018,7 +2018,8 @@ class eCommerceSynchro
 							$this->error = $this->eCommerceRemoteAccess->error;
 							$this->errors = $this->eCommerceRemoteAccess->errors;
 						} else {
-							$remote_id = $result['remote_id'];
+                            $remote_id = $result['remote_id'];
+                            $remote_language = $result['language'];
 
 							$product_static->url = $result['remote_url'];
 							$product_static->context['fromsyncofecommerceid'] = $this->eCommerceSite->id;
@@ -2035,7 +2036,8 @@ class eCommerceSynchro
 							if (!$error) {
 								$this->eCommerceProduct->remote_id = $remote_id;
 								$this->eCommerceProduct->fk_site = $this->eCommerceSite->id;
-								$this->eCommerceProduct->fk_product = $product_static->id;
+                                $this->eCommerceProduct->fk_product = $product_static->id;
+                                $this->eCommerceProduct->lang = $remote_language;
 								$this->eCommerceProduct->last_update = dol_print_date($now, '%Y-%m-%d %H:%M:%S');
 								if ($this->eCommerceSite->stock_sync_direction == 'dolibarr2ecommerce') $this->eCommerceProduct->last_update_stock = $this->eCommerceProduct->last_update;
 								if ($this->eCommerceProduct->create($user) < 0) {
@@ -3244,7 +3246,7 @@ class eCommerceSynchro
 	 */
 	public function synchronizeProduct($product_data, $object_origin = null)
 	{
-		global $conf, $langs;
+		global $mysoc, $conf, $langs;
 		dol_syslog(__METHOD__ . ' product_data=' . json_encode($product_data), LOG_DEBUG);
 
 		$this->error = '';
@@ -3501,6 +3503,31 @@ class eCommerceSynchro
 							$this->errors = array_merge($this->errors, $product->errors);
 							if (empty($product->error) && empty($product->errors)) $this->errors[] = $this->db->lasterror();
 							$error++;
+						}
+
+						// Update multi-languages
+						if (!$error && !empty($product_data['translates'])) {
+							$current_lang = $mysoc->default_lang;
+
+							foreach ($product_data['translates'] as $lang => $infos) {
+								if ($current_lang == $lang) {
+									$product->label = $infos['label'];
+									// $product->description = dol_htmlcleanlastbr($infos['description']);
+									// $product->other = '';
+								} else {
+									$product->multilangs[$lang]["label"] = $infos['label'];
+									// $product->multilangs[$lang]["description"] = dol_htmlcleanlastbr($infos['description']);
+									// $product->multilangs[$lang]["other"] = '';
+								}
+							}
+
+							$result = $product->update($product->id, $this->user);
+							if ($result > 0) $result = $product->setMultiLangs($this->user);
+							if ($result < 0) {
+								$this->errors[] = $langs->trans('ECommerceErrorUpdateProductMultiLanguages');
+								$this->errors[] = $product->errorsToString();
+								$error++;
+							}
 						}
 
 						// Set price
@@ -3828,7 +3855,8 @@ class eCommerceSynchro
 							$this->eCommerceProduct->last_update = $product_data['last_update'];
 							if ($this->eCommerceSite->stock_sync_direction == 'ecommerce2dolibarr') $this->eCommerceProduct->last_update_stock = $product_data['last_update'];
 							$this->eCommerceProduct->fk_product = $product->id > 0 ? $product->id : 0;
-							$this->eCommerceProduct->remote_id = $product_data['remote_id'];
+                            $this->eCommerceProduct->remote_id = $product_data['remote_id'];
+                            $this->eCommerceProduct->lang = $product_data['language'];
 
 							// Update link
 							if ($this->eCommerceProduct->id > 0) {
@@ -4212,6 +4240,23 @@ class eCommerceSynchro
 									}
 								}
 
+                                // Set third party language
+                                //---------------------------
+                                if (!$error) {
+                                    $third_party = new Societe($this->db);
+                                    $third_party->fetch($third_party_id);
+                                    if (empty($third_party->default_lang) && !empty($order['language']) && $order['language'] != 'ec_none') {
+                                        $third_party->default_lang = $order['language'];
+
+                                        $result = $third_party->update($third_party->id, $this->user);
+                                        if ($result < 0) {
+                                            $this->errors[] = $this->langs->trans('ECommerceErrorUpdateThirdPartyLanguage', $third_party->id);
+                                            $this->errors[] = $third_party->errorsToString();
+                                            $error++;
+                                        }
+                                    }
+                                }
+
 								// Set the order
 								//---------------------------
 								if (!$error) {
@@ -4260,9 +4305,6 @@ class eCommerceSynchro
 										}
 									} // Create order
 									else {
-										$third_party = new Societe($this->db);
-										$third_party->fetch($third_party_id);
-
 										$new_order = true;
 										$order->statut = Commande::STATUS_DRAFT;             // STATUS_DRAFT by default at creation
 										$order->cond_reglement_id = $third_party->cond_reglement_id > 0 ? $third_party->cond_reglement_id : (isset($this->eCommerceSite->parameters['payment_cond']) ? $this->eCommerceSite->parameters['payment_cond'] : null);
@@ -4801,7 +4843,7 @@ class eCommerceSynchro
 						// Define output language
 						$outputlangs = $this->langs;
 						$newlang = '';
-						if ($conf->global->MAIN_MULTILANGS && empty($newlang)) $newlang = $order->thirdparty->default_lang;
+						if ($conf->global->MAIN_MULTILANGS && !empty($order_data['language']) && $order_data['language'] != 'ec_none') $newlang = $order_data['language'];
 						if (!empty($newlang)) {
 							$outputlangs = new Translate("", $conf);
 							$outputlangs->setDefaultLang($newlang);
@@ -5015,6 +5057,17 @@ class eCommerceSynchro
 									if (isset($third_party_id)) {
 										$third_party = new Societe($this->db);
 										$third_party->fetch($third_party_id);
+                                        // Set third party language
+                                        if (empty($third_party->default_lang) && !empty($order['language']) && $order['language'] != 'ec_none') {
+                                            $third_party->default_lang = $order['language'];
+
+                                            $result = $third_party->update($third_party->id, $this->user);
+                                            if ($result < 0) {
+                                                $this->errors[] = $this->langs->trans('ECommerceErrorUpdateThirdPartyLanguage', $third_party->id);
+                                                $this->errors[] = $third_party->errorsToString();
+                                                $error++;
+                                            }
+                                        }
 
 										$isDepositType = isset($this->eCommerceSite->parameters['create_invoice_type']) && $this->eCommerceSite->parameters['create_invoice_type'] == Facture::TYPE_DEPOSIT;
 										$typeAmount = isset($this->eCommerceSite->parameters['order_actions']['create_invoice_deposit_type']) ? $this->eCommerceSite->parameters['order_actions']['create_invoice_deposit_type'] : '';
@@ -5915,7 +5968,7 @@ class eCommerceSynchro
 											// Define output language
 											$outputlangs = $this->langs;
 											$newlang = '';
-											if ($conf->global->MAIN_MULTILANGS && empty($newlang)) $newlang = $invoice->thirdparty->default_lang;
+											if ($conf->global->MAIN_MULTILANGS && !empty($order_data['language']) && $order_data['language'] != 'ec_none') $newlang = $order_data['language'];
 											if (!empty($newlang)) {
 												$outputlangs = new Translate("", $conf);
 												$outputlangs->setDefaultLang($newlang);
@@ -6046,7 +6099,7 @@ class eCommerceSynchro
 													// Define output language
 													$outputlangs = $this->langs;
 													$newlang = '';
-													if ($conf->global->MAIN_MULTILANGS && empty($newlang)) $newlang = $supplier_invoice->thirdparty->default_lang;
+                                                    if ($conf->global->MAIN_MULTILANGS && !empty($order_data['language']) && $order_data['language'] != 'ec_none') $newlang = $order_data['language'];
 													if (!empty($newlang)) {
 														$outputlangs = new Translate("", $conf);
 														$outputlangs->setDefaultLang($newlang);
@@ -6070,12 +6123,13 @@ class eCommerceSynchro
 
 										// Auto send invoice by mail
 										if (!$error && !empty($this->eCommerceSite->parameters['order_actions']['send_invoice_by_mail'])) {
+                                            $selected_language = empty($order_data['language']) ? 'ec_none' : $order_data['language'];
 											$send_to = trim($order_data['socpeopleCommande']['email']);
 											if (empty($send_to)) {
 												$this->errors[] = $this->langs->trans('ECommerceErrorCustomerEmailEmptyForSendInvoiceByEmail');
 												$error++;
-											} elseif (!($selected_payment_gateways['mail_model_for_send_invoice'] > 0)) {
-												$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysMailModelNotConfigured', $order_data['payment_method_id'], $order_data['payment_method']);
+											} elseif (isset($selected_payment_gateways['mail_model_for_send_invoice'][$selected_language]) && !($selected_payment_gateways['mail_model_for_send_invoice'][$selected_language] > 0)) {
+												$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysMailModelNotConfigured', $order_data['payment_method_id'], $order_data['payment_method'], $selected_language);
 												$error++;
 											}
 
@@ -6101,7 +6155,8 @@ class eCommerceSynchro
 
 												// Define output language
 												$outputlangs = $this->langs;
-												$newlang = $conf->global->MAIN_MULTILANGS ? $invoice->thirdparty->default_lang : '';
+												$newlang = '';
+                                                if ($conf->global->MAIN_MULTILANGS && $selected_language != 'ec_none') $newlang = $selected_language;
 												if (!empty($newlang)) {
 													$outputlangs = new Translate('', $conf);
 													$outputlangs->setDefaultLang($newlang);
@@ -6118,7 +6173,7 @@ class eCommerceSynchro
 
 												// Get email template
 												$type_template = 'facture_send';
-												$arraydefaultmessage = $formmail->getEMailTemplate($this->db, $type_template, $this->user, $outputlangs, $selected_payment_gateways['mail_model_for_send_invoice']);
+												$arraydefaultmessage = $formmail->getEMailTemplate($this->db, $type_template, $this->user, $outputlangs, $selected_payment_gateways['mail_model_for_send_invoice'][$selected_language]);
 												if (is_numeric($arraydefaultmessage) && $arraydefaultmessage < 0) {
 													$this->errors[] = $this->langs->trans('ECommerceErrorGetEMailTemplate');
 													if (!empty($formmail->error)) $this->errors[] = $formmail->error;
@@ -6193,7 +6248,7 @@ class eCommerceSynchro
 														$this->errors = array_merge($this->errors, $mailfile->errors);
 														$error++;
 													} else {
-														$result = $mailfile->sendfile();
+/*														$result = $mailfile->sendfile();
 														if ($result) {
 															// Get order contacts
 															$contact_list = $invoice->liste_contact(-1, 'external');
@@ -6251,7 +6306,7 @@ class eCommerceSynchro
 																$this->errors[] = ' No mail sent. Feature is disabled by option MAIN_DISABLE_ALL_MAILS';
 															}
 															$error++;
-														}
+														}*/
 													}
 												}
 											}
@@ -7185,7 +7240,7 @@ class eCommerceSynchro
 										// Define output language
 										$outputlangs = $this->langs;
 										$newlang = '';
-										if ($conf->global->MAIN_MULTILANGS && empty($newlang)) $newlang = $invoice_refund->thirdparty->default_lang;
+                                        if ($conf->global->MAIN_MULTILANGS && !empty($refund_info['language']) && $refund_info['language'] != 'ec_none') $newlang = $refund_info['language'];
 										if (!empty($newlang)) {
 											$outputlangs = new Translate("", $conf);
 											$outputlangs->setDefaultLang($newlang);
@@ -7238,7 +7293,7 @@ class eCommerceSynchro
 //
 //											// Define output language
 //											$outputlangs = $this->langs;
-//											$newlang = $conf->global->MAIN_MULTILANGS ? $invoice_refund->thirdparty->default_lang : '';
+//                                          if ($conf->global->MAIN_MULTILANGS && !empty($refund_info['language']) && $refund_info['language'] != 'ec_none') $newlang = $refund_info['language'];
 //											if (!empty($newlang)) {
 //												$outputlangs = new Translate('', $conf);
 //												$outputlangs->setDefaultLang($newlang);

@@ -150,6 +150,7 @@ if ($action == 'set_options') {
 	$object->parameters['product_weight_units'] = empty($conf->global->PRODUCT_DISABLE_WEIGHT) ? GETPOST('product_weight_units', 'int') : 0; // 0 = Kg
 	$object->parameters['product_dimension_units'] = empty($conf->global->PRODUCT_DISABLE_SIZE) ? GETPOST('product_dimension_units', 'int') : 2; // 2 = cm
 	$object->parameters['product_variation_mode'] = GETPOST('product_variation_mode', 'az09');
+    $object->parameters['enable_product_plugin_wpml_support'] = GETPOST('enable_product_plugin_wpml_support', 'int') ? 1 : 0;
 
 	if(empty($object->fk_cat_product)) {
 		setEventMessage($langs->trans("ErrorFieldRequired", $langs->transnoentitiesnoconv("ECommerceCatProduct")), 'errors');
@@ -444,6 +445,14 @@ $variation_modes = array(
 );
 $value = isset($object->parameters['product_variation_mode']) ? $object->parameters['product_variation_mode'] : 'one_to_one';
 print $form->selectarray('product_variation_mode', $variation_modes, $value, 0, 0, 0, '', 0, 0, 0, '', 'minwidth200 centpercent') . "\n";
+print '</td></tr>' . "\n";
+
+// Support of WooCommerce plugin : WPML for WooCommerce
+print '<tr class="oddeven">' . "\n";
+print '<td>' . $langs->trans("ECommerceWoocommerceEnableProductWpmlPluginSupport") . '</td>' . "\n";
+print '<td>' . $langs->transnoentities("ECommerceWoocommerceEnableProductWpmlPluginSupportDescription") . '</td>' . "\n";
+print '<td class="right">' . "\n";
+print '<input type="checkbox" name="enable_product_plugin_wpml_support" value="1"' . (!empty($object->parameters['enable_product_plugin_wpml_support']) ? ' checked' : '') . ' />' . "\n";
 print '</td></tr>' . "\n";
 
 print '</table>'."\n";

@@ -1,5 +1,16 @@
 # ChangeLog
 
+## 4.1.56.0
+- Ajout du support avec WPML dans la config du site onglet "produit" et non plus avec la variable globale ECOMMERCENG_WOOCOMMERCE_WPML_SUPPORT.
+- Ajout du support multilingue Dolibarr avec le support multilingue WooCommerce (via le plugin WPML)
+- Le dictionnaire de correspondance des langues entre dolibarr et WooCommerce apprais seulement si le multilingue est activé dans dolibarr. Il n'est utilisé que si l'option WPML est aussi activé dans la configuration du site.
+- Configuration du modele de mail par langue dans la configuration des commandes du site si le multilingue dolibarr et WPML sont activées
+- Lors de la synchro de la commande, définie la langue du tiers (si celle-ci n'est pas définie) avec celle de la commande (grace au dico de correspondance des langues)
+- Force le libellé et description lors de la synchro des commandes avec celle WooCommerce dans la langue de la commande
+- Génère le PDF de la commande et de la facture dans la langue de la commande WooCommerce
+- Envoie le mail de la facture avec le modele dans la langue de la commande WooCommerce
+- Mise a jour des libellé des produits dans chaque langues WooCommerce -> Dolibarr et Dolibarr -> WooCommerce (seule les langues existante coté WooCommerce sont mise à jour) 
+
 ## 4.1.55.0
 - Correction d'une erreur lors de la mise a jour d'une catégorie synchronisée
 

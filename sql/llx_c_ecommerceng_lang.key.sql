@@ -1,5 +1,5 @@
 -- ===================================================================
--- Copyright (C) 2010 Auguria <franck.charpentier@auguria.net>
+-- Copyright (C) 2021 Open-Dsi <support@open-dsi.fr>
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
 -- the Free Software Foundation; either version 2 of the License, or
@@ -16,12 +16,4 @@
 --
 -- ===================================================================
 
-CREATE TABLE llx_ecommerce_product (
-  rowid integer NOT NULL auto_increment PRIMARY KEY,
-  fk_product integer NOT NULL,
-  fk_site integer NOT NULL,
-  remote_id varchar(255) NOT NULL,
-  lang varchar(255) default NULL,
-  last_update datetime default NULL,
-  last_update_stock datetime default NULL
-) ENGINE=InnoDB COMMENT='Table transition remote site -  Dolibarr';
+ALTER TABLE llx_c_ecommerceng_lang ADD UNIQUE INDEX uk_c_ecommerceng_lang (site_id, code, entity);

@@ -155,6 +155,9 @@ if (!is_array($payment_gateways)) {
 	setEventMessages($eCommercePaymentGateways->error, $eCommercePaymentGateways->errors, 'errors');
 }
 
+$language_list = $object->getLanguages();
+$language_list = array_flip(array_flip(array_values($language_list)));
+
 /*
  *	Actions
  */
@@ -227,8 +230,11 @@ if ($action == 'set_options') {
 		$payment_gateways[$key]['bank_account_id'] = GETPOST('bank_account_id_' . $key, 'int');
 		$payment_gateways[$key]['bank_account_id'] = $payment_gateways[$key]['bank_account_id'] > 0 ? $payment_gateways[$key]['bank_account_id'] : 0;
 		$payment_gateways[$key]['create_invoice_payment'] = GETPOST('create_invoice_payment_' . $key, 'int') ? 1 : 0;
-		$payment_gateways[$key]['mail_model_for_send_invoice'] = GETPOST('mail_model_for_send_invoice_' . $key, 'int');
-		$payment_gateways[$key]['mail_model_for_send_invoice'] = $payment_gateways[$key]['mail_model_for_send_invoice'] > 0 ? $payment_gateways[$key]['mail_model_for_send_invoice'] : 0;
+        if (!is_array($payment_gateways[$key]['mail_model_for_send_invoice'])) $payment_gateways[$key]['mail_model_for_send_invoice'] = array();
+        foreach ($language_list as $lang) {
+            $value = GETPOST('mail_model_for_send_invoice_' . $lang . '_' . $key, 'int');
+            $payment_gateways[$key]['mail_model_for_send_invoice'][$lang] = $value > 0 ? $value : 0;
+        }
 		$payment_gateways[$key]['supplier_id'] = GETPOST('supplier_id_' . $key, 'int');
 		$payment_gateways[$key]['supplier_id'] = $payment_gateways[$key]['supplier_id'] > 0 ? $payment_gateways[$key]['supplier_id'] : 0;
 		$payment_gateways[$key]['product_id_for_fee'] = GETPOST('product_id_for_fee_' . $key, 'int');
@@ -611,12 +617,12 @@ if (!empty($object->parameters['order_actions']['create_order']) ||
 	}
 	foreach ($formmail->lines_model as $line) {
 		if (preg_match('/\((.*)\)/', $line->label, $reg)) {
-			$email_templates[$line->id] = $langs->trans($reg[1]);        // langs->trans when label is __(xxx)__
+			$email_templates[$line->lang][$line->id] = $langs->trans($reg[1]);        // langs->trans when label is __(xxx)__
 		} else {
-			$email_templates[$line->id] = $line->label;
+			$email_templates[$line->lang][$line->id] = $line->label;
 		}
-		if ($line->lang) $email_templates[$line->id] .= ' (' . $line->lang . ')';
-		if ($line->private) $email_templates[$line->id] .= ' - ' . $langs->trans("Private");
+        if ($line->lang) $email_templates[$line->lang][$line->id] .= ' (' . $line->lang . ')';
+        if ($line->private) $email_templates[$line->lang][$line->id] .= ' - ' . $langs->trans("Private");
 	}
 
 	foreach ($payment_gateways as $key => $infos) {
@@ -633,13 +639,20 @@ if (!empty($object->parameters['order_actions']['create_order']) ||
 			print '<td><input type="checkbox" id="create_invoice_payment_' . $key . '" name="create_invoice_payment_' . $key . '" value="1"' . (!empty($infos['create_invoice_payment']) ? ' checked' : '') . '></td>' . "\n";
 			if (!empty($object->parameters['order_actions']['send_invoice_by_mail'])) {
 				print '<td>' . "\n";
-				// Zone to select email template
-				if (count($email_templates) > 0) {
-					print $form->selectarray('mail_model_for_send_invoice_' . $key, $email_templates, $infos['mail_model_for_send_invoice'], 1, 0, 0, '', 0, 0, 0, '', 'minwidth100');
-				} else {
-					print '<select name="mail_model_for_send_invoice_' . $key . '" disabled="disabled"><option value="none">' . $langs->trans("NoTemplateDefined") . '</option></select>';    // Do not put 'disabled' on 'option' tag, it is already on 'select' and it makes chrome crazy.
-				}
-				if ($user->admin) print info_admin($langs->trans("YouCanChangeValuesForThisListFrom", $langs->transnoentitiesnoconv('Setup') . ' - ' . $langs->transnoentitiesnoconv('EMails')), 1);
+                print '<table class="nobordernopadding centpercent">' . "\n";
+                foreach ($language_list as $lang) {
+                    print '<tr><td>' . "\n";
+                    if ($lang != 'ec_none') print $lang . " : ";
+                    // Zone to select email template
+                    if (count($email_templates[$lang == 'ec_none' ? '' : $lang]) > 0) {
+                        print $form->selectarray('mail_model_for_send_invoice_' . $lang . '_' . $key, $email_templates[$lang == 'ec_none' ? '' : $lang], $infos['mail_model_for_send_invoice'][$lang], 1, 0, 0, '', 0, 0, 0, '', ' minwidth200');
+                    } else {
+                        print '<select name="mail_model_for_send_invoice_' . $lang . '_' . $key . '" disabled="disabled"><option value="none">' . $langs->trans("NoTemplateDefined") . '</option></select>';    // Do not put 'disabled' on 'option' tag, it is already on 'select' and it makes chrome crazy.
+                    }
+                    if ($user->admin) print info_admin($langs->trans("YouCanChangeValuesForThisListFrom", $langs->transnoentitiesnoconv('Setup') . ' - ' . $langs->transnoentitiesnoconv('EMails')), 1);
+                    print '</td></tr>' . "\n";
+                }
+                print '</table>' . "\n";
 				print '</td>' . "\n";
 			}
 			if (!empty($object->parameters['order_actions']['create_supplier_invoice'])) {

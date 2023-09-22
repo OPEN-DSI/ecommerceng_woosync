@@ -160,6 +160,7 @@ if ($max_sites > 0) {
 				if (!$error) {
 					$db->begin();
 
+                    $product_language = '';
 					if (empty($remote_id)) {
 						// Create remote product
 						$result = $eCommerceSynchro->eCommerceRemoteAccess->createRemoteProduct($dbProduct);
@@ -168,6 +169,7 @@ if ($max_sites > 0) {
 							$error++;
 						} else {
 							$remote_id = $result['remote_id'];
+                            $product_language = $result['language'];
 
 							$object->url = $result['remote_url'];
 							$object->context['fromsyncofecommerceid'] = $site->id;
@@ -194,7 +196,8 @@ if ($max_sites > 0) {
 							// Create product link
 							$eCommerceProduct->remote_id = $remote_id;
 							$eCommerceProduct->fk_site = $site->id;
-							$eCommerceProduct->fk_product = $dbProduct->id;
+                            $eCommerceProduct->fk_product = $dbProduct->id;
+                            if (!empty($product_language)) $eCommerceProduct->lang = $product_language;
 							$eCommerceProduct->last_update = dol_print_date(dol_now(), '%Y-%m-%d %H:%M:%S');
 							if ($site->stock_sync_direction == 'dolibarr2ecommerce') $eCommerceProduct->last_update_stock = $eCommerceProduct->last_update;
 							$result = $eCommerceProduct->create($user);
@@ -206,6 +209,7 @@ if ($max_sites > 0) {
 							// Update product link
 							$result = $eCommerceProduct->fetch($obj->link_id);
 							if ($result > 0) {
+                                if (!empty($product_language)) $eCommerceProduct->lang = $product_language;
 								$eCommerceProduct->last_update = dol_print_date(dol_now(), '%Y-%m-%d %H:%M:%S');
 								if ($site->stock_sync_direction == 'dolibarr2ecommerce') $eCommerceProduct->last_update_stock = $eCommerceProduct->last_update;
 								$result = $eCommerceProduct->update($user);

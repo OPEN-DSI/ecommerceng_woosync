@@ -357,7 +357,7 @@ class InterfaceECommerceng
 			}
 		}
 
-		if ($action == 'PRODUCT_MODIFY') {
+		if ($action == 'PRODUCT_MODIFY' || $action == 'PRODUCT_SET_MULTILANGS') {
 			if ($object->element != 'product') {
 				$error_msg = "Trigger : Object element (" . $object->element . ") is not a product for the action " . $action;
 				dol_syslog($error_msg, LOG_ERR);

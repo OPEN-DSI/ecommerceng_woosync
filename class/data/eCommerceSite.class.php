@@ -62,6 +62,8 @@ class eCommerceSite // extends CommonObject
 
     public $parameters;
 
+    public $languages_cached;
+
 	//The site type name is used to define class name in eCommerceRemoteAccess class
     private $siteTypes = array(2=>'woocommerce');
 
@@ -854,11 +856,13 @@ class eCommerceSite // extends CommonObject
 	 */
 	public function upgradeParameters()
 	{
-		global $user;
+		global $conf, $user;
 
 		// setup
 		if (!isset($this->api_version)) $this->api_version = 'v3';
 		if (!isset($this->authentication_type)) $this->authentication_type = 'oauth1_header';
+		// product
+		if (!isset($this->parameters['enable_product_plugin_wpml_support'])) $this->parameters['enable_product_plugin_wpml_support'] = !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_WPML_SUPPORT) ? 1 : 0;
 		// stock
 		if (!isset($this->parameters['order_actions']['valid_invoice_fk_warehouse'])) $this->parameters['order_actions']['valid_invoice_fk_warehouse'] = $this->parameters['order_actions']['valid_order_fk_warehouse'];
 		if (!isset($this->parameters['order_actions']['valid_supplier_invoice_fk_warehouse'])) $this->parameters['order_actions']['valid_supplier_invoice_fk_warehouse'] = $this->parameters['order_actions']['valid_order_fk_warehouse'];
@@ -883,7 +887,83 @@ class eCommerceSite // extends CommonObject
 		if (isset($this->parameters['ef_crp'])) unset($this->parameters['ef_crp']);
 		if (isset($this->parameters['ef_crp_attribute'])) unset($this->parameters['ef_crp_attribute']);
 
-		return $this->update($user);
+		$error = 0;
+		$this->db->begin();
+
+		$result = $this->update($user);
+		if ($result < 0) {
+			$error++;
+		}
+
+		// gateways
+		if (!$error) {
+			$language_list = $this->getLanguages();
+			$language_list = array_flip(array_flip(array_values($language_list)));
+
+			dol_include_once('/ecommerceng/class/data/eCommercePaymentGateways.class.php');
+			$eCommercePaymentGateways = new eCommercePaymentGateways($this->db);
+			$payment_gateways = $eCommercePaymentGateways->get_all($this->id);
+			if (!is_array($payment_gateways)) {
+				$this->error = $eCommercePaymentGateways->error;
+				$this->errors = $eCommercePaymentGateways->errors;
+				$error++;
+			}
+
+			if (!$error) {
+				foreach ($payment_gateways as $key => $infos) {
+					$save_value = !is_array($infos['mail_model_for_send_invoice']) ? $infos['mail_model_for_send_invoice'] : 0;
+					if (!is_array($infos['mail_model_for_send_invoice'])) $payment_gateways[$key]['mail_model_for_send_invoice'] = array();
+					foreach ($language_list as $lang) {
+						$payment_gateways[$key]['mail_model_for_send_invoice'][$lang] = $save_value;
+					}
+				}
+
+				$result = $eCommercePaymentGateways->set($this->id, $payment_gateways);
+				if ($result < 0) {
+					$this->error = $eCommercePaymentGateways->error;
+					$this->errors = $eCommercePaymentGateways->errors;
+					$error++;
+				}
+			}
+		}
+
+		if ($error) {
+			$this->db->rollback();
+			return -1;
+		} else {
+			$this->db->commit();
+			return 1;
+		}
+	}
+
+	/**
+	 *    Return list of languages matching
+	 *
+	 * @param boolean $force Force reload
+	 * @return    array                List of languages matching
+	 */
+	public function getLanguages($force = false)
+	{
+		global $conf;
+
+		if (!isset($this->languages_cached) || $force) {
+			$languages = array();
+			if (!empty($this->parameters['enable_product_plugin_wpml_support']) && !empty($conf->global->MAIN_MULTILANGS)) {
+				$sql = "SELECT code, lang FROM " . MAIN_DB_PREFIX . "c_ecommerceng_lang WHERE entity IN (" . getEntity('ecommerceng') . ")";
+				$resql = $this->db->query($sql);
+				if ($resql) {
+					while ($obj = $this->db->fetch_object($resql)) {
+						$languages[$obj->code] = $obj->lang;
+					}
+					$this->db->free($resql);
+				}
+			} else {
+				$languages['ec_none'] = 'ec_none';
+			}
+			$this->languages_cached = $languages;
+		}
+
+		return $this->languages_cached;
 	}
 
 	/**

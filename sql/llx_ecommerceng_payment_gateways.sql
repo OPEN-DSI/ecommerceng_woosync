@@ -25,7 +25,7 @@ create table llx_ecommerceng_payment_gateways
     payment_mode_id                 integer,                    -- Payment mode ID
     bank_account_id                 integer,                    -- Bank account ID
     create_invoice_payment          tinyint(1),                 -- Flag for create invoice payment
-    mail_model_for_send_invoice     integer,                    -- Email model ID for send invoice by mail
+    mail_model_for_send_invoice     text,                       -- Email model ID for send invoice by mail by language
     supplier_id                     integer,                    -- Supplier company ID
     product_id_for_fee              integer,                    -- Product ID for fee
     create_supplier_invoice_payment tinyint(1),                 -- Flag for create supplier invoice payment

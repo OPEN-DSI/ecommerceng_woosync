@@ -145,6 +145,19 @@ class eCommerceRemoteAccessWoocommerce
 	private static $taxes_rates_by_class_cached;
 
 	/**
+	 * Language object by language code cached.
+	 *
+	 * @var Translate[]
+	 */
+	private static $languages_cached = array();
+	/**
+	 * Remote product data by id/variation id/language cached.
+	 *
+	 * @var array
+	 */
+	private $product_language_cached = array();
+
+	/**
 	 * Disabled all call af the api for method PUT and POST for testing.
 	 *
 	 * @var bool
@@ -1077,6 +1090,31 @@ class eCommerceRemoteAccessWoocommerce
 			$remote_parent_id = $remote_data['id'];
 		}
 
+		$translates = array();
+		if (!empty($conf->global->MAIN_MULTILANGS) && !empty($this->site->parameters['enable_product_plugin_wpml_support'])) {
+			$language_list = $this->site->getLanguages();
+			foreach ($language_list as $remote_lang => $language) {
+				if ($remote_lang == 'ec_none') continue;
+
+				if ($remote_lang == $remote_data['lang']) {
+					$translated_label = $label;
+					$translated_description = $this->replace4byte(empty($remote_data['description']) ? $parent_remote_data['description'] : $remote_data['description']);
+				} else {
+					$translated_product_data = $this->getProductLanguage($isVariation ? $remote_data['parent_id'] : $remote_data['id'], $isVariation ? $remote_data['id'] : 0, $remote_lang);
+					if (!is_array($translated_product_data)) {
+						return false;
+					}
+					$translated_label = $translated_product_data['name'];
+					$translated_description = $this->replace4byte($translated_product_data['description']); // short_description
+				}
+
+				$translates[$language] = array(
+					'label' => $translated_label,
+					'description' => $translated_description,
+				);
+			}
+		}
+
 		$product = [
 			'create_date' => strtotime($remote_data['date_created']),
 			'remote_id' => $remote_id,
@@ -1098,6 +1136,8 @@ class eCommerceRemoteAccessWoocommerce
 			// Stock
 			'stock_qty' => $remote_data['stock_quantity'] < 0 ? 0 : $remote_data['stock_quantity'],
 			'is_in_stock' => $remote_data['in_stock'],   // not used
+			'language' => !empty($this->site->parameters['enable_product_plugin_wpml_support']) && isset($parent_remote_data) ? $remote_data['lang'] : '',
+			'translates' => $translates,
 			'variations' => $variations,
 			'has_variations' => !empty($remote_data['variations']),
 			'extrafields' => [
@@ -1333,9 +1373,30 @@ class eCommerceRemoteAccessWoocommerce
 			if ($toNb > 0 && $nbTotalRecords >= $toNb) break;
 		} while (count($page) == $nb_max_by_request);
 
-        dol_syslog(__METHOD__ . ": end, converted " . count($orders) . " remote orders", LOG_DEBUG);
-        return $orders;
-    }
+		dol_syslog(__METHOD__ . ": end, converted " . count($orders) . " remote orders", LOG_DEBUG);
+		return $orders;
+	}
+
+	/**
+	 * Get laguage object cached for the specified language
+	 *
+	 * @param string $language Language code
+	 * @return  Translate
+	 */
+	public function getLanguage($language)
+	{
+		global $conf;
+
+		if (!isset(self::$languages_cached[$language])) {
+			$outputlangs = new Translate("", $conf);
+			$outputlangs->setDefaultLang($language);
+			$outputlangs->loadLangs(array('main', 'ecommerce@ecommerceng', 'woocommerce@ecommerceng'));
+
+			self::$languages_cached[$language] = $outputlangs;
+		}
+
+		return self::$languages_cached[$language];
+	}
 
 	/**
 	 * Call Woocommerce API to get order datas and put into dolibarr order class.
@@ -1358,6 +1419,29 @@ class eCommerceRemoteAccessWoocommerce
 			}
 		}
 
+		// WPML and multi-language support
+		$outlangs = $langs;
+		$order_language = '';
+		$select_language = 'ec_none';
+		if (!empty($conf->global->MAIN_MULTILANGS) && !empty($this->site->parameters['enable_product_plugin_wpml_support'])) {
+			// Get metadata
+			$metas_data = array();
+			if (is_array($remote_data['meta_data'])) {
+				foreach ($remote_data['meta_data'] as $meta) {
+					$metas_data[$meta['key']] = $meta['value'];
+				}
+			}
+
+			$language_list = $this->site->getLanguages();
+			$order_language = !empty($metas_data['wpml_language']) ? $metas_data['wpml_language'] : '';
+			if (empty($language_list[$order_language])) {
+				$this->errors[] = $langs->trans('ECommerceWooCommerceErrorLanguageMatchNotFound', $order_language, $this->site->id);
+				return false;
+			}
+			$select_language = $language_list[$order_language];
+			if ($select_language != $outlangs->defaultlang) $outlangs = $this->getLanguage($select_language);
+		}
+
 		// Set product lines
 		$items = [];
 		if (!empty($remote_data['line_items'])) {
@@ -1374,6 +1458,39 @@ class eCommerceRemoteAccessWoocommerce
 				if (is_array($item['meta_data'])) {
 					foreach ($item['meta_data'] as $meta) {
 						$metas_data[$meta['key']] = $meta;
+					}
+				}
+
+				$remote_id = !empty($item['variation_id']) ? (!$product_variation_mode_all_to_one ? $item['product_id'] . '|' . $item['variation_id'] : $item['product_id'] . '|%') : $item['product_id'];
+				$label = $item['name'];
+				$description = '';
+
+				// WPML and multi-language support
+				if (!empty($order_language)) {
+					$product_link = new eCommerceProduct($this->db);
+					$result = $product_link->fetchByRemoteId($remote_id, $this->site->id);
+					if ($result < 0 && !empty($product_link->error)) {
+						$this->errors[] = $product_link->error;
+						return false;
+					}
+
+					if (empty($product_link->lang) || $product_link->lang != $order_language) {
+						$product_data = $this->getProductLanguage($item['product_id'], $item['variation_id'], $order_language);
+						if (!is_array($product_data)) {
+							return false;
+						}
+						$label = $product_data['name'];
+						$description = $this->replace4byte($product_data['description']); // short_description
+
+						if (empty($label) || empty($description) && $item['variation_id'] > 0) {
+							// Parent product
+							$parent_product_data = $this->getProductLanguage($item['product_id'], 0, $order_language);
+							if (!is_array($parent_product_data)) {
+								return false;
+							}
+							$label = empty($label) ? $product_data['name'] : $label;
+							$description = empty($description) ? $product_data['description'] : $description; // short_description
+						}
 					}
 				}
 
@@ -1403,8 +1520,8 @@ class eCommerceRemoteAccessWoocommerce
 				}
 				if (!empty($metas_data['_woosb_parent_id']) && isset($bundles_ids[$metas_data['_woosb_parent_id']['value']])) {
 					$item_id = $bundles_ids[$metas_data['_woosb_parent_id']['value']];
-					if (!isset($items[$item_id]['additional_description'])) $items[$item_id]['additional_description'] = $langs->trans('ECommerceWooCommerceBundleComposite');
-					$items[$item_id]['additional_description'] .= "\n - " . $item['quantity'] . ' x ' . $item['name'];
+					if (!isset($items[$item_id]['additional_description'])) $items[$item_id]['additional_description'] = $outlangs->trans('ECommerceWooCommerceBundleComposite');
+					$items[$item_id]['additional_description'] .= "\n - " . $item['quantity'] . ' x ' . $label;
 //					continue;
 					$total_ht = 0;
 					$total_tva = 0;
@@ -1424,8 +1541,9 @@ class eCommerceRemoteAccessWoocommerce
 					'parent_item_id' => isset($item_id) ? $item_id : (isset($parent_match[$item['id']]) ? $parent_match[$item['id']] : 0),
 					'item_id' => $item['id'],
 					'ref' => $item['sku'],
-					'label' => $item['name'],
-					'id_remote_product' => !empty($item['variation_id']) ? (!$product_variation_mode_all_to_one ? $item['product_id'] . '|' . $item['variation_id'] : $item['product_id'] . '|%') : $item['product_id'],
+					'label' => $label,
+					'description' => $description,
+					'id_remote_product' => $remote_id,
 					'product_type' => 'simple',
 					'price' => $price,
 					'total_ht' => $total_ht,
@@ -1492,8 +1610,8 @@ class eCommerceRemoteAccessWoocommerce
 					'type' => 'shipping',
 					'item_id' => $item['id'],
 					'id_product' => $shipment_service_id,
-					'label' => $langs->trans('ECommerceShipping') . (!empty($item['method_title']) ? ' - ' . $item['method_title'] : ''),
-					'description' => $langs->trans('ECommerceShipping') . (!empty($item['method_title']) ? ' - ' . $item['method_title'] : ''),
+					'label' => $outlangs->trans('ECommerceShipping') . (!empty($item['method_title']) ? ' - ' . $item['method_title'] : ''),
+					'description' => $outlangs->trans('ECommerceShipping') . (!empty($item['method_title']) ? ' - ' . $item['method_title'] : ''),
 					'product_type' => 'shipment',
 					'price' => $item['total'],
 					'total_ht' => $item['total'],
@@ -1858,6 +1976,7 @@ class eCommerceRemoteAccessWoocommerce
 			'remote_increment_id' => $remote_data['id'],
 			'remote_id_societe' => $remote_data['customer_id'],
 			'ref_client' => $remote_data['number'],
+			'language' => $select_language,
 			'date_commande' => $remote_data['date_created'],
 			'date_payment' => $remote_data['date_paid'],
 			'date_livraison' => $remote_data['date_completed'],
@@ -1948,6 +2067,29 @@ class eCommerceRemoteAccessWoocommerce
 			}
 		}
 
+		// WPML and multi-language support
+		$outlangs = $langs;
+		$order_language = '';
+		$select_language = 'ec_none';
+		if (!empty($conf->global->MAIN_MULTILANGS) && !empty($this->site->parameters['enable_product_plugin_wpml_support'])) {
+			// Get metadata
+			$metas_data = array();
+			if (is_array($remote_data['meta_data'])) {
+				foreach ($remote_data['meta_data'] as $meta) {
+					$metas_data[$meta['key']] = $meta['value'];
+				}
+			}
+
+			$language_list = $this->site->getLanguages();
+			$order_language = !empty($metas_data['wpml_language']) ? $metas_data['wpml_language'] : '';
+			if (empty($language_list[$order_language])) {
+				$this->errors[] = $langs->trans('ECommerceWooCommerceErrorLanguageMatchNotFound', $order_language, $this->site->id);
+				return false;
+			}
+			$select_language = $language_list[$order_language];
+			if ($select_language != $outlangs->defaultlang) $outlangs = $this->getLanguage($select_language);
+		}
+
 		$sum_total_ht = 0;
 
 		// Set product lines
@@ -1963,6 +2105,39 @@ class eCommerceRemoteAccessWoocommerce
 				if (is_array($item['meta_data'])) {
 					foreach ($item['meta_data'] as $meta) {
 						$metas_data[$meta['key']] = $meta;
+					}
+				}
+
+				$remote_id = !empty($item['variation_id']) ? (!$product_variation_mode_all_to_one ? $item['product_id'] . '|' . $item['variation_id'] : $item['product_id'] . '|%') : $item['product_id'];
+				$label = $item['name'];
+				$description = '';
+
+				// WPML and multi-language support
+				if (!empty($order_language)) {
+					$product_link = new eCommerceProduct($this->db);
+					$result = $product_link->fetchByRemoteId($remote_id, $this->site->id);
+					if ($result < 0 && !empty($product_link->error)) {
+						$this->errors[] = $product_link->error;
+						return false;
+					}
+
+					if (empty($product_link->lang) || $product_link->lang != $order_language) {
+						$product_data = $this->getProductLanguage($item['product_id'], $item['variation_id'], $order_language);
+						if (!is_array($product_data)) {
+							return false;
+						}
+						$label = $product_data['name'];
+						$description = $this->replace4byte($product_data['description']); // short_description
+
+						if (empty($label) || empty($description) && $item['variation_id'] > 0) {
+							// Parent product
+							$parent_product_data = $this->getProductLanguage($item['product_id'], 0, $order_language);
+							if (!is_array($parent_product_data)) {
+								return false;
+							}
+							$label = empty($label) ? $product_data['name'] : $label;
+							$description = empty($description) ? $product_data['description'] : $description; // short_description
+						}
 					}
 				}
 
@@ -1992,8 +2167,8 @@ class eCommerceRemoteAccessWoocommerce
 				}
 				if (!empty($metas_data['_woosb_parent_id']) && isset($bundles_ids[$metas_data['_woosb_parent_id']['value']])) {
 					$item_id = $bundles_ids[$metas_data['_woosb_parent_id']['value']];
-					if (!isset($items[$item_id]['additional_description'])) $items[$item_id]['additional_description'] = $langs->trans('ECommerceWooCommerceBundleComposite');
-					$items[$item_id]['additional_description'] .= "\n - " . $item_qty . ' x ' . $item['name'];
+					if (!isset($items[$item_id]['additional_description'])) $items[$item_id]['additional_description'] = $outlangs->trans('ECommerceWooCommerceBundleComposite');
+					$items[$item_id]['additional_description'] .= "\n - " . $item_qty . ' x ' . $label;
 //					continue;
 					$total_ht = 0;
 					$total_tva = 0;
@@ -2013,8 +2188,9 @@ class eCommerceRemoteAccessWoocommerce
 					'parent_item_id' => isset($item_id) ? $item_id : (isset($parent_match[$item['id']]) ? $parent_match[$item['id']] : 0),
 					'item_id' => $item['id'],
 					'ref' => $item['sku'],
-					'label' => $item['name'],
-					'id_remote_product' => !empty($item['variation_id']) ? (!$product_variation_mode_all_to_one ? $item['product_id'] . '|' . $item['variation_id'] : $item['product_id'] . '|%') : $item['product_id'],
+					'label' => $label,
+					'description' => $description,
+					'id_remote_product' => $remote_id,
 					'product_type' => 'simple',
 					'price' => $price,
 					'total_ht' => $total_ht,
@@ -2059,8 +2235,8 @@ class eCommerceRemoteAccessWoocommerce
 					'refund_item_id' => $metas_data['_refunded_item_id']['value'],
 					'item_id' => $item['id'],
 					'id_product' => $shipment_service_id,
-					'label' => $langs->trans('ECommerceShipping') . (!empty($item['method_title']) ? ' - ' . $item['method_title'] : ''),
-					'description' => $langs->trans('ECommerceShipping') . (!empty($item['method_title']) ? ' - ' . $item['method_title'] : ''),
+					'label' => $outlangs->trans('ECommerceShipping') . (!empty($item['method_title']) ? ' - ' . $item['method_title'] : ''),
+					'description' => $outlangs->trans('ECommerceShipping') . (!empty($item['method_title']) ? ' - ' . $item['method_title'] : ''),
 					'product_type' => 'shipment',
 					'price' => $item['total'],
 					'total_ht' => $item['total'],
@@ -2224,6 +2400,7 @@ class eCommerceRemoteAccessWoocommerce
 			'last_update' => $create_date->format('Y-m-d H:i:s'),
 			'remote_id' => $remote_data['id'],
 			'reason' => $remote_data['reason'],
+			'language' => $select_language,
 			'total_ht' => $sum_total_ht,
 			'total_tva' => - $remote_data['amount'] - $sum_total_ht,
 			'total_ttc' => - $remote_data['amount'],
@@ -2234,10 +2411,59 @@ class eCommerceRemoteAccessWoocommerce
 		return $refund;
 	}
 
-    /**
-     * Desactivated because is not supported by woocommerce.
-     *
-     * @param   array   $remoteObject   List of id of remote orders to convert
+	/**
+	 *  Get product data for a language (support WPML) (cached).
+	 *
+	 * @param int $remote_product_id Remote product ID
+	 * @param int $remote_product_variation_id Remote product variation ID
+	 * @param string $language Language desired
+	 * @param bool $forced Force reload
+	 * @return  array|bool                                      false if KO otherwise the product data for the desired language
+	 */
+	public function getProductLanguage($remote_product_id, $remote_product_variation_id, $language, $forced = false)
+	{
+		global $langs;
+
+		if (!isset($this->product_language_cached[$remote_product_id][$remote_product_variation_id][$language]) || $forced) {
+			$remote_product = $this->client->sendToApi(eCommerceClientApi::METHOD_GET, "products/{$remote_product_id}" . (!empty($remote_product_variation_id) ? "/variations/{$remote_product_variation_id}" : ""));
+			if (!isset($remote_product)) {
+				$this->errors[] = $langs->trans('ECommerceWoocommerceGetRemoteProduct', $remote_product_id . (!empty($remote_product_variation_id) ? "|{$remote_product_variation_id}" : ""), $this->site->name);
+				$this->errors[] = $this->client->errorsToString();
+				dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
+				return false;
+			}
+
+			if ($remote_product['lang'] != $language) {
+				$found = false;
+				foreach ($remote_product['translations'] as $k => $v) {
+					if ($k == $language) {
+						$remote_product = $this->client->sendToApi(eCommerceClientApi::METHOD_GET, "products/" . (empty($remote_product_variation_id) ? $v : $remote_product_id) . (!empty($remote_product_variation_id) ? "/variations/" . $v : ""));
+						if (!isset($remote_product)) {
+							$this->errors[] = $langs->trans('ECommerceWoocommerceGetRemoteProduct', $v . (!empty($remote_product_variation_id) ? "|{$remote_product_variation_id}" : ""), $this->site->name);
+							$this->errors[] = $this->client->errorsToString();
+							dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
+							return false;
+						}
+						$found = true;
+						break;
+					}
+				}
+				if (!$found) {
+					$this->errors[] = $langs->trans('ECommerceWoocommerceRemoteProductLanguageNotFound', $remote_product_id . (!empty($remote_product_variation_id) ? "|{$remote_product_variation_id}" : ""), $language, $this->site->name);
+					return false;
+				}
+			}
+
+			$this->product_language_cached[$remote_product_id][$remote_product_variation_id][$language] = $remote_product;
+		}
+
+		return $this->product_language_cached[$remote_product_id][$remote_product_variation_id][$language];
+	}
+
+	/**
+	 * Desactivated because is not supported by woocommerce.
+	 *
+	 * @param array $remoteObject List of id of remote orders to convert
      * @param   int     $toNb           Max nb
      * @return  array                   Empty list
      */
@@ -2663,6 +2889,20 @@ class eCommerceRemoteAccessWoocommerce
         // Product - Meta data properties
         $object->fetch_optionals();
 
+		// Multi-languages
+		$translates = array();
+		if (!empty($conf->global->MAIN_MULTILANGS) && !empty($this->site->parameters['enable_product_plugin_wpml_support'])) {
+			$language_list = $this->site->getLanguages();
+			foreach ($language_list as $remote_lang => $language) {
+				if ($remote_lang == 'ec_none' || !isset($object->multilangs[$language])) continue;
+
+				$translates[$remote_lang] = array(
+					'label' => $object->multilangs[$language]['label'],
+					// 'description' => $object->multilangs[$language]['description'],
+				);
+			}
+		}
+		$return_data['translates'] = $translates;
 
 		// Variations
         if ($isProductVariation || $isProductVariationHasOne) {
@@ -3156,6 +3396,8 @@ class eCommerceRemoteAccessWoocommerce
 		// Update extrafields infos
 		if (empty($conf->global->MAIN_EXTRAFIELDS_DISABLED)) $object->insertExtraFields();
 
+		$remote_translations = $datas['translates'];
+
 		// Product
 		//--------------------
 		if (!empty($datas['product'])) {
@@ -3171,12 +3413,19 @@ class eCommerceRemoteAccessWoocommerce
 			}
 
 			// Support for WPML (Update (others than name and descriptions) infos on translated post)
-			if (!empty($conf->global->ECOMMERCENG_WOOCOMMERCE_WPML_SUPPORT)) {
+			if (!empty($this->site->parameters['enable_product_plugin_wpml_support'])) {
 				if (isset($result['translations'])) {
-					if (isset($remote_data['name'])) unset($remote_data['name']);
 					if (isset($remote_data['description'])) unset($remote_data['description']);
 					if (isset($remote_data['short_description'])) unset($remote_data['short_description']);
-					foreach ((array)$result['translations'] as $product_id) {
+					foreach ((array) $result['translations'] as $remote_lang => $product_id) {
+						if ($result['lang'] == $remote_lang) continue;
+						if (isset($remote_translations[$remote_lang])) {
+							$remote_data['name'] = $remote_translations[$remote_lang]['label'];
+							// $remote_data['description'] = $remote_translations[$remote_lang]['description'];
+						} else {
+							if (isset($remote_data['name'])) unset($remote_data['name']);
+							// if (isset($remote_data['description'])) unset($remote_data['description']);
+						}
 						$res = $this->client->sendToApi(eCommerceClientApi::METHOD_PUT, "products/{$product_id}", [GuzzleHttp\RequestOptions::FORM_PARAMS => $remote_data]);
 						if (!isset($res)) {
 							$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteTranslatedProduct', $product_id, $remote_id, $this->site->name);
@@ -3206,12 +3455,19 @@ class eCommerceRemoteAccessWoocommerce
 				}
 
 				// Support for WPML (Update (others than name and descriptions) infos on translated post)
-				if (!empty($conf->global->ECOMMERCENG_WOOCOMMERCE_WPML_SUPPORT)) {
+				if (!empty($this->site->parameters['enable_product_plugin_wpml_support'])) {
 					if (isset($result['translations'])) {
-						if (isset($remote_data['name'])) unset($remote_data['name']);
 						if (isset($remote_data['description'])) unset($remote_data['description']);
 						if (isset($remote_data['short_description'])) unset($remote_data['short_description']);
-						foreach ((array)$result['translations'] as $product_id) {
+						foreach ((array) $result['translations'] as $remote_lang => $product_id) {
+							if ($result['lang'] == $remote_lang) continue;
+							if (isset($remote_translations[$remote_lang])) {
+								$remote_data['name'] = $remote_translations[$remote_lang]['label'];
+								// $remote_data['description'] = $remote_translations[$remote_lang]['description'];
+							} else {
+								if (isset($remote_data['name'])) unset($remote_data['name']);
+								// if (isset($remote_data['description'])) unset($remote_data['description']);
+							}
 							$result2 = $this->client->sendToApi(eCommerceClientApi::METHOD_GET, "products/{$product_id}");
 							if (!isset($result2)) {
 								$this->errors[] = $langs->trans('ECommerceWoocommerceGetTranslatedProductVariation', $product_id, $remote_variation_id, $remote_id, $this->site->name);
@@ -3473,7 +3729,7 @@ class eCommerceRemoteAccessWoocommerce
 		}
 
 		// Support for WPML (Update stocks infos on translated post)
-		if (!empty($conf->global->ECOMMERCENG_WOOCOMMERCE_WPML_SUPPORT)) {
+		if (!empty($this->site->parameters['enable_product_plugin_wpml_support'])) {
 			if ($isProductVariation || $isProductVariationHasOne) {
 				foreach ($new_variations as $remote_product_variation_id) {
 					$result = $this->client->sendToApi(eCommerceClientApi::METHOD_GET, "products/{$remote_product_variation_id}");
@@ -3801,16 +4057,18 @@ class eCommerceRemoteAccessWoocommerce
 			dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
 			return false;
 		}
-        $results = isset($results['products']) ? $results['products'] : (is_array($results) ? $results : []);
+		$results = isset($results['products']) ? $results['products'] : (is_array($results) ? $results : []);
 
 		$remote_id = '';
 		$remote_url = '';
-        if (is_array($results) && count($results) > 0) {
+		$remote_language = '';
+		if (is_array($results) && count($results) > 0) {
 			$remote_id = $results[0]['id'];
 			$remote_url = $results[0]['permalink'];
-           if (!$this->updateRemoteProduct($remote_id, $object))
-                return false;
-        } else {
+			if (!empty($this->site->parameters['enable_product_plugin_wpml_support'])) $remote_language = $results[0]['language'];
+			if (!$this->updateRemoteProduct($remote_id, $object))
+				return false;
+		} else {
 			$datas = $this->convertObjectIntoProductData('', $object);
 			if (empty($datas)) {
 				return false;
@@ -3834,15 +4092,16 @@ class eCommerceRemoteAccessWoocommerce
 
 				$remote_id = $result['id'];
 				$remote_url = $result['permalink'];
+				if (!empty($this->site->parameters['enable_product_plugin_wpml_support'])) $remote_language = $result['language'];
 			}
-        }
+		}
 
-        dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
-        return array('remote_id' => $remote_id, 'remote_url' => $remote_url);
-    }
+		dol_syslog(__METHOD__ . ": end", LOG_DEBUG);
+		return array('remote_id' => $remote_id, 'remote_url' => $remote_url, 'language' => $remote_language);
+	}
 
-    /**
-     * Create batch categories
+	/**
+	 * Create batch categories
      *
      * @param   array     $batch     Array of object category
      *
@@ -3895,14 +4154,14 @@ class eCommerceRemoteAccessWoocommerce
                 			$obj = $this->db->fetch_object($resql);
                 			$group[$key]['parent'] = $obj->remote_id;
         				} else {
-        					
+
         					$this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteCategoryParentNotFound', $this->site->name, $categoryData['name'], $categoryData['slug']);
 	                    	dol_syslog(__METHOD__ .
 	                        ': Error:' . $langs->trans('ECommerceWoocommerceCreateRemoteCategoryParentNotFound', $this->site->name, $categoryData['name'], $categoryData['slug']), LOG_ERR);
 	                    	return false;
         				}
             		} else {
-	                	
+
 	                    $this->errors[] = $langs->trans('ECommerceWoocommerceCreateRemoteCategoryParentNotCreated', $this->site->name, $categoryData['name'], $categoryData['slug']);
 	                    dol_syslog(__METHOD__ .
 	                        ': Error:' . $langs->trans('ECommerceWoocommerceCreateRemoteCategoryParentNotCreated', $this->site->name, $categoryData['name'], $categoryData['slug']), LOG_ERR);
