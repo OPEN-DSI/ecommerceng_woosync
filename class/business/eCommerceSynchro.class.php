@@ -4245,8 +4245,8 @@ class eCommerceSynchro
                                 if (!$error) {
                                     $third_party = new Societe($this->db);
                                     $third_party->fetch($third_party_id);
-                                    if (empty($third_party->default_lang) && !empty($order['language']) && $order['language'] != 'ec_none') {
-                                        $third_party->default_lang = $order['language'];
+                                    if (empty($third_party->default_lang) && !empty($order_data['language']) && $o$order_datarder['language'] != 'ec_none') {
+                                        $third_party->default_lang = $order_data['language'];
 
                                         $result = $third_party->update($third_party->id, $this->user);
                                         if ($result < 0) {
@@ -5058,8 +5058,8 @@ class eCommerceSynchro
 										$third_party = new Societe($this->db);
 										$third_party->fetch($third_party_id);
                                         // Set third party language
-                                        if (empty($third_party->default_lang) && !empty($order['language']) && $order['language'] != 'ec_none') {
-                                            $third_party->default_lang = $order['language'];
+                                        if (empty($third_party->default_lang) && !empty($order_data['language']) && $order_data['language'] != 'ec_none') {
+                                            $third_party->default_lang = $order_data['language'];
 
                                             $result = $third_party->update($third_party->id, $this->user);
                                             if ($result < 0) {
