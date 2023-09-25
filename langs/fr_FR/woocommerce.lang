@@ -162,4 +162,3 @@ ECommerceWoocommerceErrorGetOrderData                                = Erreur lo
 ECommerceWooCommerceErrorLanguageMatchNotFound                       = La correspondance de langue pour le code '%s' et site ID '%s' n'as pas été trouvée dans le dictionnaire 'Liste des langues sur Woocommerce'
 
 ECommerceWoocommerceGetRemoteProduct                                 = Récupération du produit distant (ID distant: %s) sur le site '%s'
-ECommerceWoocommerceErrorRemoteProductLanguageNotFound               = Le produit distant (ID distant: %s) pour la langue '%s' sur le site '%s' n'a pas été trouvé

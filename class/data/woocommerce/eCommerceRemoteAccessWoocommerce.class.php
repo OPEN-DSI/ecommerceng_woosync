@@ -1096,22 +1096,28 @@ class eCommerceRemoteAccessWoocommerce
 			foreach ($language_list as $remote_lang => $language) {
 				if ($remote_lang == 'ec_none') continue;
 
+				$found = false;
 				if ($remote_lang == $remote_data['lang']) {
 					$translated_label = $label;
 					$translated_description = $this->replace4byte(empty($remote_data['description']) ? $parent_remote_data['description'] : $remote_data['description']);
+					$found = true;
 				} else {
-					$translated_product_data = $this->getProductLanguage($isVariation ? $remote_data['parent_id'] : $remote_data['id'], $isVariation ? $remote_data['id'] : 0, $remote_lang);
+					$translated_product_data = $this->getProductLanguage($isVariation ? $remote_parent_id : $remote_data['id'], $isVariation ? $remote_data['id'] : 0, $remote_lang);
 					if (!is_array($translated_product_data)) {
 						return false;
+					} elseif (!empty($translated_product_data)) {
+						$translated_label = $translated_product_data['name'];
+						$translated_description = $this->replace4byte($translated_product_data['description']); // short_description
+						$found = true;
 					}
-					$translated_label = $translated_product_data['name'];
-					$translated_description = $this->replace4byte($translated_product_data['description']); // short_description
 				}
 
-				$translates[$language] = array(
-					'label' => $translated_label,
-					'description' => $translated_description,
-				);
+				if ($found) {
+					$translates[$language] = array(
+						'label' => $translated_label,
+						'description' => $translated_description,
+					);
+				}
 			}
 		}
 
@@ -1478,18 +1484,20 @@ class eCommerceRemoteAccessWoocommerce
 						$product_data = $this->getProductLanguage($item['product_id'], $item['variation_id'], $order_language);
 						if (!is_array($product_data)) {
 							return false;
-						}
-						$label = $product_data['name'];
-						$description = $this->replace4byte($product_data['description']); // short_description
+						} elseif (!empty($product_data)) {
+							$label = $product_data['name'];
+							$description = $this->replace4byte($product_data['description']); // short_description
 
-						if (empty($label) || empty($description) && $item['variation_id'] > 0) {
-							// Parent product
-							$parent_product_data = $this->getProductLanguage($item['product_id'], 0, $order_language);
-							if (!is_array($parent_product_data)) {
-								return false;
+							if (empty($label) || empty($description) && $item['variation_id'] > 0) {
+								// Parent product
+								$parent_product_data = $this->getProductLanguage($item['product_id'], 0, $order_language);
+								if (!is_array($parent_product_data)) {
+									return false;
+								} elseif (!empty($parent_product_data)) {
+									$label = empty($label) ? $product_data['name'] : $label;
+									$description = empty($description) ? $product_data['description'] : $description; // short_description
+								}
 							}
-							$label = empty($label) ? $product_data['name'] : $label;
-							$description = empty($description) ? $product_data['description'] : $description; // short_description
 						}
 					}
 				}
@@ -2125,18 +2133,20 @@ class eCommerceRemoteAccessWoocommerce
 						$product_data = $this->getProductLanguage($item['product_id'], $item['variation_id'], $order_language);
 						if (!is_array($product_data)) {
 							return false;
-						}
-						$label = $product_data['name'];
-						$description = $this->replace4byte($product_data['description']); // short_description
+						} elseif (!empty($product_data)) {
+							$label = $product_data['name'];
+							$description = $this->replace4byte($product_data['description']); // short_description
 
-						if (empty($label) || empty($description) && $item['variation_id'] > 0) {
-							// Parent product
-							$parent_product_data = $this->getProductLanguage($item['product_id'], 0, $order_language);
-							if (!is_array($parent_product_data)) {
-								return false;
+							if (empty($label) || empty($description) && $item['variation_id'] > 0) {
+								// Parent product
+								$parent_product_data = $this->getProductLanguage($item['product_id'], 0, $order_language);
+								if (!is_array($parent_product_data)) {
+									return false;
+								} elseif (!empty($parent_product_data)) {
+									$label = empty($label) ? $product_data['name'] : $label;
+									$description = empty($description) ? $product_data['description'] : $description; // short_description
+								}
 							}
-							$label = empty($label) ? $product_data['name'] : $label;
-							$description = empty($description) ? $product_data['description'] : $description; // short_description
 						}
 					}
 				}
@@ -2418,7 +2428,7 @@ class eCommerceRemoteAccessWoocommerce
 	 * @param int $remote_product_variation_id Remote product variation ID
 	 * @param string $language Language desired
 	 * @param bool $forced Force reload
-	 * @return  array|bool                                      false if KO otherwise the product data for the desired language
+	 * @return  array|bool                                      false if KO, empty if not found otherwise the product data for the desired language
 	 */
 	public function getProductLanguage($remote_product_id, $remote_product_variation_id, $language, $forced = false)
 	{
@@ -2437,8 +2447,8 @@ class eCommerceRemoteAccessWoocommerce
 				$found = false;
 				foreach ($remote_product['translations'] as $k => $v) {
 					if ($k == $language) {
-						$remote_product = $this->client->sendToApi(eCommerceClientApi::METHOD_GET, "products/" . (empty($remote_product_variation_id) ? $v : $remote_product_id) . (!empty($remote_product_variation_id) ? "/variations/" . $v : ""));
-						if (!isset($remote_product)) {
+						$sub_remote_product = $this->client->sendToApi(eCommerceClientApi::METHOD_GET, "products/" . (empty($remote_product_variation_id) ? $v : $remote_product_id) . (!empty($remote_product_variation_id) ? "/variations/" . $v : ""));
+						if (!isset($sub_remote_product)) {
 							$this->errors[] = $langs->trans('ECommerceWoocommerceGetRemoteProduct', $v . (!empty($remote_product_variation_id) ? "|{$remote_product_variation_id}" : ""), $this->site->name);
 							$this->errors[] = $this->client->errorsToString();
 							dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
@@ -2448,10 +2458,7 @@ class eCommerceRemoteAccessWoocommerce
 						break;
 					}
 				}
-				if (!$found) {
-					$this->errors[] = $langs->trans('ECommerceWoocommerceRemoteProductLanguageNotFound', $remote_product_id . (!empty($remote_product_variation_id) ? "|{$remote_product_variation_id}" : ""), $language, $this->site->name);
-					return false;
-				}
+				$remote_product = $found && !empty($sub_remote_product) ? $sub_remote_product : array();
 			}
 
 			$this->product_language_cached[$remote_product_id][$remote_product_variation_id][$language] = $remote_product;
