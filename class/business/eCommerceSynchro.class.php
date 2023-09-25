@@ -4245,7 +4245,7 @@ class eCommerceSynchro
                                 if (!$error) {
                                     $third_party = new Societe($this->db);
                                     $third_party->fetch($third_party_id);
-                                    if (empty($third_party->default_lang) && !empty($order_data['language']) && $o$order_datarder['language'] != 'ec_none') {
+                                    if (empty($third_party->default_lang) && !empty($order_data['language']) && $order_datarder['language'] != 'ec_none') {
                                         $third_party->default_lang = $order_data['language'];
 
                                         $result = $third_party->update($third_party->id, $this->user);
