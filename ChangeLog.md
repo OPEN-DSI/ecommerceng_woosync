@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.56.0
+- Correction d'une erreur lors de la mise a jour d'une catégorie synchronisée
+
 ## 4.1.55.0
 - Correction d'une erreur lors de la mise a jour d'une catégorie synchronisée
 
