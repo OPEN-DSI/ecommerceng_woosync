@@ -6248,7 +6248,7 @@ class eCommerceSynchro
 														$this->errors = array_merge($this->errors, $mailfile->errors);
 														$error++;
 													} else {
-/*														$result = $mailfile->sendfile();
+														$result = $mailfile->sendfile();
 														if ($result) {
 															// Get order contacts
 															$contact_list = $invoice->liste_contact(-1, 'external');
@@ -6306,7 +6306,7 @@ class eCommerceSynchro
 																$this->errors[] = ' No mail sent. Feature is disabled by option MAIN_DISABLE_ALL_MAILS';
 															}
 															$error++;
-														}*/
+														}
 													}
 												}
 											}
