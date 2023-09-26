@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.57.0
+- Changement logo - page support.
+
 ## 4.1.56.0
 - Ajout du support avec WPML dans la config du site onglet "produit" et non plus avec la variable globale ECOMMERCENG_WOOCOMMERCE_WPML_SUPPORT.
 - Ajout du support multilingue Dolibarr avec le support multilingue WooCommerce (via le plugin WPML)
