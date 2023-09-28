@@ -55,3 +55,7 @@ ALTER TABLE llx_ecommerce_site ADD COLUMN api_version varchar(255) NULL after we
 -- v4.1.54
 ALTER TABLE llx_ecommerce_product ADD COLUMN lang varchar(255) default NULL after remote_id;
 ALTER TABLE llx_ecommerceng_payment_gateways CHANGE COLUMN mail_model_for_send_invoice mail_model_for_send_invoice text;
+
+-- v4.1.57
+ALTER TABLE llx_ecommerceng_remote_warehouses DROP INDEX uk_ecommerceng_remote_warehouses;
+ALTER TABLE llx_ecommerceng_remote_warehouses ADD UNIQUE INDEX uk_ecommerceng_remote_warehouses(site_id,remote_id,entity);

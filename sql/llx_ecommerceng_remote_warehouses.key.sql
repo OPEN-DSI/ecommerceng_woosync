@@ -16,5 +16,5 @@
 --
 -- ===================================================================
 
-ALTER TABLE llx_ecommerceng_remote_warehouses ADD UNIQUE INDEX uk_ecommerceng_remote_warehouses(site_id,remote_code,entity);
+ALTER TABLE llx_ecommerceng_remote_warehouses ADD UNIQUE INDEX uk_ecommerceng_remote_warehouses(site_id,remote_id,entity);
 --ALTER TABLE llx_ecommerceng_remote_warehouses  ADD CONSTRAINT fk_ecommerceng_remote_warehouses_warehouse_id FOREIGN KEY (warehouse_id) REFERENCES llx_entrepot(rowid);

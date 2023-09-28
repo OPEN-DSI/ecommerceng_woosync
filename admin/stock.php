@@ -66,7 +66,7 @@ if (empty($conf->product->enabled) && empty($conf->stock->enabled)) {
 	accessforbidden($langs->trans('ModuleDisabled'));
 }
 
-if (!empty($object->parameters['enable_warehouse_plugin_sl_support'])) {
+if (!empty($object->parameters['enable_warehouse_plugin_support'])) {
 	$eCommerceRemoteWarehouses = new eCommerceRemoteWarehouses($db);
 	$remote_warehouses = $eCommerceRemoteWarehouses->get_all($object->id);
 	if (!is_array($remote_warehouses)) {
@@ -86,10 +86,11 @@ if ($action == 'set_options') {
 	$object->parameters['order_actions']['valid_invoice_fk_warehouse'] = !empty($object->parameters['order_actions']['create_invoice']) ? GETPOST('valid_invoice_fk_warehouse', 'int') : -1;
 	$object->parameters['order_actions']['valid_supplier_invoice_fk_warehouse'] = !empty($object->parameters['order_actions']['create_supplier_invoice']) ? GETPOST('valid_supplier_invoice_fk_warehouse', 'int') : -1;
 	$object->stock_sync_direction = GETPOST('stock_sync_direction', 'az09');
-	$object->parameters['enable_warehouse_plugin_sl_support'] = $object->stock_sync_direction != 'none' && GETPOST('enable_warehouse_plugin_sl_support', 'int') ? 1 : 0;
-	$object->fk_warehouse = $object->stock_sync_direction == 'ecommerce2dolibarr' && empty($object->parameters['enable_warehouse_plugin_sl_support']) ? GETPOST('fk_warehouse', 'int') : 0;
+	$object->parameters['enable_warehouse_plugin_support'] = $object->stock_sync_direction != 'none' ? GETPOST('enable_warehouse_plugin_support', 'aZ09') : '';
+	if ($object->parameters['enable_warehouse_plugin_support'] == -1) $object->parameters['enable_warehouse_plugin_support'] = '';
+	$object->fk_warehouse = $object->stock_sync_direction == 'ecommerce2dolibarr' && empty($object->parameters['enable_warehouse_plugin_support']) ? GETPOST('fk_warehouse', 'int') : 0;
 	$object->fk_warehouse = $object->fk_warehouse > 0 ? $object->fk_warehouse : 0;
-	$object->parameters['fk_warehouse_to_ecommerce'] = $object->stock_sync_direction == 'dolibarr2ecommerce' && empty($object->parameters['enable_warehouse_plugin_sl_support']) ? GETPOST('fk_warehouse_to_ecommerce', 'array') : array();
+	$object->parameters['fk_warehouse_to_ecommerce'] = $object->stock_sync_direction == 'dolibarr2ecommerce' && empty($object->parameters['enable_warehouse_plugin_support']) ? GETPOST('fk_warehouse_to_ecommerce', 'array') : array();
 
 	$result = $object->update($user);
 
@@ -100,11 +101,11 @@ if ($action == 'set_options') {
 		header("Location: " . $_SERVER["PHP_SELF"] . '?id=' . $object->id);
 		exit;
 	}
-} elseif ($action == 'set_remote_warehouse_options' && !empty($object->parameters['enable_warehouse_plugin_sl_support'])) {
-	foreach ($remote_warehouses as $remote_code => $infos) {
-		$remote_warehouses[$remote_code]['warehouse_id'] = GETPOST('warehouse_id_' . $remote_code, 'int');
-		$remote_warehouses[$remote_code]['warehouse_id'] = $remote_warehouses[$remote_code]['warehouse_id'] > 0 ? $remote_warehouses[$remote_code]['warehouse_id'] : 0;
-		$remote_warehouses[$remote_code]['set_even_if_empty_stock'] = GETPOST('set_even_if_empty_stock_' . $remote_code, 'int') ? 1 : 0;
+} elseif ($action == 'set_remote_warehouse_options' && !empty($object->parameters['enable_warehouse_plugin_support'])) {
+	foreach ($remote_warehouses as $remote_warehouse_id => $infos) {
+		$remote_warehouses[$remote_warehouse_id]['warehouse_id'] = GETPOST('warehouse_id_' . $remote_warehouse_id, 'int');
+		$remote_warehouses[$remote_warehouse_id]['warehouse_id'] = $remote_warehouses[$remote_warehouse_id]['warehouse_id'] > 0 ? $remote_warehouses[$remote_warehouse_id]['warehouse_id'] : 0;
+		$remote_warehouses[$remote_warehouse_id]['set_even_if_empty_stock'] = GETPOST('set_even_if_empty_stock_' . $remote_warehouse_id, 'int') ? 1 : 0;
 	}
 
 	$result = $eCommerceRemoteWarehouses->set($object->id, $remote_warehouses);
@@ -116,7 +117,7 @@ if ($action == 'set_options') {
 		header("Location: " . $_SERVER["PHP_SELF"] . '?id=' . $object->id);
 		exit;
 	}
-} elseif ($action == 'confirm_update_remote_warehouses' && $confirm == "yes" && !empty($object->parameters['enable_warehouse_plugin_sl_support'])) {
+} elseif ($action == 'confirm_update_remote_warehouses' && $confirm == "yes" && !empty($object->parameters['enable_warehouse_plugin_support'])) {
 	$result = ecommerceng_update_remote_warehouses($db, $object);
 	if ($result) setEventMessage($langs->trans('ECommerceRemoteWarehousesUpdated'), 'mesgs');
 
@@ -138,7 +139,7 @@ llxHeader('', $langs->trans("ECommerceSetup"), $wikihelp);
 
 $formconfirm = '';
 
-if ($action == 'update_remote_warehouses' && !empty($object->parameters['enable_warehouse_plugin_sl_support'])) {
+if ($action == 'update_remote_warehouses' && !empty($object->parameters['enable_warehouse_plugin_support'])) {
 	$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id . '&plugin=' . $plugin, $langs->trans('ECommerceUpdateRemoteWarehouses'), $langs->trans('ECommerceConfirmUpdateRemoteWarehouses'), 'confirm_update_remote_warehouses', '', 0, 1, 200, 800);
 }
 
@@ -163,7 +164,7 @@ $head=ecommercengConfigSitePrepareHead($object);
 
 dol_fiche_head($head, 'stock', $langs->trans("Module107100Name"), 0, 'eCommerce@ecommerceng');
 
-if (!empty($object->parameters['enable_warehouse_plugin_sl_support'])) {
+if (!empty($object->parameters['enable_warehouse_plugin_support'])) {
 	print '<div class="tabsAction tabsActionNoBottom">';
 	print '<a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&amp;action=update_remote_warehouses&token='.ecommercengNewToken().'">' . $langs->trans('ECommerceUpdateRemoteWarehouses') . '</a>';
 	print '</div>';
@@ -207,15 +208,15 @@ if (!empty($object->parameters['order_actions']['create_invoice'])) {
 	print '</td></tr>' . "\n";
 }
 
-if (!empty($object->parameters['order_actions']['create_supplier_invoice'])) {
-	// Warehouse used when valid a supplier invoice
-	print '<tr class="oddeven">' . "\n";
-	print '<td>' . $langs->trans("ECommerceValidSupplierInvoiceWarehouse") . '</td>' . "\n";
-	print '<td>' . $langs->transnoentities("ECommerceValidSupplierInvoiceWarehouseDescription") . '</td>' . "\n";
-	print '<td class="right">' . "\n";
-	print $formproduct->selectWarehouses($object->parameters['order_actions']['valid_supplier_invoice_fk_warehouse'], 'valid_supplier_invoice_fk_warehouse', 0, 1);
-	print '</td></tr>' . "\n";
-}
+//if (!empty($object->parameters['order_actions']['create_supplier_invoice'])) {
+//	// Warehouse used when valid a supplier invoice
+//	print '<tr class="oddeven">' . "\n";
+//	print '<td>' . $langs->trans("ECommerceValidSupplierInvoiceWarehouse") . '</td>' . "\n";
+//	print '<td>' . $langs->transnoentities("ECommerceValidSupplierInvoiceWarehouseDescription") . '</td>' . "\n";
+//	print '<td class="right">' . "\n";
+//	print $formproduct->selectWarehouses($object->parameters['order_actions']['valid_supplier_invoice_fk_warehouse'], 'valid_supplier_invoice_fk_warehouse', 0, 1);
+//	print '</td></tr>' . "\n";
+//}
 
 // Synchronize sens
 print '<tr class="oddeven">' . "\n";
@@ -231,15 +232,19 @@ print $form->selectarray('stock_sync_direction', $synchronize_sens, $object->sto
 print '</td></tr>' . "\n";
 
 if (in_array($object->stock_sync_direction, [ 'dolibarr2ecommerce', 'ecommerce2dolibarr' ])) {
-	// Support of WooCommerce plugin : Stock Locations for WooCommerce
+	// Support of WooCommerce warehouse plugins : Stock Locations for WooCommerce, WooCommerce Multi Locations Inventory Management
 	print '<tr class="oddeven">' . "\n";
-	print '<td>' . $langs->trans("ECommerceWoocommerceEnableWarehouseSlPluginSupport") . '</td>' . "\n";
-	print '<td>' . $langs->transnoentities("ECommerceWoocommerceEnableWarehousePluginSlSupportDescription") . '</td>' . "\n";
+	print '<td>' . $langs->trans("ECommerceWoocommerceEnableWarehousePluginSupport") . '</td>' . "\n";
+	print '<td>' . $langs->transnoentities("ECommerceWoocommerceEnableWarehousePluginSupportDescription") . '</td>' . "\n";
 	print '<td class="right">' . "\n";
-	print '<input type="checkbox" name="enable_warehouse_plugin_sl_support" value="1"' . (!empty($object->parameters['enable_warehouse_plugin_sl_support']) ? ' checked' : '') . ' />' . "\n";
+	$warehouse_plugins = array(
+		'slfw' => $langs->trans('ECommerceWoocommerceWarehousePluginStockLocationForWooCommerce'),
+		'wmlim' => $langs->trans('ECommerceWoocommerceWarehousePluginWooCommerceMultiLocationsInventoryManagement'),
+	);
+	print $form->selectarray('enable_warehouse_plugin_support', $warehouse_plugins, $object->parameters['enable_warehouse_plugin_support'], 1, 0, 0, '', 0, 0, 0, 0, 'minwidth200 centpercent');
 	print '</td></tr>' . "\n";
 
-	if (empty($object->parameters['enable_warehouse_plugin_sl_support'])) {
+	if (empty($object->parameters['enable_warehouse_plugin_support'])) {
 		// Warehouses
 		print '<tr class="oddeven">' . "\n";
 		print '<td>' . $langs->trans("ECommerceStockProduct") . '</td>' . "\n";
@@ -264,7 +269,7 @@ print '</div>';
 
 print '</form>';
 
-if (!empty($object->parameters['enable_warehouse_plugin_sl_support'])) {
+if (!empty($object->parameters['enable_warehouse_plugin_support'])) {
 	/**
 	 * Remote warehouses
 	 */
@@ -277,21 +282,21 @@ if (!empty($object->parameters['enable_warehouse_plugin_sl_support'])) {
 
 	print '<table class="noborder centpercent">';
 	print '<tr class="liste_titre">';
-	print '<td class="20p">' . $langs->trans("Code") . '</td>' . "\n";
-	print '<td>' . $langs->trans("ECommerceRemoteID") . '</td>' . "\n";
+	print '<td class="20p">' . $langs->trans("ECommerceRemoteID") . '</td>' . "\n";
+	print '<td>' . $langs->trans("Code") . '</td>' . "\n";
     print '<td>' . $langs->trans("Label") . '</td>' . "\n";
 	print '<td>' . $langs->trans("Warehouse") . '</td>' . "\n";
 	print '<td>' . $langs->trans("ECommerceWarehouseSetToZeroEvenIfEmptyStock") . '</td>' . "\n";
 	print '<td>' . $langs->trans("ECommerceWarehouseOldEntry") . '</td>' . "\n";
 	print "</tr>\n";
 
-	foreach ($remote_warehouses as $remote_code => $infos) {
+	foreach ($remote_warehouses as $remote_warehouse_id => $infos) {
 		print '<tr class="oddeven">' . "\n";
-		print '<td>' . $remote_code . '</td>' . "\n";
 		print '<td>' . $infos['remote_id'] . '</td>' . "\n";
+		print '<td>' . $infos['remote_code'] . '</td>' . "\n";
         print '<td>' . $infos['remote_name'] . '</td>' . "\n";
-		print '<td>' . $formproduct->selectWarehouses($infos['warehouse_id'], 'warehouse_id_' . $remote_code, 0, 1) . '</td>' . "\n";
-		print '<td><input type="checkbox" id="set_even_if_empty_stock_' . $remote_code .'" name="set_even_if_empty_stock_' . $remote_code .'" value="1"' . (!empty($infos['set_even_if_empty_stock']) ? ' checked' : '') . '></td>' . "\n";
+		print '<td>' . $formproduct->selectWarehouses($infos['warehouse_id'], 'warehouse_id_' . $remote_warehouse_id, 0, 1) . '</td>' . "\n";
+		print '<td><input type="checkbox" id="set_even_if_empty_stock_' . $remote_warehouse_id .'" name="set_even_if_empty_stock_' . $remote_warehouse_id .'" value="1"' . (!empty($infos['set_even_if_empty_stock']) ? ' checked' : '') . '></td>' . "\n";
 		print '<td>' . yn($infos['old_entry']) . '</td>' . "\n";
 		print '</tr>' . "\n";
 	}

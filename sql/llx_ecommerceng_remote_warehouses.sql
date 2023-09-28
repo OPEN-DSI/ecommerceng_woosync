@@ -20,8 +20,8 @@ create table llx_ecommerceng_remote_warehouses
 (
 	rowid							integer			AUTO_INCREMENT PRIMARY KEY,
 	site_id							integer			NOT NULL,
-	remote_code						varchar(255)	NOT NULL,	--Remote warehouse code
     remote_id						varchar(255)	NOT NULL,	--Remote warehouse ID
+	remote_code						varchar(255)	NOT NULL,	--Remote warehouse code
 	remote_name						varchar(255)	NOT NULL,	--Remote warehouse name
 	warehouse_id					integer,					-- Dolibarr warehouse ID
 	set_even_if_empty_stock			tinyint(1),					-- Flag for set the stock of the warehouse even if the stock is empty

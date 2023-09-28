@@ -3600,7 +3600,7 @@ class eCommerceSynchro
                             $product->load_stock();
 
                             $new_warehouses_stock = array();
-                            if (!empty($this->eCommerceSite->parameters['enable_warehouse_plugin_sl_support'])) {
+                            if (!empty($this->eCommerceSite->parameters['enable_warehouse_plugin_support'])) {
                                 dol_include_once('/ecommerceng/class/data/eCommerceRemoteWarehouses.class.php');
                                 $eCommerceRemoteWarehouses = new eCommerceRemoteWarehouses($this->db);
                                 $remote_warehouses = $eCommerceRemoteWarehouses->get_all($this->eCommerceSite->id);
@@ -3610,11 +3610,11 @@ class eCommerceSynchro
                                 }
 
                                 if (!$error && !empty($product_data['stock_by_warehouse'])) {
-                                    foreach ($product_data['stock_by_warehouse'] as $remote_warehouse_code => $stock) {
-                                        $local_warehouse_id = isset($remote_warehouses[$remote_warehouse_code]['warehouse_id']) && $remote_warehouses[$remote_warehouse_code]['warehouse_id'] > 0 ? $remote_warehouses[$remote_warehouse_code]['warehouse_id'] : 0;
+                                    foreach ($product_data['stock_by_warehouse'] as $remote_warehouse_id => $stock) {
+                                        $local_warehouse_id = isset($remote_warehouses[$remote_warehouse_id]['warehouse_id']) && $remote_warehouses[$remote_warehouse_id]['warehouse_id'] > 0 ? $remote_warehouses[$remote_warehouse_id]['warehouse_id'] : 0;
                                         if (empty($local_warehouse_id)) {
                                             $error++;
-                                            $this->errors[] = 'Error - Unknown remote warehouse : ' . $remote_warehouse_code;
+                                            $this->errors[] = 'Error - Unknown remote warehouse : ' . $remote_warehouse_id;
                                         } else {
                                             $current_stock = isset($product->stock_warehouse[$local_warehouse_id]->real) ? $product->stock_warehouse[$local_warehouse_id]->real : 0;
                                             $new_warehouses_stock[$this->eCommerceSite->fk_warehouse] = price2num($stock - $current_stock);
@@ -4245,7 +4245,7 @@ class eCommerceSynchro
                                 if (!$error) {
                                     $third_party = new Societe($this->db);
                                     $third_party->fetch($third_party_id);
-                                    if (empty($third_party->default_lang) && !empty($order_data['language']) && $order_datarder['language'] != 'ec_none') {
+                                    if (empty($third_party->default_lang) && !empty($order_data['language']) && $order_data['language'] != 'ec_none') {
                                         $third_party->default_lang = $order_data['language'];
 
                                         $result = $third_party->update($third_party->id, $this->user);
@@ -4516,6 +4516,7 @@ class eCommerceSynchro
 									}
 
 									// Add product line if new created
+									$warehouseByLine = array();
 									if (!$error && $new_order && count($order_data['items'])) {
 										if (empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD)) {
 											// Get products to synchronize
@@ -4587,61 +4588,78 @@ class eCommerceSynchro
 													$fk_product = $item['id_product'];
 												}
 
-												if (!$error) {
-													// Define the buy price for margin calculation
-													if (isset($item['buy_price'])) {
-														$buy_price = $item['buy_price'];
-													} else {
-														$buy_price = 0;
-														if ($fk_product > 0) {
-															$result = $order->defineBuyPrice(0, 0, $fk_product);
-															if ($result < 0) {
-																$this->errors[] = $this->langs->trans('ECommerceErrorOrderDefineBuyPrice', $fk_product, $buy_price);
-																if (!empty($order->error)) $this->errors[] = $order->error;
-																$this->errors = array_merge($this->errors, $order->errors);
-																$error++;
-																break;    // break on items
-															} else {
-																$buy_price = $result;
-															}
-														}
-														if (empty($buy_price) && isset($conf->global->ForceBuyingPriceIfNull) && $conf->global->ForceBuyingPriceIfNull > 0) {
-															$buy_price = $item['price'];
+												// Define the buy price for margin calculation
+												if (isset($item['buy_price'])) {
+													$buy_price = $item['buy_price'];
+												} else {
+													$buy_price = 0;
+													if ($fk_product > 0) {
+														$result = $order->defineBuyPrice(0, 0, $fk_product);
+														if ($result < 0) {
+															$this->errors[] = $this->langs->trans('ECommerceErrorOrderDefineBuyPrice', $fk_product, $buy_price);
+															if (!empty($order->error)) $this->errors[] = $order->error;
+															$this->errors = array_merge($this->errors, $order->errors);
+															$error++;
+															break;    // break on items
+														} else {
+															$buy_price = $result;
 														}
 													}
-
-													$label = !empty($item['label']) ? $item['label'] : '';
-													$price = $item['price'];
-													$discount = $item['discount'];
-													$description = $item['description'];
-													if (empty($description) && $fk_product > 0) {
-														$product = new Product($this->db);
-														$product->fetch($fk_product);
-														$description = $product->description;
+													if (empty($buy_price) && isset($conf->global->ForceBuyingPriceIfNull) && $conf->global->ForceBuyingPriceIfNull > 0) {
+														$buy_price = $item['price'];
 													}
-													$description = dol_concatdesc($description, $item['additional_description']);
-													$product_type = $item['product_type'] != "simple" ? 1 : 0;
+												}
 
-													$array_options = $this->getDefaultExtraFields('commandedet', $this->eCommerceSite);
-													if (is_array($item['extrafields'])) {
-														foreach ($item['extrafields'] as $extrafield => $extrafield_value) {
-															$array_options['options_' . $extrafield] = $extrafield_value;
-														}
+												$label = !empty($item['label']) ? $item['label'] : '';
+												$price = $item['price'];
+												$discount = $item['discount'];
+												$description = $item['description'];
+												if (empty($description) && $fk_product > 0) {
+													$product = new Product($this->db);
+													$product->fetch($fk_product);
+													$description = $product->description;
+												}
+												$description = dol_concatdesc($description, $item['additional_description']);
+												$product_type = $item['product_type'] != "simple" ? 1 : 0;
+
+												$array_options = $this->getDefaultExtraFields('commandedet', $this->eCommerceSite);
+												if (is_array($item['extrafields'])) {
+													foreach ($item['extrafields'] as $extrafield => $extrafield_value) {
+														$array_options['options_' . $extrafield] = $extrafield_value;
 													}
+												}
 
-													$fk_parent_line = isset($parent_match[$item['parent_item_id']]) ? $parent_match[$item['parent_item_id']] : 0;
-													$result = $order->addline($description, $price, $item['qty'], $item['tva_tx'], $item['local_tax1_tx'], $item['local_tax2_tx'],
-														$fk_product, $discount, 0, 0, 'HT', 0, '', '',
-														$product_type, -1, 0, $fk_parent_line, 0, $buy_price, $label, $array_options,
-														0, '', 0, 0);
-													if ($result <= 0) {
-														$this->errors[] = $this->langs->trans('ECommerceErrorOrderAddLine');
-														if (!empty($order->error)) $this->errors[] = $order->error;
-														$this->errors = array_merge($this->errors, $order->errors);
+												$fk_parent_line = isset($parent_match[$item['parent_item_id']]) ? $parent_match[$item['parent_item_id']] : 0;
+												$result = $order->addline($description, $price, $item['qty'], $item['tva_tx'], $item['local_tax1_tx'], $item['local_tax2_tx'],
+													$fk_product, $discount, 0, 0, 'HT', 0, '', '',
+													$product_type, -1, 0, $fk_parent_line, 0, $buy_price, $label, $array_options,
+													0, '', 0, 0);
+												if ($result <= 0) {
+													$this->errors[] = $this->langs->trans('ECommerceErrorOrderAddLine');
+													if (!empty($order->error)) $this->errors[] = $order->error;
+													$this->errors = array_merge($this->errors, $order->errors);
+													$error++;
+													break;  // break on items
+												}
+												$parent_match[$item['item_id']] = $result;
+
+												// Set import_key on the line with remote line ID
+												if ($item['type'] == 'product' && $item['item_id'] > 0) {
+													$sql = "UPDATE " . MAIN_DB_PREFIX . $order->table_element_line .
+														" SET import_key = '" . $this->db->escape($item['item_id']) . "'" .
+														" WHERE rowid = " . $result;
+													$resql = $this->db->query($sql);
+													if (!$resql) {
+														$this->errors[] = $this->langs->trans('ECommerceErrorSetRemoteProductLineIdIntoImportKey');
+														$this->errors[] = $this->db->lasterror();
 														$error++;
 														break;  // break on items
 													}
-													$parent_match[$item['item_id']] = $result;
+												}
+
+												// Support movement stock different by product
+												if ($fk_product > 0 && !empty($item['remote_warehouse_id']) && $item['remote_warehouse_id'] > 0) {
+													$warehouseByLine[$result] = $item['remote_warehouse_id'];
 												}
 
 												unset($this->eCommerceProduct);
@@ -4723,20 +4741,24 @@ class eCommerceSynchro
 
 									// Update the order status
 									if (!$error && ($new_order || ($order->statut != $order_data['status']))) {        // Always when creating
-										$warehouse_id = $this->eCommerceSite->parameters['order_actions']['valid_order_fk_warehouse'] > 0 ? $this->eCommerceSite->parameters['order_actions']['valid_order_fk_warehouse'] : 0;
+										$warehouse_id = $this->eCommerceSite->parameters['order_actions']['valid_order_fk_warehouse'] > 0 && empty($warehouseByLine) ? $this->eCommerceSite->parameters['order_actions']['valid_order_fk_warehouse'] : 0;
+										if (empty($warehouse_id) && empty($warehouseByLine) && !empty($conf->global->STOCK_CALCULATE_ON_VALIDATE_ORDER) && $conf->global->STOCK_CALCULATE_ON_VALIDATE_ORDER == 1) {
+											$this->errors[] = $this->langs->trans('ECommerceErrorValidOrderWarehouseNotConfigured');
+											$error++;
+										}
 
 										// Valid the order if the distant order is not at the draft status but the order is draft. For set the order ref.
-										if ($order_data['status'] != Commande::STATUS_DRAFT && $order->statut == Commande::STATUS_DRAFT) {
-											if (empty($warehouse_id) && !empty($conf->global->STOCK_CALCULATE_ON_VALIDATE_ORDER) && $conf->global->STOCK_CALCULATE_ON_VALIDATE_ORDER == 1) {
+										if (!$error && $order_data['status'] != Commande::STATUS_DRAFT && $order->statut == Commande::STATUS_DRAFT) {
+											$result = $order->valid($this->user, $warehouse_id);
+											if ($result < 0) {
 												$this->errors[] = $this->langs->trans('ECommerceErrorValidOrder');
-												$this->errors[] = $this->langs->trans('ECommerceErrorValidOrderWarehouseNotConfigured');
+												if (!empty($order->error)) $this->errors[] = $order->error;
+												$this->errors = array_merge($this->errors, $order->errors);
 												$error++;
 											} else {
-												$result = $order->valid($this->user, $warehouse_id);
+												$result = $this->setLinesMovementStockOnDifferentWarehouse($order, $warehouseByLine);
 												if ($result < 0) {
-													$this->errors[] = $this->langs->trans('ECommerceErrorValidOrder');
-													if (!empty($order->error)) $this->errors[] = $order->error;
-													$this->errors = array_merge($this->errors, $order->errors);
+													$this->errors[] = $this->langs->trans("ECommerceErrorWhenMovementStockOnDifferentWarehouse");
 													$error++;
 												}
 											}
@@ -4767,6 +4789,12 @@ class eCommerceSynchro
 													if (!empty($order->error)) $this->errors[] = $order->error;
 													$this->errors = array_merge($this->errors, $order->errors);
 													$error++;
+												} else {
+													$result = $this->setLinesMovementStockOnDifferentWarehouse($order, $warehouseByLine, true);
+													if ($result < 0) {
+														$this->errors[] = $this->langs->trans("ECommerceErrorWhenMovementStockOnDifferentWarehouse");
+														$error++;
+													}
 												}
 											} elseif ($order_data['status'] == Commande::STATUS_CLOSED) {
 												if ($order->statut != Commande::STATUS_CLOSED) {
@@ -4903,6 +4931,75 @@ class eCommerceSynchro
 		} else {
 			return $order->id > 0 ? $order->id : 0;
 		}
+	}
+
+	/**
+	 * Set movement stock for each product line on different warehouse
+	 *
+	 * @param	CommonObject	$object				Object handler
+	 * @param	array			$warehouseByLine	List of warehouse ID for each line
+	 * @param	boolean			$undoMovement		True to undo movements
+	 * @return	int									<0 if KO, >0 if OK
+	 */
+	public function setLinesMovementStockOnDifferentWarehouse($object, $warehouseByLine, $undoMovement = false)
+	{
+		global $conf;
+
+		$canMakeMovement = !empty($warehouseByLine) && !empty($conf->stock->enabled);
+		if ($object->element == 'commande') {
+			$canMakeMovement &= !empty($conf->global->STOCK_CALCULATE_ON_VALIDATE_ORDER) && $conf->global->STOCK_CALCULATE_ON_VALIDATE_ORDER == 1;
+			$movementLabel = $this->langs->trans($undoMovement ? "OrderCanceledInDolibarr" : "OrderValidatedInDolibarr", $object->ref);
+			$movementDelivery = empty($undoMovement);
+		} elseif ($object->element == 'facture') {
+			$canMakeMovement &= $object->type != Facture::TYPE_DEPOSIT && !empty($conf->global->STOCK_CALCULATE_ON_BILL);
+			$movementLabel = $this->langs->trans($undoMovement ? "InvoiceBackToDraftInDolibarr" : "InvoiceValidatedInDolibarr", $object->ref);
+			$movementDelivery = empty($undoMovement) && $object->type != Facture::TYPE_CREDIT_NOTE;
+		} else {
+			$this->errors[] = $this->langs->trans("ECommerceErrorElementNotSupportedForLinesMovementStockOnDifferentWarehouse", $object->element);
+			return -1;
+		}
+
+		// If stock can be incremented/decremented
+		if ($canMakeMovement) {
+			require_once DOL_DOCUMENT_ROOT.'/product/stock/class/mouvementstock.class.php';
+			$this->langs->load("agenda");
+
+			$error = 0;
+			$this->db->begin();
+			foreach ($object->lines as $line) {
+				if ($line->fk_product > 0) {
+					if (!isset($warehouseByLine[$line->id])) {
+						$this->errors[] = $this->langs->trans("ECommerceErrorWarehouseIdNotSpecifiedForTheLine", $line->fk_product);
+						$error++;
+						break;
+					}
+
+					$mouvP = new MouvementStock($this->db);
+					$mouvP->origin = &$object;
+					if ($movementDelivery) {
+						// We decremented stock of product (and sub-products)
+						$result = $mouvP->livraison($this->user, $line->fk_product, $warehouseByLine[$line->id], $line->qty, $line->subprice, $movementLabel);
+					} else {
+						// We increment stock of product (and sub-products)
+						$result = $mouvP->reception($this->user, $line->fk_product, $warehouseByLine[$line->id], $line->qty, 0, $movementLabel); // price is 0, we don't want WAP to be changed
+					}
+					if ($result < 0) {
+						$this->errors[] = $mouvP->errorsToString();
+						$error++;
+						break;
+					}
+				}
+			}
+
+			if ($error) {
+				$this->db->rollback();
+				return -1;
+			} else {
+				$this->db->commit();
+			}
+		}
+
+		return 1;
 	}
 
 	/**
@@ -5126,6 +5223,7 @@ class eCommerceSynchro
 										}
 
 										// Add product lines and contacts
+										$warehouseByLine = array();
 										if (!$error) {
 											if ($order->id > 0) {
 												if (empty($order->lines)) {
@@ -5311,6 +5409,11 @@ class eCommerceSynchro
 																	// Defined the new fk_parent_line
 																	if ($line->product_type == 9) {
 																		$fk_parent_line = $result;
+																	}
+
+																	// Support movement stock different by product
+																	if ($line->fk_product > 0 && !empty($line->import_key) && !empty($order_data['items'][$line->import_key]['remote_warehouse_id']) && $order_data['items'][$line->import_key]['remote_warehouse_id'] > 0) {
+																		$warehouseByLine[$result] = $order_data['items'][$line->import_key]['remote_warehouse_id'];
 																	}
 																}
 															}
@@ -5594,6 +5697,11 @@ class eCommerceSynchro
 																			break;  // break on items
 																		}
 																		$parent_match[$item['item_id']] = $result;
+
+																		// Support movement stock different by product
+																		if ($fk_product > 0 && !empty($item['remote_warehouse_id']) && $item['remote_warehouse_id'] > 0) {
+																			$warehouseByLine[$result] = $item['remote_warehouse_id'];
+																		}
 																	}
 																}
 
@@ -5870,7 +5978,11 @@ class eCommerceSynchro
 										}
 
 										// Get warehouse ID
-										$warehouse_id = $this->eCommerceSite->parameters['order_actions']['valid_invoice_fk_warehouse'] > 0 ? $this->eCommerceSite->parameters['order_actions']['valid_invoice_fk_warehouse'] : 0;
+										$warehouse_id = $this->eCommerceSite->parameters['order_actions']['valid_invoice_fk_warehouse'] > 0 && empty($warehouseByLine) ? $this->eCommerceSite->parameters['order_actions']['valid_invoice_fk_warehouse'] : 0;
+										if (empty($warehouse_id) && empty($warehouseByLine) && !empty($conf->global->STOCK_CALCULATE_ON_BILL)) {
+											$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceValidateWarehouseNotConfigured');
+											$error++;
+										}
 
 										if ($isDepositType) {
 											$save_WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER = $conf->global->WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER;
@@ -5883,16 +5995,16 @@ class eCommerceSynchro
 
 										// Validate invoice
 										if (!$error) {
-											if (empty($warehouse_id) && !empty($conf->global->STOCK_CALCULATE_ON_BILL)) {
+											$result = $invoice->validate($this->user, '', $warehouse_id);
+											if ($result < 0) {
 												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceValidate');
-												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceValidateWarehouseNotConfigured');
+												if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+												$this->errors = array_merge($this->errors, $invoice->errors);
 												$error++;
 											} else {
-												$result = $invoice->validate($this->user, '', $warehouse_id);
+												$result = $this->setLinesMovementStockOnDifferentWarehouse($invoice, $warehouseByLine);
 												if ($result < 0) {
-													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceValidate');
-													if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-													$this->errors = array_merge($this->errors, $invoice->errors);
+													$this->errors[] = $this->langs->trans("ECommerceErrorWhenMovementStockOnDifferentWarehouse");
 													$error++;
 												}
 											}
@@ -6593,6 +6705,7 @@ class eCommerceSynchro
 									}
 
 									// Add product lines and contacts
+									$warehouseByLine = array();
 									if (!$error) {
 										if ($order->id > 0) {
 											if (empty($order->lines)) {
@@ -6888,6 +7001,11 @@ class eCommerceSynchro
 																	break;  // break on items
 																}
 																$parent_match[$item['item_id']] = $result;
+
+													// Support movement stock different by product
+													if ($fk_product > 0 && !empty($item['remote_warehouse_id']) && $item['remote_warehouse_id'] > 0) {
+														$warehouseByLine[$result] = $item['remote_warehouse_id'];
+													}
 															}
 														}
 
@@ -7164,6 +7282,10 @@ class eCommerceSynchro
 
 									// Get warehouse ID
 									$warehouse_id = $this->eCommerceSite->parameters['order_actions']['valid_invoice_fk_warehouse'] > 0 ? $this->eCommerceSite->parameters['order_actions']['valid_invoice_fk_warehouse'] : 0;
+									if (empty($warehouse_id) && empty($warehouseByLine) && !empty($conf->global->STOCK_CALCULATE_ON_BILL)) {
+										$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceValidateWarehouseNotConfigured');
+										$error++;
+									}
 
 									// Validate invoice
 									if (!$error) {
@@ -7173,6 +7295,12 @@ class eCommerceSynchro
 											if (!empty($invoice_refund->error)) $this->errors[] = $invoice_refund->error;
 											$this->errors = array_merge($this->errors, $invoice_refund->errors);
 											$error++;
+										} else {
+											$result = $this->setLinesMovementStockOnDifferentWarehouse($invoice_refund, $warehouseByLine);
+											if ($result < 0) {
+												$this->errors[] = $this->langs->trans("ECommerceErrorWhenMovementStockOnDifferentWarehouse");
+												$error++;
+											}
 										}
 									}
 

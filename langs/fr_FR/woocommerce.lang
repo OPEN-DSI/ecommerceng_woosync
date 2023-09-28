@@ -71,8 +71,10 @@ ECommerceWoocommerceErrorDisableDictAttribute                        =Erreur de 
 ECommerceWoocommerceErrorAddDictAttribute                            =Erreur d'ajout d'un attribut, slug:"%s", nom:"%s", erreur:"%s"
 ECommerceWoocommerceErrorUpdateDictAttribute                         =Erreur de mise à jour d'un attribut, slug:"%s", erreur:"%s"
 
-ECommerceWoocommerceEnableWarehouseSlPluginSupport                   = Stock Locations
-ECommerceWoocommerceEnableWarehousePluginSlSupportDescription        = Active le support de l'extension "Stock Locations" installée sur WooCommerce
+ECommerceWoocommerceEnableWarehousePluginSupport                                = Extension de gestion d'entrepôts
+ECommerceWoocommerceEnableWarehousePluginSupportDescription                     = Selectionner l'extension supporté gérant les entrepôts installée sur WooCommerce
+ECommerceWoocommerceWarehousePluginStockLocationForWooCommerce                  = Stock Locations for WooCommerce
+ECommerceWoocommerceWarehousePluginWooCommerceMultiLocationsInventoryManagement = WooCommerce Multi Locations Inventory Management
 
 ECommerceWoocommerceEnableProductWpmlPluginSupport                   = WPML
 ECommerceWoocommerceEnableProductWpmlPluginSupportDescription        = Active le support de l'extension "WPML" installée sur WooCommerce
