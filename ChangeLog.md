@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.1.58.0
+- Ignore la synchronisation de l'entrepot distant s'il n'est pas associé avec un entrepôt dolibarr.
+- Correction du script de synchronisation des produits vers le site
+
 ## 4.1.57.0
 - Ajout du support de l'extension woocommerce "WooCommerce Multi Locations Inventory Management".
 - Correction synchro attribut de produit de dolibarr vers le site.

@@ -325,7 +325,7 @@ ECommerceCreateOrderDescription                                                 
 ECommerceCreateInvoiceIfAmount0                                                                     =Créer la facture même si le montant est nul
 ECommerceCreateInvoiceIfAmount0Description                                                          =Créer la facture même si le montant est nul lors de la synchronisation de la commande
 
-ECommerceRemoteWarehousesCorrespondence                                                             =Correspondance des entrpôts avec le site
+ECommerceRemoteWarehousesCorrespondence                                                             =Correspondance des entrpôts avec le site ( ignoré si l'entrepôt n'est pas configuré )
 ECommerceWarehouseSetToZeroEvenIfEmptyStock                                                         =Definie le stock même si la quantité est à zero
 ECommerceWarehouseOldEntry                                                                          =Ancien entrepôt
 ECommerceUpdateRemoteWarehouses                                                                     =Mise à jour des entrepôts distants
