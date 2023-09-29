@@ -188,35 +188,37 @@ print '<td>'.$langs->trans("Description").'</td>'."\n";
 print '<td class="right">'.$langs->trans("Value").'</td>'."\n";
 print "</tr>\n";
 
-if (!empty($object->parameters['order_actions']['create_order'])) {
-	// Warehouse used when valid a order
-	print '<tr class="oddeven">' . "\n";
-	print '<td>' . $langs->trans("ECommerceValidOrderWarehouse") . '</td>' . "\n";
-	print '<td>' . $langs->transnoentities("ECommerceValidOrderWarehouseDescription") . '</td>' . "\n";
-	print '<td class="right">' . "\n";
-	print $formproduct->selectWarehouses($object->parameters['order_actions']['valid_order_fk_warehouse'], 'valid_order_fk_warehouse', 0, 1);
-	print '</td></tr>' . "\n";
-}
+if ($object->parameters['enable_warehouse_plugin_support'] != 'wmlim') {
+	if (!empty($object->parameters['order_actions']['create_order'])) {
+		// Warehouse used when valid a order
+		print '<tr class="oddeven">' . "\n";
+		print '<td>' . $langs->trans("ECommerceValidOrderWarehouse") . '</td>' . "\n";
+		print '<td>' . $langs->transnoentities("ECommerceValidOrderWarehouseDescription") . '</td>' . "\n";
+		print '<td class="right">' . "\n";
+		print $formproduct->selectWarehouses($object->parameters['order_actions']['valid_order_fk_warehouse'], 'valid_order_fk_warehouse', 0, 1);
+		print '</td></tr>' . "\n";
+	}
 
-if (!empty($object->parameters['order_actions']['create_invoice'])) {
-	// Warehouse used when valid a invoice
-	print '<tr class="oddeven">' . "\n";
-	print '<td>' . $langs->trans("ECommerceValidInvoiceWarehouse") . '</td>' . "\n";
-	print '<td>' . $langs->transnoentities("ECommerceValidInvoiceWarehouseDescription") . '</td>' . "\n";
-	print '<td class="right">' . "\n";
-	print $formproduct->selectWarehouses($object->parameters['order_actions']['valid_invoice_fk_warehouse'], 'valid_invoice_fk_warehouse', 0, 1);
-	print '</td></tr>' . "\n";
-}
+	if (!empty($object->parameters['order_actions']['create_invoice'])) {
+		// Warehouse used when valid a invoice
+		print '<tr class="oddeven">' . "\n";
+		print '<td>' . $langs->trans("ECommerceValidInvoiceWarehouse") . '</td>' . "\n";
+		print '<td>' . $langs->transnoentities("ECommerceValidInvoiceWarehouseDescription") . '</td>' . "\n";
+		print '<td class="right">' . "\n";
+		print $formproduct->selectWarehouses($object->parameters['order_actions']['valid_invoice_fk_warehouse'], 'valid_invoice_fk_warehouse', 0, 1);
+		print '</td></tr>' . "\n";
+	}
 
-//if (!empty($object->parameters['order_actions']['create_supplier_invoice'])) {
-//	// Warehouse used when valid a supplier invoice
-//	print '<tr class="oddeven">' . "\n";
-//	print '<td>' . $langs->trans("ECommerceValidSupplierInvoiceWarehouse") . '</td>' . "\n";
-//	print '<td>' . $langs->transnoentities("ECommerceValidSupplierInvoiceWarehouseDescription") . '</td>' . "\n";
-//	print '<td class="right">' . "\n";
-//	print $formproduct->selectWarehouses($object->parameters['order_actions']['valid_supplier_invoice_fk_warehouse'], 'valid_supplier_invoice_fk_warehouse', 0, 1);
-//	print '</td></tr>' . "\n";
-//}
+	//if (!empty($object->parameters['order_actions']['create_supplier_invoice'])) {
+	//	// Warehouse used when valid a supplier invoice
+	//	print '<tr class="oddeven">' . "\n";
+	//	print '<td>' . $langs->trans("ECommerceValidSupplierInvoiceWarehouse") . '</td>' . "\n";
+	//	print '<td>' . $langs->transnoentities("ECommerceValidSupplierInvoiceWarehouseDescription") . '</td>' . "\n";
+	//	print '<td class="right">' . "\n";
+	//	print $formproduct->selectWarehouses($object->parameters['order_actions']['valid_supplier_invoice_fk_warehouse'], 'valid_supplier_invoice_fk_warehouse', 0, 1);
+	//	print '</td></tr>' . "\n";
+	//}
+}
 
 // Synchronize sens
 print '<tr class="oddeven">' . "\n";

@@ -812,6 +812,7 @@ function ecommerceng_update_remote_warehouses($db, $site)
 	foreach ($remote_warehouses_list as $remote_warehouse_id => $infos) {
 		$finalRemoteWarehouses[$remote_warehouse_id] = array(
 			'remote_id' => $infos['remote_id'],
+			'remote_code' => $infos['remote_code'],
             'remote_name' => $infos['name'],
 			'warehouse_id' => $currentRemoteWarehouses[$remote_warehouse_id]['warehouse_id'] > 0 ? $currentRemoteWarehouses[$remote_warehouse_id]['warehouse_id'] : 0,
 			'set_even_if_empty_stock' => $currentRemoteWarehouses[$remote_warehouse_id]['set_even_if_empty_stock'] > 0 ? $currentRemoteWarehouses[$remote_warehouse_id]['set_even_if_empty_stock'] : 0,
@@ -824,6 +825,7 @@ function ecommerceng_update_remote_warehouses($db, $site)
 		if (!isset($finalRemoteWarehouses[$remote_warehouse_id])) {
 			$finalRemoteWarehouses[$remote_warehouse_id] = array(
 				'remote_id' => $infos['remote_id'],
+				'remote_code' => $infos['remote_code'],
                 'remote_name' => $infos['name'],
 				'warehouse_id' => $infos['warehouse_id'],
 				'set_even_if_empty_stock' => $infos['set_even_if_empty_stock'],

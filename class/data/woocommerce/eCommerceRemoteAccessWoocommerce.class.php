@@ -5412,7 +5412,12 @@ class eCommerceRemoteAccessWoocommerce
 		// plugin warehouse support
 		if (!empty($this->site->parameters['enable_warehouse_plugin_support'])) {
 			$plugin_support = $this->site->parameters['enable_warehouse_plugin_support'];
-			$remote_warehouses = $this->worpressclient->sendToApi(eCommerceClientApi::METHOD_GET, 'location');
+			if ($plugin_support == 'wmlim') {
+				$remote_warehouses = $this->client->sendToApi(eCommerceClientApi::METHOD_GET, 'locations');
+			} else {
+				$remote_warehouses = $this->worpressclient->sendToApi(eCommerceClientApi::METHOD_GET, 'location');
+			}
+			$remote_warehouses = $this->worpressclient->sendToApi(eCommerceClientApi::METHOD_GET, $plugin_support == 'wmlim' ? 'locations' : 'location');
 			if (!isset($remote_warehouses)) {
 				$this->errors[] = $langs->trans('ECommerceWoocommerceGetAllWoocommerceRemoteWarehouses', $this->site->name);
                 $this->errors[] = $this->worpressclient->errorsToString();
@@ -5421,8 +5426,10 @@ class eCommerceRemoteAccessWoocommerce
 			}
 
 			foreach ($remote_warehouses as $infos) {
-				$remoteWarehousesTable[$infos["slug"]] = [
-					'remote_id' => $plugin_support == 'wmlim' ? $infos["term_id"] : $infos["id"],
+				$remote_id = $infos["id"];
+				$remoteWarehousesTable[$remote_id] = [
+					'remote_code' => $infos["slug"],
+					'remote_id' => $remote_id,
 					'name' => $infos["name"],
 					'parent' => $infos["parent"],
 				];
