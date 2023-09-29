@@ -3613,6 +3613,7 @@ class eCommerceSynchro
                                     foreach ($product_data['stock_by_warehouse'] as $remote_warehouse_id => $stock) {
                                         $local_warehouse_id = isset($remote_warehouses[$remote_warehouse_id]['warehouse_id']) && $remote_warehouses[$remote_warehouse_id]['warehouse_id'] > 0 ? $remote_warehouses[$remote_warehouse_id]['warehouse_id'] : 0;
                                         if (empty($local_warehouse_id)) {
+											dol_syslog(__METHOD__ . ' Warehouse not configured for remote warehouse ID ' . '');
                                             $error++;
                                             $this->errors[] = 'Error - Unknown remote warehouse : ' . $remote_warehouse_id;
                                         } else {

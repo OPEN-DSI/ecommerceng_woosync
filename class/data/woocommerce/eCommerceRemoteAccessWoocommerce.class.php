@@ -3133,8 +3133,8 @@ class eCommerceRemoteAccessWoocommerce
 					}
 
 					// Synch extrafields <=> attributes
-					if (!empty($this->site->parameters['extra_fields']['product']['activated']['mdt'][$cr_key])) {
-						$data_key = $this->site->parameters['extra_fields']['product']['values']['mdt'][$cr_key];
+					if (!empty($this->site->parameters['extra_fields']['product']['activated']['att'][$cr_key])) {
+						$data_key = $this->site->parameters['extra_fields']['product']['values']['att'][$cr_key];
 						if (!empty($data_key)) {
 							$variationData['attributes'][] = array('id' => $data_key, 'options' => !empty($value) ? explode(',', $value) : array());
 						}
@@ -3406,8 +3406,8 @@ class eCommerceRemoteAccessWoocommerce
 					}
 
 					// Synch extrafields <=> attributes
-					if (!empty($this->site->parameters['extra_fields']['product']['activated']['mdt'][$cr_key])) {
-						$data_key = $this->site->parameters['extra_fields']['product']['values']['mdt'][$cr_key];
+					if (!empty($this->site->parameters['extra_fields']['product']['activated']['att'][$cr_key])) {
+						$data_key = $this->site->parameters['extra_fields']['product']['values']['att'][$cr_key];
 						if (!empty($data_key)) {
 							$productData['attributes'][] = array('id' => $data_key, 'options' => !empty($value) ? explode(',', $value) : array());
 						}
