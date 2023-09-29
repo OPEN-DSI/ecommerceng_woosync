@@ -625,7 +625,10 @@ class eCommerceSynchro
 			$tmp = $this->eCommerceRemoteAccess->getRemoteCategoryTree();
 			if (is_array($tmp)) {
 				$resanswer = array();
-				eCommerceCategory::cuttingCategoryTreeFromMagentoToDolibarrNew($tmp, $resanswer);
+				// Fix correction fatal error PHP 8.1
+				$eCommerceCategory = new eCommerceCategory($this->db);
+				$eCommerceCategory->cuttingCategoryTreeFromMagentoToDolibarrNew($tmp, $resanswer);
+				//eCommerceCategory::cuttingCategoryTreeFromMagentoToDolibarrNew($tmp, $resanswer);
 
 				$this->initECommerceCategory(); // Initialise 2 properties eCommerceCategory and eCommerceMotherCategory
 

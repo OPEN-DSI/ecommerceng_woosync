@@ -1,5 +1,7 @@
 <?php
 
+$var='';
+
 llxHeader();
 
 if (is_object($site)) {

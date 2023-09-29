@@ -41,10 +41,16 @@ $nbFactureInDolibarr = 0;
 $langs->load("admin");
 $langs->load("ecommerce");
 
+// Correction warning
+$socid = GETPOST('socid','int');
+if (!empty($user->societe_id)) $socid=$user->societe_id;
+$result = restrictedArea($user,'societe',$socid,'');
+
+
 // Protection if external user
-if ($user->societe_id > 0 || !$user->rights->ecommerceng->read) {
+/*if ($user->societe_id > 0 || !$user->rights->ecommerceng->read) {
 	accessforbidden();
-}
+}*/
 
 $id = GETPOST('id','int');
 $to_date = GETPOST('to_date','aZ09');

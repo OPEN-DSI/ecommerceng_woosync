@@ -73,8 +73,10 @@ if (is_array($extra_fields_list)) {
 			}
 			print "</tr>\n";
 
+			//if (!empty($object->parameters['socpeople'])) {
 			$activated_info = $object->parameters['extra_fields'][$table_element]['activated'];
 			$values_info = $object->parameters['extra_fields'][$table_element]['values'];
+			//}
 			foreach ($info['extra_fields'] as $key => $label) {
 				if (!empty($extrafields->attributes[$table_element]['langfile'][$key])) $langs->load($extrafields->attributes[$table_element]['langfile'][$key]);
 

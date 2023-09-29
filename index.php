@@ -39,10 +39,16 @@ $langs->load("ecommerce@ecommerceng");
 ****************************************************/
 //CHECK ACCESS
 // Protection if external user
-if ($user->societe_id > 0 || !$user->rights->ecommerceng->read)
+
+// Correction warning
+$socid = GETPOST('socid','int');
+if (!empty($user->societe_id)) $socid=$user->societe_id;
+$result = restrictedArea($user,'societe',$socid,'');
+
+/* if ($user->societe_id > 0 || !$user->rights->ecommerceng->read)
 {
 	accessforbidden();
-}
+}*/
 
 /***************************************************
 * Define page variables
