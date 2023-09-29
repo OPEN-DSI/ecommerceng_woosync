@@ -1,5 +1,5 @@
 -- ===================================================================
--- Copyright (C) 2011 Auguria <anthony.poiret@auguria.net>
+-- Copyright (C) 2021 Open-Dsi <support@open-dsi.fr>
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
 -- the Free Software Foundation; either version 2 of the License, or
@@ -16,15 +16,13 @@
 --
 -- ===================================================================
 
-create table llx_ecommerceng_remote_warehouses
+create table llx_c_ecommerceng_lang
 (
-	rowid							integer			AUTO_INCREMENT PRIMARY KEY,
-	site_id							integer			NOT NULL,
-    remote_id						varchar(255)	NOT NULL,	--Remote warehouse ID
-	remote_code						varchar(255)	NOT NULL,	--Remote warehouse code
-	remote_name						varchar(255)	NOT NULL,	--Remote warehouse name
-	warehouse_id					integer,					-- Dolibarr warehouse ID
-	set_even_if_empty_stock			tinyint(1),					-- Flag for set the stock of the warehouse even if the stock is empty
-	old_entry						tinyint(1),					-- Flag for set if this warehouse has been delete on WooCommerce
-	entity							integer			DEFAULT 1
+  rowid						integer       AUTO_INCREMENT PRIMARY KEY,
+  site_id					integer       NOT NULL,
+  code				        varchar(255)  NOT NULL,
+  label				        varchar(255)  NOT NULL,
+  lang             			varchar(255)  NOT NULL,
+  entity					integer       DEFAULT 1,
+  active					tinyint       DEFAULT 1 NOT NULL
 ) ENGINE=InnoDB;

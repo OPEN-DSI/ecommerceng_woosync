@@ -59,6 +59,8 @@ ECommerceWoocommerceErrorDisableDictTaxClass=Error of deactivation of a VAT clas
 ECommerceWoocommerceErrorAddDictTaxClass=Error adding a VAT class, code:"%s", name:"%s", error:"%s"
 ECommerceWoocommerceErrorUpdateDictTaxClass=Error updating a VAT class, code:"%s", error:"%s"
 
+ECommercengWoocommerceDictLang=List of languages on WooCommerce
+
 ECommercengWoocommerceDictTaxRate=List of VAT rates on Woocommerce
 ECommerceWoocommerceErrorDisableDictTaxClass=Error of deactivation of a VAT rate, ID:"%s", error:"%s"
 ECommerceWoocommerceErrorAddDictTaxClass=Error adding a VAT rate, ID:"%s", erreur:"%s"

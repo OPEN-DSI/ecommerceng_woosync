@@ -82,13 +82,13 @@ class eCommerceRemoteWarehouses
 
 		$this->db->begin();
 
-		foreach ($remote_warehouses as $remote_code => $infos) {
+		foreach ($remote_warehouses as $remote_id => $infos) {
 			// Search warehouse
 			$sql = 'SELECT rowid';
 			$sql .= ' FROM ' . MAIN_DB_PREFIX . $this->table_element;
 			$sql .= ' WHERE site_id = ' . $site_id;
 			$sql .= ' AND entity = ' . $conf->entity;
-			$sql .= " AND remote_code = '" . $this->db->escape($remote_code) . "'";
+			$sql .= " AND remote_id = '" . $this->db->escape($remote_id) . "'";
 
 			$resql = $this->db->query($sql);
 			if (!$resql) {
@@ -108,7 +108,7 @@ class eCommerceRemoteWarehouses
 			if ($line_id > 0) {
 				// Update values
 				$sql = 'UPDATE ' . MAIN_DB_PREFIX . $this->table_element . ' SET';
-				$sql .= "  remote_id = '" . $this->db->escape($infos['remote_id']) . "'";
+				$sql .= "  remote_code = '" . $this->db->escape($infos['remote_code']) . "'";
                 $sql .= ", remote_name = '" . $this->db->escape($infos['remote_name']) . "'";
 				$sql .= ", warehouse_id = " . ($infos['warehouse_id'] > 0 ? $infos['warehouse_id'] : 'NULL');
 				$sql .= ', set_even_if_empty_stock = ' . (!empty($infos['set_even_if_empty_stock']) ? 1 : 'NULL');
@@ -120,7 +120,7 @@ class eCommerceRemoteWarehouses
 				// Insert values
 				$sql = 'INSERT INTO ' . MAIN_DB_PREFIX . $this->table_element . '(site_id, remote_code, remote_id, remote_name, warehouse_id, set_even_if_empty_stock, old_entry, entity) VALUES (';
 				$sql .= $site_id;
-				$sql .= ", '" . $this->db->escape($remote_code) . "'";
+				$sql .= ", '" . $this->db->escape($infos['remote_code']) . "'";
 				$sql .= ", '" . $this->db->escape($infos['remote_id']) . "'";
                 $sql .= ", '" . $this->db->escape($infos['remote_name']) . "'";
 				$sql .= ', ' . ($infos['warehouse_id'] > 0 ? $infos['warehouse_id'] : 'NULL');
@@ -151,12 +151,12 @@ class eCommerceRemoteWarehouses
      *  Get a remote warehouse of a site by the remote warehouse code or warehouse id
      *
      * @param   int         $site_id                Site ID
-	 * @param   string      $remote_code  			Remote warehouse code on site
+	 * @param   string      $remote_id  			Remote warehouse ID on site
      * @param   int         $warehouse_id  			Warehouse ID on Dolibarr
      * @return  array|int                           0 if not found, <0 if errors or array of infos
      * @throws  Exception
      */
-    public function get($site_id, $remote_code='', $warehouse_id=0)
+    public function get($site_id, $remote_id='', $warehouse_id=0)
     {
         global $conf;
         dol_syslog(__METHOD__ . " site_id=$site_id, remote_code=$remote_code, warehouse_id=$warehouse_id");
@@ -167,7 +167,7 @@ class eCommerceRemoteWarehouses
 			$sql .= ' AND warehouse_id = ' . $warehouse_id;
 			$sql .= ' AND old_entry IS NULL';
 		} else {
-            $sql .= " AND remote_code = '" . $this->db->escape($remote_code) . "'";
+            $sql .= " AND remote_id = '" . $this->db->escape($remote_id) . "'";
         }
         $resql = $this->db->query($sql);
         if ($resql) {
@@ -210,8 +210,9 @@ class eCommerceRemoteWarehouses
         $resql = $this->db->query($sql);
         if ($resql) {
             while ($obj = $this->db->fetch_object($resql)) {
-				$warehouses[$obj->remote_code] = array(
-                    'remote_id' => $obj->remote_id,
+				$warehouses[$obj->remote_id] = array(
+                    'remote_code' => $obj->remote_code,
+					'remote_id' => $obj->remote_id,
                     'remote_name' => $obj->remote_name,
                     'warehouse_id' => $obj->warehouse_id,
                     'set_even_if_empty_stock' => !empty($obj->set_even_if_empty_stock) ? 1 : 0,

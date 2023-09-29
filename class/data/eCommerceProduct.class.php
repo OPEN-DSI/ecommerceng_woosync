@@ -30,6 +30,7 @@ class eCommerceProduct // extends CommonObject
     public $fk_product;
     public $fk_site;
     public $remote_id;
+    public $lang;
     public $last_update;
     public $last_update_stock;
 
@@ -59,7 +60,8 @@ class eCommerceProduct // extends CommonObject
 		// Clean parameters
 		if (isset($this->fk_product)) $this->fk_product=intval($this->fk_product);
 		if (isset($this->fk_site)) $this->fk_site=intval($this->fk_site);
-		if (isset($this->remote_id)) $this->remote_id=trim($this->remote_id);
+        if (isset($this->remote_id)) $this->remote_id=trim($this->remote_id);
+        if (isset($this->lang)) $this->lang=trim($this->lang);
         if (isset($this->last_update)) $this->last_update=trim($this->last_update);
         if (isset($this->last_update_stock)) $this->last_update_stock=trim($this->last_update_stock);
 
@@ -71,12 +73,14 @@ class eCommerceProduct // extends CommonObject
 		$sql.= "fk_product,";
 		$sql.= "fk_site,";
 		$sql.= "remote_id,";
+        $sql.= "lang,";
 		$sql.= "last_update,";
         $sql.= "last_update_stock";
         $sql.= ") VALUES (";
 		$sql.= " ".(isset($this->fk_product)?intval($this->fk_product):0).",";
 		$sql.= " ".(isset($this->fk_site)?intval($this->fk_site):0).",";
 		$sql.= " ".(isset($this->remote_id)?"'".$this->db->escape($this->remote_id)."'":"").",";
+        $sql.= " ".(!empty($this->lang)?"'".$this->db->escape($this->lang)."'":"null").",";
 		$sql.= " ".(isset($this->last_update)?"'".$this->last_update."'" : 'null').",";
         $sql.= " ".(isset($this->last_update_stock)?"'".$this->last_update_stock."'" : 'null')."";
 		$sql.= ")";
@@ -138,6 +142,7 @@ class eCommerceProduct // extends CommonObject
 		$sql.= " t.fk_product,";
 		$sql.= " t.fk_site,";
 		$sql.= " t.remote_id,";
+        $sql.= " t.lang,";
 		$sql.= " t.last_update,";
         $sql.= " t.last_update_stock";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_product as t";
@@ -155,6 +160,7 @@ class eCommerceProduct // extends CommonObject
                 $this->fk_product = $obj->fk_product;
                 $this->fk_site = $obj->fk_site;
                 $this->remote_id = $obj->remote_id;
+                $this->lang = $obj->lang;
                 $this->last_update = $obj->last_update;
                 $this->last_update_stock = $obj->last_update_stock;
 				return 1;
@@ -187,6 +193,7 @@ class eCommerceProduct // extends CommonObject
 		if (isset($this->fk_product)) $this->fk_product=intval($this->fk_product);
 		if (isset($this->fk_site)) $this->fk_site=intval($this->fk_site);
 		if (isset($this->remote_id)) $this->remote_id=trim($this->remote_id);
+        if (isset($this->lang)) $this->lang=trim($this->lang);
 		if (isset($this->last_update)) $this->last_update=trim($this->last_update);
         if (isset($this->last_update_stock)) $this->last_update_stock=trim($this->last_update_stock);
 
@@ -199,6 +206,7 @@ class eCommerceProduct // extends CommonObject
 		$sql.= " fk_product=".(isset($this->fk_product)?intval($this->fk_product):0).",";
 		$sql.= " fk_site=".(isset($this->fk_site)?intval($this->fk_site):0).",";
 		$sql.= " remote_id='".$this->db->escape($this->remote_id)."',";
+        $sql.= " lang=".(!empty($this->lang)?"'".$this->db->escape($this->lang)."'" : 'null').",";
 		$sql.= " last_update=".(isset($this->last_update)?"'".$this->last_update."'" : 'null').",";
         $sql.= " last_update_stock=".(isset($this->last_update_stock)?"'".$this->last_update_stock."'" : 'null')."";
 
@@ -349,6 +357,7 @@ class eCommerceProduct // extends CommonObject
 		$sql .= " t.fk_product,";
 		$sql .= " t.fk_site,";
 		$sql .= " t.remote_id,";
+        $sql .= " t.lang,";
 		$sql .= " t.last_update,";
         $sql .= " t.last_update_stock";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "ecommerce_product as t";
@@ -364,6 +373,7 @@ class eCommerceProduct // extends CommonObject
 				$this->fk_product = $obj->fk_product;
 				$this->fk_site = $obj->fk_site;
 				$this->remote_id = $obj->remote_id;
+                $this->lang = $obj->lang;
 				$this->last_update = $obj->last_update;
                 $this->last_update_stock = $obj->last_update_stock;
 				$this->db->free($resql);
@@ -401,6 +411,7 @@ class eCommerceProduct // extends CommonObject
 		$sql.= " t.fk_product,";
 		$sql.= " t.fk_site,";
 		$sql.= " t.remote_id,";
+        $sql.= " t.lang,";
 		$sql.= " t.last_update,";
         $sql.= " t.last_update_stock";
         $sql.= " FROM ".MAIN_DB_PREFIX."ecommerce_product as t";
@@ -417,6 +428,7 @@ class eCommerceProduct // extends CommonObject
                 $this->fk_product = $obj->fk_product;
                 $this->fk_site = $obj->fk_site;
                 $this->remote_id = $obj->remote_id;
+                $this->lang = $obj->lang;
                 $this->last_update = $obj->last_update;
                 $this->last_update_stock = $obj->last_update_stock;
            		$this->db->free($resql);

@@ -570,7 +570,7 @@ ECommerceErrorSupplierInvoiceCreatePayment                                      
 ECommerceErrorSupplierInvoiceAddPaymentToBank                                                       =Erreur lors de l'ajout du paiement sur la banque pour la facture fournisseur
 ECommerceErrorSupplierInvoiceGenerateDocument                                                       =Erreur lors de la génération du document de la facture fournisseur
 ECommerceErrorCustomerEmailEmptyForSendInvoiceByEmail                                               =Erreur, l'email de la commande distante est vide pour l'envoi de la facture par e-mail
-ECommerceErrorPaymentGatewaysMailModelNotConfigured                                                 =Le mode de paiement (%s, %s) synchronisé n'a pas été configuré pour le modèle d'e-mail de Dolibarr
+ECommerceErrorPaymentGatewaysMailModelNotConfigured                                                 =Le mode de paiement (%s, %s, language: %s) synchronisé n'a pas été configuré pour le modèle d'e-mail de Dolibarr
 ECommerceErrorInvoiceCreateMail                                                                     =Erreur lors de la création de l'e-mail pour l'envoi de la facture
 ECommerceErrorInvoiceGetExternalContacts                                                            =Erreur lors de la récupération des contacts externes de la facture (ID : %s)
 ECommerceErrorInvoiceCreateSendMailEvent                                                            =Erreur lors de la création de l'événement de l'envoi de la facture par e-mail
@@ -617,6 +617,7 @@ ECommerceErrorDelProductComponent                                               
 ECommerceErrorSetOrderCorrectAmount                                                                 =Erreur lors du forçage du prix TTC de la commande
 ECommerceErrorSetInvoiceCorrectAmount                                                               =Erreur lors du forçage du prix TTC de la facture
 ECommerceErrorConnectAPI                                                                            =Erreur de connexion au site '%s'
+ECommerceErrorUpdateThirdPartyLanguage                                                              =Erreur lors de la mise a jour de la langue du tiers (ID: %s)
 
 ############################################################################################
 # Warnings

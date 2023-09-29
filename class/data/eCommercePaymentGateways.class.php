@@ -92,7 +92,7 @@ class eCommercePaymentGateways
 				$sql .= ', ' . ($infos['payment_mode_id'] > 0 ? $infos['payment_mode_id'] : 'NULL');
 				$sql .= ', ' . ($infos['bank_account_id'] > 0 ? $infos['bank_account_id'] : 'NULL');
 				$sql .= ', ' . (!empty($infos['create_invoice_payment']) ? 1 : 'NULL');
-				$sql .= ', ' . (!empty($infos['mail_model_for_send_invoice']) && $infos['mail_model_for_send_invoice'] > 0 ? $infos['mail_model_for_send_invoice'] : 'NULL');
+				$sql .= ', ' . (!empty($infos['mail_model_for_send_invoice']) ? "'" . $this->db->escape(json_encode($infos['mail_model_for_send_invoice'])) . "'" : 'NULL');
 				$sql .= ', ' . ($infos['supplier_id'] > 0 ? $infos['supplier_id'] : 'NULL');
 				$sql .= ', ' . (!empty($infos['product_id_for_fee']) && $infos['product_id_for_fee'] > 0 ? $infos['product_id_for_fee'] : 'NULL');
 				$sql .= ', ' . (!empty($infos['create_supplier_invoice_payment']) ? 1 : 'NULL');
@@ -106,7 +106,7 @@ class eCommercePaymentGateways
 						$sql .= ', payment_mode_id = ' . ($infos['payment_mode_id'] > 0 ? $infos['payment_mode_id'] : 'NULL');
 						$sql .= ', bank_account_id = ' . ($infos['bank_account_id'] > 0 ? $infos['bank_account_id'] : 'NULL');
 						$sql .= ', create_invoice_payment = ' . (!empty($infos['create_invoice_payment']) ? 1 : 'NULL');
-						$sql .= ', mail_model_for_send_invoice = ' . (!empty($infos['mail_model_for_send_invoice']) && $infos['mail_model_for_send_invoice'] > 0 ? $infos['mail_model_for_send_invoice'] : 'NULL');
+						$sql .= ', mail_model_for_send_invoice = ' . (!empty($infos['mail_model_for_send_invoice']) ? "'" . $this->db->escape(json_encode($infos['mail_model_for_send_invoice'])) . "'" : 'NULL');
 						$sql .= ', supplier_id = ' . ($infos['supplier_id'] > 0 ? $infos['supplier_id'] : 'NULL');
 						$sql .= ', product_id_for_fee = ' . (!empty($infos['product_id_for_fee']) && $infos['product_id_for_fee'] > 0 ? $infos['product_id_for_fee'] : 'NULL');
 						$sql .= ', create_supplier_invoice_payment = ' . (!empty($infos['create_supplier_invoice_payment']) ? 1 : 'NULL');
@@ -166,13 +166,16 @@ class eCommercePaymentGateways
                 return 0;
 
             if ($obj = $this->db->fetch_object($resql)) {
+                $mail_model_for_send_invoice = json_decode($obj->mail_model_for_send_invoice, true);
+                if (!isset($mail_model_for_send_invoice)) $mail_model_for_send_invoice = array('ec_none' => $obj->mail_model_for_send_invoice);
+
                 return array(
                     'payment_gateway_id' => $obj->payment_gateway_id,
                     'payment_gateway_label' => $obj->payment_gateway_label,
                     'payment_mode_id' => $obj->payment_mode_id,
                     'bank_account_id' => $obj->bank_account_id,
                     'create_invoice_payment' => !empty($obj->create_invoice_payment) ? 1 : 0,
-                    'mail_model_for_send_invoice' => $obj->mail_model_for_send_invoice,
+                    'mail_model_for_send_invoice' => $mail_model_for_send_invoice,
                     'supplier_id' => $obj->supplier_id,
                     'product_id_for_fee' => $obj->product_id_for_fee,
                     'create_supplier_invoice_payment' => !empty($obj->create_supplier_invoice_payment) ? 1 : 0,
@@ -204,12 +207,15 @@ class eCommercePaymentGateways
         $resql = $this->db->query($sql);
         if ($resql) {
             while ($obj = $this->db->fetch_object($resql)) {
+                $mail_model_for_send_invoice = json_decode($obj->mail_model_for_send_invoice, true);
+                if (!isset($mail_model_for_send_invoice)) $mail_model_for_send_invoice = array('ec_none' => $obj->mail_model_for_send_invoice);
+
                 $payment_gateways[$obj->payment_gateway_id] = array(
                     'payment_gateway_label' => $obj->payment_gateway_label,
                     'payment_mode_id' => $obj->payment_mode_id,
                     'bank_account_id' => $obj->bank_account_id,
                     'create_invoice_payment' => !empty($obj->create_invoice_payment) ? 1 : 0,
-                    'mail_model_for_send_invoice' => $obj->mail_model_for_send_invoice,
+                    'mail_model_for_send_invoice' => $mail_model_for_send_invoice,
                     'supplier_id' => $obj->supplier_id,
                     'product_id_for_fee' => $obj->product_id_for_fee,
                     'create_supplier_invoice_payment' => !empty($obj->create_supplier_invoice_payment) ? 1 : 0,
