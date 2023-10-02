@@ -184,6 +184,8 @@ ECommerceUpdateLevelPrice                                                       
 ECommerceConfirmUpdatePriceLevel                                                                    =Vous avez modifié le niveau de prix. Les produits sur le site E-Commerce vont être mis à jour.\nCette opération peut être longue, merci de confirmer.
 ThirdPartyForNonLoggedUsers                                                                         =Tiers générique de recueil des clients sans compte créé
 SynchUnkownCustomersOnThirdParty                                                                    =Tiers générique auquel seront rattachées les commandes de clients sans compte
+ECommerceDontSearchCompanyByNameAndZip                                                              =Recherche par nom et code postal
+ECommerceDontSearchCompanyByNameAndZipDescription                                                   =Ne pas rechercher le tiers Dolibarr graçe au nom et code postal fournit par WooCommerce
 ECommerceDontUpdateDolibarrCompany                                                                  =Mise à jour du tiers
 ECommerceDontUpdateDolibarrCompanyDescription                                                       =Ne pas mettre à jour le tiers de Dolibarr lorsqu'il existe déja dans dolibarr
 

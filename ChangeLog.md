@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.59.0
+- Ajout d'une option pour ne pas chercher le tiers grace a son nom et code postal
+
 ## 4.1.58.0
 - Ignore la synchronisation de l'entrepot distant s'il n'est pas associé avec un entrepôt dolibarr.
 - Correction du script de synchronisation des produits vers le site

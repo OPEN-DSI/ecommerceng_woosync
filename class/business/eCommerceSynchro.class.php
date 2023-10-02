@@ -2946,7 +2946,7 @@ class eCommerceSynchro
 
 						// Search customer by name if it's a company
 						if (!$error && !($third_party_id > 0) && (!isset($customer_data['type']) || $customer_data['type'] == 'company')) {
-							$result = $this->getThirdPartyByInfos($customer_data['name'], $customer_data['zip']);
+							$result = $this->getThirdPartyByNameAndZip($customer_data['name'], $customer_data['zip']);
 							if ($result < 0) {
 								if ($result != -2) $error++;
 							} else {
@@ -7655,7 +7655,7 @@ class eCommerceSynchro
 	 */
 	public function getThirdPartyByNameAndZip($name, $zip = '', $site_id = 0)
 	{
-		if (empty($name)) {
+		if (empty($name) || !empty($this->eCommerceSite->parameters['dont_search_company_by_name_and_zip'])) {
 			return 0;
 		}
 

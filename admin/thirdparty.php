@@ -110,6 +110,7 @@ if ($action == 'set_options') {
 	$object->fk_anonymous_thirdparty = GETPOST('fk_anonymous_thirdparty', 'int');
 	$object->fk_anonymous_thirdparty = $object->fk_anonymous_thirdparty > 0 ? $object->fk_anonymous_thirdparty : 0;
 	$object->parameters['customer_roles'] = GETPOST('customer_roles', 'alphanohtml');
+	$object->parameters['dont_search_company_by_name_and_zip'] = GETPOST('dont_search_company_by_name_and_zip', 'int') ? 1 : 0;
 	$object->parameters['dont_update_dolibarr_company'] = GETPOST('dont_update_dolibarr_company', 'int') ? 1 : 0;
 
 	if(empty($object->fk_cat_societe)) {
@@ -214,6 +215,14 @@ print '<td>' . $langs->trans("ECommerceWoocommerceCustomerRolesSupportedDescript
 print '<td class="right">' . "\n";
 $value = isset($object->parameters['customer_roles']) ? $object->parameters['customer_roles'] : 'customer';
 print '<input type="text" class="flat centpercent" name="customer_roles" value="' . dol_escape_htmltag($value) . '">' . "\n";
+print '</td></tr>' . "\n";
+
+// Don't search company by name and zip
+print '<tr class="oddeven">' . "\n";
+print '<td>' . $langs->trans("ECommerceDontSearchCompanyByNameAndZip") . '</td>' . "\n";
+print '<td>' . $langs->trans("ECommerceDontSearchCompanyByNameAndZipDescription") . '</td>' . "\n";
+print '<td class="right">' . "\n";
+print '<input type="checkbox" name="dont_search_company_by_name_and_zip" value="1"' . (!empty($object->parameters['dont_search_company_by_name_and_zip']) ? ' checked' : '') . ' />' . "\n";
 print '</td></tr>' . "\n";
 
 // Don't update the third party
