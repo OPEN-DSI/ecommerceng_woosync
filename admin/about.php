@@ -34,7 +34,35 @@ $langs->load("admin");
 $langs->load("ecommerce@ecommerceng");
 $langs->load("opendsi@ecommerceng");
 
-if (!$user->admin) accessforbidden();
+if (!$user->admin && !$user->rights->ecommerceng->site) accessforbidden();
+
+$id = GETPOST('id', 'int');
+$action = GETPOST('action', 'aZ09');
+$confirm = GETPOST('confirm', 'aZ09');
+
+$object = new eCommerceSite($db);
+if (empty($action) && !($id > 0) && strlen($id) == 0) {
+	$sites = $object->listSites();
+	if (!empty($sites)) {
+		$id = array_values($sites)[0]['id'];
+	}
+}
+if ($id > 0) {
+	$result = $object->fetch($id);
+	if ($result < 0) {
+		accessforbidden($object->errorsToString());
+	} elseif ($result == 0) {
+		$langs->load('errors');
+		accessforbidden($langs->trans('ErrorRecordNotFound'));
+	}
+}
+
+/**
+ *	Actions
+ */
+$error = 0;
+
+include dol_buildpath('/ecommerceng/admin/actions_selectsite.inc.php');
 
 
 /**
@@ -46,12 +74,13 @@ llxHeader('', $langs->trans("ECommerceSetup"), $wikihelp);
 
 $linkback='<a href="'.DOL_URL_ROOT.'/admin/modules.php">'.$langs->trans("BackToModuleList").'</a>';
 print load_fiche_titre($langs->trans("ECommerceSetup"),$linkback,'title_setup');
-print "<br>\n";
+
+include dol_buildpath('/ecommerceng/admin/tpl/selectsite.tpl.php');
 
 $head=ecommercengConfigSitePrepareHead($object);
 
 print dol_get_fiche_head($head, 'about', $langs->trans("Module107100Name"), 0, 'opendsi@ecommerceng');
-
+print '<br>';
 
 $modClass = new modECommerceNg($db);
 $ECommerceNgVersion = !empty($modClass->getVersion()) ? $modClass->getVersion() : 'NC';

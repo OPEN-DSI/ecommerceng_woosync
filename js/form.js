@@ -19,6 +19,6 @@ jQuery(document).ready(function (){
     var target = _this.attr('data-target');
     var state = _this.is(':checked');
 
-    jQuery('#'+target).prop('disabled', !state);
+    jQuery('.'+target).prop('disabled', !state);
   }
 });

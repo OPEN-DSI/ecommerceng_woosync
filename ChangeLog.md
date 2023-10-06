@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 4.1.62.0
+- Ajout d'une option sur le parametrage des "attributs" de produit pour definir l'affichage de celui-ci sur WooCommerce
+- Correction de la page "A propos"
+
 ## 4.1.61.0
 - Ajout d'un champ dans la liste des factures pour afficher le delta entre le total TTC et le total HT plus total TVA
 - Ajout d'un script pour corriger les factures en recreant les lignes de celles-ci (et modifie le prix des lignes existantes de la commande lié, ne creer pas les nouvelle lignes manquantes)

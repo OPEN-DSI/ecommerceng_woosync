@@ -3181,8 +3181,9 @@ class eCommerceRemoteAccessWoocommerce
 					// Synch extrafields <=> attributes
 					if (!empty($this->site->parameters['extra_fields']['product']['activated']['att'][$cr_key])) {
 						$data_key = $this->site->parameters['extra_fields']['product']['values']['att'][$cr_key];
+						$show_attr = $this->site->parameters['extra_fields']['product']['show']['att'][$cr_key];
 						if (!empty($data_key)) {
-							$variationData['attributes'][] = array('id' => $data_key, 'options' => !empty($value) ? explode(',', $value) : array());
+							$variationData['attributes'][] = array('id' => $data_key, 'visible' => $show_attr != 2, 'options' => !empty($value) ? explode(',', $value) : array());
 						}
 					}
 				}
@@ -3474,8 +3475,9 @@ class eCommerceRemoteAccessWoocommerce
 					// Synch extrafields <=> attributes
 					if (!empty($this->site->parameters['extra_fields']['product']['activated']['att'][$cr_key])) {
 						$data_key = $this->site->parameters['extra_fields']['product']['values']['att'][$cr_key];
+						$show_attr = $this->site->parameters['extra_fields']['product']['show']['att'][$cr_key];
 						if (!empty($data_key)) {
-							$productData['attributes'][] = array('id' => $data_key, 'options' => !empty($value) ? explode(',', $value) : array());
+							$productData['attributes'][] = array('id' => $data_key, 'visible' => $show_attr != 2, 'options' => !empty($value) ? explode(',', $value) : array());
 						}
 					}
                 }

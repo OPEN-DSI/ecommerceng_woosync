@@ -75,6 +75,7 @@ if (is_array($extra_fields_list)) {
 
 			$activated_info = $object->parameters['extra_fields'][$table_element]['activated'];
 			$values_info = $object->parameters['extra_fields'][$table_element]['values'];
+			$show_info = $object->parameters['extra_fields'][$table_element]['show'];
 			foreach ($info['extra_fields'] as $key => $label) {
 				if (!empty($extrafields->attributes[$table_element]['langfile'][$key])) $langs->load($extrafields->attributes[$table_element]['langfile'][$key]);
 
@@ -83,6 +84,7 @@ if (is_array($extra_fields_list)) {
 				if (!empty($info['default'])) {
 					$not_supported = in_array($extrafields->attributes[$table_element]['type'][$key], [ 'date', 'datetime' ]);
 
+					$target_class = 'ef_dft_' . $table_element . '_' . $key;
 					$default_value = '';
 					if (isset($extrafields->attributes[$table_element]['default'][$key])) $default_value = $extrafields->attributes[$table_element]['default'][$key];
 					$value = isset($values_info['dft'][$key]) ? $values_info['dft'][$key] : $default_value;
@@ -92,33 +94,37 @@ if (is_array($extra_fields_list)) {
 						print $langs->trans('NotSupported');
 					} else {
 //						print $extrafields->showInputField($key, $value, ($activated ? '' : ' disabled'), '', 'ef_dft_value_' . $table_element . '_', '', 0, $table_element);
-						print '<input type="text" class="centpercent" id="ef_dft_value_' . $table_element . '_options_' . $key . '" name="ef_dft_value_' . $table_element . '_options_' . $key . '" value="' . dol_escape_htmltag($value) . '"' . ($activated ? '' : ' disabled') . ' />';
+						print '<input type="text" class="centpercent ' . $target_class . '" id="ef_dft_value_' . $table_element . '_options_' . $key . '" name="ef_dft_value_' . $table_element . '_options_' . $key . '" value="' . dol_escape_htmltag($value) . '"' . ($activated ? '' : ' disabled') . ' />';
 					}
 					print '</td>' . "\n";
 					print '<td class="center">' . "\n";
 					if (!$not_supported) {
-						print '<input type="checkbox" class="ef_state ef_dft_state_' . $table_element . '" name="ef_dft_state_' . $table_element . '_' . $key . '" value="1" data-target="ef_dft_value_' . $table_element . '_options_' . $key . '"' . ($activated ? ' checked' : '') . ' title="' . $langs->trans('Enabled') . '" />' . "\n";
+						print '<input type="checkbox" class="ef_state ef_dft_state_' . $table_element . '" name="ef_dft_state_' . $table_element . '_' . $key . '" value="1" data-target="' . $target_class . '"' . ($activated ? ' checked' : '') . ' title="' . $langs->trans('Enabled') . '" />' . "\n";
 					}
 					print '</td>';
 				}
 				if (!empty($info['metadata'])) {
+					$target_class = 'ef_mdt_' . $table_element . '_' . $key;
 					$value = isset($values_info['mdt'][$key]) ? $values_info['mdt'][$key] : $key;
 					$activated = !empty($activated_info['mdt'][$key]);
 					print '<td>' . "\n";
-					print '<input type="text" class="centpercent" id="ef_mdt_value_' . $table_element . '_' . $key . '" name="ef_mdt_value_' . $table_element . '_' . $key . '" value="' . dol_escape_htmltag($value) . '"' . ($activated ? '' : ' disabled') . ' />';
+					print '<input type="text" class="centpercent ' . $target_class . '" id="ef_mdt_value_' . $table_element . '_' . $key . '" name="ef_mdt_value_' . $table_element . '_' . $key . '" value="' . dol_escape_htmltag($value) . '"' . ($activated ? '' : ' disabled') . ' />';
 					print '</td>' . "\n";
 					print '<td class="center">' . "\n";
-					print '<input type="checkbox" class="ef_state ef_mdt_state_' . $table_element . '" name="ef_mdt_state_' . $table_element . '_' . $key . '" value="1" data-target="ef_mdt_value_' . $table_element . '_' . $key . '"' . ($activated ? ' checked' : '') . ' title="' . $langs->trans('Enabled') . '" />' . "\n";
+					print '<input type="checkbox" class="ef_state ef_mdt_state_' . $table_element . '" name="ef_mdt_state_' . $table_element . '_' . $key . '" value="1" data-target="' . $target_class . '"' . ($activated ? ' checked' : '') . ' title="' . $langs->trans('Enabled') . '" />' . "\n";
 					print '</td>';
 				}
 				if (!empty($info['attributes'])) {
+					$target_class = 'ef_att_' . $table_element . '_' . $key;
 					$value = isset($values_info['att'][$key]) ? $values_info['att'][$key] : (isset($remote_attributes_label[$label]) ? $remote_attributes_label[$label] : $key);
+					$show = isset($show_info['att'][$key]) ? $show_info['att'][$key] : 0;
 					$activated = !empty($activated_info['att'][$key]);
 					print '<td>' . "\n";
-					print $form->selectarray('ef_att_value_' . $table_element . '_' . $key, $info['attributes'], $value, 1, 0, 0, '', 0, 0, $activated ? 0 : 1, '', 'minwidth300');
+					print $form->selectarray('ef_att_value_' . $table_element . '_' . $key, $info['attributes'], $value, 1, 0, 0, '', 0, 0, $activated ? 0 : 1, '', 'minwidth300 ' . $target_class);
+					print $form->selectarray('ef_att_show_' . $table_element . '_' . $key, [ 1 => $langs->trans('Show'), 2 => $langs->trans('Hide') ], $show, 0, 0, 0, '', 0, 0, $activated ? 0 : 1, '', 'minwidth100 ' . $target_class);
 					print '</td>' . "\n";
 					print '<td class="center">' . "\n";
-					print '<input type="checkbox" class="ef_state ef_att_state_' . $table_element . '" name="ef_att_state_' . $table_element . '_' . $key . '" value="1" data-target="ef_att_value_' . $table_element . '_' . $key . '"' . ($activated ? ' checked' : '') . ' title="' . $langs->trans('Enabled') . '" />' . "\n";
+					print '<input type="checkbox" class="ef_state ef_att_state_' . $table_element . '" name="ef_att_state_' . $table_element . '_' . $key . '" value="1" data-target="' . $target_class . '"' . ($activated ? ' checked' : '') . ' title="' . $langs->trans('Enabled') . '" />' . "\n";
 					print '</td>';
 				}
 				print '</tr>' . "\n";

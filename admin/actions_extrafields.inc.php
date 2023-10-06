@@ -35,6 +35,7 @@ if ($action == 'set_extra_fields_options') {
 
 		$activated_list = array();
 		$value_list = array();
+		$show_list = array();
 		foreach ($extra_fields_list[$table_element]['extra_fields'] as $key => $label) {
 			// default value
 			$activated = GETPOST("ef_dft_state_{$table_element}_{$key}", 'int') ? 1 : 0;
@@ -56,9 +57,13 @@ if ($action == 'set_extra_fields_options') {
 			$value = $activated ? GETPOST("ef_att_value_{$table_element}_{$key}", 'alphanohtml') :
 				(!empty($object->parameters['extra_fields'][$table_element]['values']['att'][$key]) ? $object->parameters['extra_fields'][$table_element]['values']['att'][$key] : null);
 			if (isset($value)) $value_list['att'][$key] = $value;
+			$show = $activated ? GETPOST("ef_att_show_{$table_element}_{$key}", 'alphanohtml') :
+				(!empty($object->parameters['extra_fields'][$table_element]['show']['att'][$key]) ? $object->parameters['extra_fields'][$table_element]['show']['att'][$key] : null);
+			if (isset($show)) $show_list['att'][$key] = $show;
 		}
 		$object->parameters['extra_fields'][$table_element]['activated'] = $activated_list;
 		$object->parameters['extra_fields'][$table_element]['values'] = $value_list;
+		$object->parameters['extra_fields'][$table_element]['show'] = $show_list;
 
 		$result = $object->update($user);
 
