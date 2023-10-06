@@ -51,17 +51,21 @@ class modECommerceNg extends DolibarrModules
 
 		// Family can be 'crm','financial','hr','projects','products','ecm','technic','other'
 		// It is used to group modules in module setup page
-		$this->family = "other";
+		$this->family = 'easya';
+		$this->familyinfo = array('easya' => array('position' => '001', 'label' => $langs->trans("easyaFamily")));
 		// Module label (no space allowed), used if translation string 'ModuleXXXName' not found (where XXX is value of numeric property 'numero' of module)
 		$this->name = 'EcommerceNg';        //  Must be same than value used for if $conf->ecommerceng->enabled
 		// Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
 		$this->description = "Module to synchronise Dolibarr with ECommerce platform (currently ecommerce supported: WooCommerce)";
 		$this->descriptionlong = "See page https://wiki.dolibarr.org/index.php/Module_Magento_EN for more information";
-		$this->editor_name = 'Open-Dsi';
-		$this->editor_url = 'http://www.open-dsi.fr';
+		$this->editor_name      = '<b>Easya Solutions</b> (Ex Open-Dsi)';
+        $this->editor_web       = 'https://easya.solutions';
+        $this->editor_url       = "https://easya.solutions";
+        $this->editor_email     = 'support@easya.solutions';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
 		$this->version = file_get_contents(__DIR__.'/../../VERSION');
+		$this->url_last_version = 'https://git.open-dsi.fr/dolibarr-extension/'.strtolower($this->name).'/-/raw/2022.5.3/VERSION';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_' . strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
@@ -69,7 +73,12 @@ class modECommerceNg extends DolibarrModules
 		// Name of image file used for this module.
 		// If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
 		// If file is in module/images directory, use this->picto=DOL_URL_ROOT.'/module/images/file.png'
-		$this->picto = 'eCommerce.png@ecommerceng';
+		// $this->picto = 'eCommerce.png@ecommerceng';
+		if((float)DOL_VERSION <= 11.0) {
+            $this->picto='opendsi@'.strtolower($this->name);
+        } else {
+            $this->picto='opendsi_big@'.strtolower($this->name);
+        }
 
 		// Defined all module parts (triggers, login, substitutions, menus, css, etc...)
 		// for default path (eg: /mymodule/core/xxxxx) (0=disable, 1=enable)
