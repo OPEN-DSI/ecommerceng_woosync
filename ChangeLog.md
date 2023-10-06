@@ -1,7 +1,19 @@
 # ChangeLog
 
-## 4.1.57.0
+## 4.1.60.0
 - Changement logo - page support.
+
+## 4.1.59.0
+- Ajout d'une option pour ne pas chercher le tiers grace a son nom et code postal
+
+## 4.1.58.0
+- Ignore la synchronisation de l'entrepot distant s'il n'est pas associé avec un entrepôt dolibarr.
+- Correction du script de synchronisation des produits vers le site
+
+## 4.1.57.0
+- Ajout du support de l'extension woocommerce "WooCommerce Multi Locations Inventory Management".
+- Correction synchro attribut de produit de dolibarr vers le site.
+- Correction synchro stock avec l'extension "Stock Locations for WooCommerce" du site vers dolibarr.
 
 ## 4.1.56.0
 - Ajout du support avec WPML dans la config du site onglet "produit" et non plus avec la variable globale ECOMMERCENG_WOOCOMMERCE_WPML_SUPPORT.

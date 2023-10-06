@@ -2946,7 +2946,7 @@ class eCommerceSynchro
 
 						// Search customer by name if it's a company
 						if (!$error && !($third_party_id > 0) && (!isset($customer_data['type']) || $customer_data['type'] == 'company')) {
-							$result = $this->getThirdPartyByInfos($customer_data['name'], $customer_data['zip']);
+							$result = $this->getThirdPartyByNameAndZip($customer_data['name'], $customer_data['zip']);
 							if ($result < 0) {
 								if ($result != -2) $error++;
 							} else {
@@ -3600,7 +3600,7 @@ class eCommerceSynchro
                             $product->load_stock();
 
                             $new_warehouses_stock = array();
-                            if (!empty($this->eCommerceSite->parameters['enable_warehouse_plugin_sl_support'])) {
+                            if (!empty($this->eCommerceSite->parameters['enable_warehouse_plugin_support'])) {
                                 dol_include_once('/ecommerceng/class/data/eCommerceRemoteWarehouses.class.php');
                                 $eCommerceRemoteWarehouses = new eCommerceRemoteWarehouses($this->db);
                                 $remote_warehouses = $eCommerceRemoteWarehouses->get_all($this->eCommerceSite->id);
@@ -3610,14 +3610,15 @@ class eCommerceSynchro
                                 }
 
                                 if (!$error && !empty($product_data['stock_by_warehouse'])) {
-                                    foreach ($product_data['stock_by_warehouse'] as $remote_warehouse_code => $stock) {
-                                        $local_warehouse_id = isset($remote_warehouses[$remote_warehouse_code]['warehouse_id']) && $remote_warehouses[$remote_warehouse_code]['warehouse_id'] > 0 ? $remote_warehouses[$remote_warehouse_code]['warehouse_id'] : 0;
+                                    foreach ($product_data['stock_by_warehouse'] as $remote_warehouse_id => $stock) {
+                                        $local_warehouse_id = isset($remote_warehouses[$remote_warehouse_id]['warehouse_id']) && $remote_warehouses[$remote_warehouse_id]['warehouse_id'] > 0 ? $remote_warehouses[$remote_warehouse_id]['warehouse_id'] : 0;
                                         if (empty($local_warehouse_id)) {
-                                            $error++;
-                                            $this->errors[] = 'Error - Unknown remote warehouse : ' . $remote_warehouse_code;
+											dol_syslog(__METHOD__ . ' Warehouse not configured for remote warehouse ID ' . $remote_warehouse_id . ' so we don\'t process this remote warehouse', LOG_WARNING);
+//                                            $error++;
+//                                            $this->errors[] = 'Error - Unknown remote warehouse : ' . $remote_warehouse_id;
                                         } else {
                                             $current_stock = isset($product->stock_warehouse[$local_warehouse_id]->real) ? $product->stock_warehouse[$local_warehouse_id]->real : 0;
-                                            $new_warehouses_stock[$this->eCommerceSite->fk_warehouse] = price2num($stock - $current_stock);
+                                            $new_warehouses_stock[$local_warehouse_id] = price2num($stock - $current_stock);
                                         }
                                     }
                                 }
@@ -4245,7 +4246,7 @@ class eCommerceSynchro
                                 if (!$error) {
                                     $third_party = new Societe($this->db);
                                     $third_party->fetch($third_party_id);
-                                    if (empty($third_party->default_lang) && !empty($order_data['language']) && $order_datarder['language'] != 'ec_none') {
+                                    if (empty($third_party->default_lang) && !empty($order_data['language']) && $order_data['language'] != 'ec_none') {
                                         $third_party->default_lang = $order_data['language'];
 
                                         $result = $third_party->update($third_party->id, $this->user);
@@ -4516,11 +4517,13 @@ class eCommerceSynchro
 									}
 
 									// Add product line if new created
-									if (!$error && $new_order && count($order_data['items'])) {
-										if (empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD)) {
-											// Get products to synchronize
-											$remote_id_to_synchronize = array();
-											foreach ($order_data['items'] as $item) {
+									$warehouseByLine = array();
+									if (!$error && count($order_data['items'])) {
+										if ($new_order) {
+											if (empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD)) {
+												// Get products to synchronize
+												$remote_id_to_synchronize = array();
+												foreach ($order_data['items'] as $item) {
 //												$this->initECommerceProduct();
 //												$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
 //												if ($result < 0 && !empty($this->eCommerceProduct->error)) {
@@ -4528,66 +4531,65 @@ class eCommerceSynchro
 //													$this->errors = array_merge($this->errors, $this->eCommerceProduct->errors);
 //													$error++;
 //												} elseif ($result <= 0) {
-												if (!empty($item['id_remote_product']))
-													$remote_id_to_synchronize[] = str_replace('|%', '', $item['id_remote_product']);
+													if (!empty($item['id_remote_product']))
+														$remote_id_to_synchronize[] = str_replace('|%', '', $item['id_remote_product']);
 //												}
-											}
+												}
 
-											// Synchronize the product to synchronize
-											if (!empty($remote_id_to_synchronize) && !$dont_synchronize_products) {
-												// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
-												$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, count($remote_id_to_synchronize), false, $order);
-												if ($result < 0) {
-													$error++;
+												// Synchronize the product to synchronize
+												if (!empty($remote_id_to_synchronize) && !$dont_synchronize_products) {
+													// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
+													$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, count($remote_id_to_synchronize), false, $order);
+													if ($result < 0) {
+														$error++;
+													}
 												}
 											}
-										}
 
-										// Add product lines
-										if (!$error) {
-											$parent_match = array();
-											foreach ($order_data['items'] as $item) {
-												// Get product ID
-												$fk_product = 0;
-												if (!empty($item['id_remote_product'])) {
-													if (empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD)) {
-														$this->initECommerceProduct();
-														$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
-														if ($result < 0 && !empty($this->eCommerceProduct->error)) {
-															$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $item['id_remote_product'], $this->eCommerceSite->id);
-															$this->errors[] = $this->eCommerceProduct->error;
-															$error++;
-															break;  // break on items
-														} elseif ($result > 0) {
-															$fk_product = $this->eCommerceProduct->fk_product;
-														}
-													} else {
-														$product_ref = trim($item['ref']);
-														if (!empty($product_ref)) {
-															$product = new Product($this->db);
-															$result = $product->fetch(0, $product_ref);
-															if ($result < 0) {
-																$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductByRef', $product_ref);
-																$this->errors[] = $product->errorsToString();
+											// Add product lines
+											if (!$error) {
+												$parent_match = array();
+												foreach ($order_data['items'] as $item) {
+													// Get product ID
+													$fk_product = 0;
+													if (!empty($item['id_remote_product'])) {
+														if (empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD)) {
+															$this->initECommerceProduct();
+															$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
+															if ($result < 0 && !empty($this->eCommerceProduct->error)) {
+																$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $item['id_remote_product'], $this->eCommerceSite->id);
+																$this->errors[] = $this->eCommerceProduct->error;
 																$error++;
 																break;  // break on items
-															} elseif ($result == 0) {
-																$this->errors[] = $this->langs->trans('ECommerceErrorProductNotFoundByRef', $product_ref);
+															} elseif ($result > 0) {
+																$fk_product = $this->eCommerceProduct->fk_product;
+															}
+														} else {
+															$product_ref = trim($item['ref']);
+															if (!empty($product_ref)) {
+																$product = new Product($this->db);
+																$result = $product->fetch(0, $product_ref);
+																if ($result < 0) {
+																	$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductByRef', $product_ref);
+																	$this->errors[] = $product->errorsToString();
+																	$error++;
+																	break;  // break on items
+																} elseif ($result == 0) {
+																	$this->errors[] = $this->langs->trans('ECommerceErrorProductNotFoundByRef', $product_ref);
+																	$error++;
+																	break;  // break on items
+																}
+																$fk_product = $product->id;
+															} elseif (!empty($conf->global->ECOMMERCENG_PRODUCT_REF_MANDATORY)) {
+																$this->errors[] = $this->langs->trans('ECommerceErrorProductRefMandatory2', $item['label']);
 																$error++;
 																break;  // break on items
 															}
-															$fk_product = $product->id;
-														} elseif (!empty($conf->global->ECOMMERCENG_PRODUCT_REF_MANDATORY)) {
-															$this->errors[] = $this->langs->trans('ECommerceErrorProductRefMandatory2', $item['label']);
-															$error++;
-															break;  // break on items
 														}
+													} elseif (!empty($item['id_product'])) {
+														$fk_product = $item['id_product'];
 													}
-												} elseif (!empty($item['id_product'])) {
-													$fk_product = $item['id_product'];
-												}
 
-												if (!$error) {
 													// Define the buy price for margin calculation
 													if (isset($item['buy_price'])) {
 														$buy_price = $item['buy_price'];
@@ -4642,13 +4644,48 @@ class eCommerceSynchro
 														break;  // break on items
 													}
 													$parent_match[$item['item_id']] = $result;
+
+													// Set import_key on the line with remote line ID
+													if ($item['type'] == 'product' && $item['item_id'] > 0) {
+														$sql = "UPDATE " . MAIN_DB_PREFIX . $order->table_element_line .
+															" SET import_key = '" . $this->db->escape($item['item_id']) . "'" .
+															" WHERE rowid = " . $result;
+														$resql = $this->db->query($sql);
+														if (!$resql) {
+															$this->errors[] = $this->langs->trans('ECommerceErrorSetRemoteProductLineIdIntoImportKey');
+															$this->errors[] = $this->db->lasterror();
+															$error++;
+															break;  // break on items
+														}
+													}
+
+													// Support movement stock different by product
+													if ($fk_product > 0 && !empty($item['remote_warehouse_id']) && $item['remote_warehouse_id'] > 0) {
+														$warehouseByLine[$result] = $item['remote_warehouse_id'];
+													}
+
+													unset($this->eCommerceProduct);
+												}
+											}
+											if (method_exists($order, 'fetch_lines')) $order->fetch_lines();
+											elseif (method_exists($order, 'getLinesArray')) $order->getLinesArray();
+										} else {
+											foreach ($order->lines as $line) {
+												// Get import key of the line
+												$import_key = dol_getIdFromCode($this->db, $line->id, $order->table_element_line, 'rowid', 'import_key');
+												if ($import_key == -1) {
+													$this->errors[] = $this->langs->trans('ECommerceErrorGetImportKeyOfLine', $line->id, $order->ref);
+													$this->errors[] = $this->db->lasterror();
+													$error++;
+													break;  // break on items
 												}
 
-												unset($this->eCommerceProduct);
+												// Support movement stock different by product
+												if ($line->fk_product > 0 && !empty($import_key) && !empty($order_data['items'][$import_key]['remote_warehouse_id']) && $order_data['items'][$import_key]['remote_warehouse_id'] > 0) {
+													$warehouseByLine[$line->id] = $order_data['items'][$import_key]['remote_warehouse_id'];
+												}
 											}
 										}
-										if (method_exists($order, 'fetch_lines')) $order->fetch_lines();
-										elseif (method_exists($order, 'getLinesArray')) $order->getLinesArray();
 									}
 
 									// Force set amount if another amount paid
@@ -4723,20 +4760,24 @@ class eCommerceSynchro
 
 									// Update the order status
 									if (!$error && ($new_order || ($order->statut != $order_data['status']))) {        // Always when creating
-										$warehouse_id = $this->eCommerceSite->parameters['order_actions']['valid_order_fk_warehouse'] > 0 ? $this->eCommerceSite->parameters['order_actions']['valid_order_fk_warehouse'] : 0;
+										$warehouse_id = $this->eCommerceSite->parameters['order_actions']['valid_order_fk_warehouse'] > 0 && empty($warehouseByLine) ? $this->eCommerceSite->parameters['order_actions']['valid_order_fk_warehouse'] : 0;
+										if (empty($warehouse_id) && empty($warehouseByLine) && !empty($conf->global->STOCK_CALCULATE_ON_VALIDATE_ORDER) && $conf->global->STOCK_CALCULATE_ON_VALIDATE_ORDER == 1) {
+											$this->errors[] = $this->langs->trans('ECommerceErrorValidOrderWarehouseNotConfigured', $this->eCommerceSite->name);
+											$error++;
+										}
 
 										// Valid the order if the distant order is not at the draft status but the order is draft. For set the order ref.
-										if ($order_data['status'] != Commande::STATUS_DRAFT && $order->statut == Commande::STATUS_DRAFT) {
-											if (empty($warehouse_id) && !empty($conf->global->STOCK_CALCULATE_ON_VALIDATE_ORDER) && $conf->global->STOCK_CALCULATE_ON_VALIDATE_ORDER == 1) {
+										if (!$error && $order_data['status'] != Commande::STATUS_DRAFT && $order->statut == Commande::STATUS_DRAFT) {
+											$result = $order->valid($this->user, $warehouse_id);
+											if ($result < 0) {
 												$this->errors[] = $this->langs->trans('ECommerceErrorValidOrder');
-												$this->errors[] = $this->langs->trans('ECommerceErrorValidOrderWarehouseNotConfigured');
+												if (!empty($order->error)) $this->errors[] = $order->error;
+												$this->errors = array_merge($this->errors, $order->errors);
 												$error++;
 											} else {
-												$result = $order->valid($this->user, $warehouse_id);
+												$result = $this->setLinesMovementStockOnDifferentWarehouse($order, $warehouseByLine);
 												if ($result < 0) {
-													$this->errors[] = $this->langs->trans('ECommerceErrorValidOrder');
-													if (!empty($order->error)) $this->errors[] = $order->error;
-													$this->errors = array_merge($this->errors, $order->errors);
+													$this->errors[] = $this->langs->trans("ECommerceErrorWhenMovementStockOnDifferentWarehouse");
 													$error++;
 												}
 											}
@@ -4767,6 +4808,12 @@ class eCommerceSynchro
 													if (!empty($order->error)) $this->errors[] = $order->error;
 													$this->errors = array_merge($this->errors, $order->errors);
 													$error++;
+												} else {
+													$result = $this->setLinesMovementStockOnDifferentWarehouse($order, $warehouseByLine, true);
+													if ($result < 0) {
+														$this->errors[] = $this->langs->trans("ECommerceErrorWhenMovementStockOnDifferentWarehouse");
+														$error++;
+													}
 												}
 											} elseif ($order_data['status'] == Commande::STATUS_CLOSED) {
 												if ($order->statut != Commande::STATUS_CLOSED) {
@@ -4903,6 +4950,94 @@ class eCommerceSynchro
 		} else {
 			return $order->id > 0 ? $order->id : 0;
 		}
+	}
+
+	/**
+	 * Set movement stock for each product line on different warehouse
+	 *
+	 * @param	CommonObject	$object				Object handler
+	 * @param	array			$warehouseByLine	List of warehouse ID for each line
+	 * @param	boolean			$undoMovement		True to undo movements
+	 * @return	int									<0 if KO, >0 if OK
+	 */
+	public function setLinesMovementStockOnDifferentWarehouse($object, $warehouseByLine, $undoMovement = false)
+	{
+		global $conf;
+
+		$canMakeMovement = !empty($warehouseByLine) && !empty($conf->stock->enabled);
+		if ($object->element == 'commande') {
+			$canMakeMovement &= !empty($conf->global->STOCK_CALCULATE_ON_VALIDATE_ORDER) && $conf->global->STOCK_CALCULATE_ON_VALIDATE_ORDER == 1;
+			$movementLabel = $this->langs->trans($undoMovement ? "OrderCanceledInDolibarr" : "OrderValidatedInDolibarr", $object->ref);
+			$movementDelivery = empty($undoMovement);
+		} elseif ($object->element == 'facture') {
+			$canMakeMovement &= $object->type != Facture::TYPE_DEPOSIT && !empty($conf->global->STOCK_CALCULATE_ON_BILL);
+			$movementLabel = $this->langs->trans($undoMovement ? "InvoiceBackToDraftInDolibarr" : "InvoiceValidatedInDolibarr", $object->ref);
+			$movementDelivery = empty($undoMovement) && $object->type != Facture::TYPE_CREDIT_NOTE;
+		} else {
+			$this->errors[] = $this->langs->trans("ECommerceErrorElementNotSupportedForLinesMovementStockOnDifferentWarehouse", $object->element);
+			return -1;
+		}
+
+		// If stock can be incremented/decremented
+		if ($canMakeMovement) {
+			// Get all payment gateways
+			dol_include_once('/ecommerceng/class/data/eCommerceRemoteWarehouses.class.php');
+			$remote_warehouses = new eCommerceRemoteWarehouses($this->db);
+			$remoteWarehousesList = $remote_warehouses->get_all($this->eCommerceSite->id);
+			if (!is_array($remoteWarehousesList) && $remoteWarehousesList < 0) {
+				$this->errors[] = $remote_warehouses->errorsToString();
+				return -1;
+			}
+
+			require_once DOL_DOCUMENT_ROOT.'/product/stock/class/mouvementstock.class.php';
+			$this->langs->load("agenda");
+
+			$error = 0;
+			$this->db->begin();
+			foreach ($object->lines as $line) {
+				if ($line->fk_product > 0) {
+					$remoteWarehouseId = isset($warehouseByLine[$line->id]) && $warehouseByLine[$line->id] > 0 ? $warehouseByLine[$line->id] : 0;
+					if (empty($remoteWarehouseId) && $line->product_type == Product::TYPE_PRODUCT) {
+						$this->errors[] = $this->langs->trans("ECommerceErrorWarehouseIdNotSpecifiedForTheLine", $line->fk_product);
+						$error++;
+						break;
+					}
+
+					$warehouseId = isset($remoteWarehousesList[$remoteWarehouseId]['warehouse_id']) && $remoteWarehousesList[$remoteWarehouseId]['warehouse_id'] > 0 ? $remoteWarehousesList[$remoteWarehouseId]['warehouse_id'] : 0;
+					if ($remoteWarehouseId > 0 && empty($warehouseId)) {
+						dol_syslog(__METHOD__ . ' Warehouse not configured for remote warehouse ID ' . $remoteWarehouseId . ' so we don\'t process this remote warehouse', LOG_WARNING);
+						continue;
+//						$this->errors[] = $this->langs->trans("ECommerceErrorWarehouseIdNotConfiguredForRemoteWarehouse", $remoteWarehouseId, $this->eCommerceSite->name);
+//						$error++;
+//						break;
+					}
+
+					$mouvP = new MouvementStock($this->db);
+					$mouvP->origin = &$object;
+					if ($movementDelivery) {
+						// We decremented stock of product (and sub-products)
+						$result = $mouvP->livraison($this->user, $line->fk_product, $warehouseId, $line->qty, $line->subprice, $movementLabel);
+					} else {
+						// We increment stock of product (and sub-products)
+						$result = $mouvP->reception($this->user, $line->fk_product, $warehouseId, $line->qty, 0, $movementLabel); // price is 0, we don't want WAP to be changed
+					}
+					if ($result < 0) {
+						$this->errors[] = $mouvP->errorsToString();
+						$error++;
+						break;
+					}
+				}
+			}
+
+			if ($error) {
+				$this->db->rollback();
+				return -1;
+			} else {
+				$this->db->commit();
+			}
+		}
+
+		return 1;
 	}
 
 	/**
@@ -5126,6 +5261,7 @@ class eCommerceSynchro
 										}
 
 										// Add product lines and contacts
+										$warehouseByLine = array();
 										if (!$error) {
 											if ($order->id > 0) {
 												if (empty($order->lines)) {
@@ -5311,6 +5447,20 @@ class eCommerceSynchro
 																	// Defined the new fk_parent_line
 																	if ($line->product_type == 9) {
 																		$fk_parent_line = $result;
+																	}
+
+																	// Get import key of the line
+																	$import_key = dol_getIdFromCode($this->db, $line->id, $invoice->table_element_line, 'rowid', 'import_key');
+																	if ($import_key == -1) {
+																		$this->errors[] = $this->langs->trans('ECommerceErrorGetImportKeyOfLine', $line->id, $invoice->ref);
+																		$this->errors[] = $this->db->lasterror();
+																		$error++;
+																		break;  // break on items
+																	}
+
+																	// Support movement stock different by product
+																	if ($line->fk_product > 0 && !empty($import_key) && !empty($order_data['items'][$import_key]['remote_warehouse_id']) && $order_data['items'][$import_key]['remote_warehouse_id'] > 0) {
+																		$warehouseByLine[$line->id] = $order_data['items'][$import_key]['remote_warehouse_id'];
 																	}
 																}
 															}
@@ -5594,6 +5744,11 @@ class eCommerceSynchro
 																			break;  // break on items
 																		}
 																		$parent_match[$item['item_id']] = $result;
+
+																		// Support movement stock different by product
+																		if ($fk_product > 0 && !empty($item['remote_warehouse_id']) && $item['remote_warehouse_id'] > 0) {
+																			$warehouseByLine[$result] = $item['remote_warehouse_id'];
+																		}
 																	}
 																}
 
@@ -5870,7 +6025,11 @@ class eCommerceSynchro
 										}
 
 										// Get warehouse ID
-										$warehouse_id = $this->eCommerceSite->parameters['order_actions']['valid_invoice_fk_warehouse'] > 0 ? $this->eCommerceSite->parameters['order_actions']['valid_invoice_fk_warehouse'] : 0;
+										$warehouse_id = $this->eCommerceSite->parameters['order_actions']['valid_invoice_fk_warehouse'] > 0 && empty($warehouseByLine) ? $this->eCommerceSite->parameters['order_actions']['valid_invoice_fk_warehouse'] : 0;
+										if (empty($warehouse_id) && empty($warehouseByLine) && !empty($conf->global->STOCK_CALCULATE_ON_BILL)) {
+											$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceValidateWarehouseNotConfigured');
+											$error++;
+										}
 
 										if ($isDepositType) {
 											$save_WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER = $conf->global->WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_ORDER;
@@ -5883,16 +6042,16 @@ class eCommerceSynchro
 
 										// Validate invoice
 										if (!$error) {
-											if (empty($warehouse_id) && !empty($conf->global->STOCK_CALCULATE_ON_BILL)) {
+											$result = $invoice->validate($this->user, '', $warehouse_id);
+											if ($result < 0) {
 												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceValidate');
-												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceValidateWarehouseNotConfigured');
+												if (!empty($invoice->error)) $this->errors[] = $invoice->error;
+												$this->errors = array_merge($this->errors, $invoice->errors);
 												$error++;
 											} else {
-												$result = $invoice->validate($this->user, '', $warehouse_id);
+												$result = $this->setLinesMovementStockOnDifferentWarehouse($invoice, $warehouseByLine);
 												if ($result < 0) {
-													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceValidate');
-													if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-													$this->errors = array_merge($this->errors, $invoice->errors);
+													$this->errors[] = $this->langs->trans("ECommerceErrorWhenMovementStockOnDifferentWarehouse");
 													$error++;
 												}
 											}
@@ -6411,7 +6570,7 @@ class eCommerceSynchro
 		if (!$error && !empty($order_data)) {
 			$order_ref_ext = $this->eCommerceSite->name . '-' . $order_data['remote_id'];
 			$invoice_ref_ext = 'eCommerce-' . $this->eCommerceSite->id . '-' . $order_data['remote_id'];
-			$invoice_refund_ref_ext_prefix = 'eCommerce-' . $this->eCommerceSite->id . '-' . $order_data['remote_id'].'-refund-';
+			$invoice_refund_ref_ext_prefix = 'eCommerce-' . $this->eCommerceSite->id . '-' . $order_data['remote_id'] . '-refund-';
 			$order_id = 0;
 			$selected_payment_gateways = null;
 			$payment_method_id = 0;
@@ -6592,34 +6751,102 @@ class eCommerceSynchro
 										$error++;
 									}
 
-									// Add product lines and contacts
-									if (!$error) {
-										if ($order->id > 0) {
-											if (empty($order->lines)) {
-												if (method_exists($order, 'fetch_lines')) $order->fetch_lines();
-												elseif (method_exists($order, 'getLinesArray')) $order->getLinesArray();
+									// Add product lines
+									$warehouseByLine = array();
+									if (!$error && is_array($refund_info['items']) && count($refund_info['items']) > 0) {
+										if (empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD)) {
+											// Get products to synchronize
+											$remote_id_to_synchronize = array();
+											foreach ($refund_info['items'] as $item) {
+//																$this->initECommerceProduct();
+//																$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
+//																if ($result < 0 && !empty($this->eCommerceProduct->error)) {
+//																	$this->error = $this->eCommerceProduct->error;
+//																	$this->errors = array_merge($this->errors, $this->eCommerceProduct->errors);
+//																	$error++;
+//																} elseif ($result <= 0) {
+												if (!empty($item['id_remote_product']))
+													$remote_id_to_synchronize[] = str_replace('|%', '', $item['id_remote_product']);
+//																}
 											}
 
-											// Add product lines
-											$lines = $order->lines;
-											if (is_array($lines) && count($lines) > 0) {
-												$parent_line_match = array();
-												$fk_parent_line = 0;
+											// Synchronize the product to synchronize
+											if (!empty($remote_id_to_synchronize) && !$dont_synchronize_products) {
+												// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
+												$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, count($remote_id_to_synchronize), false, $invoice_refund);
+												if ($result < 0) {
+													$error++;
+												}
+											}
+										}
 
-												foreach ($lines as $line) {
-													$label = (!empty($line->label) ? $line->label : '');
-													$desc = (!empty($line->desc) ? $line->desc : $line->libelle);
+										// Add product lines
+										if (!$error) {
+											$parent_match = array();
+											foreach ($refund_info['items'] as $item) {
+												// Get product ID
+												$fk_product = 0;
+												if (!empty($item['id_remote_product'])) {
+													if (empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD)) {
+														$this->initECommerceProduct();
+														$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
+														if ($result < 0 && !empty($this->eCommerceProduct->error)) {
+															$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $item['id_remote_product'], $this->eCommerceSite->id);
+															$this->errors[] = $this->eCommerceProduct->error;
+															$error++;
+															break;  // break on items
+														} elseif ($result > 0) {
+															$fk_product = $this->eCommerceProduct->fk_product;
+														}
+													} else {
+														$product_ref = trim($item['ref']);
+														if (!empty($product_ref)) {
+															$product = new Product($this->db);
+															$result = $product->fetch(0, $product_ref);
+															if ($result < 0) {
+																$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductByRef', $product_ref);
+																$this->errors[] = $product->errorsToString();
+																$error++;
+																break;  // break on items
+															} elseif ($result == 0) {
+																$this->errors[] = $this->langs->trans('ECommerceErrorProductNotFoundByRef', $product_ref);
+																$error++;
+																break;  // break on items
+															}
+															$fk_product = $product->id;
+														} elseif (!empty($conf->global->ECOMMERCENG_PRODUCT_REF_MANDATORY)) {
+															$this->errors[] = $this->langs->trans('ECommerceErrorProductRefMandatory2', $item['label']);
+															$error++;
+															break;  // break on items
+														}
+													}
+												} elseif (!empty($item['id_product'])) {
+													$fk_product = $item['id_product'];
+												}
 
-													if ($line->subprice < 0 && empty($conf->global->ECOMMERCE_KEEP_NEGATIVE_PRICE_LINES_WHEN_CREATE_INVOICE)) {
+												if (!$error) {
+													$price = $item['price'];
+													$total_ht = $item['total_ht'];
+													$total_tva = $item['total_tva'];
+													$total_ttc = $item['total_ttc'];
+													$description = $item['description'];
+													if (empty($description) && $fk_product > 0) {
+														$product = new Product($this->db);
+														$product->fetch($fk_product);
+														$description = $product->description;
+													}
+													$description = dol_concatdesc($description, $item['additional_description']);
+
+													if ($price < 0 && empty($conf->global->ECOMMERCE_KEEP_NEGATIVE_PRICE_LINES_WHEN_CREATE_INVOICE)) {
 														// Negative line, we create a discount line
 														$discount = new DiscountAbsolute($this->db);
 														$discount->fk_soc = $invoice_refund->socid;
-														$discount->amount_ht = abs($line->total_ht);
-														$discount->amount_tva = abs($line->total_tva);
-														$discount->amount_ttc = abs($line->total_ttc);
-														$discount->tva_tx = $line->tva_tx;
+														$discount->amount_ht = abs($total_ht);
+														$discount->amount_tva = abs($total_tva);
+														$discount->amount_ttc = abs($total_ttc);
+														$discount->tva_tx = $item['tva_tx'];
 														$discount->fk_user = $this->user->id;
-														$discount->description = $desc;
+														$discount->description = $description;
 														$discount_id = $discount->create($this->user);
 														if ($discount_id > 0) {
 															$result = $invoice_refund->insert_discount($discount_id); // This include link_to_invoice
@@ -6628,6 +6855,7 @@ class eCommerceSynchro
 																if (!empty($invoice_refund->error)) $this->errors[] = $invoice_refund->error;
 																$this->errors = array_merge($this->errors, $invoice_refund->errors);
 																$error++;
+																break;  // break on items
 															}
 														} else {
 															$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceDiscountCreate');
@@ -6637,443 +6865,241 @@ class eCommerceSynchro
 															break;
 														}
 													} else {
-														// Positive line
-														$product_type = ($line->product_type ? $line->product_type : 0);
-
-														// Date start
-														$date_start = false;
-														if ($line->date_debut_prevue)
-															$date_start = $line->date_debut_prevue;
-														if ($line->date_debut_reel)
-															$date_start = $line->date_debut_reel;
-														if ($line->date_start)
-															$date_start = $line->date_start;
-
-														// Date end
-														$date_end = false;
-														if ($line->date_fin_prevue)
-															$date_end = $line->date_fin_prevue;
-														if ($line->date_fin_reel)
-															$date_end = $line->date_fin_reel;
-														if ($line->date_end)
-															$date_end = $line->date_end;
-
-														// Reset fk_parent_line for no child products and special product
-														if (($line->product_type != 9 && empty($line->fk_parent_line)) || $line->product_type == 9) {
-															$fk_parent_line = 0;
+														// Define the buy price for margin calculation
+														if (isset($item['buy_price'])) {
+															$buy_price = $item['buy_price'];
 														} else {
-															$fk_parent_line = isset($parent_line_match[$line->fk_parent_line]) ? $parent_line_match[$line->fk_parent_line] : $fk_parent_line;
-														}
-
-														// Extrafields
-														$array_options = $this->getDefaultExtraFields('facturedet', $this->eCommerceSite);
-														if (empty($conf->global->MAIN_EXTRAFIELDS_DISABLED)) {
-															foreach ($line->array_options as $k => $v) {
-																$array_options[$k] = $v;
+															$buy_price = 0;
+															if ($fk_product > 0) {
+																$result = $order->defineBuyPrice(0, 0, $fk_product);
+																if ($result < 0) {
+																	$this->errors[] = $this->langs->trans('ECommerceErrorOrderDefineBuyPrice', $fk_product, $buy_price);
+																	if (!empty($order->error)) $this->errors[] = $order->error;
+																	$this->errors = array_merge($this->errors, $order->errors);
+																	$error++;
+																	break;    // break on items
+																} else {
+																	$buy_price = $result;
+																}
+															}
+															if (empty($buy_price) && isset($conf->global->ForceBuyingPriceIfNull) && $conf->global->ForceBuyingPriceIfNull > 0) {
+																$buy_price = $item['price'];
 															}
 														}
 
-														$tva_tx = $line->tva_tx;
-														if (!empty($line->vat_src_code) && !preg_match('/\(/', $tva_tx)) $tva_tx .= ' (' . $line->vat_src_code . ')';
+														$label = !empty($item['label']) ? $item['label'] : '';
+														$discount = $item['discount'];
+														$product_type = $item['product_type'] != "simple" ? 1 : 0;
 
-														$result = $invoice_refund->addline($desc, $line->subprice, $line->qty, $tva_tx, $line->localtax1_tx, $line->localtax2_tx,
-															$line->fk_product, $line->remise_percent, $date_start, $date_end, 0, $line->info_bits, $line->fk_remise_except, 'HT',
-															0, $product_type, $line->rang, $line->special_code, $order->element, $line->id, $fk_parent_line, $line->fk_fournprice, $line->pa_ht,
-															$label, $array_options, 100, 0, $line->fk_unit, $line->multicurrency_subprice);
-														if ($result < 0) {
+														$array_options = $this->getDefaultExtraFields('facturedet', $this->eCommerceSite);
+														if (is_array($item['extrafields'])) {
+															foreach ($item['extrafields'] as $extrafield => $extrafield_value) {
+																$array_options['options_' . $extrafield] = $extrafield_value;
+															}
+														}
+
+														$fk_parent_line = isset($parent_match[$item['parent_item_id']]) ? $parent_match[$item['parent_item_id']] : 0;
+														$result = $invoice_refund->addline($description, $price, $item['qty'], $item['tva_tx'], $item['local_tax1_tx'], $item['local_tax2_tx'],
+															$fk_product, $discount, '', '', 0, 0, 0, 'HT',
+															0, $product_type, -1, 0, '', 0, 0, 0, $buy_price,
+															$label, $array_options, 100, 0, 0, 0);
+														if ($result <= 0) {
 															$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
 															if (!empty($invoice_refund->error)) $this->errors[] = $invoice_refund->error;
 															$this->errors = array_merge($this->errors, $invoice_refund->errors);
 															$error++;
-															break;
-														} elseif ($result > 0) {
-															$parent_line_match[$line->id] = $result;
-															// Defined the new fk_parent_line
-															if ($line->product_type == 9) {
-																$fk_parent_line = $result;
-															}
+															break;  // break on items
+														}
+														$parent_match[$item['item_id']] = $result;
+
+														// Support movement stock different by product
+														if ($fk_product > 0 && !empty($item['remote_warehouse_id']) && $item['remote_warehouse_id'] > 0) {
+															$warehouseByLine[$result] = $item['remote_warehouse_id'];
 														}
 													}
 												}
-											}
-											if (method_exists($invoice_refund, 'fetch_lines')) $invoice_refund->fetch_lines();
-											elseif (method_exists($invoice_refund, 'getLinesArray')) $invoice_refund->getLinesArray();
 
-											// Get order internal contacts
-											$internal_contact_list = $order->liste_contact(-1, 'internal');
-											if (!is_array($internal_contact_list)) {
-												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceGetOrderInternalContacts', $order->id);
-												if (!empty($order->error)) $this->errors[] = $order->error;
-												$this->errors = array_merge($this->errors, $order->errors);
+												unset($this->eCommerceProduct);
+											}
+										}
+									}
+
+									// Add contacts
+									if (!$error) {
+										// Search or create the third party for customer contact
+										$contact_data = $order_data['socpeopleCommande'];
+										$result = $this->getContactInfosFromData($contact_data, $invoice_refund->socid);
+										if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
+										if (!is_array($result)) {
+											$error++;
+										} elseif (!empty($result) && $result['company_id'] > 0) {
+											$order_data['socpeopleCommande']['fk_soc'] = $result['company_id'];
+										} else {
+											if (empty($contact_data['company'])) {
+												if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
+													$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
+												} elseif (!empty($contact_data['firstname'])) {
+													$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
+												} else {
+													$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
+												}
+											} else {
+												$third_party_name = $contact_data['company'];
+											}
+											$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
+											if ($result < 0) {
 												$error++;
-											}
-
-											// Get order external contacts
-											$external_contact_list = $order->liste_contact(-1, 'external');
-											if (!is_array($external_contact_list)) {
-												$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceGetOrderExternalContacts', $order->id);
-												if (!empty($order->error)) $this->errors[] = $order->error;
-												$this->errors = array_merge($this->errors, $order->errors);
-												$error++;
-											}
-
-											$contact_list = array_merge($internal_contact_list, $external_contact_list);
-											foreach ($contact_list as $contact_infos) {
-												$result = $invoice_refund->add_contact($contact_infos['id'], $contact_infos['code'], $contact_infos['source']);    // May failed because of duplicate key or because code of contact type does not exists for new object
-												if ($result < 0 && $this->db->errno() != 'DB_ERROR_RECORD_ALREADY_EXISTS' && $invoice_refund->error != 'CODE_NOT_VALID_FOR_THIS_ELEMENT') {
-													$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddContact', $contact_infos['id'], $contact_infos['code'], $contact_infos['source']);
-													if (!empty($invoice_refund->error)) $this->errors[] = $invoice_refund->error;
-													$this->errors = array_merge($this->errors, $invoice_refund->errors);
+											} elseif ($result > 0) {
+												$order_data['socpeopleCommande']['fk_soc'] = $result;
+											} else {
+												$result = $this->createThirdParty($order_data['ref_client'],
+													$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
+													$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
+												if ($result < 0) {
 													$error++;
-													break;
+												} elseif ($result > 0) {
+													$order_data['socpeopleCommande']['fk_soc'] = $result;
 												}
 											}
-										} else {
-												// Add product lines
-											if (!$error && is_array($refund_info['items']) && count($refund_info['items']) > 0) {
-												if (empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD)) {
-													// Get products to synchronize
-													$remote_id_to_synchronize = array();
-													foreach ($refund_info['items'] as $item) {
-//																$this->initECommerceProduct();
-//																$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
-//																if ($result < 0 && !empty($this->eCommerceProduct->error)) {
-//																	$this->error = $this->eCommerceProduct->error;
-//																	$this->errors = array_merge($this->errors, $this->eCommerceProduct->errors);
-//																	$error++;
-//																} elseif ($result <= 0) {
-														if (!empty($item['id_remote_product']))
-															$remote_id_to_synchronize[] = str_replace('|%', '', $item['id_remote_product']);
-//																}
-													}
+										}
 
-													// Synchronize the product to synchronize
-													if (!empty($remote_id_to_synchronize) && !$dont_synchronize_products) {
-														// Todo We don't change stock here, even if dolibarr option is on because, this should be already done by product sync ?
-														$result = $this->synchronizeProducts(null, null, $remote_id_to_synchronize, count($remote_id_to_synchronize), false, $invoice);
+										// Add customer contact
+										if (!$error) {
+											$result = $this->synchSocpeople($order_data['socpeopleCommande']);
+											if ($result > 0) {
+												$result = $this->addUpdateContact($invoice_refund, true, $result, 'CUSTOMER');
+												if ($result < 0) {
+													$error++;
+												} else {
+													// Update thirdparty of the order
+													if ($order_data['socpeopleCommande']['fk_soc'] > 0 && $third_party_id != $order_data['socpeopleCommande']['fk_soc']) {
+														$invoice_refund->socid = $order_data['socpeopleCommande']['fk_soc'];
+														$result = $invoice_refund->update($this->user);
 														if ($result < 0) {
+															$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceUpdate');
+															if (!empty($invoice_refund->error)) $this->errors[] = $invoice_refund->error;
+															$this->errors = array_merge($this->errors, $invoice_refund->errors);
 															$error++;
 														}
 													}
 												}
-
-												// Add product lines
-												if (!$error) {
-													$parent_match = array();
-													foreach ($refund_info['items'] as $item) {
-														// Get product ID
-														$fk_product = 0;
-														if (!empty($item['id_remote_product'])) {
-															if (empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD)) {
-																$this->initECommerceProduct();
-																$result = $this->eCommerceProduct->fetchByRemoteId($item['id_remote_product'], $this->eCommerceSite->id); // load info of table ecommerce_product
-																if ($result < 0 && !empty($this->eCommerceProduct->error)) {
-																	$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductLinkByRemoteId', $item['id_remote_product'], $this->eCommerceSite->id);
-																	$this->errors[] = $this->eCommerceProduct->error;
-																	$error++;
-																	break;  // break on items
-																} elseif ($result > 0) {
-																	$fk_product = $this->eCommerceProduct->fk_product;
-																}
-															} else {
-																$product_ref = trim($item['ref']);
-																if (!empty($product_ref)) {
-																	$product = new Product($this->db);
-																	$result = $product->fetch(0, $product_ref);
-																	if ($result < 0) {
-																		$this->errors[] = $this->langs->trans('ECommerceErrorFetchProductByRef', $product_ref);
-																		$this->errors[] = $product->errorsToString();
-																		$error++;
-																		break;  // break on items
-																	} elseif ($result == 0) {
-																		$this->errors[] = $this->langs->trans('ECommerceErrorProductNotFoundByRef', $product_ref);
-																		$error++;
-																		break;  // break on items
-																	}
-																	$fk_product = $product->id;
-																} elseif (!empty($conf->global->ECOMMERCENG_PRODUCT_REF_MANDATORY)) {
-																	$this->errors[] = $this->langs->trans('ECommerceErrorProductRefMandatory2', $item['label']);
-																	$error++;
-																	break;  // break on items
-																}
-															}
-														} elseif (!empty($item['id_product'])) {
-															$fk_product = $item['id_product'];
-														}
-
-														if (!$error) {
-															$price = $item['price'];
-															$total_ht = $item['total_ht'];
-															$total_tva = $item['total_tva'];
-															$total_ttc = $item['total_ttc'];
-															$description = $item['description'];
-															if (empty($description) && $fk_product > 0) {
-																$product = new Product($this->db);
-																$product->fetch($fk_product);
-																$description = $product->description;
-															}
-															$description = dol_concatdesc($description, $item['additional_description']);
-
-															if ($price < 0 && empty($conf->global->ECOMMERCE_KEEP_NEGATIVE_PRICE_LINES_WHEN_CREATE_INVOICE)) {
-																// Negative line, we create a discount line
-																$discount = new DiscountAbsolute($this->db);
-																$discount->fk_soc = $invoice->socid;
-																$discount->amount_ht = abs($total_ht);
-																$discount->amount_tva = abs($total_tva);
-																$discount->amount_ttc = abs($total_ttc);
-																$discount->tva_tx = $item['tva_tx'];
-																$discount->fk_user = $this->user->id;
-																$discount->description = $description;
-																$discount_id = $discount->create($this->user);
-																if ($discount_id > 0) {
-																	$result = $invoice->insert_discount($discount_id); // This include link_to_invoice
-																	if ($result < 0) {
-																		$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceInsertDiscount');
-																		if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-																		$this->errors = array_merge($this->errors, $invoice->errors);
-																		$error++;
-																		break;  // break on items
-																	}
-																} else {
-																	$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceDiscountCreate');
-																	if (!empty($discount->error)) $this->errors[] = $discount->error;
-																	$this->errors = array_merge($this->errors, $discount->errors);
-																	$error++;
-																	break;
-																}
-															} else {
-																// Define the buy price for margin calculation
-																if (isset($item['buy_price'])) {
-																	$buy_price = $item['buy_price'];
-																} else {
-																	$buy_price = 0;
-																	if ($fk_product > 0) {
-																		$result = $order->defineBuyPrice(0, 0, $fk_product);
-																		if ($result < 0) {
-																			$this->errors[] = $this->langs->trans('ECommerceErrorOrderDefineBuyPrice', $fk_product, $buy_price);
-																			if (!empty($order->error)) $this->errors[] = $order->error;
-																			$this->errors = array_merge($this->errors, $order->errors);
-																			$error++;
-																			break;    // break on items
-																		} else {
-																			$buy_price = $result;
-																		}
-																	}
-																	if (empty($buy_price) && isset($conf->global->ForceBuyingPriceIfNull) && $conf->global->ForceBuyingPriceIfNull > 0) {
-																		$buy_price = $item['price'];
-																	}
-																}
-
-																$label = !empty($item['label']) ? $item['label'] : '';
-																$discount = $item['discount'];
-																$product_type = $item['product_type'] != "simple" ? 1 : 0;
-
-																$array_options = $this->getDefaultExtraFields('facturedet', $this->eCommerceSite);
-																if (is_array($item['extrafields'])) {
-																	foreach ($item['extrafields'] as $extrafield => $extrafield_value) {
-																		$array_options['options_' . $extrafield] = $extrafield_value;
-																	}
-																}
-
-																$fk_parent_line = isset($parent_match[$item['parent_item_id']]) ? $parent_match[$item['parent_item_id']] : 0;
-																$result = $invoice->addline($description, $price, $item['qty'], $item['tva_tx'], $item['local_tax1_tx'], $item['local_tax2_tx'],
-																	$fk_product, $discount, '', '', 0, 0, 0, 'HT',
-																	0, $product_type, -1, 0, '', 0, 0, 0, $buy_price,
-																	$label, $array_options, 100, 0, 0, 0);
-																if ($result <= 0) {
-																	$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceAddLine');
-																	if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-																	$this->errors = array_merge($this->errors, $invoice->errors);
-																	$error++;
-																	break;  // break on items
-																}
-																$parent_match[$item['item_id']] = $result;
-															}
-														}
-
-														unset($this->eCommerceProduct);
-													}
-												}
+											} else {
+												$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
+												$error++;
 											}
+										}
 
-											// Add contacts
-											if (!$error) {
-												// Search or create the third party for customer contact
-												$contact_data = $order_data['socpeopleCommande'];
-												$result = $this->getContactInfosFromData($contact_data, $invoice->socid);
-												if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
-												if (!is_array($result)) {
-													$error++;
-												} elseif (!empty($result) && $result['company_id'] > 0) {
-													$order_data['socpeopleCommande']['fk_soc'] = $result['company_id'];
-												} else {
-													if (empty($contact_data['company'])) {
-														if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
-															$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
-														} elseif (!empty($contact_data['firstname'])) {
-															$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
-														} else {
-															$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
-														}
+										// Search or create the third party for billing contact
+										if (!$error) {
+											$contact_data = $order_data['socpeopleFacture'];
+											$result = $this->getContactInfosFromData($contact_data, $invoice_refund->socid);
+											if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
+											if (!is_array($result)) {
+												$error++;
+											} elseif (!empty($result) && $result['company_id'] > 0) {
+												$order_data['socpeopleCommande']['fk_soc'] = $result['company_id'];
+											} else {
+												if (empty($contact_data['company'])) {
+													if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
+														$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
+													} elseif (!empty($contact_data['firstname'])) {
+														$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
 													} else {
-														$third_party_name = $contact_data['company'];
+														$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
 													}
-													$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
+												} else {
+													$third_party_name = $contact_data['company'];
+												}
+												$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
+												if ($result < 0) {
+													$error++;
+												} elseif ($result > 0) {
+													$order_data['socpeopleFacture']['fk_soc'] = $result;
+												} else {
+													$result = $this->createThirdParty($order_data['ref_client'],
+														$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
+														$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
 													if ($result < 0) {
 														$error++;
 													} elseif ($result > 0) {
-														$order_data['socpeopleCommande']['fk_soc'] = $result;
-													} else {
-														$result = $this->createThirdParty($order_data['ref_client'],
-															$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
-															$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
-														if ($result < 0) {
-															$error++;
-														} elseif ($result > 0) {
-															$order_data['socpeopleCommande']['fk_soc'] = $result;
-														}
+														$order_data['socpeopleFacture']['fk_soc'] = $result;
 													}
 												}
+											}
+										}
 
-												// Add customer contact
-												if (!$error) {
-													$result = $this->synchSocpeople($order_data['socpeopleCommande']);
-													if ($result > 0) {
-														$result = $this->addUpdateContact($invoice, true, $result, 'CUSTOMER');
-														if ($result < 0) {
-															$error++;
-														} else {
-															// Update thirdparty of the order
-															if ($order_data['socpeopleCommande']['fk_soc'] > 0 && $third_party_id != $order_data['socpeopleCommande']['fk_soc']) {
-																$invoice->socid = $order_data['socpeopleCommande']['fk_soc'];
-																$result = $invoice->update($this->user);
-																if ($result < 0) {
-																	$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceUpdate');
-																	if (!empty($invoice->error)) $this->errors[] = $invoice->error;
-																	$this->errors = array_merge($this->errors, $invoice->errors);
-																	$error++;
-																}
-															}
-														}
-													} else {
-														$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
-														$error++;
-													}
+										// Add billing contact
+										if (!$error) {
+											$result = $this->synchSocpeople($order_data['socpeopleFacture']);
+											if ($result > 0) {
+												$result = $this->addUpdateContact($invoice_refund, true, $result, 'BILLING');
+												if ($result < 0) {
+													$error++;
 												}
+											} else {
+												$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
+												$error++;
+											}
+										}
 
-												// Search or create the third party for billing contact
-												if (!$error) {
-													$contact_data = $order_data['socpeopleFacture'];
-													$result = $this->getContactInfosFromData($contact_data, $invoice->socid);
-													if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
-													if (!is_array($result)) {
-														$error++;
-													} elseif (!empty($result) && $result['company_id'] > 0) {
-														$order_data['socpeopleCommande']['fk_soc'] = $result['company_id'];
+										// Search or create the third party for shipping contact
+										if (!$error) {
+											$contact_data = $order_data['socpeopleLivraison'];
+											$result = $this->getContactInfosFromData($contact_data, $invoice_refund->socid);
+											if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
+											if (!is_array($result)) {
+												$error++;
+											} elseif (!empty($result) && $result['company_id'] > 0) {
+												$order_data['socpeopleCommande']['fk_soc'] = $result['company_id'];
+											} else {
+												if (empty($contact_data['company'])) {
+													if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
+														$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
+													} elseif (!empty($contact_data['firstname'])) {
+														$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
 													} else {
-														if (empty($contact_data['company'])) {
-															if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
-																$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
-															} elseif (!empty($contact_data['firstname'])) {
-																$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
-															} else {
-																$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
-															}
-														} else {
-															$third_party_name = $contact_data['company'];
-														}
-														$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
-														if ($result < 0) {
-															$error++;
-														} elseif ($result > 0) {
-															$order_data['socpeopleFacture']['fk_soc'] = $result;
-														} else {
-															$result = $this->createThirdParty($order_data['ref_client'],
-																$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
-																$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
-															if ($result < 0) {
-																$error++;
-															} elseif ($result > 0) {
-																$order_data['socpeopleFacture']['fk_soc'] = $result;
-															}
-														}
+														$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
 													}
+												} else {
+													$third_party_name = $contact_data['company'];
 												}
-
-												// Add billing contact
-												if (!$error) {
-													$result = $this->synchSocpeople($order_data['socpeopleFacture']);
-													if ($result > 0) {
-														$result = $this->addUpdateContact($invoice, true, $result, 'BILLING');
-														if ($result < 0) {
-															$error++;
-														}
-													} else {
-														$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
-														$error++;
-													}
-												}
-
-												// Search or create the third party for shipping contact
-												if (!$error) {
-													$contact_data = $order_data['socpeopleLivraison'];
-													$result = $this->getContactInfosFromData($contact_data, $invoice->socid);
-													if (!is_array($result) || empty($result) || !($result['company_id'] > 0)) $result = $this->getContactInfosFromData($contact_data);
-													if (!is_array($result)) {
-														$error++;
-													} elseif (!empty($result) && $result['company_id'] > 0) {
-														$order_data['socpeopleCommande']['fk_soc'] = $result['company_id'];
-													} else {
-														if (empty($contact_data['company'])) {
-															if (!empty($contact_data['firstname']) && !empty($contact_data['lastname'])) {
-																$third_party_name = dolGetFirstLastname($contact_data['firstname'], $contact_data['lastname']);
-															} elseif (!empty($contact_data['firstname'])) {
-																$third_party_name = dolGetFirstLastname($contact_data['firstname'], $this->langs->transnoentitiesnoconv("ECommerceLastNameNotInformed"));
-															} else {
-																$third_party_name = $this->langs->transnoentitiesnoconv('ECommerceFirstNameLastNameNotInformed');
-															}
-														} else {
-															$third_party_name = $contact_data['company'];
-														}
-														$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
-														if ($result < 0) {
-															$error++;
-														} elseif ($result > 0) {
-															$order_data['socpeopleLivraison']['fk_soc'] = $result;
-														} else {
-															$result = $this->createThirdParty($order_data['ref_client'],
-																$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
-																$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
-															if ($result < 0) {
-																$error++;
-															} elseif ($result > 0) {
-																$order_data['socpeopleLivraison']['fk_soc'] = $result;
-															}
-														}
-													}
-												}
-
-												// Add shipping contact
-												if (!$error) {
-													$result = $this->synchSocpeople($order_data['socpeopleLivraison']);
-													if ($result > 0) {
-														$result = $this->addUpdateContact($invoice, true, $result, 'SHIPPING');
-														if ($result < 0) {
-															$error++;
-														}
-													} else {
-														$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
-														$error++;
-													}
-												}
-
-												// Add contact
-												if (!$error && $this->eCommerceSite->parameters['default_sales_representative_follow'] > 0) {
-													$result = $this->addUpdateContact($invoice, true, $this->eCommerceSite->parameters['default_sales_representative_follow'], 'SALESREPFOLL', 'internal');
+												$result = $this->getThirdPartyByInfos($contact_data['email'], $third_party_name, $contact_data['zip']);
+												if ($result < 0) {
+													$error++;
+												} elseif ($result > 0) {
+													$order_data['socpeopleLivraison']['fk_soc'] = $result;
+												} else {
+													$result = $this->createThirdParty($order_data['ref_client'],
+														$contact_data['company'], $contact_data['firstname'], $contact_data['lastname'],
+														$contact_data['address'], $contact_data['zip'], $contact_data['town'], $contact_data['country_id'], $contact_data['email'], $contact_data['phone'], $contact_data['fax']);
 													if ($result < 0) {
 														$error++;
+													} elseif ($result > 0) {
+														$order_data['socpeopleLivraison']['fk_soc'] = $result;
 													}
 												}
+											}
+										}
+
+										// Add shipping contact
+										if (!$error) {
+											$result = $this->synchSocpeople($order_data['socpeopleLivraison']);
+											if ($result > 0) {
+												$result = $this->addUpdateContact($invoice_refund, true, $result, 'SHIPPING');
+												if ($result < 0) {
+													$error++;
+												}
+											} else {
+												$this->errors = array_merge(array($this->langs->trans('ECommerceErrorWhenSynchronizeContact')), $this->errors);
+												$error++;
+											}
+										}
+
+										// Add contact
+										if (!$error && $this->eCommerceSite->parameters['default_sales_representative_follow'] > 0) {
+											$result = $this->addUpdateContact($invoice_refund, true, $this->eCommerceSite->parameters['default_sales_representative_follow'], 'SALESREPFOLL', 'internal');
+											if ($result < 0) {
+												$error++;
 											}
 										}
 									}
@@ -7164,6 +7190,10 @@ class eCommerceSynchro
 
 									// Get warehouse ID
 									$warehouse_id = $this->eCommerceSite->parameters['order_actions']['valid_invoice_fk_warehouse'] > 0 ? $this->eCommerceSite->parameters['order_actions']['valid_invoice_fk_warehouse'] : 0;
+									if (empty($warehouse_id) && empty($warehouseByLine) && !empty($conf->global->STOCK_CALCULATE_ON_BILL)) {
+										$this->errors[] = $this->langs->trans('ECommerceErrorInvoiceValidateWarehouseNotConfigured');
+										$error++;
+									}
 
 									// Validate invoice
 									if (!$error) {
@@ -7173,6 +7203,12 @@ class eCommerceSynchro
 											if (!empty($invoice_refund->error)) $this->errors[] = $invoice_refund->error;
 											$this->errors = array_merge($this->errors, $invoice_refund->errors);
 											$error++;
+										} else {
+											$result = $this->setLinesMovementStockOnDifferentWarehouse($invoice_refund, $warehouseByLine);
+											if ($result < 0) {
+												$this->errors[] = $this->langs->trans("ECommerceErrorWhenMovementStockOnDifferentWarehouse");
+												$error++;
+											}
 										}
 									}
 
@@ -7240,7 +7276,7 @@ class eCommerceSynchro
 										// Define output language
 										$outputlangs = $this->langs;
 										$newlang = '';
-                                        if ($conf->global->MAIN_MULTILANGS && !empty($refund_info['language']) && $refund_info['language'] != 'ec_none') $newlang = $refund_info['language'];
+										if ($conf->global->MAIN_MULTILANGS && !empty($refund_info['language']) && $refund_info['language'] != 'ec_none') $newlang = $refund_info['language'];
 										if (!empty($newlang)) {
 											$outputlangs = new Translate("", $conf);
 											$outputlangs->setDefaultLang($newlang);
@@ -7619,7 +7655,7 @@ class eCommerceSynchro
 	 */
 	public function getThirdPartyByNameAndZip($name, $zip = '', $site_id = 0)
 	{
-		if (empty($name)) {
+		if (empty($name) || !empty($this->eCommerceSite->parameters['dont_search_company_by_name_and_zip'])) {
 			return 0;
 		}
 

@@ -555,7 +555,7 @@ class eCommerceCategory // extends CommonObject
      *      @param     array       $resanswer     Array containing each category on a unique level (without the tree root)
      * 		@return    void
      */
-    public function cuttingCategoryTreeFromMagentoToDolibarrNew($tree, &$resanswer)
+    public static function cuttingCategoryTreeFromMagentoToDolibarrNew($tree, &$resanswer)
     {
         $tmp=$tree;
         if (isset($tmp['level']) && $tmp['level']==0) $tmp=$tree['children'];

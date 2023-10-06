@@ -656,9 +656,9 @@ class eCommerceSite // extends CommonObject
 	/**
 	 *    Return list of all defined ecommerce sites
 	 *
-	 *    @param	string		$mode		'array' or 'object'
-	 *    @param	boolean		$all_entity	List site from all entities
-	 *    @return 	array					List of sites
+	 *    @param	string				$mode		'array' or 'object'
+	 *    @param	boolean				$all_entity	List site from all entities
+	 *    @return 	eCommerceSite[]					List of sites
 	 */
 	function listSites($mode='array', $all_entity = false)
 	{
@@ -864,6 +864,7 @@ class eCommerceSite // extends CommonObject
 		// product
 		if (!isset($this->parameters['enable_product_plugin_wpml_support'])) $this->parameters['enable_product_plugin_wpml_support'] = !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_WPML_SUPPORT) ? 1 : 0;
 		// stock
+		if (!empty($this->parameters['enable_warehouse_plugin_sl_support'])) { $this->parameters['enable_warehouse_plugin_support'] = 'slfw'; unset($this->parameters['enable_warehouse_plugin_sl_support']); }
 		if (!isset($this->parameters['order_actions']['valid_invoice_fk_warehouse'])) $this->parameters['order_actions']['valid_invoice_fk_warehouse'] = $this->parameters['order_actions']['valid_order_fk_warehouse'];
 		if (!isset($this->parameters['order_actions']['valid_supplier_invoice_fk_warehouse'])) $this->parameters['order_actions']['valid_supplier_invoice_fk_warehouse'] = $this->parameters['order_actions']['valid_order_fk_warehouse'];
 		// extra fields

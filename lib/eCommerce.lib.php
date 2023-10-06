@@ -783,6 +783,10 @@ function ecommerceng_update_remote_warehouses($db, $site)
 	global $conf, $langs;
 	$langs->load('woocommerce@ecommerceng');
 
+	if (empty($site->parameters['enable_warehouse_plugin_support'])) {
+		return 1;
+	}
+
 	dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
 	$synchro = new eCommerceSynchro($db, $site, 0, 0);
 
@@ -800,7 +804,7 @@ function ecommerceng_update_remote_warehouses($db, $site)
 	}
 
 	// Get all payment gateways
-	dol_include_once('/ecommerceng/class/data/eCommerceRemoteWarehousesPluginSlSupport.class.php');
+	dol_include_once('/ecommerceng/class/data/eCommerceRemoteWarehouses.class.php');
 	$remote_warehouses = new eCommerceRemoteWarehouses($db);
 	$currentRemoteWarehouses = $remote_warehouses->get_all($site->id);
 	if (!is_array($currentRemoteWarehouses) && $currentRemoteWarehouses < 0) {
@@ -811,21 +815,23 @@ function ecommerceng_update_remote_warehouses($db, $site)
 	$finalRemoteWarehouses = array();
 
 	// Add remotes warehouses
-	foreach ($remote_warehouses_list as $remote_code => $infos) {
-		$finalRemoteWarehouses[$remote_code] = array(
+	foreach ($remote_warehouses_list as $remote_warehouse_id => $infos) {
+		$finalRemoteWarehouses[$remote_warehouse_id] = array(
 			'remote_id' => $infos['remote_id'],
+			'remote_code' => $infos['remote_code'],
             'remote_name' => $infos['name'],
-			'warehouse_id' => $currentRemoteWarehouses[$remote_code]['warehouse_id'] > 0 ? $currentRemoteWarehouses[$remote_code]['warehouse_id'] : 0,
-			'set_even_if_empty_stock' => $currentRemoteWarehouses[$remote_code]['set_even_if_empty_stock'] > 0 ? $currentRemoteWarehouses[$remote_code]['set_even_if_empty_stock'] : 0,
+			'warehouse_id' => $currentRemoteWarehouses[$remote_warehouse_id]['warehouse_id'] > 0 ? $currentRemoteWarehouses[$remote_warehouse_id]['warehouse_id'] : 0,
+			'set_even_if_empty_stock' => $currentRemoteWarehouses[$remote_warehouse_id]['set_even_if_empty_stock'] > 0 ? $currentRemoteWarehouses[$remote_warehouse_id]['set_even_if_empty_stock'] : 0,
 			'old_entry' => 0,
 		);
 	}
 
 	// Add current warehouses who has been deleted
-	foreach ($currentRemoteWarehouses as $remote_code => $infos) {
-		if (!isset($finalRemoteWarehouses[$remote_code])) {
-			$finalRemoteWarehouses[$remote_code] = array(
+	foreach ($currentRemoteWarehouses as $remote_warehouse_id => $infos) {
+		if (!isset($finalRemoteWarehouses[$remote_warehouse_id])) {
+			$finalRemoteWarehouses[$remote_warehouse_id] = array(
 				'remote_id' => $infos['remote_id'],
+				'remote_code' => $infos['remote_code'],
                 'remote_name' => $infos['name'],
 				'warehouse_id' => $infos['warehouse_id'],
 				'set_even_if_empty_stock' => $infos['set_even_if_empty_stock'],

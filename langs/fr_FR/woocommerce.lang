@@ -71,8 +71,10 @@ ECommerceWoocommerceErrorDisableDictAttribute                        =Erreur de 
 ECommerceWoocommerceErrorAddDictAttribute                            =Erreur d'ajout d'un attribut, slug:"%s", nom:"%s", erreur:"%s"
 ECommerceWoocommerceErrorUpdateDictAttribute                         =Erreur de mise à jour d'un attribut, slug:"%s", erreur:"%s"
 
-ECommerceWoocommerceEnableWarehouseSlPluginSupport                   = Stock Locations
-ECommerceWoocommerceEnableWarehousePluginSlSupportDescription        = Active le support de l'extension "Stock Locations" installée sur WooCommerce
+ECommerceWoocommerceEnableWarehousePluginSupport                                = Extension de gestion d'entrepôts
+ECommerceWoocommerceEnableWarehousePluginSupportDescription                     = Selectionner l'extension supporté gérant les entrepôts installée sur WooCommerce
+ECommerceWoocommerceWarehousePluginStockLocationForWooCommerce                  = Stock Locations for WooCommerce
+ECommerceWoocommerceWarehousePluginWooCommerceMultiLocationsInventoryManagement = WooCommerce Multi Locations Inventory Management
 
 ECommerceWoocommerceEnableProductWpmlPluginSupport                   = WPML
 ECommerceWoocommerceEnableProductWpmlPluginSupportDescription        = Active le support de l'extension "WPML" installée sur WooCommerce
@@ -162,3 +164,8 @@ ECommerceWoocommerceErrorGetOrderData                                = Erreur lo
 ECommerceWooCommerceErrorLanguageMatchNotFound                       = La correspondance de langue pour le code '%s' et site ID '%s' n'as pas été trouvée dans le dictionnaire 'Liste des langues sur Woocommerce'
 
 ECommerceWoocommerceGetRemoteProduct                                 = Récupération du produit distant (ID distant: %s) sur le site '%s'
+ECommerceErrorWarehouseIdNotSpecifiedForTheLine                      = L'entrepôt distant n'a pas été trouver pour la ligne de produit
+ECommerceErrorWarehouseIdNotConfiguredForRemoteWarehouse             = L'entrepôt dolibarr n'as pas été configuré pour l'entrepôt distant (ID: %s) sur le site '%s'
+ECommerceErrorWhenMovementStockOnDifferentWarehouse                  = Erreur lors de la mise a jour des stocks des produits sur differents entrepots
+ECommerceErrorValidOrderWarehouseNotConfigured                       = L'entrepot par defaut pour la validation de la commande n'est pas configuré pour le site '%s'
+ECommerceErrorGetImportKeyOfLine                                     = Erreur lors de la recuperation de la clé d'import de la ligne '%s' de la pièce '%s'

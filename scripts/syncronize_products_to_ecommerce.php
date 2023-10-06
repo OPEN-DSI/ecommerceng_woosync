@@ -122,12 +122,6 @@ if ($max_sites > 0) {
 			continue;
 		}
 
-		$supported_warehouses = is_array($site->parameters['fk_warehouse_to_ecommerce']) ? $site->parameters['fk_warehouse_to_ecommerce'] : array();
-		if (empty($supported_warehouses)) {
-			print "Warning: Warehouses not configured.\n";
-			continue;
-		}
-
 		$sql = "SELECT DISTINCT p.rowid AS product_id, IFNULL(ep.remote_id, '') as remote_id, ep.rowid AS link_id FROM " . MAIN_DB_PREFIX . "product as p" .
 			" INNER JOIN " . MAIN_DB_PREFIX . "categorie_product as cp ON p.rowid = cp.fk_product AND cp.fk_categorie IN (" . implode(',', $woocommerce_product_categories) . ")" .
 			" LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_product as ep ON p.rowid = ep.fk_product AND ep.fk_site=" . $site->id .
@@ -171,15 +165,12 @@ if ($max_sites > 0) {
 							$remote_id = $result['remote_id'];
                             $product_language = $result['language'];
 
-							$object->url = $result['remote_url'];
-							$object->context['fromsyncofecommerceid'] = $site->id;
-							$result = $object->update($object->id, $user);
+							$dbProduct->url = $result['remote_url'];
+							$dbProduct->context['fromsyncofecommerceid'] = $site->id;
+							$result = $dbProduct->update($dbProduct->id, $user);
 							if ($result < 0) {
 								$error++;
-								$error_msg = $langs->trans('ECommerceUpdateProduct');
-								$this->errors[] = $error_msg;
-								$this->errors = array_merge($this->errors, $object->errors);
-								dol_syslog(__METHOD__ . ': Error:' . $error_msg, LOG_WARNING);
+								print "\nError: Update dolibarr product url (ID: {$dbProduct->id}): " . errorsToString($dbProduct) . ".\n";
 							}
 						}
 					} else {

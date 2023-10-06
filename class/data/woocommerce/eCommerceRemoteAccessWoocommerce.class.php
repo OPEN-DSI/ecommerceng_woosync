@@ -1286,6 +1286,28 @@ class eCommerceRemoteAccessWoocommerce
 			}
 		}
 
+		if (!empty($this->site->parameters['enable_warehouse_plugin_support'])) {
+			$product_stock_by_warehouse = array();
+
+			if ($this->site->parameters['enable_warehouse_plugin_support'] == 'wmlim') {
+				if (is_array($remote_data['meta_data'])) {
+					foreach ($remote_data['meta_data'] as $meta) {
+						if (preg_match('/^wcmlim_stock_at_(\d+)$/', $meta['key'], $matches)) {
+							$product_stock_by_warehouse[$matches[1]] = $meta['value'];
+						}
+					}
+				}
+			} else { // == slfw
+				if (is_array($remote_data['locations'])) {
+					foreach ($remote_data['locations'] as $info) {
+						$product_stock_by_warehouse[$info['id']] = $info['quantity'];
+					}
+				}
+			}
+
+			$product['stock_by_warehouse'] = $product_stock_by_warehouse;
+		}
+
 		// Synchronize bundle to virtual product
 		if ($remote_data['type'] == 'woosb' && !empty($metas_data['woosb_ids'])) {
 //			$components = [];
@@ -1561,6 +1583,11 @@ class eCommerceRemoteAccessWoocommerce
 					'discount' => 0,
 					'buy_price' => null,
 				];
+
+				// Support warehouse plugins for split movement stocks
+				if (!empty($this->site->parameters['enable_warehouse_plugin_support']) && $this->site->parameters['enable_warehouse_plugin_support'] == 'wmlim') {
+					$item_data['remote_warehouse_id'] = isset($metas_data['_selectedLocTermId']) ? $metas_data['_selectedLocTermId']['value'] : 0;
+				}
 
 				// Taxes
 				$taxes = $this->getTaxesInfoFromRemoteData($item['taxes'], $tax_list);
@@ -2210,6 +2237,11 @@ class eCommerceRemoteAccessWoocommerce
 					'discount' => 0,
 					'buy_price' => null,
 				];
+
+				// Support warehouse plugins for split movement stocks
+				if (!empty($this->site->parameters['enable_warehouse_plugin_support']) && $this->site->parameters['enable_warehouse_plugin_support'] == 'wmlim') {
+					$item_data['remote_warehouse_id'] = isset($metas_data['_selectedLocTermId']) ? $metas_data['_selectedLocTermId']['value'] : 0;
+				}
 
 				// Taxes
 				$taxes = $this->getTaxesInfoFromRemoteData($item['taxes'], $tax_list);
@@ -3044,7 +3076,16 @@ class eCommerceRemoteAccessWoocommerce
 					$object->load_stock();
 
                     $total_stock = 0;
-                    if (!empty($this->site->parameters['enable_warehouse_plugin_sl_support'])) {
+                    if (!empty($this->site->parameters['enable_warehouse_plugin_support'])) {
+						$remote_product_variation_id = array_values($remote_product_variation_ids)[0];
+						$remote_product = $this->client->sendToApi(eCommerceClientApi::METHOD_GET, "products/{$remote_product_id}/variations/{$remote_product_variation_id}");
+						if (!isset($remote_product)) {
+							$this->errors[] = $langs->trans('ECommerceWoocommerceGetRemoteProduct', $remote_product_id . '|' . $remote_product_variation_id, $this->site->name);
+							$this->errors[] = $this->client->errorsToString();
+							dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
+							return false;
+						}
+
                         dol_include_once('/ecommerceng/class/data/eCommerceRemoteWarehouses.class.php');
                         $eCommerceRemoteWarehouses = new eCommerceRemoteWarehouses($this->db);
                         $remote_warehouses = $eCommerceRemoteWarehouses->get_all($this->site->id);
@@ -3053,16 +3094,33 @@ class eCommerceRemoteAccessWoocommerce
                             return array();
                         }
 
+						$plugin_support = $this->site->parameters['enable_warehouse_plugin_support'];
                         $stock_by_location = array();
-                        foreach ($remote_warehouses as $remote_code => $info) {
+                        foreach ($remote_warehouses as $info) {
+							if (!($info['warehouse_id'] > 0)) {
+								dol_syslog(__METHOD__ . ' Warehouse not configured for remote warehouse ID ' . $info['remote_id'] . ' so we don\'t process this remote warehouse', LOG_WARNING);
+								continue;
+							}
                             $stock = isset($object->stock_warehouse[$info['warehouse_id']]->real) ? $object->stock_warehouse[$info['warehouse_id']]->real : 0;
 							$stock = $stock < 0 ? 0 : $stock;
                             $total_stock += $stock;
-                            $stock_by_location[] = [
-                                'id' => $info['remote_id'],
-                                'quantity' => $stock,
-                            ];
+							if ($plugin_support == 'wmlim') {
+								$variationData['meta_data'][] = array('key' => 'wcmlim_stock_at_' . $info['remote_id'], 'value' => $stock);
+							} else { // == slfw
+								$stock_by_location[] = [
+									'id' => $info['remote_id'],
+									'quantity' => $stock,
+								];
+							}
                         }
+						if (is_array($remote_product['locations'])) {
+							foreach ($remote_product['locations'] as $location) {
+								if (!isset($stock_by_location[$location['id']])) {
+									$total_stock += $location['quantity'];
+									$stock_by_location[$location['id']] = $location;
+								}
+							}
+						}
                         if (!empty($stock_by_location)) {
                             $variationData['locations'] = $stock_by_location;
                         }
@@ -3096,8 +3154,8 @@ class eCommerceRemoteAccessWoocommerce
 					}
 
 					// Synch extrafields <=> attributes
-					if (!empty($this->site->parameters['extra_fields']['product']['activated']['mdt'][$cr_key])) {
-						$data_key = $this->site->parameters['extra_fields']['product']['values']['mdt'][$cr_key];
+					if (!empty($this->site->parameters['extra_fields']['product']['activated']['att'][$cr_key])) {
+						$data_key = $this->site->parameters['extra_fields']['product']['values']['att'][$cr_key];
 						if (!empty($data_key)) {
 							$variationData['attributes'][] = array('id' => $data_key, 'options' => !empty($value) ? explode(',', $value) : array());
 						}
@@ -3312,7 +3370,15 @@ class eCommerceRemoteAccessWoocommerce
 					$object->load_stock();
 
                     $total_stock = 0;
-                    if (!empty($this->site->parameters['enable_warehouse_plugin_sl_support'])) {
+                    if (!empty($this->site->parameters['enable_warehouse_plugin_support'])) {
+						$remote_product = $this->client->sendToApi(eCommerceClientApi::METHOD_GET, "products/{$remote_product_id}");
+						if (!isset($remote_product)) {
+							$this->errors[] = $langs->trans('ECommerceWoocommerceGetRemoteProduct', $remote_product_id, $this->site->name);
+							$this->errors[] = $this->client->errorsToString();
+							dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
+							return false;
+						}
+
                         dol_include_once('/ecommerceng/class/data/eCommerceRemoteWarehouses.class.php');
                         $eCommerceRemoteWarehouses = new eCommerceRemoteWarehouses($this->db);
                         $remote_warehouses = $eCommerceRemoteWarehouses->get_all($this->site->id);
@@ -3321,16 +3387,33 @@ class eCommerceRemoteAccessWoocommerce
                             return array();
                         }
 
+						$plugin_support = $this->site->parameters['enable_warehouse_plugin_support'];
                         $stock_by_location = array();
-                        foreach ($remote_warehouses as $remote_code => $info) {
+                        foreach ($remote_warehouses as $info) {
+							if (!($info['warehouse_id'] > 0)) {
+								dol_syslog(__METHOD__ . ' Warehouse not configured for remote warehouse ID ' . $info['remote_id'] . ' so we don\'t process this remote warehouse', LOG_WARNING);
+								continue;
+							}
                             $stock = isset($object->stock_warehouse[$info['warehouse_id']]->real) ? $object->stock_warehouse[$info['warehouse_id']]->real : 0;
 							$stock = $stock < 0 ? 0 : $stock;
                             $total_stock += $stock;
-                            $stock_by_location[] = [
-                                'id' => $info['remote_id'],
-                                'quantity' => $stock,
-                            ];
+							if ($plugin_support == 'wmlim') {
+								$productData['meta_data'][] = array('key' => 'wcmlim_stock_at_' . $info['remote_id'], 'value' => $stock);
+							} else { // == slfw
+								$stock_by_location[] = [
+									'id' => $info['remote_id'],
+									'quantity' => $stock,
+								];
+							}
                         }
+						if (is_array($remote_product['locations'])) {
+							foreach ($remote_product['locations'] as $location) {
+								if (!isset($stock_by_location[$location['id']])) {
+									$total_stock += $location['quantity'];
+									$stock_by_location[$location['id']] = $location;
+								}
+							}
+						}
                         if (!empty($stock_by_location)) {
                             $productData['locations'] = $stock_by_location;
                         }
@@ -3364,8 +3447,8 @@ class eCommerceRemoteAccessWoocommerce
 					}
 
 					// Synch extrafields <=> attributes
-					if (!empty($this->site->parameters['extra_fields']['product']['activated']['mdt'][$cr_key])) {
-						$data_key = $this->site->parameters['extra_fields']['product']['values']['mdt'][$cr_key];
+					if (!empty($this->site->parameters['extra_fields']['product']['activated']['att'][$cr_key])) {
+						$data_key = $this->site->parameters['extra_fields']['product']['values']['att'][$cr_key];
 						if (!empty($data_key)) {
 							$productData['attributes'][] = array('id' => $data_key, 'options' => !empty($value) ? explode(',', $value) : array());
 						}
@@ -3533,7 +3616,7 @@ class eCommerceRemoteAccessWoocommerce
 				$product->load_stock();
 
 				$total_stock = 0;
-				if (!empty($this->site->parameters['enable_warehouse_plugin_sl_support'])) {
+				if (!empty($this->site->parameters['enable_warehouse_plugin_support'])) {
 					$idsProduct = explode('|', $remote_id);
 					$remote_product_id = $idsProduct[0];
 					if (count($idsProduct) > 1) {
@@ -3556,16 +3639,24 @@ class eCommerceRemoteAccessWoocommerce
 						return false;
 					}
 
+					$plugin_support = $this->site->parameters['enable_warehouse_plugin_support'];
 					$stock_by_location = array();
-					foreach ($remote_warehouses as $remote_code => $info) {
-						if (!($info['warehouse_id'] > 0)) continue;
+					foreach ($remote_warehouses as $info) {
+						if (!($info['warehouse_id'] > 0)) {
+							dol_syslog(__METHOD__ . ' Warehouse not configured for remote warehouse ID ' . $info['remote_id'] . ' so we don\'t process this remote warehouse', LOG_WARNING);
+							continue;
+						}
 						$stock = isset($product->stock_warehouse[$info['warehouse_id']]->real) ? $product->stock_warehouse[$info['warehouse_id']]->real : 0;
 						$stock = $stock < 0 ? 0 : $stock;
 						$total_stock += $stock;
-						$stock_by_location[$info['remote_id']] = [
-							'id' => $info['remote_id'],
-							'quantity' => $stock,
-						];
+						if ($plugin_support == 'wmlim') {
+							$productData['meta_data'][] = array('key' => 'wcmlim_stock_at_' . $info['remote_id'], 'value' => $stock);
+						} else { // == slfw
+							$stock_by_location[$info['remote_id']] = [
+								'id' => $info['remote_id'],
+								'quantity' => $stock,
+							];
+						}
 					}
 					if (is_array($remote_product['locations'])) {
 						foreach ($remote_product['locations'] as $location) {
@@ -5362,9 +5453,15 @@ class eCommerceRemoteAccessWoocommerce
 		global $langs;
 		$remoteWarehousesTable = [];
 
-		// plugin SL support
-		if (!empty($this->site->parameters['enable_warehouse_plugin_sl_support'])) {
-			$remote_warehouses = $this->worpressclient->sendToApi(eCommerceClientApi::METHOD_GET, 'location');
+		// plugin warehouse support
+		if (!empty($this->site->parameters['enable_warehouse_plugin_support'])) {
+			$plugin_support = $this->site->parameters['enable_warehouse_plugin_support'];
+			if ($plugin_support == 'wmlim') {
+				$remote_warehouses = $this->client->sendToApi(eCommerceClientApi::METHOD_GET, 'locations');
+			} else {
+				$remote_warehouses = $this->worpressclient->sendToApi(eCommerceClientApi::METHOD_GET, 'location');
+			}
+			$remote_warehouses = $this->worpressclient->sendToApi(eCommerceClientApi::METHOD_GET, $plugin_support == 'wmlim' ? 'locations' : 'location');
 			if (!isset($remote_warehouses)) {
 				$this->errors[] = $langs->trans('ECommerceWoocommerceGetAllWoocommerceRemoteWarehouses', $this->site->name);
                 $this->errors[] = $this->worpressclient->errorsToString();
@@ -5373,8 +5470,10 @@ class eCommerceRemoteAccessWoocommerce
 			}
 
 			foreach ($remote_warehouses as $infos) {
-				$remoteWarehousesTable[$infos["slug"]] = [
-					'remote_id' => $infos["id"],
+				$remote_id = $infos["id"];
+				$remoteWarehousesTable[$remote_id] = [
+					'remote_code' => $infos["slug"],
+					'remote_id' => $remote_id,
 					'name' => $infos["name"],
 					'parent' => $infos["parent"],
 				];
