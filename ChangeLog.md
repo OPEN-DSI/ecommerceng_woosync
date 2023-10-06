@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.60.0
+- Changement logo - page support.
+
 ## 4.1.59.0
 - Ajout d'une option pour ne pas chercher le tiers grace a son nom et code postal
 
