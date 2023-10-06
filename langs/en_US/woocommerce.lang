@@ -152,3 +152,13 @@ ECommerceWooCommerceErrorDontSupportMultiTaxes      = The module does not curren
 ECommerceWoocommerceErrorGetWoocommerceWebHooks     = Error retrieving webhooks from the site '%s':
 ECommerceWoocommerceErrorTaxClassNotFoundFromTaxRate                 = La taxe '%s' n'est pas trouver dans le dictionnaire de taxe du module WooSync pour le site '%s' pour le produit '%s'
 ECommerceWoocommerceErrorGetOrderData                                = Erreur lors de la récupération des données de la commande distante '%s' du site '%s'
+ECommerceWooCommerceErrorLanguageMatchNotFound                       = La correspondance de langue pour le code '%s' et site ID '%s' n'as pas été trouvée dans le dictionnaire 'Liste des langues sur Woocommerce'
+
+ECommerceWoocommerceGetRemoteProduct                                 = Récupération du produit distant (ID distant: %s) sur le site '%s'
+ECommerceErrorWarehouseIdNotSpecifiedForTheLine                      = L'entrepôt distant n'a pas été trouver pour la ligne de produit
+ECommerceErrorWarehouseIdNotConfiguredForRemoteWarehouse             = L'entrepôt dolibarr n'as pas été configuré pour l'entrepôt distant (ID: %s) sur le site '%s'
+ECommerceErrorWhenMovementStockOnDifferentWarehouse                  = Erreur lors de la mise a jour des stocks des produits sur differents entrepots
+ECommerceErrorValidOrderWarehouseNotConfigured                       = L'entrepot par defaut pour la validation de la commande n'est pas configuré pour le site '%s'
+ECommerceErrorGetImportKeyOfLine                                     = Erreur lors de la recuperation de la clé d'import de la ligne '%s' de la pièce '%s'
+
+ECommerceWooCommerceStoreCredit                                      = Store Credits

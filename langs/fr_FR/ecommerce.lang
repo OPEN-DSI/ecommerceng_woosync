@@ -317,6 +317,10 @@ ECommerceCreateInvoice                                                          
 ECommerceCreateInvoiceDescription                                                                   =Activer la création de la facture a la synchronisation de la commande
 ECommerceCreateInvoiceType                                                                          =Type la facture
 ECommerceCreateInvoiceTypeDescription                                                               =Type la facture créée a la synchronisation de la commande
+ECommerceCreateInvoiceDepositType                                                                   =
+ECommerceCreateInvoiceDepositTypeDescription                                                        =
+ECommerceCreateInvoiceDepositValue                                                                  =Montant ou pourcentage
+ECommerceCreateInvoiceDepositValueDescription                                                       =
 ECommerceCreateSupplierInvoiceFromFee                                                               =Créer la facture fournisseur à partir des frais
 ECommerceCreateSupplierInvoiceFromFeeDescription                                                    =Créer la facture fournisseur à partir des frais lors de la creation de la facture
 ECommerceFeeLineAsItemLine                                                                          =Considérer les lignes de frais comme des lignes de services
@@ -369,6 +373,8 @@ ECommerceDiscountCodeService                                                    
 ECommerceDiscountCodeServiceDescription                                                             =Service utilisé pour la gestion des codes promos
 ECommercePwGiftCardsService                                                                         =Cartes cadeaux
 ECommercePwGiftCardsServiceDescription                                                              =Service utilisé pour la gestion des Cartes cadeaux (extension WooCommerce: <a href="https://wordpress.org/plugins/pw-woocommerce-gift-cards/" target="_blank">PW WooCommerce Gift Cards Pro</a>)
+ECommerceAcfwStoreCreditsService                                                                    =Crédits boutique
+ECommerceAcfwStoreCreditsServiceDescription                                                         =Service utilisé pour la gestion des Crédits boutique (extension WooCommerce: <a href="https://wordpress.org/plugins/advanced-coupons-for-woocommerce-free/" target="_blank">Advanced Coupons for WooCommerce Free</a>)
 
 ECommerceProcessPendingWebHooks                                                                     =Traitement de toutes les commandes délivrées par crochet Web (WebHooks)
 ECommerceSynchronizeWebHooksSuccess                                                                 =La synchronisation de la file d'attente des crochets web reçus s'est terminée avec succès
@@ -402,6 +408,7 @@ ECommerceExclude                                                                
 ECommerceInclude                                                                                    =Inclure
 
 ECommerceSynchronize                                                                                =Synchroniser
+ECommerceTotalDelta                                                                                 =WooSync Total Delta
 
 ECOMMERCE_ACCOUNTING_PRODUCT_BUY_ACCOUNT                = Compte comptable par défaut pour les produits achetés (utilisé si non défini dans la fiche produit ou dans Dolibarr)
 ECOMMERCE_ACCOUNTING_PRODUCT_BUY_INTRA_ACCOUNT          = Compte comptable par défaut pour les produits achetés dans la CEE (utilisé si non défini dans la fiche produit ou dans Dolibarr)
@@ -620,6 +627,8 @@ ECommerceErrorSetOrderCorrectAmount                                             
 ECommerceErrorSetInvoiceCorrectAmount                                                               =Erreur lors du forçage du prix TTC de la facture
 ECommerceErrorConnectAPI                                                                            =Erreur de connexion au site '%s'
 ECommerceErrorUpdateThirdPartyLanguage                                                              =Erreur lors de la mise a jour de la langue du tiers (ID: %s)
+ECommerceErrorDefineBuyPrice                                                                        =Erreur lors de la mise à jour du prix dans Dolibarr (ID : %s, Prix: %s)
+ECommerceErrorAddLine                                                                               =Erreur lors de l'ajout d'une ligne de produit
 
 ############################################################################################
 # Warnings

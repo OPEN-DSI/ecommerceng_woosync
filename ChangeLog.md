@@ -1,5 +1,14 @@
 # ChangeLog
 
+## 4.1.60.0
+- Ajout d'un champ dans la liste des factures pour afficher le delta entre le total TTC et le total HT plus total TVA
+- Ajout d'un script pour corriger les factures en recreant les lignes de celles-ci (et modifie le prix des lignes existantes de la commande lié, ne creer pas les nouvelle lignes manquantes)
+- Factorisation du code pour l'ajouts des lignes dans les commandes/factures
+- Factorisation du code pour l'ajouts des contacts dans les commandes/factures
+- Factorisation du code pour fixer le delta du montant TTC des commandes/factures (si le delta est inférieur a 0.1 ou ECOMMERCE_DELTA_FIX_TOTAL_AMOUNTS alors on modifie le prix unitaire de la première ligne pour avoir le TTC correct), dans tout les cas on force le Total TTC de la facture avec le bon montant
+- Correction des données des informations de prix sur les remboursement ainsi que des bundles (plugin)
+- Rajout du support partiel du plugin "Advanced Coupons for WooCommerce Free"
+
 ## 4.1.59.0
 - Ajout d'une option pour ne pas chercher le tiers grace a son nom et code postal
 

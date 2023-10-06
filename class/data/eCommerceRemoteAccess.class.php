@@ -68,6 +68,11 @@ class eCommerceRemoteAccess
     	$this->class = $class;
     }
 
+	public function getClass()
+	{
+		return $this->class;
+	}
+
     /**
      * Call the connect method of the class instantiated in the constructor
      */

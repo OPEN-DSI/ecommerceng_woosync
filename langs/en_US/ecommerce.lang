@@ -315,7 +315,11 @@ ECommerceCreateInvoice                      = Create the bill
 ECommerceCreateInvoiceDescription                                                                   =Activer la création de la facture a la synchronisation de la commande
 ECommerceCreateInvoiceType                                                                          =Type la facture
 ECommerceCreateInvoiceTypeDescription                                                               =Type la facture créée a la synchronisation de la commande
-ECommerceCreateSupplierInvoiceFromFee       = Create the supplier bill from the charges
+ECommerceCreateInvoiceDepositType                                                                   =
+ECommerceCreateInvoiceDepositTypeDescription                                                        =
+ECommerceCreateInvoiceDepositValue                                                                  =Montant ou pourcentage
+ECommerceCreateInvoiceDepositValueDescription                                                       =
+CommerceCreateSupplierInvoiceFromFee       = Create the supplier bill from the charges
 ECommerceCreateSupplierInvoiceFromFeeDescription                                                    =Créer la facture fournisseur à partir des frais lors de la creation de la facture
 ECommerceFeeLineAsItemLine                  = The fee line is as the service line
 ECommerceFeeLineAsItemLineDescription                                                               =Considérer les lignes de frais comme des lignes de services lors de la création de la commande/facture
@@ -359,6 +363,8 @@ ECommerceDiscountCodeService                        = Promotional codes
 ECommerceDiscountCodeServiceDescription             = Service used to manage promotional codes
 ECommercePwGiftCardsService                         = Gift cards
 ECommercePwGiftCardsServiceDescription              = Service used to manage gift cards (extension WooCommerce: PW WooCommerce Gift Cards Pro)
+ECommerceAcfwStoreCreditsService                                                                    =Crédits boutique
+ECommerceAcfwStoreCreditsServiceDescription                                                         =Service utilisé pour la gestion des Crédits boutique (extension WooCommerce: <a href="https://wordpress.org/plugins/advanced-coupons-for-woocommerce-free/" target="_blank">Advanced Coupons for WooCommerce Free</a>)
 
 ECommerceProcessPendingWebHooks                     = Processing of all orders delivered by Webhook
 ECommerceSynchronizeWebHooksSuccess                 = Synchronization of the queue of received Webhooks has been successfully completed
@@ -392,6 +398,7 @@ ECommerceExclude    = Exclude
 ECommerceInclude    = Include
 
 ECommerceSynchronize                                                                                =Synchronize
+ECommerceTotalDelta                                                                                 =WooSync Total Delta
 
 ECOMMERCE_ACCOUNTING_PRODUCT_BUY_ACCOUNT                = Compte comptable par défaut pour les produits achetés (utilisé si non défini dans la fiche produit ou dans dolibarr)
 ECOMMERCE_ACCOUNTING_PRODUCT_BUY_INTRA_ACCOUNT          = Compte comptable par défaut pour les produits achetés dans la CEE (utilisé si non défini dans la fiche produit ou dans dolibarr)

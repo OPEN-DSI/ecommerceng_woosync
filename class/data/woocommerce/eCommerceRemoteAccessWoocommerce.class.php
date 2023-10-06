@@ -62,13 +62,13 @@ class eCommerceRemoteAccessWoocommerce
      *
      * @var eCommerceClientWooCommerceApi
      */
-    private $client;
+    public $client;
     /**
      * WordPress client.
      *
      * @var eCommerceClientWordpressApi
      */
-    private $worpressclient;
+	public $worpressclient;
 
     /**
      * Dolibarr tax rates.
@@ -1534,29 +1534,11 @@ class eCommerceRemoteAccessWoocommerce
 				$item_id = null;
 				if (!empty($metas_data['_woosb_ids'])) {
 					$bundles_ids[$item['product_id']] = $item['id'];
-					if ($item['subtotal'] != 0) {
-                        if (isset($metas_data['_woosb_price'])) {
-                            $total_ht = $metas_data['_woosb_price']['value'] / (1 + ($item['subtotal_tax'] / $item['subtotal']));
-                            $total_tva = $metas_data['_woosb_price']['value'] - $total_ht;
-                            $total_ttc = $metas_data['_woosb_price']['value'];
-                            $price = $total_ht / $item['quantity'];
-                        }
-					} else {
-						$total_ht = 0;
-						$total_tva = 0;
-						$total_ttc = 0;
-						$price = 0;
-					}
 				}
 				if (!empty($metas_data['_woosb_parent_id']) && isset($bundles_ids[$metas_data['_woosb_parent_id']['value']])) {
 					$item_id = $bundles_ids[$metas_data['_woosb_parent_id']['value']];
 					if (!isset($items[$item_id]['additional_description'])) $items[$item_id]['additional_description'] = $outlangs->trans('ECommerceWooCommerceBundleComposite');
 					$items[$item_id]['additional_description'] .= "\n - " . $item['quantity'] . ' x ' . $label;
-//					continue;
-					$total_ht = 0;
-					$total_tva = 0;
-					$total_ttc = 0;
-					$price = 0;
 				}
 
 				// Support produits composés
@@ -1779,6 +1761,35 @@ class eCommerceRemoteAccessWoocommerce
 			}
 		}
 
+		// Support store credits order (Advanced Coupons for WooCommerce)
+		if (is_array($remote_data['meta_data'])) {
+			$store_credits_service_label = $outlangs->trans('ECommerceWooCommerceStoreCredit');
+			$store_credits_service_id = $this->site->parameters['acfw_store_credits_service'] > 0 ? $this->site->parameters['acfw_store_credits_service'] : 0;
+			foreach ($remote_data['meta_data'] as $meta) {
+				if ($meta['key'] == 'acfw_store_credits_order_paid') {
+					$items[] = [
+						'type' => 'store_credits',
+						'product_type' => 'acfw_store_credits',
+						'id_product' => $store_credits_service_id,
+						'description' => $store_credits_service_label,
+						'label' => $store_credits_service_label,
+						'price' => -$meta['value']['amount'],
+						'total_ht' => -$meta['value']['amount'],
+						'total_tva' => 0,
+						'total_ttc' => -$meta['value']['amount'],
+						'qty' => 1,
+						'discount' => 0,
+						'buy_price' => 0,
+						'tva_tx' => 0,
+						'local_tax1_tx' => 0,
+						'local_tax2_tx' => 0,
+						'total_local_tax1' => 0,
+						'total_local_tax2' => 0,
+					];
+				}
+			}
+		}
+
 		// Set fee lines
 		$fee_lines = [];
 		$fee_line_as_item_line = !empty($this->site->parameters['order_actions']['fee_line_as_item_line']);
@@ -1853,7 +1864,7 @@ class eCommerceRemoteAccessWoocommerce
 				if ($item_data === false) {
 					return false;
 				}
-				$refunds[] = $item_data;
+				$refunds[$item['id']] = $item_data;
 			}
 		}
 
@@ -2179,6 +2190,7 @@ class eCommerceRemoteAccessWoocommerce
 				}
 
 				$item_qty = abs($item['quantity']);
+				if (empty($item_qty)) $item_qty = 1;
 
 				// Set prices
 				$price = $item['subtotal'] != $item['total'] ? ($item['subtotal'] / $item_qty) : $item['price'];
@@ -2190,27 +2202,11 @@ class eCommerceRemoteAccessWoocommerce
 				$item_id = null;
 				if (!empty($metas_data['_woosb_ids'])) {
 					$bundles_ids[$item['product_id']] = $item['id'];
-					if ($item['subtotal'] != 0) {
-						$total_ht = $metas_data['_woosb_price']['value'] / (1 + ($item['subtotal_tax'] / $item['subtotal']));
-						$total_tva = $metas_data['_woosb_price']['value'] - $total_ht;
-						$total_ttc = $metas_data['_woosb_price']['value'];
-						$price = $total_ht / $item_qty;
-					} else {
-						$total_ht = 0;
-						$total_tva = 0;
-						$total_ttc = 0;
-						$price = 0;
-					}
 				}
 				if (!empty($metas_data['_woosb_parent_id']) && isset($bundles_ids[$metas_data['_woosb_parent_id']['value']])) {
 					$item_id = $bundles_ids[$metas_data['_woosb_parent_id']['value']];
 					if (!isset($items[$item_id]['additional_description'])) $items[$item_id]['additional_description'] = $outlangs->trans('ECommerceWooCommerceBundleComposite');
 					$items[$item_id]['additional_description'] .= "\n - " . $item_qty . ' x ' . $label;
-//					continue;
-					$total_ht = 0;
-					$total_tva = 0;
-					$total_ttc = 0;
-					$price = 0;
 				}
 
 				// Support produits composés
@@ -2255,6 +2251,14 @@ class eCommerceRemoteAccessWoocommerce
 				if (isset($item['cog_item_cost'])) $item_data['buy_price'] = $this->site->ecommerce_price_type == 'TTC' ? 100 * $item['cog_item_cost'] / (100 + $item_data['tva_tx']) : $item['cog_item_cost'];
 				if ($this->site->ecommerce_price_type == 'TTC') $item_data['price'] = (100 * $total_ttc / (100 + $item_data['tva_tx'])) / $item_qty;
 
+				$item_data['price'] = abs($item_data['price']);
+				$item_data['total_ht'] = abs($item_data['total_ht']);
+				$item_data['total_tva'] = abs($item_data['total_tva']);
+				$item_data['total_ttc'] = abs($item_data['total_ttc']);
+				$item_data['total_local_tax1'] = abs($item_data['total_local_tax1']);
+				$item_data['total_local_tax2'] = abs($item_data['total_local_tax2']);
+				if (isset($item_data['buy_price']) ) $item_data['buy_price'] = abs($item_data['buy_price']);
+
 				$sum_total_ht += $item_data['total_ht'];
 
 				$items[$item['id']] = $item_data;
@@ -2297,8 +2301,17 @@ class eCommerceRemoteAccessWoocommerce
 				$item_data['total_local_tax1'] = $taxes['total_local_tax1'];
 				$item_data['total_local_tax2'] = $taxes['total_local_tax2'];
 
+				// Todo check if not equal to $item['total'] - $item['total_tax']
 				if ($this->site->ecommerce_price_type == 'TTC') $item_data['price'] = 100 * ($item['total'] + $item['total_tax']) / (100 + $item_data['tva_tx']);
 				$item_data['buy_price'] = $item_data['price'];
+
+				$item_data['price'] = abs($item_data['price']);
+				$item_data['total_ht'] = abs($item_data['total_ht']);
+				$item_data['total_tva'] = abs($item_data['total_tva']);
+				$item_data['total_ttc'] = abs($item_data['total_ttc']);
+				$item_data['total_local_tax1'] = abs($item_data['total_local_tax1']);
+				$item_data['total_local_tax2'] = abs($item_data['total_local_tax2']);
+				if (isset($item_data['buy_price']) ) $item_data['buy_price'] = abs($item_data['buy_price']);
 
 				$sum_total_ht += $item_data['total_ht'];
 
@@ -2337,10 +2350,14 @@ class eCommerceRemoteAccessWoocommerce
 				$ht = 100 * $ttc / ($tax_rate + 100);
 
 				$item_data['tva_tx'] = $tax_rate;
-				$item_data['price'] = -$ht;
-				$item_data['total_ht'] = -$ht;
-				$item_data['total_tva'] = -$tva;
-				$item_data['total_ttc'] = -$ttc;
+
+				$item_data['price'] = abs($item_data['price']);
+				$item_data['total_ht'] = abs($item_data['total_ht']);
+				$item_data['total_tva'] = abs($item_data['total_tva']);
+				$item_data['total_ttc'] = abs($item_data['total_ttc']);
+				$item_data['total_local_tax1'] = abs($item_data['total_local_tax1']);
+				$item_data['total_local_tax2'] = abs($item_data['total_local_tax2']);
+				if (isset($item_data['buy_price']) ) $item_data['buy_price'] = abs($item_data['buy_price']);
 
 				$sum_total_ht += $item_data['total_ht'];
 
@@ -2357,10 +2374,10 @@ class eCommerceRemoteAccessWoocommerce
 					'id_product' => $gift_cards_service_id,
 					'description' => $gift_cards['number'],
 					'label' => $gift_cards['number'],
-					'price' => - $gift_cards['amount'],
-					'total_ht' => - $gift_cards['amount'],
+					'price' => abs($gift_cards['amount']),
+					'total_ht' => abs($gift_cards['amount']),
 					'total_tva' => 0,
-					'total_ttc' => - $gift_cards['amount'],
+					'total_ttc' => abs($gift_cards['amount']),
 					'qty' => 1,
 					'discount' => 0,
 					'buy_price' => 0,
@@ -2396,6 +2413,14 @@ class eCommerceRemoteAccessWoocommerce
 				$line['local_tax2_tx'] = $taxes['local_tax2_tx'];
 				$line['total_local_tax1'] = $taxes['total_local_tax1'];
 				$line['total_local_tax2'] = $taxes['total_local_tax2'];
+
+				$item_data['price'] = abs($item_data['price']);
+				$item_data['total_ht'] = abs($item_data['total_ht']);
+				$item_data['total_tva'] = abs($item_data['total_tva']);
+				$item_data['total_ttc'] = abs($item_data['total_ttc']);
+				$item_data['total_local_tax1'] = abs($item_data['total_local_tax1']);
+				$item_data['total_local_tax2'] = abs($item_data['total_local_tax2']);
+				if (isset($item_data['buy_price']) ) $item_data['buy_price'] = abs($item_data['buy_price']);
 
 				if ($fee_line_as_item_line) {
 					$line['product_type'] = 'service';
@@ -2444,8 +2469,8 @@ class eCommerceRemoteAccessWoocommerce
 			'reason' => $remote_data['reason'],
 			'language' => $select_language,
 			'total_ht' => $sum_total_ht,
-			'total_tva' => - $remote_data['amount'] - $sum_total_ht,
-			'total_ttc' => - $remote_data['amount'],
+			'total_tva' => abs($remote_data['amount']) - $sum_total_ht,
+			'total_ttc' => abs($remote_data['amount']),
 			'items' => $items,
 			'fee_lines' => $fee_lines,
 		];

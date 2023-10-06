@@ -36,111 +36,113 @@ class ActionsECommerceNg
      * @return  int                             < 0 on error, 0 on success, 1 to replace standard code
      */
     function doActions($parameters, &$object, &$action, $hookmanager)
-    {
-        global $conf, $user, $langs;
+	{
+		global $conf, $user, $langs;
 
-        if (in_array('productdocuments', explode(':', $parameters['context'])) && $action == 'synchronize_images') {
-            if ($this->isImageSync($object) && $this->isProductLinkedToECommerce($object)) {
-                $result = $object->call_trigger('PRODUCT_MODIFY', $user);
-                if ($result < 0) {
-                    if (count($object->errors)) setEventMessages($object->error, $object->errors, 'errors');
-                    else setEventMessages($langs->trans($object->error), null, 'errors');
-                } else {
-                    setEventMessage($langs->trans('ECommerceProductImagesSynchronized'));
-                }
-            }
-        } elseif (in_array('productcard', explode(':', $parameters['context']))) {
-            $confirm = GETPOST('confirm', 'alpha');
+		$contexts = explode(':', $parameters['context']);
 
-            if ($action == 'confirm_unlink_product_to_ecommerce' && $confirm == 'yes' && $this->isProductLinkedToECommerce($object)) {
-                $site_id = GETPOST('siteid', 'int');
-                $error = 0;
-                $object->db->begin();
+		if (in_array('productdocuments', $contexts) && $action == 'synchronize_images') {
+			if ($this->isImageSync($object) && $this->isProductLinkedToECommerce($object)) {
+				$result = $object->call_trigger('PRODUCT_MODIFY', $user);
+				if ($result < 0) {
+					if (count($object->errors)) setEventMessages($object->error, $object->errors, 'errors');
+					else setEventMessages($langs->trans($object->error), null, 'errors');
+				} else {
+					setEventMessage($langs->trans('ECommerceProductImagesSynchronized'));
+				}
+			}
+		} elseif (in_array('productcard', $contexts)) {
+			$confirm = GETPOST('confirm', 'alpha');
 
-                // Delete link to ecommerce
-                $eCommerceProduct = new eCommerceProduct($object->db);
-                if ($eCommerceProduct->fetchByProductId($object->id, $site_id) > 0) {
-                    if ($eCommerceProduct->delete($user) < 0) {
-                        setEventMessages($eCommerceProduct->error, $eCommerceProduct->errors, 'errors');
-                        $error++;
-                    }
-                }
+			if ($action == 'confirm_unlink_product_to_ecommerce' && $confirm == 'yes' && $this->isProductLinkedToECommerce($object)) {
+				$site_id = GETPOST('siteid', 'int');
+				$error = 0;
+				$object->db->begin();
 
-                // Delete all categories of the ecommerce
-                if (!$error && empty($conf->global->ECOMMERCE_DONT_UNSET_CATEGORIE_OF_PRODUCT_WHEN_DELINK)) {
-                    $eCommerceSite = new eCommerceSite($object->db);
-                    if ($eCommerceSite->fetch($site_id) > 0) {
-                        require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
-                        $cat = new Categorie($object->db);
-                        $cat_root = $eCommerceSite->fk_cat_product;
-                        $all_cat_full_arbo = $cat->get_full_arbo('product');
-                        $cats_full_arbo = array();
-                        foreach ($all_cat_full_arbo as $category) {
-                            $cats_full_arbo[$category['id']] = $category['fullpath'];
-                        }
-                        $categories = $cat->containing($object->id, 'product', 'id');
-                        foreach ($categories as $cat_id) {
-                            if (isset($cats_full_arbo[$cat_id]) &&
-                                (preg_match("/^{$cat_root}$/", $cats_full_arbo[$cat_id]) || preg_match("/^{$cat_root}_/", $cats_full_arbo[$cat_id]) ||
-                                    preg_match("/_{$cat_root}_/", $cats_full_arbo[$cat_id]) || preg_match("/_{$cat_root}$/", $cats_full_arbo[$cat_id])
-                                )
-                            ) {
-                                if ($cat->fetch($cat_id) > 0) {
-                                    if ($cat->del_type($object, 'product') < 0) {
-                                        setEventMessages($cat->error, $cat->errors, 'errors');
-                                        $error++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+				// Delete link to ecommerce
+				$eCommerceProduct = new eCommerceProduct($object->db);
+				if ($eCommerceProduct->fetchByProductId($object->id, $site_id) > 0) {
+					if ($eCommerceProduct->delete($user) < 0) {
+						setEventMessages($eCommerceProduct->error, $eCommerceProduct->errors, 'errors');
+						$error++;
+					}
+				}
 
-                $action = '';
+				// Delete all categories of the ecommerce
+				if (!$error && empty($conf->global->ECOMMERCE_DONT_UNSET_CATEGORIE_OF_PRODUCT_WHEN_DELINK)) {
+					$eCommerceSite = new eCommerceSite($object->db);
+					if ($eCommerceSite->fetch($site_id) > 0) {
+						require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+						$cat = new Categorie($object->db);
+						$cat_root = $eCommerceSite->fk_cat_product;
+						$all_cat_full_arbo = $cat->get_full_arbo('product');
+						$cats_full_arbo = array();
+						foreach ($all_cat_full_arbo as $category) {
+							$cats_full_arbo[$category['id']] = $category['fullpath'];
+						}
+						$categories = $cat->containing($object->id, 'product', 'id');
+						foreach ($categories as $cat_id) {
+							if (isset($cats_full_arbo[$cat_id]) &&
+								(preg_match("/^{$cat_root}$/", $cats_full_arbo[$cat_id]) || preg_match("/^{$cat_root}_/", $cats_full_arbo[$cat_id]) ||
+									preg_match("/_{$cat_root}_/", $cats_full_arbo[$cat_id]) || preg_match("/_{$cat_root}$/", $cats_full_arbo[$cat_id])
+								)
+							) {
+								if ($cat->fetch($cat_id) > 0) {
+									if ($cat->del_type($object, 'product') < 0) {
+										setEventMessages($cat->error, $cat->errors, 'errors');
+										$error++;
+									}
+								}
+							}
+						}
+					}
+				}
 
-                if ($error) {
-                    $object->db->rollback();
-                    return -1;
-                } else {
-                    $object->db->commit();
-                }
-            }
-        } elseif (in_array('thirdpartycard', explode(':', $parameters['context']))) {
-            $confirm = GETPOST('confirm', 'alpha');
+				$action = '';
 
-            if ($action == 'confirm_update_company_from_ecommerce' && $confirm == 'yes' && $this->isCompanyLinkedToECommerce($object)) {
-                $site_id = GETPOST('siteid', 'int');
-                $langs->load('ecommerceng@ecommerceng');
-                $langs->load('woocommerce@ecommerceng');
+				if ($error) {
+					$object->db->rollback();
+					return -1;
+				} else {
+					$object->db->commit();
+				}
+			}
+		} elseif (in_array('thirdpartycard', $contexts)) {
+			$confirm = GETPOST('confirm', 'alpha');
 
-                $error = 0;
-                $object->db->begin();
+			if ($action == 'confirm_update_company_from_ecommerce' && $confirm == 'yes' && $this->isCompanyLinkedToECommerce($object)) {
+				$site_id = GETPOST('siteid', 'int');
+				$langs->load('ecommerceng@ecommerceng');
+				$langs->load('woocommerce@ecommerceng');
 
-                dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
-                $siteDb = new eCommerceSite($object->db);
-                $result = $siteDb->fetch($site_id);
-                if ($result == 0) {
-                    setEventMessage($langs->trans('EcommerceSiteNotFound', $site_id), 'errors');
-                    $error++;
-                } elseif ($result < 0) {
-                    setEventMessage($langs->trans('EcommerceSiteNotFound', $site_id) . ' : ' . $siteDb->error, 'errors');
-                    $error++;
-                }
+				$error = 0;
+				$object->db->begin();
 
-                if (!$error) {
-                    dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
-                    $synchro = new eCommerceSynchro($object->db, $siteDb, 0, 0);
-                    $synchro->connect();
-                    if (count($synchro->errors)) {
-                        setEventMessages($synchro->error, $synchro->errors, 'errors');
-                        $error++;
-                    }
-                }
+				dol_include_once('/ecommerceng/class/data/eCommerceSite.class.php');
+				$siteDb = new eCommerceSite($object->db);
+				$result = $siteDb->fetch($site_id);
+				if ($result == 0) {
+					setEventMessage($langs->trans('EcommerceSiteNotFound', $site_id), 'errors');
+					$error++;
+				} elseif ($result < 0) {
+					setEventMessage($langs->trans('EcommerceSiteNotFound', $site_id) . ' : ' . $siteDb->error, 'errors');
+					$error++;
+				}
 
-                if (!$error) {
-                    $eCommerceSociete = new eCommerceSociete($object->db);
-                    $links_list = $eCommerceSociete->getAllLinksByFkSociete($object->id, $siteDb->id);
-                    if (!is_array($links_list)) {
+				if (!$error) {
+					dol_include_once('/ecommerceng/class/business/eCommerceSynchro.class.php');
+					$synchro = new eCommerceSynchro($object->db, $siteDb, 0, 0);
+					$synchro->connect();
+					if (count($synchro->errors)) {
+						setEventMessages($synchro->error, $synchro->errors, 'errors');
+						$error++;
+					}
+				}
+
+				if (!$error) {
+					$eCommerceSociete = new eCommerceSociete($object->db);
+					$links_list = $eCommerceSociete->getAllLinksByFkSociete($object->id, $siteDb->id);
+					if (!is_array($links_list)) {
 						setEventMessages($eCommerceSociete->error, $eCommerceSociete->errors, 'errors');
 						$error++;
 					}
@@ -155,22 +157,28 @@ class ActionsECommerceNg
 							}
 						}
 					}
-                }
+				}
 
-                $action = '';
+				$action = '';
 
-                if ($error) {
-                    $object->db->rollback();
-                    return -1;
-                } else {
-                    setEventMessage($langs->trans('EcommerceUpdateCompanyFromECommerceSuccess'));
-                    $object->db->commit();
-                }
-            }
-        }
+				if ($error) {
+					$object->db->rollback();
+					return -1;
+				} else {
+					setEventMessage($langs->trans('EcommerceUpdateCompanyFromECommerceSuccess'));
+					$object->db->commit();
+				}
+			}
+		} elseif (in_array('invoicelist', $contexts)) {
+			// remove filters
+			if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x', 'alpha') || GETPOST('button_removefilter', 'alpha')) {
+				$_GET['search_ec_total_delta'] = '';
+				$_POST['search_ec_total_delta'] = '';
+			}
+		}
 
-        return 0; // or return 1 to replace standard code
-    }
+		return 0; // or return 1 to replace standard code
+	}
 
     /**
      * Overloading the addMoreActionsButtons function : replacing the parent's function with the one below
@@ -185,7 +193,9 @@ class ActionsECommerceNg
     {
         global $conf, $user, $langs;
 
-        if (in_array('productcard', explode(':', $parameters['context']))) {
+		$contexts = explode(':', $parameters['context']);
+
+        if (in_array('productcard', $contexts)) {
             if ($user->rights->ecommerceng->write) {
                 // Site list
                 $sites = $this->getProductLinkedSite($object);
@@ -211,7 +221,7 @@ class ActionsECommerceNg
                     print '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . $params . '&token='.ecommercengNewToken().'">' . $langs->trans("EcommerceNGUnlinkToECommerce") . '</a></div>';
                 }
             }
-        } elseif (in_array('thirdpartycard', explode(':', $parameters['context']))) {
+        } elseif (in_array('thirdpartycard', $contexts)) {
             if ($user->rights->ecommerceng->write) {
                 // Site list
                 $sites = $this->getCompanyLinkedSite($object);
@@ -255,7 +265,9 @@ class ActionsECommerceNg
     {
         global $conf, $langs;
 
-        if (in_array('productdocuments', explode(':', $parameters['context']))) {
+		$contexts = explode(':', $parameters['context']);
+
+        if (in_array('productdocuments', $contexts)) {
             if ($this->isImageSync($object) && $this->isProductLinkedToECommerce($object)) {
                 $buttons = '<div class="tabsAction">';
                 $buttons .= '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?action=synchronize_images&amp;id=' . $object->id . '&token='.ecommercengNewToken().'">' . $langs->trans("ECommerceSynchronizeProductImages") . '</a></div>';
@@ -285,8 +297,10 @@ class ActionsECommerceNg
     {
         global $conf, $user, $langs, $db;
 
-        if ((in_array('expeditioncard', explode(':', $parameters['context'])) && ($action == 'confirm_valid' || $action == 'builddoc')) ||
-            (in_array('invoicecard', explode(':', $parameters['context'])) && ($action == 'confirm_valid' || $action == 'builddoc'))
+		$contexts = explode(':', $parameters['context']);
+
+        if ((in_array('expeditioncard', $contexts) && ($action == 'confirm_valid' || $action == 'builddoc')) ||
+            (in_array('invoicecard', $contexts) && ($action == 'confirm_valid' || $action == 'builddoc'))
         ) {
             if (!empty($conf->global->ECOMMERCENG_ENABLE_SEND_FILE_TO_ORDER)) {
                 $commande_id = 0;
@@ -359,8 +373,10 @@ class ActionsECommerceNg
     {
         global $conf, $user, $langs, $db;
 
-        if ((in_array('expeditioncard', explode(':', $parameters['context'])) && ($action == 'confirm_valid' || $action == 'builddoc')) ||
-            (in_array('invoicecard', explode(':', $parameters['context'])) && ($action == 'confirm_valid' || $action == 'builddoc'))
+		$contexts = explode(':', $parameters['context']);
+
+        if ((in_array('expeditioncard', $contexts) && ($action == 'confirm_valid' || $action == 'builddoc')) ||
+            (in_array('invoicecard', $contexts) && ($action == 'confirm_valid' || $action == 'builddoc'))
         ) {
             if (!empty($conf->global->ECOMMERCENG_ENABLE_SEND_FILE_TO_ORDER)) {
                 $commande_id = 0;
@@ -640,4 +656,161 @@ class ActionsECommerceNg
 
         return $isImageSync;
     }
+
+	/**
+	 * Overloading the printFieldListSearchParam function : replacing the parent's function with the one below
+	 *
+	 * @param	array()			$parameters		Hook metadatas (context, etc...)
+	 * @param	CommonObject	$object			The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+	 * @param	string			$action			Current action (if set). Generally create or edit or null
+	 * @param	HookManager		$hookmanager	Hook manager propagated to allow calling another hook
+	 * @return	int								< 0 on error, 0 on success, 1 to replace standard code
+	 */
+	public function printFieldListSearchParam($parameters, &$object, &$action, $hookmanager)
+	{
+		$contexts = explode(':', $parameters['context']);
+
+		if (in_array('invoicelist', $contexts)) {
+			global $arrayfields, $langs;
+			$langs->load('ecommerceng@ecommerceng');
+
+			$arrayfields['ec_total_delta'] = array('label' => $langs->trans('ECommerceTotalDelta'), 'checked' => 0, 'position' => 400);
+
+			$search_ec_total_delta = GETPOST('search_ec_total_delta', 'alphanohtml');
+
+			$resPrints = '';
+			if ($search_ec_total_delta != '') $resPrints .= '&search_ec_total_delta=' . urlencode($search_ec_total_delta);
+			$this->resprints = $resPrints;
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Overloading the printFieldListSelect function : replacing the parent's function with the one below
+	 *
+	 * @param	array()			$parameters		Hook metadatas (context, etc...)
+	 * @param	CommonObject	$object			The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+	 * @param	string			$action			Current action (if set). Generally create or edit or null
+	 * @param	HookManager		$hookmanager	Hook manager propagated to allow calling another hook
+	 * @return	int								< 0 on error, 0 on success, 1 to replace standard code
+	 */
+	public function printFieldListSelect($parameters, &$object, &$action, $hookmanager)
+	{
+		$contexts = explode(':', $parameters['context']);
+
+		if (in_array('invoicelist', $contexts)) {
+			$resPrints = ', ABS(total_ttc - (total_ht + total_tva)) AS ec_total_delta';
+			$this->resprints = $resPrints;
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Overloading the printFieldListWhere function : replacing the parent's function with the one below
+	 *
+	 * @param	array()			$parameters		Hook metadatas (context, etc...)
+	 * @param	CommonObject	$object			The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+	 * @param	string			$action			Current action (if set). Generally create or edit or null
+	 * @param	HookManager		$hookmanager	Hook manager propagated to allow calling another hook
+	 * @return	int								< 0 on error, 0 on success, 1 to replace standard code
+	 */
+	public function printFieldListWhere($parameters, &$object, &$action, $hookmanager)
+	{
+		$contexts = explode(':', $parameters['context']);
+
+		if (in_array('invoicelist', $contexts)) {
+			$search_ec_total_delta = GETPOST('search_ec_total_delta', 'alphanohtml');
+
+			$out = '';
+			if ($search_ec_total_delta) $out .= natural_search('ABS(total_ttc - (total_ht + total_tva))', $search_ec_total_delta, 1);
+
+			$this->resprints = $out;
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Overloading the printFieldListOption function : replacing the parent's function with the one below
+	 *
+	 * @param	array()			$parameters		Hook metadatas (context, etc...)
+	 * @param	CommonObject	$object			The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+	 * @param	string			$action			Current action (if set). Generally create or edit or null
+	 * @param	HookManager		$hookmanager	Hook manager propagated to allow calling another hook
+	 * @return	int								< 0 on error, 0 on success, 1 to replace standard code
+	 */
+	public function printFieldListOption($parameters, &$object, &$action, $hookmanager)
+	{
+		$contexts = explode(':', $parameters['context']);
+
+		if (in_array('invoicelist', $contexts)) {
+			$arrayfields = $parameters['arrayfields'];
+
+			if (!empty($arrayfields['ec_total_delta']['checked'])) {
+				$search_ec_total_delta = GETPOST('search_ec_total_delta', 'alphanohtml');
+				print '<td class="liste_titre right">';
+				print '<input class="flat" type="text" name="search_ec_total_delta" size="8" value="' . dol_escape_htmltag($search_ec_total_delta) . '">';
+				print '</td>';
+			}
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Overloading the printFieldListTitle function : replacing the parent's function with the one below
+	 *
+	 * @param	array()			$parameters		Hook metadatas (context, etc...)
+	 * @param	CommonObject	$object			The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+	 * @param	string			$action			Current action (if set). Generally create or edit or null
+	 * @param	HookManager		$hookmanager	Hook manager propagated to allow calling another hook
+	 * @return	int								< 0 on error, 0 on success, 1 to replace standard code
+	 */
+	public function printFieldListTitle($parameters, &$object, &$action, $hookmanager)
+	{
+		global $langs;
+		$contexts = explode(':', $parameters['context']);
+
+		if (in_array('invoicelist', $contexts)) {
+			$param = $parameters['param'];
+			$sortfield = $parameters['sortfield'];
+			$sortorder = $parameters['sortorder'];
+			$arrayfields = $parameters['arrayfields'];
+
+			if (!empty($arrayfields['ec_total_delta']['checked'])) {
+				print_liste_field_titre($arrayfields['ec_total_delta']['label'], $_SERVER['PHP_SELF'], '', '', $param, '', $sortfield, $sortorder, 'right ');
+			}
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Overloading the printFieldListValue function : replacing the parent's function with the one below
+	 *
+	 * @param	array()			$parameters		Hook metadatas (context, etc...)
+	 * @param	CommonObject	$object			The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+	 * @param	string			$action			Current action (if set). Generally create or edit or null
+	 * @param	HookManager		$hookmanager	Hook manager propagated to allow calling another hook
+	 * @return	int								< 0 on error, 0 on success, 1 to replace standard code
+	 */
+	public function printFieldListValue($parameters, &$object, &$action, $hookmanager)
+	{
+		$contexts = explode(':', $parameters['context']);
+
+		if (in_array('invoicelist', $contexts)) {
+			$obj = $parameters['obj'];
+			$arrayfields = $parameters['arrayfields'];
+
+			if (!empty($arrayfields['ec_total_delta']['checked'])) {
+				print '<td class="right">';
+				print price(price2num($obj->ec_total_delta));
+				print '</td>';
+			}
+		}
+
+		return 0;
+	}
 }

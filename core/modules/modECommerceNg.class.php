@@ -88,7 +88,7 @@ class modECommerceNg extends DolibarrModules
 		//                        );
 		$this->module_parts = array(
 			'triggers' => 1,
-			'hooks' => array('expeditioncard', 'invoicecard', 'productdocuments', 'productcard', 'thirdpartycard'),
+			'hooks' => array('expeditioncard', 'invoicecard', 'productdocuments', 'productcard', 'thirdpartycard', 'invoicelist'),
 		);
 
 		// Data directories to create when module is enabled.

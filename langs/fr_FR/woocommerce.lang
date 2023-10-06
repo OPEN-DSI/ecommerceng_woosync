@@ -169,3 +169,5 @@ ECommerceErrorWarehouseIdNotConfiguredForRemoteWarehouse             = L'entrep�
 ECommerceErrorWhenMovementStockOnDifferentWarehouse                  = Erreur lors de la mise a jour des stocks des produits sur differents entrepots
 ECommerceErrorValidOrderWarehouseNotConfigured                       = L'entrepot par defaut pour la validation de la commande n'est pas configuré pour le site '%s'
 ECommerceErrorGetImportKeyOfLine                                     = Erreur lors de la recuperation de la clé d'import de la ligne '%s' de la pièce '%s'
+
+ECommerceWooCommerceStoreCredit                                      = Crédit Boutique

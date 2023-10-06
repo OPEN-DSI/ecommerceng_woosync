@@ -365,8 +365,8 @@ if (!empty($object->parameters['order_actions']['create_invoice'])) {
 	if ($object->parameters['order_actions']['create_invoice_type'] == Facture::TYPE_DEPOSIT) {
 		// Invoice deposit type
 		print '<tr class="oddeven">' . "\n";
-		print '<td>' . $langs->trans("ECommerceSendInvoiceByMail") . '</td>' . "\n";
-		print '<td>' . $langs->trans("ECommerceSendInvoiceByMailDescription") . '</td>' . "\n";
+		print '<td>' . $langs->trans("ECommerceCreateInvoiceDepositType") . '</td>' . "\n";
+		print '<td>' . $langs->trans("ECommerceCreateInvoiceDepositTypeDescription") . '</td>' . "\n";
 		print '<td class="right">' . "\n";
 		$invoice_deposit_types = array(
 			'amount' => $langs->trans('FixAmount', $langs->transnoentitiesnoconv('Deposit')),
@@ -379,8 +379,8 @@ if (!empty($object->parameters['order_actions']['create_invoice'])) {
 		if (in_array($object->parameters['order_actions']['create_invoice_deposit_type'], [ 'variable', 'variablealllines' ])) {
 			// Invoice deposit value
 			print '<tr class="oddeven">' . "\n";
-			print '<td>' . $langs->trans("ECommerceSendInvoiceByMail") . '</td>' . "\n";
-			print '<td>' . $langs->trans("ECommerceSendInvoiceByMailDescription") . '</td>' . "\n";
+			print '<td>' . $langs->trans("ECommerceCreateInvoiceDepositValue") . '</td>' . "\n";
+			print '<td>' . $langs->trans("ECommerceCreateInvoiceDepositValueDescription") . '</td>' . "\n";
 			print '<td class="right">' . "\n";
 			print '<input type="number" class="flat centpercent" name="create_invoice_deposit_value" value="' . dol_escape_htmltag($object->parameters['order_actions']['create_invoice_deposit_value']) . '">' . "\n";
 			print '</td></tr>' . "\n";

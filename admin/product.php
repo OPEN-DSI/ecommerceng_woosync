@@ -146,6 +146,8 @@ if ($action == 'set_options') {
 	$object->parameters['discount_code_service'] = $object->parameters['discount_code_service'] > 0 ? $object->parameters['discount_code_service'] : 0;
 	$object->parameters['pw_gift_cards_service'] = GETPOST('pw_gift_cards_service', 'int');
 	$object->parameters['pw_gift_cards_service'] = $object->parameters['pw_gift_cards_service'] > 0 ? $object->parameters['pw_gift_cards_service'] : 0;
+	$object->parameters['acfw_store_credits_service'] = GETPOST('acfw_store_credits_service', 'int');
+	$object->parameters['acfw_store_credits_service'] = $object->parameters['acfw_store_credits_service'] > 0 ? $object->parameters['acfw_store_credits_service'] : 0;
 	$object->parameters['product_synch_price'] = GETPOST('product_synch_price', 'az09');
 	$object->parameters['product_weight_units'] = empty($conf->global->PRODUCT_DISABLE_WEIGHT) ? GETPOST('product_weight_units', 'int') : 0; // 0 = Kg
 	$object->parameters['product_dimension_units'] = empty($conf->global->PRODUCT_DISABLE_SIZE) ? GETPOST('product_dimension_units', 'int') : 2; // 2 = cm
@@ -390,6 +392,14 @@ print '<td>'.$langs->trans("ECommercePwGiftCardsService").'</td>'."\n";
 print '<td>' . $langs->transnoentities("ECommercePwGiftCardsServiceDescription") . '</td>' . "\n";
 print '<td class="right">' . "\n";
 print $form->select_produits($object->parameters['pw_gift_cards_service'], 'pw_gift_cards_service', 1, 0) . "\n";
+print '</td></tr>' . "\n";
+
+// ACFW store credits service
+print '<tr class="oddeven">' . "\n";
+print '<td>'.$langs->trans("ECommerceAcfwStoreCreditsService").'</td>'."\n";
+print '<td>' . $langs->transnoentities("ECommerceAcfwStoreCreditsServiceDescription") . '</td>' . "\n";
+print '<td class="right">' . "\n";
+print $form->select_produits($object->parameters['acfw_store_credits_service'], 'acfw_store_credits_service', 1, 0) . "\n";
 print '</td></tr>' . "\n";
 
 // Synchronize prices
