@@ -91,6 +91,7 @@ if ($action == 'set_options') {
 	$object->fk_warehouse = $object->stock_sync_direction == 'ecommerce2dolibarr' && empty($object->parameters['enable_warehouse_plugin_support']) ? GETPOST('fk_warehouse', 'int') : 0;
 	$object->fk_warehouse = $object->fk_warehouse > 0 ? $object->fk_warehouse : 0;
 	$object->parameters['fk_warehouse_to_ecommerce'] = $object->stock_sync_direction == 'dolibarr2ecommerce' && empty($object->parameters['enable_warehouse_plugin_support']) ? GETPOST('fk_warehouse_to_ecommerce', 'array') : array();
+	$object->parameters['update_virtual_stock'] = $object->stock_sync_direction == 'dolibarr2ecommerce' && empty($object->parameters['enable_warehouse_plugin_support']) && GETPOST('update_virtual_stock', 'int') ? 1 : 0;
 
 	$result = $object->update($user);
 
@@ -247,6 +248,16 @@ if (in_array($object->stock_sync_direction, [ 'dolibarr2ecommerce', 'ecommerce2d
 	print '</td></tr>' . "\n";
 
 	if (empty($object->parameters['enable_warehouse_plugin_support'])) {
+		if ($object->stock_sync_direction == 'dolibarr2ecommerce') {
+			// Update virtual stock
+			print '<tr class="oddeven">' . "\n";
+			print '<td>' . $langs->trans("ECommerceUpdateVirtualStock") . '</td>' . "\n";
+			print '<td>' . $langs->transnoentities("ECommerceUpdateVirtualStockDescription") . '</td>' . "\n";
+			print '<td class="right">' . "\n";
+			print '<input type="checkbox" name="update_virtual_stock" value="1"' . (!empty($object->parameters['update_virtual_stock']) ? ' checked' : '') . ' />' . "\n";
+			print '</td></tr>' . "\n";
+		}
+
 		// Warehouses
 		print '<tr class="oddeven">' . "\n";
 		print '<td>' . $langs->trans("ECommerceStockProduct") . '</td>' . "\n";

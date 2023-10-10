@@ -375,6 +375,8 @@ ECommercePwGiftCardsService                                                     
 ECommercePwGiftCardsServiceDescription                                                              =Service utilisé pour la gestion des Cartes cadeaux (extension WooCommerce: <a href="https://wordpress.org/plugins/pw-woocommerce-gift-cards/" target="_blank">PW WooCommerce Gift Cards Pro</a>)
 ECommerceAcfwStoreCreditsService                                                                    =Crédits boutique
 ECommerceAcfwStoreCreditsServiceDescription                                                         =Service utilisé pour la gestion des Crédits boutique (extension WooCommerce: <a href="https://wordpress.org/plugins/advanced-coupons-for-woocommerce-free/" target="_blank">Advanced Coupons for WooCommerce Free</a>)
+ECommerceFeeService                                                                                 =Frais annexe
+ECommerceFeeServiceDescription                                                                      =Service utilisé pour la gestion des frais annexes
 
 ECommerceProcessPendingWebHooks                                                                     =Traitement de toutes les commandes délivrées par crochet Web (WebHooks)
 ECommerceSynchronizeWebHooksSuccess                                                                 =La synchronisation de la file d'attente des crochets web reçus s'est terminée avec succès
@@ -514,7 +516,8 @@ ECommerceErrorProductRefMandatory                                               
 ECommerceErrorFetchProductLinkByRemoteId                                                            =Erreur de chargement du lien de synchronisation du produit (ID distant: %s, Site ID : %s)
 ECommerceErrorFetchProduct                                                                          =Erreur de chargement du produit (ID : %s)
 ECommerceErrorFetchProductByRef                                                                     =Erreur de chargement du produit (Réf. : %s)
-ECommerceErrorFetchProductLinkByProductId                                                           =Erreur de chargement du lien de synchronisation du produit (ID : %s, Site ID : %s)
+ECommerceErrorFetchProductLinkByProductId                                                           =Erreur de chargement du lien de synchronisation du produit (ID produit : %s, Site ID : %s)
+ECommerceErrorFetchProductLink                                                                      =Erreur de chargement du lien de synchronisation du produit (ID lien : %s, Site ID : %s)
 ECommerceErrorProductAlreadyLinkedWithRemoteProduct                                                 =Le produit avec la référence %s est déjà lié au produit distant ID : %s
 ECommerceErrorUpdateProduct                                                                         =Erreur lors de la mise à jour du produit dans Dolibarr (ID : %s)
 ECommerceErrorCreateProduct                                                                         =Erreur lors de la création du produit dans Dolibarr

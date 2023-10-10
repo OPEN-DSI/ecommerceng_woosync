@@ -77,92 +77,175 @@ class eCommerceUtils
 
         $stopwatch_id = eCommerceUtils::startAndLogStopwatch(__METHOD__);
 
-        $sql = "SELECT sm.fk_product, MAX(sm.datem) AS update_date, GROUP_CONCAT(DISTINCT CONCAT(ep.rowid, ':', ep.fk_site, ':', ep.remote_id) SEPARATOR ';') AS links";
-        $sql .= " FROM " . MAIN_DB_PREFIX . "stock_mouvement AS sm";
-		$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_product AS ep ON ep.fk_product = sm.fk_product";
-        $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "ecommerce_site AS es ON es.rowid = ep.fk_site";
-        $sql .= " WHERE es.entity IN (" . getEntity('ecommerceng') . ")";
-        $sql .= " AND (ep.last_update_stock IS NULL OR sm.datem > ep.last_update_stock)";
-        $sql .= " GROUP BY sm.fk_product";
+		$eCommerceSite = new eCommerceSite($this->db);
+		$sites = $eCommerceSite->listSites('object');
 
-        $resql = $this->db->query($sql);
-        if (!$resql) {
-            $output .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $this->db->lasterror() . '</span>' . "<br>";
-            $error++;
-        } elseif ($this->db->num_rows($resql) > 0) {
-            $eCommerceSite = new eCommerceSite($this->db);
-            $sites = $eCommerceSite->listSites('object');
+		foreach ($sites as $site) {
+			$output .= $langs->trans('ECommerceSynchronizeStockToSite', $site->name) . " :<br>";
+			if ($site->stock_sync_direction != 'dolibarr2ecommerce') {
+				$output .= $langs->trans('None') . "<br>";
+				continue;
+			}
 
-            while ($obj = $this->db->fetch_object($resql)) {
-                $update_date = $obj->update_date;
-                $links = explode(';', $obj->links);
+			$eCommerceSynchro = new eCommerceSynchro($this->db, $site);
+			$update_virtual_stock = !empty($site->parameters['update_virtual_stock']);
+			$date_now = $this->db->idate(dol_now());
 
-                $product = new Product($this->db);
-                $product->fetch($obj->fk_product);
+			// Connect to site
+			try {
+				$eCommerceSynchro->connect();
+				if (count($eCommerceSynchro->errors)) {
+					$output .= '<span style="color: red;">' . $langs->trans('Error') . ' - Connect to site ' . $site->name . ' : ' . $eCommerceSynchro->errorsToString() . '</span>' . "<br>";
+					$error++;
+					continue;
+				}
+			} catch (Exception $e) {
+				$output .= '<span style="color: red;">' . $langs->trans('Error') . ' - Connect to site ' . $site->name . ' : ' . $e->getMessage() . '</span>' . "<br>";
+				$error++;
+				continue;
+			}
 
-                foreach ($links as $link) {
-                    $sub_error = 0;
-                    $link_info = explode(':', $link);
-                    $link_id = $link_info[0];
-                    $site_id = $link_info[1];
-                    $remote_id = $link_info[2];
+			$sql = "SELECT ep.rowid AS link_id, ep.fk_product, ep.remote_id, sm.max_date AS update_date";
+			if ($update_virtual_stock) {
+				$sql .= ", GREATEST(COALESCE(sm.max_date, '1971-01-01')";
+				// Order
+				if (!empty($conf->commande->enabled)) {
+					$sql .= ", COALESCE(cv.max_date, '1971-01-01')";
+				}
+				// Shipping
+				if (!empty($conf->expedition->enabled)) {
+					$sql .= ", COALESCE(sv.max_date, '1971-01-01')";
+				}
+				// Supplier order
+				if ((!empty($conf->fournisseur->enabled) && empty($conf->global->MAIN_USE_NEW_SUPPLIERMOD)) || !empty($conf->supplier_order->enabled)) {
+					$sql .= ", COALESCE(sov.max_date, '1971-01-01')";
+				}
+				// Delivery order
+				if (((!empty($conf->fournisseur->enabled) && empty($conf->global->MAIN_USE_NEW_SUPPLIERMOD)) || !empty($conf->supplier_order->enabled) || !empty($conf->supplier_invoice->enabled))) {
+					$sql .= ", COALESCE(dov.max_date, '1971-01-01')";
+				}
+				// Mrp
+				if (!empty($conf->mrp->enabled)) {
+					$sql .= ", COALESCE(mv.max_date, '1971-01-01')";
+				}
+				$sql .= ") AS update_date";
+			} else {
+				$sql .= ", COALESCE(sm.max_date, '1971-01-01') AS update_date";
+			}
+			$sql .= " FROM " . MAIN_DB_PREFIX . "ecommerce_product AS ep";
+			$sql .= " LEFT JOIN (";
+			$sql .= "   SELECT fk_product, MAX(datem) AS max_date";
+			$sql .= "   FROM " . MAIN_DB_PREFIX . "stock_mouvement";
+			$sql .= "   GROUP BY fk_product";
+			$sql .= ") AS sm ON sm.fk_product = ep.fk_product";
+			if ($update_virtual_stock) {
+				// Order
+				if (!empty($conf->commande->enabled)) {
+					$sql .= " LEFT JOIN (";
+					$sql .= "   SELECT cd.fk_product, MAX(c.tms) AS max_date";
+					$sql .= "   FROM " . MAIN_DB_PREFIX . "commandedet AS cd";
+					$sql .= "   LEFT JOIN " . MAIN_DB_PREFIX . "commande AS c ON c.rowid = cd.fk_commande";
+					$sql .= "   GROUP BY cd.fk_product";
+					$sql .= ") AS cv ON cv.fk_product = ep.fk_product";
+				}
+				// Shipping
+				if (!empty($conf->expedition->enabled)) {
+					$sql .= " LEFT JOIN (";
+					$sql .= "   SELECT cd.fk_product, GREATEST(MAX(e.tms), COALESCE(MAX(c.tms), '1971-01-01')) AS max_date";
+					$sql .= "   FROM " . MAIN_DB_PREFIX . "expeditiondet AS ed";
+					$sql .= "   LEFT JOIN " . MAIN_DB_PREFIX . "expedition AS e ON e.rowid = ed.fk_expedition";
+					$sql .= "   LEFT JOIN " . MAIN_DB_PREFIX . "commandedet AS cd ON cd.rowid = ed.fk_origin_line";
+					$sql .= "   LEFT JOIN " . MAIN_DB_PREFIX . "commande AS c ON c.rowid = cd.fk_commande";
+					$sql .= "   GROUP BY cd.fk_product";
+					$sql .= ") AS sv ON sv.fk_product = ep.fk_product";
+				}
+				// Supplier order
+				if ((!empty($conf->fournisseur->enabled) && empty($conf->global->MAIN_USE_NEW_SUPPLIERMOD)) || !empty($conf->supplier_order->enabled)) {
+					$sql .= " LEFT JOIN (";
+					$sql .= "   SELECT cfd.fk_product, MAX(cf.tms) AS max_date";
+					$sql .= "   FROM " . MAIN_DB_PREFIX . "commande_fournisseurdet AS cfd";
+					$sql .= "   LEFT JOIN " . MAIN_DB_PREFIX . "commande_fournisseur AS cf ON cf.rowid = cfd.fk_commande";
+					$sql .= "   GROUP BY cfd.fk_product";
+					$sql .= ") AS sov ON sov.fk_product = ep.fk_product";
+				}
+				// Delivery order
+				if (((!empty($conf->fournisseur->enabled) && empty($conf->global->MAIN_USE_NEW_SUPPLIERMOD)) || !empty($conf->supplier_order->enabled) || !empty($conf->supplier_invoice->enabled))) {
+					$sql .= " LEFT JOIN (";
+					$sql .= "   SELECT cfd.fk_product, MAX(cf.tms) AS max_date";
+					$sql .= "   FROM " . MAIN_DB_PREFIX . "commande_fournisseur_dispatch AS cfd";
+					$sql .= "   LEFT JOIN " . MAIN_DB_PREFIX . "commande_fournisseur AS cf ON cf.rowid = cfd.fk_commande";
+					$sql .= "   GROUP BY cfd.fk_product";
+					$sql .= ") AS dov ON dov.fk_product = ep.fk_product";
+				}
+				// Mrp
+				if (!empty($conf->mrp->enabled)) {
+					$sql .= " LEFT JOIN (";
+					$sql .= "   SELECT mp.fk_product, MAX(mp.tms) AS max_date";
+					$sql .= "   FROM " . MAIN_DB_PREFIX . "mrp_production AS mp";
+					$sql .= "   GROUP BY mp.fk_product";
+					$sql .= ") AS mv ON mv.fk_product = ep.fk_product";
+				}
+			}
+			$sql .= " WHERE ep.fk_site = " . $site->id;
+			$sql .= " AND (ep.last_update_stock IS NULL OR (sm.datem IS NOT NULL AND (sm.datem > ep.last_update_stock";
+			if ($update_virtual_stock) {
+				$sql .= " OR sm.datem > ep.last_update_stock";
+			}
+			$sql .= ")))";
+			$sql .= " GROUP BY ep.rowid, ep.fk_product, ep.remote_id";
 
-                    if (isset($sites[$site_id]) && $sites[$site_id]->id > 0) {
-                        $site = $sites[$site_id];
+			$resql = $this->db->query($sql);
+			if (!$resql) {
+				$output .= '<span style="color: red;">' . $langs->trans('Error') . ': ' . $this->db->lasterror() . '</span>' . "<br>";
+				$error++;
+				continue;
+			}
 
-						if ($site->stock_sync_direction == 'dolibarr2ecommerce') {
-							$eCommerceProduct = new eCommerceProduct($this->db);
-							$result = $eCommerceProduct->fetch($link_id);
-							if ($result < 0) {
-								$output .= '<span style="color: red;">' . $langs->trans('ECommerceUpdateRemoteProductLink', $product->id, $site->name) . ': ' . $eCommerceProduct->error . '</span>' . "<br>";
-								$sub_error++;
-							} elseif ($result == 0) {
-								continue;
-							}
+			while ($obj = $this->db->fetch_object($resql)) {
+				$eCommerceProduct = new eCommerceProduct($this->db);
+				$result = $eCommerceProduct->fetch($obj->link_id);
+				if ($result < 0) {
+					$output .= '<span style="color: red;">' . $langs->trans('ECommerceErrorFetchProductLink', $obj->fk_product, $site->name) . ': ' . $eCommerceProduct->error . '</span>' . "<br>";
+					$error++;
+					continue;
+				} elseif ($result == 0) {
+					continue;
+				}
 
-							if (!$sub_error) {
-								try {
-									// Connect to site
-									$eCommerceSynchro = new eCommerceSynchro($this->db, $site);
-									$eCommerceSynchro->connect();
-									if (count($eCommerceSynchro->errors)) {
-										$output .= '<span style="color: red;">' . $langs->trans('Error') . ' - Connect to site ' . $site->name . ' : ' . $eCommerceSynchro->errorsToString() . '</span>' . "<br>";
-										$sub_error++;
-									}
+				$product = new Product($this->db);
+				$result = $product->fetch($obj->fk_product);
+				if ($result < 0) {
+					$output .= '<span style="color: red;">' . $langs->trans('ECommerceErrorFetchProduct', $obj->fk_product) . ': ' . $product->errorsToString() . '</span>' . "<br>";
+					$error++;
+					continue;
+				}
 
-									if (!$sub_error) {
-										$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteStockProduct($remote_id, $product, $eCommerceProduct);
-										if (!$result) {
-											$output .= '<span style="color: red;">' . $langs->trans('Error') . ' - Update stock of ' . $product->ref . ' to site ' . $site->name . ' : ' . $eCommerceSynchro->eCommerceRemoteAccess->errorsToString() . '</span>' . "<br>";
-											$sub_error++;
-										}
-									}
-								} catch (Exception $e) {
-									$output .= '<span style="color: red;">' . $langs->trans('Error') . ' - Update stock of ' . $product->ref . ' to site ' . $site->name . ' : ' . $e->getMessage() . '</span>' . "<br>";
-									$sub_error++;
-								}
-							}
+				try {
+					$result = $eCommerceSynchro->eCommerceRemoteAccess->updateRemoteStockProduct($obj->remote_id, $product, $eCommerceProduct);
+					if (!$result) {
+						$output .= '<span style="color: red;">' . $langs->trans('Error') . ' - Update stock of ' . $product->ref . ' to site ' . $site->name . ' : ' . $eCommerceSynchro->eCommerceRemoteAccess->errorsToString() . '</span>' . "<br>";
+						$error++;
+						continue;
+					}
+				} catch (Exception $e) {
+					$output .= '<span style="color: red;">' . $langs->trans('Error') . ' - Update stock of ' . $product->ref . ' to site ' . $site->name . ' : ' . $e->getMessage() . '</span>' . "<br>";
+					$error++;
+					continue;
+				}
 
-							if (!$sub_error && $eCommerceProduct->id > 0) { // test for when the link is deleted because the product in WooCommerce is not found
-								// Update link
-								$eCommerceProduct->last_update_stock = $update_date;
-								$result = $eCommerceProduct->update($user);
-								if ($result < 0) {
-									$output .= '<span style="color: red;">' . $langs->trans('ECommerceUpdateRemoteProductLink', $product->id, $site->name) . ': ' . $eCommerceProduct->error . '</span>' . "<br>";
-									$sub_error++;
-								}
-							}
-						}
-                    } else {
-                        $output .= '<span style="color: red;">' . $langs->trans('Error') . ': Site not found (ID: ' . $site_id . ')</span>' . "<br>";
-                        $sub_error++;
-                    }
+				if ($eCommerceProduct->id > 0) { // test for when the link is deleted because the product in WooCommerce is not found
+					// Update link
+					$eCommerceProduct->last_update_stock = isset($obj->update_date) ? $obj->update_date : $date_now;
+					$result = $eCommerceProduct->update($user);
+					if ($result < 0) {
+						$output .= '<span style="color: red;">' . $langs->trans('ECommerceUpdateRemoteProductLink', $product->id, $site->name) . ': ' . $eCommerceProduct->error . '</span>' . "<br>";
+						$error++;
+					}
+				}
+			}
 
-                    if ($sub_error) $error++;
-                }
-            }
-            $this->db->free($resql);
-        }
+			$this->db->free($resql);
+		}
 
         eCommerceUtils::stopAndLogStopwatch($stopwatch_id);
 

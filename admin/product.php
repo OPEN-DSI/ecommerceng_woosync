@@ -140,6 +140,8 @@ if ($action == 'set_options') {
 	$object->fk_cat_product = $object->fk_cat_product > 0 ? $object->fk_cat_product : 0;
 	$object->parameters['realtime_dtoe']['product'] = GETPOST('realtime_dtoe_product', 'int') ? 1 : 0;
 	$object->ecommerce_price_type = GETPOST('base_price_type', 'az09');
+	$object->parameters['fee_service'] = GETPOST('fee_service', 'int');
+	$object->parameters['fee_service'] = $object->parameters['fee_service'] > 0 ? $object->parameters['fee_service'] : 0;
 	$object->parameters['shipping_service'] = GETPOST('shipping_service', 'int');
 	$object->parameters['shipping_service'] = $object->parameters['shipping_service'] > 0 ? $object->parameters['shipping_service'] : 0;
 	$object->parameters['discount_code_service'] = GETPOST('discount_code_service', 'int');
@@ -401,6 +403,16 @@ print '<td>' . $langs->transnoentities("ECommerceAcfwStoreCreditsServiceDescript
 print '<td class="right">' . "\n";
 print $form->select_produits($object->parameters['acfw_store_credits_service'], 'acfw_store_credits_service', 1, 0) . "\n";
 print '</td></tr>' . "\n";
+
+// Fee service
+if (!empty($object->parameters['order_actions']['fee_line_as_item_line'])) {
+	print '<tr class="oddeven">' . "\n";
+	print '<td>' . $langs->trans("ECommerceFeeService") . '</td>' . "\n";
+	print '<td>' . $langs->transnoentities("ECommerceFeeServiceDescription") . '</td>' . "\n";
+	print '<td class="right">' . "\n";
+	print $form->select_produits($object->parameters['fee_service'], 'fee_service', 1, 0) . "\n";
+	print '</td></tr>' . "\n";
+}
 
 // Synchronize prices
 print '<tr class="oddeven">' . "\n";

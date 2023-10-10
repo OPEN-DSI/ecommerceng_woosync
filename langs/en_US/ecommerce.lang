@@ -365,6 +365,8 @@ ECommercePwGiftCardsService                         = Gift cards
 ECommercePwGiftCardsServiceDescription              = Service used to manage gift cards (extension WooCommerce: PW WooCommerce Gift Cards Pro)
 ECommerceAcfwStoreCreditsService                                                                    =Crédits boutique
 ECommerceAcfwStoreCreditsServiceDescription                                                         =Service utilisé pour la gestion des Crédits boutique (extension WooCommerce: <a href="https://wordpress.org/plugins/advanced-coupons-for-woocommerce-free/" target="_blank">Advanced Coupons for WooCommerce Free</a>)
+ECommerceFeeService                                                                                 =Frais annexe
+ECommerceFeeServiceDescription                                                                      =Service utilisé pour la gestion des frais annexes
 
 ECommerceProcessPendingWebHooks                     = Processing of all orders delivered by Webhook
 ECommerceSynchronizeWebHooksSuccess                 = Synchronization of the queue of received Webhooks has been successfully completed

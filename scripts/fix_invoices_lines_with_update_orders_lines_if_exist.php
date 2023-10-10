@@ -41,10 +41,19 @@ if (substr($sapi_type, 0, 3) == 'cgi') {
 
 // Check parameters
 if (! isset($argv[1]) || ! $argv[1]) {
-    print 'Usage: ' . $script_file . ' user_login_in_dolibarr';
+    print 'Usage: ' . $script_file . ' user_login_in_dolibarr [also_invoice_with_free_lines(0|1) [begin_date(YYYY-MM-DD)]]' . "\n";
     exit(-1);
 }
 $userlogin=$argv[1];
+$also_invoice_with_free_lines=!empty($argv[2]);
+if (isset($argv[3])) {
+	$begin_date = strtotime($argv[3]);
+	if ($begin_date === false) {
+		print 'Wrong date format' . "\n";
+		print 'Usage: ' . $script_file . ' user_login_in_dolibarr [also_invoice_with_free_lines(0|1) begin_date(YYYY-MM-DD)]' . "\n";
+		exit(-1);
+	}
+}
 
 // Change this following line to use the correct relative path (../, ../../, etc)
 $res=0;
@@ -123,11 +132,25 @@ if ($max_sites > 0) {
 		$eCommerceWooCommerce = $eCommerceSynchro->eCommerceRemoteAccess->getClass();
 
 		print "Get all Invoice who have TTC != HT + TVA.\n";
+		if ($also_invoice_with_free_lines) {
+			print "Or all Invoice who have free lines.\n";
+		}
 
-		$sql = "SELECT rowid, ref_ext FROM " . MAIN_DB_PREFIX . "facture" .
-			" WHERE entity IN (" . getEntity('facture') . ")" .
-			" AND total_ttc != (total_ht + total_tva)" .
-			" AND ref_ext LIKE 'eCommerce-" . $site->id . "-%'";
+		$sql = "SELECT DISTINCT f.rowid, f.ref_ext";
+		$sql .= " FROM " . MAIN_DB_PREFIX . "facture AS f";
+        if ($also_invoice_with_free_lines) {
+			$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "facturedet AS fd ON fd.fk_facture = f.rowid";
+		}
+		$sql .= " WHERE f.entity IN (" . getEntity('facture') . ")";
+		$sql .= " AND f.ref_ext LIKE 'eCommerce-" . $site->id . "-%'";
+		if (isset($begin_date)) {
+			$sql .= " AND f.datef >= '" . $db->idate($begin_date) . "'";
+		}
+		$sql .= " AND (f.total_ttc != (f.total_ht + f.total_tva)";
+        if ($also_invoice_with_free_lines) {
+			$sql .= " OR fd.fk_product IS NULL OR fd.fk_product = 0";
+		}
+		$sql .= ")";
 
 		$resql = $db->query($sql);
 		if (!$resql) {
@@ -319,6 +342,13 @@ if ($max_sites > 0) {
 						$order->statut = $order->status = Commande::STATUS_DRAFT;
 						$order->brouillon = 1;
 
+                        $services_id = array();
+						if ($site->parameters['shipping_service'] > 0) $services_id[] = $site->parameters['shipping_service'];
+						if ($site->parameters['discount_code_service'] > 0) $services_id[] = $site->parameters['discount_code_service'];
+						if ($site->parameters['pw_gift_cards_service'] > 0) $services_id[] = $site->parameters['pw_gift_cards_service'];
+						if ($site->parameters['acfw_store_credits_service'] > 0) $services_id[] = $site->parameters['acfw_store_credits_service'];
+						if ($site->parameters['fee_service'] > 0) $services_id[] = $site->parameters['fee_service'];
+
 						$lines = $order_data['items'];
 						$rang = 1;
 						foreach ($lines as $item) {
@@ -364,7 +394,8 @@ if ($max_sites > 0) {
 							if ($fk_product > 0) {
 								// Fetch line
 								if (!$error) {
-									$sql2 = "SELECT rowid FROM " . MAIN_DB_PREFIX . "commandedet WHERE fk_commande = " . $order->id . " AND fk_product = " . $fk_product . " AND rang = " . $rang;
+									$sql2 = "SELECT rowid FROM " . MAIN_DB_PREFIX . "commandedet WHERE fk_commande = " . $order->id . " AND rang = " . $rang .
+                                        " AND (" . (in_array($fk_product, $services_id) ? "fk_product IS NULL OR fk_product = 0 OR " : "") . "fk_product = " . $fk_product . ")";
 									$resql2 = $db->query($sql2);
 									if (!$resql2) {
 										print "\nError: SQL : $sql2; Error: " . $db->lasterror() . "\n";
@@ -379,9 +410,8 @@ if ($max_sites > 0) {
 									$db->free($resql2);
 
 									if (empty($line_id)) {
-										print "\nError: Line ID not found for product {$fk_product} rang {$rang} of order {$order->ref} for remote order {$remote_id}\n";
-										$error++;
-										break;  // break on items
+										print "\nWarning: Line ID not found for product {$fk_product} rang {$rang} of order {$order->ref} for remote order {$remote_id}\n";
+										continue;
 									}
 
 									$line = new OrderLine($db);

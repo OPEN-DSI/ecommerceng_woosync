@@ -1,5 +1,12 @@
 # ChangeLog
 
+## 4.1.63.0
+- Ajout d'une option pour synchroniser le stock virtuel (de dolibarr vers le site, égale à la somme des stocks des entrepots selectionnés plus le 'stock virtuel') si aucun plugin "multi-entrepots" n'est selectionné
+- Ajout de la possibilité de choisir un service pour les lignes de frais annexes dans l'onglet 'produits' de la configuration (lorsque l'option 'Considérer les lignes de frais comme des lignes de services' est selectionné dans l'onglet 'commandes/factures')
+- Ajout d'options supplémentaires dans le script 'fix_invoices_lines_with_update_orders_lines_if_exist.php'
+- Factorisation du code pour les données des stocks envoyées à WooCommerce
+- Correction diverses
+
 ## 4.1.62.0
 - Ajout d'une option sur le parametrage des "attributs" de produit pour definir l'affichage de celui-ci sur WooCommerce
 - Correction de la page "A propos"

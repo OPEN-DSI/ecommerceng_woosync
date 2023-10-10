@@ -71,6 +71,8 @@ ECommerceWoocommerceErrorDisableDictAttribute                        =Erreur de 
 ECommerceWoocommerceErrorAddDictAttribute                            =Erreur d'ajout d'un attribut, slug:"%s", nom:"%s", erreur:"%s"
 ECommerceWoocommerceErrorUpdateDictAttribute                         =Erreur de mise à jour d'un attribut, slug:"%s", erreur:"%s"
 
+ECommerceUpdateVirtualStock                                                     = Stocks virtuels
+ECommerceUpdateVirtualStockDescription                                          = Mise à jour du stock du site avec le stock virtuel au lieu du stock physique
 ECommerceWoocommerceEnableWarehousePluginSupport                                = Extension de gestion d'entrepôts
 ECommerceWoocommerceEnableWarehousePluginSupportDescription                     = Selectionner l'extension supporté gérant les entrepôts installée sur WooCommerce
 ECommerceWoocommerceWarehousePluginStockLocationForWooCommerce                  = Stock Locations for WooCommerce
