@@ -105,7 +105,7 @@ class eCommerceUtils
 				continue;
 			}
 
-			$sql = "SELECT ep.rowid AS link_id, ep.fk_product, ep.remote_id, sm.max_date AS update_date";
+			$sql = "SELECT ep.rowid AS link_id, ep.fk_product, ep.remote_id";
 			if ($update_virtual_stock) {
 				$sql .= ", GREATEST(COALESCE(sm.max_date, '1971-01-01')";
 				// Order
@@ -187,9 +187,28 @@ class eCommerceUtils
 				}
 			}
 			$sql .= " WHERE ep.fk_site = " . $site->id;
-			$sql .= " AND (ep.last_update_stock IS NULL OR (sm.datem IS NOT NULL AND (sm.datem > ep.last_update_stock";
+			$sql .= " AND (ep.last_update_stock IS NULL OR (sm.max_date IS NOT NULL AND (sm.max_date > ep.last_update_stock";
 			if ($update_virtual_stock) {
-				$sql .= " OR sm.datem > ep.last_update_stock";
+				// Order
+				if (!empty($conf->commande->enabled)) {
+					$sql .= " OR cv.max_date > ep.last_update_stock";
+				}
+				// Shipping
+				if (!empty($conf->expedition->enabled)) {
+					$sql .= " OR sv.max_date > ep.last_update_stock";
+				}
+				// Supplier order
+				if ((!empty($conf->fournisseur->enabled) && empty($conf->global->MAIN_USE_NEW_SUPPLIERMOD)) || !empty($conf->supplier_order->enabled)) {
+					$sql .= " OR sov.max_date > ep.last_update_stock";
+				}
+				// Delivery order
+				if (((!empty($conf->fournisseur->enabled) && empty($conf->global->MAIN_USE_NEW_SUPPLIERMOD)) || !empty($conf->supplier_order->enabled) || !empty($conf->supplier_invoice->enabled))) {
+					$sql .= " OR dov.max_date > ep.last_update_stock";
+				}
+				// Mrp
+				if (!empty($conf->mrp->enabled)) {
+					$sql .= " OR mv.max_date > ep.last_update_stock";
+				}
 			}
 			$sql .= ")))";
 			$sql .= " GROUP BY ep.rowid, ep.fk_product, ep.remote_id";
