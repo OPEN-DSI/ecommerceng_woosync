@@ -3451,7 +3451,6 @@ class eCommerceRemoteAccessWoocommerce
 					if (!empty($this->site->parameters['update_virtual_stock'])) {
 						$total_stock = $object->stock_theorique - $object->stock_reel;
 					}
-					dol_syslog(__METHOD__ . ' - Total stock : ' . $total_stock, LOG_NOTICE);
 
 					$supported_warehouses = is_array($this->site->parameters['fk_warehouse_to_ecommerce']) ? $this->site->parameters['fk_warehouse_to_ecommerce'] : array();
 					foreach ($supported_warehouses as $warehouse_id) {
