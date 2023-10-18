@@ -85,7 +85,7 @@ if ($res == 0) {
 }
 
 $siteDb = new eCommerceSite($db);
-$sites = $siteDb->listSites('object');
+$sites = $siteDb->listSites('object', true);
 
 $max_sites = count($sites);
 $num_sites = 0;
