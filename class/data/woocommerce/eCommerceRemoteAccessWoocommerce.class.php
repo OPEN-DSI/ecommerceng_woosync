@@ -4088,7 +4088,7 @@ class eCommerceRemoteAccessWoocommerce
 		$remote_url = '';
 		$remote_language = '';
 		if (is_array($results) && count($results) > 0) {
-			$remote_id = $results[0]['id'];
+			$remote_id = (!empty($results[0]['parent_id']) ? $results[0]['parent_id'] . '|' : '') . $results[0]['id'];
 			$remote_url = $results[0]['permalink'];
 			if (!empty($this->site->parameters['enable_product_plugin_wpml_support'])) $remote_language = $results[0]['language'];
 			if (!$this->updateRemoteProduct($remote_id, $object))
