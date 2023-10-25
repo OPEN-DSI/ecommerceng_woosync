@@ -425,6 +425,11 @@ ECOMMERCE_ACCOUNTING_SERVICE_SOLD_ACCOUNT               = Compte comptable par d
 ECOMMERCE_ACCOUNTING_SERVICE_SOLD_INTRA_ACCOUNT         = Compte comptable par défaut pour les services vendus dans la CEE (utilisé si non défini dans la fiche service ou dans Dolibarr)
 ECOMMERCE_ACCOUNTING_SERVICE_SOLD_EXPORT_ACCOUNT        = Compte comptable par défaut pour les services vendus et exportés hors de la CEE (utilisé si non défini dans la fiche service ou dans Dolibarr)
 
+StockableProduct            = Activer la gestion des stocks
+StockableProductDescription = Si cette option est désactivée, la modification du stock pour cet élément n'est pas prise en compte. Les mouvements de stock ne seront pas pris en compte dans les commandes client, commande fournisseur, expédition, réception, ordre de fabrication.<br /> Dans les faits, cette option se comporte comme une activation/désactivation du module stock mais à l'échelle du produit/service
+StockDisabled               = Stock désactivé
+StockEnabled                = Stock activé
+
 ############################################################################################
 # Web Hooks
 ############################################################################################

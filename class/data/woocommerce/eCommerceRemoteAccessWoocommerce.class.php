@@ -1152,6 +1152,7 @@ class eCommerceRemoteAccessWoocommerce
 				"ecommerceng_wc_date_on_sale_from_{$this->site->id}_{$conf->entity}" => $date_on_sale_from,
 				"ecommerceng_wc_date_on_sale_to_{$this->site->id}_{$conf->entity}" => $date_on_sale_to,
 				"ecommerceng_wc_manage_stock_{$this->site->id}_{$conf->entity}" => !empty($remote_data['manage_stock']) ? 1 : 0,
+				"ecommerceng_stockable_product" => $remote_data['type'] == 'woosb' ? 0 : 1,
 			],
 		];
 
