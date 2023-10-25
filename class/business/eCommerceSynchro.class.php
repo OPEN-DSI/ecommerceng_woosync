@@ -3434,6 +3434,7 @@ class eCommerceSynchro
 						$product->url = strlen($product_data['url']) > 255 ? '' : $product_data['url'];
 
 						if (!isset($product->stock_reel)) $product->stock_reel = 0;
+						if (property_exists($product, 'stockable_product')) $product->stockable_product = $product_data['extrafields']['ecommerceng_stockable_product'];
 
 						if (!($product->id > 0)) $product->array_options = $this->getDefaultExtraFields($product->table_element, $this->eCommerceSite);
 						if (is_array($product_data['extrafields'])) {

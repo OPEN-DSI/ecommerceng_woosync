@@ -415,6 +415,11 @@ ECOMMERCE_ACCOUNTING_SERVICE_SOLD_ACCOUNT               = Compte comptable par d
 ECOMMERCE_ACCOUNTING_SERVICE_SOLD_INTRA_ACCOUNT         = Compte comptable par défaut pour les services vendus dans la CEE (utilisé si non défini dans la fiche service ou dans dolibarr)
 ECOMMERCE_ACCOUNTING_SERVICE_SOLD_EXPORT_ACCOUNT        = Compte comptable par défaut pour les services vendus et exportés hors de la CEE (utilisé si non défini dans la fiche service ou dans dolibarr)
 
+StockableProduct            = Stock management
+StockableProductDescription = If this option is enabled, the stock modification for this element is retained. If disabled, the stock modification for this element is not retained.
+StockDisabled               = Stock disabled
+StockEnabled                = Stock enabled
+
 ############################################################################################
 # Web Hooks
 ############################################################################################

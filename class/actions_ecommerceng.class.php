@@ -26,6 +26,41 @@ dol_include_once("/ecommerceng/lib/eCommerce.lib.php");
 
 class ActionsECommerceNg
 {
+	/**
+	 * @var DoliDB Database handler.
+	 */
+	public $db;
+
+	/**
+	 * @var string Error
+	 */
+	public $error = '';
+
+	/**
+	 * @var array Errors
+	 */
+	public $errors = array();
+
+	/**
+	 * @var array Hook results. Propagated to $hookmanager->resArray for later reuse
+	 */
+	public $results = array();
+
+	/**
+	 * @var string String displayed by executeHook() immediately after return
+	 */
+	public $resprints;
+
+	/**
+	 * Constructor
+	 *
+	 * @param DoliDB $db Database handler
+	 */
+	public function __construct($db)
+	{
+		$this->db = $db;
+	}
+
     /**
      * Overloading the doActions function : replacing the parent's function with the one below
      *
@@ -724,7 +759,7 @@ class ActionsECommerceNg
 			$search_ec_total_delta = GETPOST('search_ec_total_delta', 'alphanohtml');
 
 			$out = '';
-			if ($search_ec_total_delta) $out .= natural_search('ABS(total_ttc - (total_ht + total_tva))', $search_ec_total_delta, 1);
+			if ($search_ec_total_delta) $out .= natural_search('ABS(f.total_ttc - (f.total_ht + f.total_tva))', $search_ec_total_delta, 1);
 
 			$this->resprints = $out;
 		}
@@ -808,6 +843,45 @@ class ActionsECommerceNg
 				print '<td class="right">';
 				print price(price2num($obj->ec_total_delta));
 				print '</td>';
+			}
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Overloading the stockMovementCreate function : replacing the parent's function with the one below
+	 *
+	 * @param	array()			$parameters		Hook metadatas (context, etc...)
+	 * @param	CommonObject	$object			The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+	 * @param	string			$action			Current action (if set). Generally create or edit or null
+	 * @param	HookManager		$hookmanager	Hook manager propagated to allow calling another hook
+	 * @return	int								< 0 on error, 0 on success, 1 to replace standard code
+	 */
+	public function stockMovementCreate($parameters, &$object, &$action, $hookmanager)
+	{
+		$contexts = explode(':', $parameters['context']);
+
+		if (in_array('mouvementstock', $contexts)) {
+			$fk_product = $parameters['fk_product'];
+
+			if ($fk_product > 0) {
+				require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
+				$product = new Product($this->db);
+
+				$result = $product->fetch($fk_product);
+				if ($result < 0) {
+					$this->errors[] = $product->errorsToString();
+					return -1;
+				} elseif ($result == 0) {
+					return 1;
+				}
+
+				if (isset($product->array_options['options_ecommerceng_stockable_product']) &&
+					$product->array_options['options_ecommerceng_stockable_product'] == 0
+				) {
+					return 1;
+				}
 			}
 		}
 
