@@ -3122,7 +3122,7 @@ class eCommerceRemoteAccessWoocommerce
 						$data_key = $this->site->parameters['extra_fields']['product']['values']['att'][$cr_key];
 						$show_attr = $this->site->parameters['extra_fields']['product']['show']['att'][$cr_key];
 						if (!empty($data_key)) {
-							$variationData['attributes'][] = array('id' => $data_key, 'visible' => $show_attr != 2, 'options' => !empty($value) ? explode(',', $value) : array());
+							$variationData['attributes'][] = array('id' => $data_key, 'option' => !empty($value) ? $value : '');
 						}
 					}
 				}

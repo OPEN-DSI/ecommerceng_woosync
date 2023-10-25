@@ -2,6 +2,7 @@
 
 ## 4.1.65
 - Correction de la synchronisation d'un nouveau produit variable depuis les crochets web qui créait un produit "parent" non voulue
+- Correction de la synchro des attributs d'une variation d'un produit variable de dolibarr vers le site
 
 ## 4.1.64
 - Correction script 'syncronize_products_to_ecommerce.php' recupère tous les sites (multi-entités)
