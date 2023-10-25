@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.65
+- Correction de la synchronisation d'un nouveau produit variable depuis les crochets web qui créait un produit "parent" non voulue
+
 ## 4.1.64
 - Correction script 'syncronize_products_to_ecommerce.php' recupère tous les sites (multi-entités)
 

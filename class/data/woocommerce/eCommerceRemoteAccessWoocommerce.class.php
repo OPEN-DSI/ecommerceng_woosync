@@ -1145,7 +1145,7 @@ class eCommerceRemoteAccessWoocommerce
 			'language' => !empty($this->site->parameters['enable_product_plugin_wpml_support']) && isset($parent_remote_data) ? $remote_data['lang'] : '',
 			'translates' => $translates,
 			'variations' => $variations,
-			'has_variations' => !empty($remote_data['variations']),
+			'has_variations' => !empty($remote_data['variations']) || $remote_data['type'] == 'variable',
 			'extrafields' => [
 				"ecommerceng_wc_regular_price_{$this->site->id}_{$conf->entity}" => $remote_data['regular_price'],
 				"ecommerceng_wc_sale_price_{$this->site->id}_{$conf->entity}" => $remote_data['sale_price'],
