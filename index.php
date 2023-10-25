@@ -39,7 +39,7 @@ $langs->load("ecommerce@ecommerceng");
 ****************************************************/
 //CHECK ACCESS
 // Protection if external user
-if ($user->societe_id > 0 || !$user->rights->ecommerceng->read)
+if ((isset($user->societe_id) && $user->societe_id > 0) || empty($user->rights->ecommerceng->read))
 {
 	accessforbidden();
 }
