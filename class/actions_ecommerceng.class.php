@@ -700,7 +700,7 @@ class ActionsECommerceNg
 		$contexts = explode(':', $parameters['context']);
 
 		if (in_array('invoicelist', $contexts)) {
-			$resPrints = ', ABS(total_ttc - (total_ht + total_tva)) AS ec_total_delta';
+			$resPrints = ', ABS(f.total_ttc - (f.total_ht + f.total_tva)) AS ec_total_delta';
 			$this->resprints = $resPrints;
 		}
 
