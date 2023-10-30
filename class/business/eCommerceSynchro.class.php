@@ -6392,7 +6392,7 @@ class eCommerceSynchro
 			if (empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD) && !$dont_synchronize_products) {
 				// Get products to synchronize
 				$remote_id_to_synchronize = array();
-				foreach ($refund_info['items'] as $item) {
+				foreach ($items as $item) {
 					if (!empty($item['id_remote_product'])) {
 						$remote_id_to_synchronize[] = str_replace('|%', '', $item['id_remote_product']);
 					}
