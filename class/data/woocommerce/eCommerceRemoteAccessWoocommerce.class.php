@@ -3161,7 +3161,7 @@ class eCommerceRemoteAccessWoocommerce
 						$found = false;
 						foreach ($return_data['data']['attributes'] as $k => $v) {
 							if ($v['id'] == $key) {
-								$return_data['data']['attributes'][$k]['options'] = array_filter(array_map('trim', array_flip(array_flip(array_merge(array($info['value']), explode(',', $v['options']))))), 'strlen');
+								$return_data['data']['attributes'][$k]['options'] = array_filter(array_map('trim', array_flip(array_flip(array_merge(array($info['value']), $v['options'])))), 'strlen');
 								$found = true;
 								break;
 							}
