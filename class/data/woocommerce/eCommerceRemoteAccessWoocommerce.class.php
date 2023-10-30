@@ -3153,21 +3153,21 @@ class eCommerceRemoteAccessWoocommerce
 
 					if (is_array($parent_remote_data['attributes'])) {
 						foreach ($parent_remote_data['attributes'] as $attribute) {
-							$return_data['data']['attributes'][] = $attribute;
+							$return_data['product']['data']['attributes'][] = $attribute;
 						}
 					}
 
 					foreach ($attributes_to_add as $key => $info) {
 						$found = false;
-						foreach ($return_data['data']['attributes'] as $k => $v) {
+						foreach ($return_data['product']['data']['attributes'] as $k => $v) {
 							if ($v['id'] == $key) {
-								$return_data['data']['attributes'][$k]['options'] = array_filter(array_map('trim', array_flip(array_flip(array_merge(array($info['value']), $v['options'])))), 'strlen');
+								$return_data['product']['data']['attributes'][$k]['options'] = array_filter(array_map('trim', array_flip(array_flip(array_merge(array($info['value']), $v['options'])))), 'strlen');
 								$found = true;
 								break;
 							}
 						}
 						if (!$found) {
-							$return_data['data']['attributes'][] = array('id' => $key, 'visible' => $info['visible'] != 2, 'variation' => true, 'options' => array($info['value']));
+							$return_data['product']['data']['attributes'][] = array('id' => $key, 'visible' => $info['visible'] != 2, 'variation' => true, 'options' => array($info['value']));
 						}
 					}
 				}
