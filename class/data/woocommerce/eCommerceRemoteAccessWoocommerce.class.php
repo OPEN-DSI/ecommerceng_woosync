@@ -1281,7 +1281,11 @@ class eCommerceRemoteAccessWoocommerce
 				}
 				foreach ($attributes as $attribute) {
 					if (isset($correspondences[$attribute['id']])) {
-						$product['extrafields'][$correspondences[$attribute['id']]] = implode(',', $attribute['options']);
+						if ($isVariation) {
+							$product['extrafields'][$correspondences[$attribute['id']]] = $attribute['option'];
+						} else {
+							$product['extrafields'][$correspondences[$attribute['id']]] = implode(',', $attribute['options']);
+						}
 					}
 				}
 			}
