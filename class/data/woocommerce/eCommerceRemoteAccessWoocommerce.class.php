@@ -1281,7 +1281,11 @@ class eCommerceRemoteAccessWoocommerce
 				}
 				foreach ($attributes as $attribute) {
 					if (isset($correspondences[$attribute['id']])) {
-						$product['extrafields'][$correspondences[$attribute['id']]] = implode(',', $attribute['options']);
+						if ($isVariation) {
+							$product['extrafields'][$correspondences[$attribute['id']]] = $attribute['option'];
+						} else {
+							$product['extrafields'][$correspondences[$attribute['id']]] = implode(',', $attribute['options']);
+						}
 					}
 				}
 			}
@@ -3106,6 +3110,7 @@ class eCommerceRemoteAccessWoocommerce
 
 			// Synch extrafields <=> metadatas and attributes
 			if (!empty($object->array_options)) {
+				$attributes_to_add = array();
 				foreach ($object->array_options as $key => $value) {
 					$cr_key = substr($key, 8);
 					if (preg_match('/^ecommerceng_/', $cr_key)) continue;
@@ -3124,6 +3129,45 @@ class eCommerceRemoteAccessWoocommerce
 						$show_attr = $this->site->parameters['extra_fields']['product']['show']['att'][$cr_key];
 						if (!empty($data_key)) {
 							$variationData['attributes'][] = array('id' => $data_key, 'option' => !empty($value) ? $value : '');
+							if (!empty($value)) $attributes_to_add[$data_key] = array('value' => $value, 'visible' => $show_attr);
+						}
+					}
+				}
+
+				// Update parent attributs
+				if (!empty($attributes_to_add)) {
+					$parent_remote_data = $this->client->sendToApi(eCommerceClientApi::METHOD_GET, "products/{$remote_product_id}");
+					if (!isset($parent_remote_data)) {
+						$this->errors[] = $langs->trans('ECommerceWoocommerceUpdateRemoteProductGetRemoteProduct', $remote_product_id, $this->site->name);
+						$this->errors[] = $this->client->errorsToString();
+						dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
+						return array();
+					}
+
+					$return_data['product'] = array(
+						'remote_id' => $remote_product_id,
+						'data' => array(
+							'attributes' => array(),
+						),
+					);
+
+					if (is_array($parent_remote_data['attributes'])) {
+						foreach ($parent_remote_data['attributes'] as $attribute) {
+							$return_data['product']['data']['attributes'][] = $attribute;
+						}
+					}
+
+					foreach ($attributes_to_add as $key => $info) {
+						$found = false;
+						foreach ($return_data['product']['data']['attributes'] as $k => $v) {
+							if ($v['id'] == $key) {
+								$return_data['product']['data']['attributes'][$k]['options'] = array_filter(array_map('trim', array_flip(array_flip(array_merge(array($info['value']), $v['options'])))), 'strlen');
+								$found = true;
+								break;
+							}
+						}
+						if (!$found) {
+							$return_data['product']['data']['attributes'][] = array('id' => $key, 'visible' => $info['visible'] != 2, 'variation' => true, 'options' => array($info['value']));
 						}
 					}
 				}
