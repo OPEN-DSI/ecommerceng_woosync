@@ -454,7 +454,8 @@ if ($object->id > 0) {
 	print '<td>' . $langs->transnoentities("ECommerceSiteWebHooksSecretDescription") . '</td>' . "\n";
 	print '<td class="right">' . "\n";
 	print '<table class="nobordernopadding centpercent"><tr><td>' . "\n";
-	print '<input type="text" class="flat centpercent" id="site_web_hooks_secret" name="site_web_hooks_secret" value="' . dol_escape_htmltag($object->parameters['web_hooks_secret']) . '">' . "\n";
+	$p_webhooksecret = !empty($object->parameters['web_hooks_secret']) ? $object->parameters['web_hooks_secret'] : '';
+	print '<input type="text" class="flat centpercent" id="site_web_hooks_secret" name="site_web_hooks_secret" value="' . dol_escape_htmltag($p_webhooksecret) . '">' . "\n";
 	if (!empty($conf->use_javascript_ajax)) {
 		print '</td><td class="width25">' . img_picto($langs->trans('Generate'), 'refresh', 'id="generate_web_hooks_secret" class="linkobject"');
 		print "\n" . '<script type="text/javascript">';
@@ -479,7 +480,8 @@ if ($object->id > 0) {
 	print '<td>' . $langs->trans("ECommerceSiteWebHooksVolumetryAlert") . '</td>' . "\n";
 	print '<td>' . $langs->transnoentities("ECommerceSiteWebHooksVolumetryAlertDescription") . '</td>' . "\n";
 	print '<td class="right">' . "\n";
-	print '<input type="number" class="flat centpercent" name="site_web_hooks_volumetry_alert" value="' . dol_escape_htmltag($object->parameters['web_hooks_volumetry_alert']) . '">' . "\n";
+	$p_webhookvolalert = !empty($object->parameters['web_hooks_volumetry_alert']) ? $object->parameters['web_hooks_volumetry_alert'] : '';
+	print '<input type="number" class="flat centpercent" name="site_web_hooks_volumetry_alert" value="' . dol_escape_htmltag($p_webhookvolalert) . '">' . "\n";
 	print '</td></tr>' . "\n";
 
 	print '</table>' . "\n";

@@ -189,14 +189,16 @@ print '<td>'.$langs->trans("Description").'</td>'."\n";
 print '<td class="right">'.$langs->trans("Value").'</td>'."\n";
 print "</tr>\n";
 
-if ($object->parameters['enable_warehouse_plugin_support'] != 'wmlim') {
+$p_warehouseplugin = !empty($object->parameters['enable_warehouse_plugin_support']) ? $object->parameters['enable_warehouse_plugin_support'] : '';
+if ($p_warehouseplugin != 'wmlim') {
 	if (!empty($object->parameters['order_actions']['create_order'])) {
 		// Warehouse used when valid a order
 		print '<tr class="oddeven">' . "\n";
 		print '<td>' . $langs->trans("ECommerceValidOrderWarehouse") . '</td>' . "\n";
 		print '<td>' . $langs->transnoentities("ECommerceValidOrderWarehouseDescription") . '</td>' . "\n";
 		print '<td class="right">' . "\n";
-		print $formproduct->selectWarehouses($object->parameters['order_actions']['valid_order_fk_warehouse'], 'valid_order_fk_warehouse', 0, 1);
+		$p_orderactionsorder = !empty($object->parameters['order_actions']['valid_order_fk_warehouse']) ? $object->parameters['order_actions']['valid_order_fk_warehouse'] : '';
+		print $formproduct->selectWarehouses($p_orderactionsorder, 'valid_order_fk_warehouse', 0, 1);
 		print '</td></tr>' . "\n";
 	}
 
@@ -206,7 +208,8 @@ if ($object->parameters['enable_warehouse_plugin_support'] != 'wmlim') {
 		print '<td>' . $langs->trans("ECommerceValidInvoiceWarehouse") . '</td>' . "\n";
 		print '<td>' . $langs->transnoentities("ECommerceValidInvoiceWarehouseDescription") . '</td>' . "\n";
 		print '<td class="right">' . "\n";
-		print $formproduct->selectWarehouses($object->parameters['order_actions']['valid_invoice_fk_warehouse'], 'valid_invoice_fk_warehouse', 0, 1);
+		$p_orderactionsinvoice = !empty($object->parameters['order_actions']['valid_invoice_fk_warehouse']) ? $object->parameters['order_actions']['valid_invoice_fk_warehouse'] : '';
+		print $formproduct->selectWarehouses($p_orderactionsinvoice, 'valid_invoice_fk_warehouse', 0, 1);
 		print '</td></tr>' . "\n";
 	}
 
