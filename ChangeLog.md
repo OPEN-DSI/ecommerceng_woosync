@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.67
+- Correction bug synchro categories dolibarr vers site
+
 ## 4.1.66
 - Correction bug ajout de ligne de produit dans la commande, facture, ...
 
