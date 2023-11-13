@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.68
+- Correction synchro commande avec un commercial en contact par defaut
+
 ## 4.1.67
 - Correction bug synchro categories dolibarr vers site
 
