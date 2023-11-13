@@ -1,6 +1,10 @@
 # ChangeLog
 
+## 4.1.68
+- Correction synchro commande avec un commercial en contact par defaut
+
 ## 4.1.67
+- Correction bug synchro categories dolibarr vers site
 - Ajout modification des attributs parent d'une variation lors de l'ajout d'une nouvelle valeur d'attribut sur la variation (synchro dolibarr vers WooCommerce)
 - Correction synchro attributs de WooCommerce vers Dolibarr pour une variation
 

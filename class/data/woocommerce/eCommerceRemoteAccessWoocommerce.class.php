@@ -4257,7 +4257,7 @@ class eCommerceRemoteAccessWoocommerce
                         $this->errors[] = $error_msg;
                         dol_syslog(__METHOD__ . ' - Error: ' . $error_msg, LOG_ERR);
                     } else {
-                        $cats_id_remote_id[$cats_slug_id[$item->slug]] = array('remote_id' => $item->id, 'remote_parent_id' => $item->parent);
+						$cats_id_remote_id[$cats_slug_id[$item['slug']]] = array('remote_id' => $item['id'], 'remote_parent_id' => $item['parent']);
                     }
                 }
             }

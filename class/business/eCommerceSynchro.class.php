@@ -6690,7 +6690,7 @@ class eCommerceSynchro
 
 		// Add sales contact
 		if (!$error && $this->eCommerceSite->parameters['default_sales_representative_follow'] > 0 && $new_object) { // Todo update this contact when update order ?
-			$result = $this->addUpdateContact($order, $new_order, $this->eCommerceSite->parameters['default_sales_representative_follow'], 'SALESREPFOLL', 'internal');
+			$result = $this->addUpdateContact($object, $new_order, $this->eCommerceSite->parameters['default_sales_representative_follow'], 'SALESREPFOLL', 'internal');
 			if ($result < 0) {
 				$error++;
 			}

@@ -86,9 +86,11 @@ $modClass = new modECommerceNg($db);
 $ECommerceNgVersion = !empty($modClass->getVersion()) ? $modClass->getVersion() : 'NC';
 
 $supportvalue = "/*****"."<br>";
+$supportvalue.= " * Module : ".$langs->trans("Module107100Name")."<br>";
 $supportvalue.= " * Module version : ".$ECommerceNgVersion."<br>";
 $supportvalue.= " * Dolibarr version : ".DOL_VERSION."<br>";
 $supportvalue.= " * Dolibarr version installation initiale : ".$conf->global->MAIN_VERSION_LAST_INSTALL."<br>";
+$supportvalue.= " * Version PHP : ".PHP_VERSION."<br>";
 $supportvalue.= " *****/"."<br><br>";
 $supportvalue.= "Description de votre problème :"."<br>";
 
