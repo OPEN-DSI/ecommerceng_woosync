@@ -1017,7 +1017,7 @@ class eCommerceRemoteAccessWoocommerce
 
 		// Label
 		$label = $remote_data['name'];
-		if ($isVariation && (empty($label) || $product_variation_mode_all_to_one)) {
+		if ($isVariation) {
 			$label = $parent_remote_data['name'];
 			// Attributes of the variation
 			if (is_array($remote_data['attributes']) && !$product_variation_mode_all_to_one) {
