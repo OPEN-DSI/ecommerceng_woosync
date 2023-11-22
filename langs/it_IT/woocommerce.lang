@@ -30,6 +30,9 @@ ECommerceWoocommerceGetAllWoocommerceTaxClass=Errore durante la raccolta dei dat
 ECommerceWoocommerceGetWoocommerceTaxes=Errore durante il recupero delle aliquote fiscali per lo shop '%s':
 ECommerceWoocommerceCreateRemoteProductSendImage=Errore durante l'invio di un'immagine per il prodotto 'ref:%s' nei media di Wordpress per lo shop '%s': %s
 
+ECommerceWoocommerceStatusProductSupported                           = Statuts supportés
+ECommerceWoocommerceStatusProductSupportedDescription                = Liste des statuts supportés pour la synchronisation.(vide pour tous les statuts; liste de valeurs séparées par des virgules)<br>Seules les valeurs retournées par l'API sont supportées. ex: draft, pending, private, publish, ...
+
 ECommercengWoocommerceStatus=Stato per lo shop [%s]
 ECommercengWoocommerceDescription=Descrizione lunga shop
 ECommercengWoocommerceShortDescription=Descrizione breve shop
