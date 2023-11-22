@@ -155,6 +155,7 @@ if ($action == 'set_options') {
 	$object->parameters['product_dimension_units'] = empty($conf->global->PRODUCT_DISABLE_SIZE) ? GETPOST('product_dimension_units', 'int') : 2; // 2 = cm
 	$object->parameters['product_variation_mode'] = GETPOST('product_variation_mode', 'az09');
     $object->parameters['enable_product_plugin_wpml_support'] = GETPOST('enable_product_plugin_wpml_support', 'int') ? 1 : 0;
+	$object->parameters['product_status_supported'] = GETPOST('product_status_supported', 'alphanohtml');
 
 	if(empty($object->fk_cat_product)) {
 		setEventMessage($langs->trans("ErrorFieldRequired", $langs->transnoentitiesnoconv("ECommerceCatProduct")), 'errors');
@@ -480,6 +481,15 @@ print '<td>' . $langs->trans("ECommerceWoocommerceEnableProductWpmlPluginSupport
 print '<td>' . $langs->transnoentities("ECommerceWoocommerceEnableProductWpmlPluginSupportDescription") . '</td>' . "\n";
 print '<td class="right">' . "\n";
 print '<input type="checkbox" name="enable_product_plugin_wpml_support" value="1"' . (!empty($object->parameters['enable_product_plugin_wpml_support']) ? ' checked' : '') . ' />' . "\n";
+print '</td></tr>' . "\n";
+
+// Supported status (draft, pending, private and publish)
+print '<tr class="oddeven">' . "\n";
+print '<td>' . $langs->trans("ECommerceWoocommerceStatusProductSupported") . '</td>' . "\n";
+print '<td>' . $langs->transnoentities("ECommerceWoocommerceStatusProductSupportedDescription") . '</td>' . "\n";
+print '<td class="right">' . "\n";
+$value = isset($object->parameters['product_status_supported']) ? $object->parameters['product_status_supported'] : 'publish';
+print '<input type="text" class="flat centpercent" name="product_status_supported" value="' . dol_escape_htmltag($value) . '">' . "\n";
 print '</td></tr>' . "\n";
 
 print '</table>'."\n";

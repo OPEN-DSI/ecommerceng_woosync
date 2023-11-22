@@ -863,6 +863,7 @@ class eCommerceSite // extends CommonObject
 		if (!isset($this->authentication_type)) $this->authentication_type = 'oauth1_header';
 		// product
 		if (!isset($this->parameters['enable_product_plugin_wpml_support'])) $this->parameters['enable_product_plugin_wpml_support'] = !empty($conf->global->ECOMMERCENG_WOOCOMMERCE_WPML_SUPPORT) ? 1 : 0;
+		if (!isset($this->parameters['product_status_supported'])) $this->parameters['product_status_supported'] = 'publish';
 		// stock
 		if (!empty($this->parameters['enable_warehouse_plugin_sl_support'])) { $this->parameters['enable_warehouse_plugin_support'] = 'slfw'; unset($this->parameters['enable_warehouse_plugin_sl_support']); }
 		if (!isset($this->parameters['order_actions']['valid_invoice_fk_warehouse'])) $this->parameters['order_actions']['valid_invoice_fk_warehouse'] = $this->parameters['order_actions']['valid_order_fk_warehouse'];

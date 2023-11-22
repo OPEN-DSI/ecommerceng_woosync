@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.69
+- Ajout d'un paramètre pour définir les statuts des produits synchronisablent (par défault : publish)
+
 ## 4.1.68
 - Correction synchro commande avec un commercial en contact par defaut
 

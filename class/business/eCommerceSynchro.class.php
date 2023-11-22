@@ -3262,7 +3262,9 @@ class eCommerceSynchro
 			$error++;
 		}
 
-		if (!$error && !empty($product_data) && ($product_data['status'] == 'publish' || is_object($object_origin))) {
+		$supported_status = empty($object->parameters['product_status_supported']) ? array() : array_filter(array_map('trim', explode(',', $object->parameters['product_status_supported'])), 'strlen');
+
+		if (!$error && !empty($product_data) && (empty($supported_status) || in_array($product_data['status'], $supported_status) || is_object($object_origin))) {
 			$this->db->begin();
 
 			try {

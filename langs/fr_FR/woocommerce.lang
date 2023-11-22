@@ -40,6 +40,9 @@ ECommerceWoocommerceGetAllWoocommerceRemoteWarehouses                =Erreur de 
 ECommerceWoocommerceGetTranslatedProductVariation                    =Erreur de récupération de la traduction 'id:%s' de la variation 'id:%s' du produit distant 'id:%s' sur le site '%s':
 ECommerceWoocommerceErrorGetRemoteProduct                            =Erreur de récupération du produit distant 'id:%s' sur le site '%s':
 
+ECommerceWoocommerceStatusProductSupported                           = Statuts supportés
+ECommerceWoocommerceStatusProductSupportedDescription                = Liste des statuts supportés pour la synchronisation.(vide pour tous les statuts; liste de valeurs séparées par des virgules)<br>Seules les valeurs retournées par l'API sont supportées. ex: draft, pending, private, publish, ...
+
 ECommercengWoocommerceStatus                                         =Statut pour le site [%s]
 ECommercengWoocommerceDescription                                    =Description boutique
 ECommercengWoocommerceShortDescription                               =Description courte boutique

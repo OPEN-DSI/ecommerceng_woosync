@@ -117,6 +117,7 @@ if ($action == 'set_options') {
 			$object->parameters['product_weight_units'] = 0; // 0 = Kg
 			$object->parameters['product_dimension_units'] = 2; // 2 = cm
 			$object->parameters['product_variation_mode'] = 'one_to_one';
+			$object->parameters['product_status_supported'] = 'publish';
 			$object->price_level = 1;
 			$object->parameters['product_synch_direction']['ref'] = 'all';
 			$object->parameters['product_synch_direction']['description'] = 'etod';
