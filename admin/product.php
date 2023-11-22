@@ -378,7 +378,8 @@ print '<tr class="oddeven">' . "\n";
 print '<td>'.$langs->trans("ECommerceShippingService").'</td>'."\n";
 print '<td>' . $langs->transnoentities("ECommerceShippingServiceDescription") . '</td>' . "\n";
 print '<td class="right">' . "\n";
-print $form->select_produits($object->parameters['shipping_service'], 'shipping_service', 1, 0) . "\n";
+$p_shippingservice = !empty($object->parameters['shipping_service']) ? $object->parameters['shipping_service'] : '';
+print $form->select_produits($p_shippingservice, 'shipping_service', 1, 0) . "\n";
 print '</td></tr>' . "\n";
 
 // Discount code service
@@ -386,7 +387,8 @@ print '<tr class="oddeven">' . "\n";
 print '<td>'.$langs->trans("ECommerceDiscountCodeService").'</td>'."\n";
 print '<td>' . $langs->transnoentities("ECommerceDiscountCodeServiceDescription") . '</td>' . "\n";
 print '<td class="right">' . "\n";
-print $form->select_produits($object->parameters['discount_code_service'], 'discount_code_service', 1, 0) . "\n";
+$p_discountcode = !empty($object->parameters['discount_code_service']) ? $object->parameters['discount_code_service'] : '';
+print $form->select_produits($p_discountcode, 'discount_code_service', 1, 0) . "\n";
 print '</td></tr>' . "\n";
 
 // PW gift cards service
@@ -394,7 +396,8 @@ print '<tr class="oddeven">' . "\n";
 print '<td>'.$langs->trans("ECommercePwGiftCardsService").'</td>'."\n";
 print '<td>' . $langs->transnoentities("ECommercePwGiftCardsServiceDescription") . '</td>' . "\n";
 print '<td class="right">' . "\n";
-print $form->select_produits($object->parameters['pw_gift_cards_service'], 'pw_gift_cards_service', 1, 0) . "\n";
+$p_pwgiftcardservice = !empty($object->parameters['pw_gift_cards_service']) ? $object->parameters['pw_gift_cards_service'] : '';
+print $form->select_produits($p_pwgiftcardservice, 'pw_gift_cards_service', 1, 0) . "\n";
 print '</td></tr>' . "\n";
 
 // ACFW store credits service
@@ -402,7 +405,8 @@ print '<tr class="oddeven">' . "\n";
 print '<td>'.$langs->trans("ECommerceAcfwStoreCreditsService").'</td>'."\n";
 print '<td>' . $langs->transnoentities("ECommerceAcfwStoreCreditsServiceDescription") . '</td>' . "\n";
 print '<td class="right">' . "\n";
-print $form->select_produits($object->parameters['acfw_store_credits_service'], 'acfw_store_credits_service', 1, 0) . "\n";
+$p_acfwstorecreditsservice = !empty($object->parameters['acfw_store_credits_service']) ? $object->parameters['acfw_store_credits_service'] : '';
+print $form->select_produits($p_acfwstorecreditsservice, 'acfw_store_credits_service', 1, 0) . "\n";
 print '</td></tr>' . "\n";
 
 // Fee service
@@ -411,7 +415,8 @@ if (!empty($object->parameters['order_actions']['fee_line_as_item_line'])) {
 	print '<td>' . $langs->trans("ECommerceFeeService") . '</td>' . "\n";
 	print '<td>' . $langs->transnoentities("ECommerceFeeServiceDescription") . '</td>' . "\n";
 	print '<td class="right">' . "\n";
-	print $form->select_produits($object->parameters['fee_service'], 'fee_service', 1, 0) . "\n";
+	$p_feeservice = !empty($object->parameters['fee_service']) ? $object->parameters['fee_service'] : '';
+	print $form->select_produits($p_feeservice, 'fee_service', 1, 0) . "\n";
 	print '</td></tr>' . "\n";
 }
 
@@ -639,7 +644,8 @@ if (!empty($conf->accounting->enabled)) {
 			print '<td>'.$langs->trans('ECOMMERCE_' . $const_name).'</td>'."\n";
 			print '<td>' . $langs->transnoentities('DefaultValue') . ' : ' . (empty($conf->global->$const_name) || $conf->global->$const_name == -1 ? $langs->trans('NotDefined') : $conf->global->$const_name) . '</td>' . "\n";
 			print '<td class="right">' . "\n";
-			print $formaccounting->select_account($object->parameters['default_account'][$key], $key, 1, '', 1, 1);
+			$p_defaultaccount = !empty($object->parameters['default_account'][$key]) ? $object->parameters['default_account'][$key] : '';
+			print $formaccounting->select_account($p_defaultaccount, $key, 1, '', 1, 1);
 			print '</td></tr>' . "\n";
 		}
 	}

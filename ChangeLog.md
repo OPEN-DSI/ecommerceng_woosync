@@ -8,6 +8,8 @@
 
 ## 4.1.67
 - Correction bug synchro categories dolibarr vers site
+- Ajout modification des attributs parent d'une variation lors de l'ajout d'une nouvelle valeur d'attribut sur la variation (synchro dolibarr vers WooCommerce)
+- Correction synchro attributs de WooCommerce vers Dolibarr pour une variation
 
 ## 4.1.66
 - Correction bug ajout de ligne de produit dans la commande, facture, ...
