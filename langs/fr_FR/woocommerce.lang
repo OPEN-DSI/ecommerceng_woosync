@@ -104,7 +104,7 @@ ECommercengWoocommerceOrderStatusTrash                               =Corbeille
 
 ECommercengWoocommerceOrderLink                                      =Lien vers la commande du site [%s]
 
-ECommercengWoocommerceExtrafieldsOptionsOf                           = Paramètrage des attributs supplémentaires : %s
+ECommercengWoocommerceExtrafieldsOptionsOf                           = Paramétrage des attributs supplémentaires : %s
 ECommercengWoocommerceExtrafieldsMetaData                            = Méta-données de Woocommerce
 ECommercengWoocommerceExtrafieldsAttribute                           = Attribut WooCommerce
 ECommercengWoocommerceExtrafieldsOptionsDefaultValueDescription      = Valeur par default de l'attribut supplémentaire (Si vide celui définie dans la configuration de celui-ci)
@@ -129,7 +129,7 @@ ECommerceWoocommerceSellingPrice                                     = Prix de v
 ECommerceWoocommerceProductVariationMode                             = Synchronisation des variations
 ECommerceWoocommerceProductVariationOneToOne                         = Un => un
 ECommerceWoocommerceProductVariationAllToOne                         = Tous => un
-ECommerceWoocommerceProductVariationModeDescription                  = Choisir comment on synchronise les variations<br>'Un => un' créera un produit pour chaque variation du produit WooCommerce<br>'Tous => un' créera un produit et un seul pour le produit variant avec les informations du parent et les meta-données de la première variation
+ECommerceWoocommerceProductVariationModeDescription                  = Choisir comment on synchronise les variations<br>'Un => un' créera un produit pour chaque variation du produit WooCommerce<br>'Tous => un' créera un produit et un seul pour le produit variant avec les informations du parent et les méta-données de la première variation
 
 ECommercengWoocommerceRegularPrice                                   = Prix régulier pour le site [%s]
 ECommercengWoocommerceSalePrice                                      = Prix promo pour le site [%s]
@@ -147,7 +147,7 @@ ECommercengWoocommerceCompanyRole_shop_manager                       = Gestionna
 ECommercengWoocommerceCompanyRole_                                   = Pas de rôle sur ce site
 
 ECommerceWoocommerceCustomerRolesSupported                           = Rôles utilisateurs supportés
-ECommerceWoocommerceCustomerRolesSupportedDescription                = Liste des rôles utilisateurs supportés pour la synchronisation.(vide pour tous les rôles; liste de valeurs séparées par des virgules)<br>Seules les valeurs retournées par l'API sont supportées. ex: customer, administrator, author, contributor, editor, subscriber, shop_manager, ...<br>Seuls les utilisateurs des rôles définis seront traités<br>Seules les commandes invités ou dont le client est synchronisé seront traitées
+ECommerceWoocommerceCustomerRolesSupportedDescription                = Liste des rôles utilisateurs supportés pour la synchronisation.(vide pour tous les rôles; liste de valeurs séparées par des virgules)<br>Seules les valeurs retournées par l'API sont supportées. ex: customer, administrator, author, contributor, editor, subscriber, shop_manager, ...<br>Seuls les utilisateurs des rôles définis seront traités<br>Seules les commandes invitées où dont le client est synchronisé seront traitées
 
 ECommerceWooCommerceBundleComposite                                  = Composition du kit :
 

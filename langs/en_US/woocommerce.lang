@@ -93,7 +93,7 @@ ECommercengWoocommerceOrderStatusTrash=Trash
 
 ECommercengWoocommerceOrderLink=Link to the site order [%s]
 
-ECommercengWoocommerceExtrafieldsOptionsOf                           = Paramètrage des attributs supplémentaires : %s
+ECommercengWoocommerceExtrafieldsOptionsOf                           = Paramétrage des attributs supplémentaires : %s
 ECommercengWoocommerceExtrafieldsMetaData                            = Méta-données de Woocommerce
 ECommercengWoocommerceExtrafieldsAttribute                           = Attribut WooCommerce
 ECommercengWoocommerceExtrafieldsOptionsDefaultValueDescription      = Valeur par default de l'attribut supplémentaire (Si vide celui définie dans la configuration de celui-ci)

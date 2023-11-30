@@ -169,12 +169,12 @@ RestrictNbInSync=Restrict number of record of same object to synchronize in same
 SynchUnkownCustomersOnThirdParty=Use the following thirdparty for orders done on unknown customers (non logged customers)
 ThirdPartyForNonLoggedUsers=Third party for anonymous/non logged users
 ECommerceDontUpdateDolibarrCompany                                                                  =Mise a jour du tiers
-ECommerceDontUpdateDolibarrCompanyDescription                                                       =Ne pas mettre à jour le tiers sur Dolibarr lorsqu'il existe déja dans dolibarr
+ECommerceDontUpdateDolibarrCompanyDescription                                                       =Ne pas mettre à jour le tiers sur Dolibarr lorsqu'il existe déjà dans dolibarr
 
 ## OAuth Setup ##
 ECommerceWordpressAuthenticationSetup                                                               =Connexion sur WordPress (Allez sur <a class="notasortlink" href="%s" target="_blank">cette page</a> , puis configurer la connexion)
 ECommerceWordpressAuthenticationType                                                                =Type d'authentification
-ECommerceWordpressAuthenticationTypeDescription                                                     =Choissiez entre la connexion interne Wordpress avec un mot de passe d'application situé sur un utilisateur<br>Ou une authentification JWT grâçe à l'extension "WordPress REST API Authentication" de miniOrange
+ECommerceWordpressAuthenticationTypeDescription                                                     =Choisissez entre la connexion interne Wordpress avec un mot de passe d'application situé sur un utilisateur<br>Ou une authentification JWT grâce à l'extension "WordPress REST API Authentication" de miniOrange
 ECommerceWordpressAuthenticationTypeWordpressApplication                                            =Mot de passe d'application (Wordpress)
 ECommerceWordpressAuthenticationTypeJWTAuthentication                                               =Authentification JWT
 ECommerceWordpressAuthenticationLogin                                                               =Identifiant
@@ -233,7 +233,7 @@ ECommerceRealTimeSynchroDolibarrToECommerceContactDescription                   
 ECommerceRealTimeSynchroDolibarrToECommerceProduct                                                  =Synchronisation du produit en temps réel de Dolibarr vers E-Commerce
 ECommerceRealTimeSynchroDolibarrToECommerceProductDescription                                       =Synchronisation du produit dans le site E-Commerce à la modification de celui lié dans Dolibarr
 ECommerceRealTimeSynchroDolibarrToECommerceOrder                                                    =Synchronisation de la commande en temps réel de Dolibarr vers E-Commerce
-ECommerceRealTimeSynchroDolibarrToECommerceOrderDescription                                         =Synchronisation de la commande dans le site E-Commerce à la modification de celui lié dans Dolibarr
+ECommerceRealTimeSynchroDolibarrToECommerceOrderDescription                                         =Synchronisation de la commande dans le site E-Commerce à la modification de celle liée dans Dolibarr
 
 ECommerceSyncheCommerceMotherCategoryCreateError=Erreur de création du lien de la catégorie racine pour la catégorie distante '%s' 'id:%s' sur le site '%s'.
 ECommerceNGUpdateElementDateMoreRecent=Inclus aussi les éléments dont la date de mise à jour est plus récente que celle de synchronisation
@@ -317,9 +317,9 @@ ECommerceUpdateRemoteCompanyLinkWhenMergeCompany    = Errore durante l'aggiornam
 ECommerceSynchronizeStockToECommerce=Synchronization of the product stock on the site %s.
 
 ECommerceCreateOrder                        = Create the order
-ECommerceCreateOrderDescription             = Activer la création de la commande a la synchronisation de la commande
+ECommerceCreateOrderDescription             = Activer la création de la commande à la synchronisation de la commande
 ECommerceCreateInvoice                      = Create the bill
-ECommerceCreateInvoiceDescription                                                                   =Activer la création de la facture a la synchronisation de la commande
+ECommerceCreateInvoiceDescription                                                                   =Activer la création de la facture à la synchronisation de la commande
 ECommerceCreateInvoiceType                                                                          =Type la facture
 ECommerceCreateInvoiceTypeDescription                                                               =Type la facture créée a la synchronisation de la commande
 ECommerceCreateSupplierInvoiceFromFee       = Create the supplier bill from the charges
@@ -359,7 +359,7 @@ ECommerceSiteWebHooksUrlDescription                 = URL sur laquelle la connex
 ECommerceSiteWebHooksSecret                         = Secret
 ECommerceSiteWebHooksSecretDescription              = La clé secrète est utilisée pour générer un hachage du crochet Web livré et indiqué dans les en-têtes de requête
 ECommerceSiteWebHooksVolumetryAlert                                                                 =Alerte volumétrie
-ECommerceSiteWebHooksVolumetryAlertDescription                                                      =Envoie un email grace a une tache planifié si le nombre de hooks en attente de traitement depasse cette valeur (0 signifie qu'il n'y a pas de verification)
+ECommerceSiteWebHooksVolumetryAlertDescription                                                      =Envoie un email grâce à une tâche planifiée si le nombre de hooks en attente de traitement dépasse cette valeur (0 signifie qu'il n'y a pas de vérification)
 ECommerceShippingService                            = Frais de port
 ECommerceShippingServiceDescription                 = Service utilisé pour la gestion des frais de port
 ECommerceDiscountCodeService                        = Code promo
