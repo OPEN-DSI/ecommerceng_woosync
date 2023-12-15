@@ -37,6 +37,23 @@ if (empty($conf) || !is_object($conf)) {
  * Extra fields.
  */
 
+//Initialize variables for PHP 8.2 Compatibility
+if (empty($object->parameters['extra_fields'])) {
+	$object->parameters['extra_fields'] = array();
+}
+if (empty($object->parameters['extra_fields']['societe'])) {
+	$object->parameters['extra_fields']['societe'] = array();
+}
+if (empty($object->parameters['extra_fields'][$table_element]['activated'])) {
+	$object->parameters['extra_fields'][$table_element]['activated'] = array();
+}
+if (empty($object->parameters['extra_fields'][$table_element]['values'])) {
+	$object->parameters['extra_fields'][$table_element]['values'] = array();
+}
+if (empty($object->parameters['extra_fields'][$table_element]['show'])) {
+	$object->parameters['extra_fields'][$table_element]['show'] = array();
+} 
+
 if (is_array($extra_fields_list)) {
 	dol_include_once("/ecommerceng/lib/eCommerce.lib.php");
 	foreach ($extra_fields_list as $table_element => $info) {

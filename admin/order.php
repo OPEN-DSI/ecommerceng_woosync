@@ -430,6 +430,11 @@ if (!empty($object->parameters['order_actions']['create_order']) ||
 	print '<td>' . $langs->trans("ECommerceCreateOrderSalesRepresentativeFollowByDefault") . '</td>' . "\n";
 	print '<td>' . $langs->trans("ECommerceCreateOrderSalesRepresentativeFollowByDefaultDescription") . '</td>' . "\n";
 	print '<td class="right">' . "\n";
+
+	//Initialize for PHP8.2 Compatibility
+	if (empty($object->parameters['default_sales_representative_follow'])){
+		$object->parameters['default_sales_representative_follow'] = array();
+	}
 	print $form->select_dolusers($object->parameters['default_sales_representative_follow'], 'default_sales_representative_follow', 1, null, 0, null, null, 0, 56, '', 0, '', 'minwidth200imp');
 	print '</td></tr>' . "\n";
 
