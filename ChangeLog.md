@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.70
+- Rajout d'un champ commenté (prix régulier)
+
 ## 4.1.69
 - Ajout d'un paramètre pour définir les statuts des produits synchronisablent (par défault : publish)
 - Correction synchronisation du libellé du produit variant
