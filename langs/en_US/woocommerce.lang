@@ -136,7 +136,7 @@ ECommercengWoocommerceCompanyRole_shop_manager  = Shop manager
 ECommercengWoocommerceCompanyRole_              = No role for this site
 
 ECommerceWoocommerceCustomerRolesSupported              = Supported user roles
-ECommerceWoocommerceCustomerRolesSupportedDescription   = List of user roles supported for synchronization.(empty for all roles; comma separated list of values)<br>Only values returned by the API are supported. e.g.: customer, administrator, author, contributor, editor, subscriber, shop_manager, ...<br>Only users in the defined roles will be processed<br>Only guest orders or whose client is synchronized will be processed
+ECommerceWoocommerceCustomerRolesSupportedDescription   = Role supported for synchronization.(empty for all roles)<br>Only values returned by the API are supported. e.g.: customer, administrator, author, contributor, editor, subscriber, shop_manager, ...<br>Only user in the defined role will be processed<br>Only guest orders or whose client is synchronized will be processed
 
 ECommerceWooCommerceBundleComposite                                  = Composition du kit :
 
