@@ -147,7 +147,7 @@ ECommercengWoocommerceCompanyRole_shop_manager                       = Gestionna
 ECommercengWoocommerceCompanyRole_                                   = Pas de rôle sur ce site
 
 ECommerceWoocommerceCustomerRolesSupported                           = Rôles utilisateurs supportés
-ECommerceWoocommerceCustomerRolesSupportedDescription                = Liste des rôles utilisateurs supportés pour la synchronisation.(vide pour tous les rôles; liste de valeurs séparées par des virgules)<br>Seules les valeurs retournées par l'API sont supportées. ex: customer, administrator, author, contributor, editor, subscriber, shop_manager, ...<br>Seuls les utilisateurs des rôles définis seront traités<br>Seules les commandes invités ou dont le client est synchronisé seront traitées
+ECommerceWoocommerceCustomerRolesSupportedDescription                = Rôle utilisateur supporté pour la synchronisation.(vide pour tous les rôles)<br>Seules les valeurs retournées par l'API sont supportées. ex: customer, administrator, author, contributor, editor, subscriber, shop_manager, ...<br>Seuls les utilisateurs du rôle définis seront traités<br>Seules les commandes invités ou dont le client est synchronisé seront traitées
 
 ECommerceWooCommerceBundleComposite                                  = Composition du kit :
 

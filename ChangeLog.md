@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.71
+- Ajout d'une variable globale ECOMMERCENG_BYPASS_SEND_INVOICE_WHEN_NO_EMAIL_TEMPLATE pour passer l'envoi des factures par email si le modèle n'est renseigné au lieu d'avoir une erreur
+
 ## 4.1.70
 - Rajout d'un champ commenté (prix régulier)
 

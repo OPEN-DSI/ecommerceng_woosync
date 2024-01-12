@@ -5280,12 +5280,17 @@ class eCommerceSynchro
 											if (empty($send_to)) {
 												$this->errors[] = $this->langs->trans('ECommerceErrorCustomerEmailEmptyForSendInvoiceByEmail');
 												$error++;
-											} elseif (isset($selected_payment_gateways['mail_model_for_send_invoice'][$selected_language]) && !($selected_payment_gateways['mail_model_for_send_invoice'][$selected_language] > 0)) {
+											} elseif ((!isset($selected_payment_gateways['mail_model_for_send_invoice'][$selected_language]) ||
+												!($selected_payment_gateways['mail_model_for_send_invoice'][$selected_language] > 0)) &&
+												empty($conf->global->ECOMMERCENG_BYPASS_SEND_INVOICE_WHEN_NO_EMAIL_TEMPLATE)
+											) {
 												$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysMailModelNotConfigured', $order_data['payment_method_id'], $order_data['payment_method'], $selected_language);
 												$error++;
 											}
 
-											if (!$error) {
+											if (!$error && (empty($conf->global->ECOMMERCENG_BYPASS_SEND_INVOICE_WHEN_NO_EMAIL_TEMPLATE) ||
+													(isset($selected_payment_gateways['mail_model_for_send_invoice'][$selected_language]) && $selected_payment_gateways['mail_model_for_send_invoice'][$selected_language] > 0))
+											) {
 												$ret = $invoice->fetch($invoice->id);
 												$ret = $invoice->fetch_thirdparty();
 
