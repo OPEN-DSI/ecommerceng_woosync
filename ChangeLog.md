@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.72
+- Correction 'MISSING LABEL' lors de la synchro d'un produit du site vers dolibarr
+
 ## 4.1.71
 - Ajout d'une variable globale ECOMMERCENG_BYPASS_SEND_INVOICE_WHEN_NO_EMAIL_TEMPLATE pour passer l'envoi des factures par email si le modèle n'est renseigné au lieu d'avoir une erreur
 
