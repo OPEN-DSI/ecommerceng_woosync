@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 4.1.73
+- Correction de la recuperation du libéllé du produit ('MISSING LABEL' lors de la synchro d'un produit du site vers dolibarr)
+
 ## 4.1.72
 - Correction 'MISSING LABEL' lors de la synchro d'un produit du site vers dolibarr
 

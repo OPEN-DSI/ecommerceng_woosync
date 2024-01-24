@@ -1016,15 +1016,23 @@ class eCommerceRemoteAccessWoocommerce
 		}
 
 		// Label
-		$label = $remote_data['name'];
-		if ($isVariation && (empty($label) || $product_variation_mode_all_to_one)) {
-			if (empty($label)) $label = $parent_remote_data['name'];
-			// Attributes of the variation
-			if (is_array($remote_data['attributes']) && !$product_variation_mode_all_to_one) {
-				foreach ($remote_data['attributes'] as $attribute) {
-					$label .= ' - ' . $attribute['option'];
+		if ($isVariation) {
+			$label = $parent_remote_data['name'];
+			if (!$product_variation_mode_all_to_one) {
+				$label .= ' - ';
+				// Attributes of the variation
+				if (!empty($remote_data['name'])) {
+					$label .= $remote_data['name'];
+				} elseif (is_array($remote_data['attributes'])) {
+					$to_print = [];
+					foreach ($remote_data['attributes'] as $attribute) {
+						$to_print[] = $attribute['option'];
+					}
+					$label .= implode(', ', $to_print);
 				}
 			}
+		} else {
+			$label = $remote_data['name'];
 		}
 
 		$last_update_product = $this->getDateTimeFromGMTDateTime(!empty($remote_data['date_modified_gmt']) ? $remote_data['date_modified_gmt'] : $remote_data['date_created_gmt']);
