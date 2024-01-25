@@ -2958,7 +2958,7 @@ class eCommerceRemoteAccessWoocommerce
         }
 
         // Product - Meta data properties
-        $object->fetch_optionals();
+        if (empty($object->array_options)) $object->fetch_optionals();
 
 		// Multi-languages
 		$translates = array();
