@@ -960,6 +960,61 @@ class eCommerceRemoteAccessWoocommerce
 	}
 
 	/**
+	 * Get name from remote product data
+	 *
+	 * @param	array			$remote_data 			Remote data
+	 * @param	array			$parent_remote_data 	Parent remote data if the product is a variation
+	 * @return  string|bool             				FALSE if KO otherwise product name.
+	 */
+	public function getNameFromRemoteProductData($remote_data, $parent_remote_data)
+	{
+		dol_syslog(__METHOD__ . " remote_data=" . json_encode($remote_data), LOG_DEBUG);
+		global $conf, $langs;
+
+		$this->errors = array();
+		$isVariation = isset($parent_remote_data) || $remote_data['parent_id'] > 0;
+		$parent_id = isset($parent_remote_data) ? $parent_remote_data['id'] : ($remote_data['parent_id'] > 0 ? $remote_data['parent_id'] : 0);
+		if ($isVariation && empty($parent_remote_data)) {
+			$this->errors[] = $langs->trans('ECommerceWoocommerceErrorMissingParentRemoteDate');
+			dol_syslog(__METHOD__ . ': Error:' . $this->errorsToString(), LOG_ERR);
+			return false;
+		}
+
+		// if the parent has no variations (ex: webhook of a variation transformed in a simple product before the webhook is precessed)
+		if ($isVariation && empty($parent_remote_data['variations'])) {
+			$isVariation = false;
+			$parent_id = 0;
+			$remote_data = $parent_remote_data;
+			$parent_remote_data = null;
+		}
+
+		$product_variation_mode_all_to_one = !empty($this->site->parameters['product_variation_mode']) && $this->site->parameters['product_variation_mode'] == 'all_to_one';
+
+		// Label
+		if ($isVariation) {
+			$label = $parent_remote_data['name'];
+			if (!$product_variation_mode_all_to_one) {
+				$label .= ' - ';
+				// Attributes of the variation
+				if (!empty($remote_data['name'])) {
+					$label .= preg_replace('/^' . preg_quote($label) . '/', '', $remote_data['name']);
+				} elseif (is_array($remote_data['attributes'])) {
+					$to_print = [];
+					foreach ($remote_data['attributes'] as $attribute) {
+						$to_print[] = $attribute['option'];
+					}
+					$label .= implode(', ', $to_print);
+				}
+			}
+		} else {
+			$label = $remote_data['name'];
+		}
+//		$label = dol_trunc($label, 255);
+
+		return $label;
+	}
+
+	/**
 	 * Call Woocommerce API to get product datas and put into dolibarr product class.
 	 *
 	 * @param	array		$remote_data 			Remote data
@@ -1016,23 +1071,9 @@ class eCommerceRemoteAccessWoocommerce
 		}
 
 		// Label
-		if ($isVariation) {
-			$label = $parent_remote_data['name'];
-			if (!$product_variation_mode_all_to_one) {
-				$label .= ' - ';
-				// Attributes of the variation
-				if (!empty($remote_data['name'])) {
-					$label .= $remote_data['name'];
-				} elseif (is_array($remote_data['attributes'])) {
-					$to_print = [];
-					foreach ($remote_data['attributes'] as $attribute) {
-						$to_print[] = $attribute['option'];
-					}
-					$label .= implode(', ', $to_print);
-				}
-			}
-		} else {
-			$label = $remote_data['name'];
+		$label = $this->getNameFromRemoteProductData($remote_data, $parent_remote_data);
+		if ($label === false) {
+			return false;
 		}
 
 		$last_update_product = $this->getDateTimeFromGMTDateTime(!empty($remote_data['date_modified_gmt']) ? $remote_data['date_modified_gmt'] : $remote_data['date_created_gmt']);
@@ -1113,8 +1154,20 @@ class eCommerceRemoteAccessWoocommerce
 					$translated_product_data = $this->getProductLanguage($isVariation ? $remote_parent_id : $remote_data['id'], $isVariation ? $remote_data['id'] : 0, $remote_lang);
 					if (!is_array($translated_product_data)) {
 						return false;
-					} elseif (!empty($translated_product_data)) {
-						$translated_label = $translated_product_data['name'];
+					}
+					$translated_parent_product_data = null;
+					if ($isVariation) {
+						$translated_parent_product_data = $this->getProductLanguage($remote_parent_id, 0, $remote_lang);
+						if (!is_array($translated_product_data)) {
+							return false;
+						}
+					}
+
+					if (!empty($translated_product_data)) {
+						$translated_label = $this->getNameFromRemoteProductData($translated_product_data, $translated_parent_product_data);
+						if ($translated_label === false) {
+							return false;
+						}
 						$translated_description = $this->replace4byte($translated_product_data['description']); // short_description
 						$found = true;
 					}
