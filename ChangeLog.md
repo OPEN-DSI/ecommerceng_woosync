@@ -1,5 +1,8 @@
 # ChangeLog
 
+## [14.0.0] - 23-02-2024
+- Changement de numérotation
+
 ## 4.1.72
 - Correction 'MISSING LABEL' lors de la synchro d'un produit du site vers dolibarr
 
@@ -881,3 +884,6 @@
 ## 3.9.0.0
 
 - Initial version.
+
+
+[14.0.0]: https://github.com/OPEN-DSI/ecommerceng_woosync/releases/tag/14.0.0
