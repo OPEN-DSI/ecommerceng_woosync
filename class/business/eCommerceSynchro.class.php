@@ -3262,7 +3262,9 @@ class eCommerceSynchro
 			$error++;
 		}
 
-		if (!$error && !empty($product_data) && ($product_data['status'] == 'publish' || is_object($object_origin))) {
+		$supported_status = empty($object->parameters['product_status_supported']) ? array() : array_filter(array_map('trim', explode(',', $object->parameters['product_status_supported'])), 'strlen');
+
+		if (!$error && !empty($product_data) && (empty($supported_status) || in_array($product_data['status'], $supported_status) || is_object($object_origin))) {
 			$this->db->begin();
 
 			try {
@@ -3434,6 +3436,7 @@ class eCommerceSynchro
 						$product->url = strlen($product_data['url']) > 255 ? '' : $product_data['url'];
 
 						if (!isset($product->stock_reel)) $product->stock_reel = 0;
+						if (property_exists($product, 'stockable_product')) $product->stockable_product = $product_data['extrafields']['ecommerceng_stockable_product'];
 
 						if (!($product->id > 0)) $product->array_options = $this->getDefaultExtraFields($product->table_element, $this->eCommerceSite);
 						if (is_array($product_data['extrafields'])) {
@@ -5277,12 +5280,17 @@ class eCommerceSynchro
 											if (empty($send_to)) {
 												$this->errors[] = $this->langs->trans('ECommerceErrorCustomerEmailEmptyForSendInvoiceByEmail');
 												$error++;
-											} elseif (isset($selected_payment_gateways['mail_model_for_send_invoice'][$selected_language]) && !($selected_payment_gateways['mail_model_for_send_invoice'][$selected_language] > 0)) {
+											} elseif ((!isset($selected_payment_gateways['mail_model_for_send_invoice'][$selected_language]) ||
+												!($selected_payment_gateways['mail_model_for_send_invoice'][$selected_language] > 0)) &&
+												empty($conf->global->ECOMMERCENG_BYPASS_SEND_INVOICE_WHEN_NO_EMAIL_TEMPLATE)
+											) {
 												$this->errors[] = $this->langs->trans('ECommerceErrorPaymentGatewaysMailModelNotConfigured', $order_data['payment_method_id'], $order_data['payment_method'], $selected_language);
 												$error++;
 											}
 
-											if (!$error) {
+											if (!$error && (empty($conf->global->ECOMMERCENG_BYPASS_SEND_INVOICE_WHEN_NO_EMAIL_TEMPLATE) ||
+													(isset($selected_payment_gateways['mail_model_for_send_invoice'][$selected_language]) && $selected_payment_gateways['mail_model_for_send_invoice'][$selected_language] > 0))
+											) {
 												$ret = $invoice->fetch($invoice->id);
 												$ret = $invoice->fetch_thirdparty();
 
@@ -6391,7 +6399,7 @@ class eCommerceSynchro
 			if (empty($conf->global->ECOMMERCENG_DISABLED_PRODUCT_SYNCHRO_STOD) && !$dont_synchronize_products) {
 				// Get products to synchronize
 				$remote_id_to_synchronize = array();
-				foreach ($refund_info['items'] as $item) {
+				foreach ($items as $item) {
 					if (!empty($item['id_remote_product'])) {
 						$remote_id_to_synchronize[] = str_replace('|%', '', $item['id_remote_product']);
 					}
@@ -6689,7 +6697,7 @@ class eCommerceSynchro
 
 		// Add sales contact
 		if (!$error && $this->eCommerceSite->parameters['default_sales_representative_follow'] > 0 && $new_object) { // Todo update this contact when update order ?
-			$result = $this->addUpdateContact($order, $new_order, $this->eCommerceSite->parameters['default_sales_representative_follow'], 'SALESREPFOLL', 'internal');
+			$result = $this->addUpdateContact($object, $new_order, $this->eCommerceSite->parameters['default_sales_representative_follow'], 'SALESREPFOLL', 'internal');
 			if ($result < 0) {
 				$error++;
 			}

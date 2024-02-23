@@ -155,6 +155,7 @@ if ($action == 'set_options') {
 	$object->parameters['product_dimension_units'] = empty($conf->global->PRODUCT_DISABLE_SIZE) ? GETPOST('product_dimension_units', 'int') : 2; // 2 = cm
 	$object->parameters['product_variation_mode'] = GETPOST('product_variation_mode', 'az09');
     $object->parameters['enable_product_plugin_wpml_support'] = GETPOST('enable_product_plugin_wpml_support', 'int') ? 1 : 0;
+	$object->parameters['product_status_supported'] = GETPOST('product_status_supported', 'alphanohtml');
 
 	if(empty($object->fk_cat_product)) {
 		setEventMessage($langs->trans("ErrorFieldRequired", $langs->transnoentitiesnoconv("ECommerceCatProduct")), 'errors');
@@ -377,7 +378,8 @@ print '<tr class="oddeven">' . "\n";
 print '<td>'.$langs->trans("ECommerceShippingService").'</td>'."\n";
 print '<td>' . $langs->transnoentities("ECommerceShippingServiceDescription") . '</td>' . "\n";
 print '<td class="right">' . "\n";
-print $form->select_produits($object->parameters['shipping_service'], 'shipping_service', 1, 0) . "\n";
+$p_shippingservice = !empty($object->parameters['shipping_service']) ? $object->parameters['shipping_service'] : '';
+print $form->select_produits($p_shippingservice, 'shipping_service', 1, 0) . "\n";
 print '</td></tr>' . "\n";
 
 // Discount code service
@@ -385,7 +387,8 @@ print '<tr class="oddeven">' . "\n";
 print '<td>'.$langs->trans("ECommerceDiscountCodeService").'</td>'."\n";
 print '<td>' . $langs->transnoentities("ECommerceDiscountCodeServiceDescription") . '</td>' . "\n";
 print '<td class="right">' . "\n";
-print $form->select_produits($object->parameters['discount_code_service'], 'discount_code_service', 1, 0) . "\n";
+$p_discountcode = !empty($object->parameters['discount_code_service']) ? $object->parameters['discount_code_service'] : '';
+print $form->select_produits($p_discountcode, 'discount_code_service', 1, 0) . "\n";
 print '</td></tr>' . "\n";
 
 // PW gift cards service
@@ -393,7 +396,8 @@ print '<tr class="oddeven">' . "\n";
 print '<td>'.$langs->trans("ECommercePwGiftCardsService").'</td>'."\n";
 print '<td>' . $langs->transnoentities("ECommercePwGiftCardsServiceDescription") . '</td>' . "\n";
 print '<td class="right">' . "\n";
-print $form->select_produits($object->parameters['pw_gift_cards_service'], 'pw_gift_cards_service', 1, 0) . "\n";
+$p_pwgiftcardservice = !empty($object->parameters['pw_gift_cards_service']) ? $object->parameters['pw_gift_cards_service'] : '';
+print $form->select_produits($p_pwgiftcardservice, 'pw_gift_cards_service', 1, 0) . "\n";
 print '</td></tr>' . "\n";
 
 // ACFW store credits service
@@ -401,7 +405,8 @@ print '<tr class="oddeven">' . "\n";
 print '<td>'.$langs->trans("ECommerceAcfwStoreCreditsService").'</td>'."\n";
 print '<td>' . $langs->transnoentities("ECommerceAcfwStoreCreditsServiceDescription") . '</td>' . "\n";
 print '<td class="right">' . "\n";
-print $form->select_produits($object->parameters['acfw_store_credits_service'], 'acfw_store_credits_service', 1, 0) . "\n";
+$p_acfwstorecreditsservice = !empty($object->parameters['acfw_store_credits_service']) ? $object->parameters['acfw_store_credits_service'] : '';
+print $form->select_produits($p_acfwstorecreditsservice, 'acfw_store_credits_service', 1, 0) . "\n";
 print '</td></tr>' . "\n";
 
 // Fee service
@@ -410,7 +415,8 @@ if (!empty($object->parameters['order_actions']['fee_line_as_item_line'])) {
 	print '<td>' . $langs->trans("ECommerceFeeService") . '</td>' . "\n";
 	print '<td>' . $langs->transnoentities("ECommerceFeeServiceDescription") . '</td>' . "\n";
 	print '<td class="right">' . "\n";
-	print $form->select_produits($object->parameters['fee_service'], 'fee_service', 1, 0) . "\n";
+	$p_feeservice = !empty($object->parameters['fee_service']) ? $object->parameters['fee_service'] : '';
+	print $form->select_produits($p_feeservice, 'fee_service', 1, 0) . "\n";
 	print '</td></tr>' . "\n";
 }
 
@@ -475,6 +481,15 @@ print '<td>' . $langs->trans("ECommerceWoocommerceEnableProductWpmlPluginSupport
 print '<td>' . $langs->transnoentities("ECommerceWoocommerceEnableProductWpmlPluginSupportDescription") . '</td>' . "\n";
 print '<td class="right">' . "\n";
 print '<input type="checkbox" name="enable_product_plugin_wpml_support" value="1"' . (!empty($object->parameters['enable_product_plugin_wpml_support']) ? ' checked' : '') . ' />' . "\n";
+print '</td></tr>' . "\n";
+
+// Supported status (draft, pending, private and publish)
+print '<tr class="oddeven">' . "\n";
+print '<td>' . $langs->trans("ECommerceWoocommerceStatusProductSupported") . '</td>' . "\n";
+print '<td>' . $langs->transnoentities("ECommerceWoocommerceStatusProductSupportedDescription") . '</td>' . "\n";
+print '<td class="right">' . "\n";
+$value = isset($object->parameters['product_status_supported']) ? $object->parameters['product_status_supported'] : 'publish';
+print '<input type="text" class="flat centpercent" name="product_status_supported" value="' . dol_escape_htmltag($value) . '">' . "\n";
 print '</td></tr>' . "\n";
 
 print '</table>'."\n";
@@ -629,7 +644,8 @@ if (!empty($conf->accounting->enabled)) {
 			print '<td>'.$langs->trans('ECOMMERCE_' . $const_name).'</td>'."\n";
 			print '<td>' . $langs->transnoentities('DefaultValue') . ' : ' . (empty($conf->global->$const_name) || $conf->global->$const_name == -1 ? $langs->trans('NotDefined') : $conf->global->$const_name) . '</td>' . "\n";
 			print '<td class="right">' . "\n";
-			print $formaccounting->select_account($object->parameters['default_account'][$key], $key, 1, '', 1, 1);
+			$p_defaultaccount = !empty($object->parameters['default_account'][$key]) ? $object->parameters['default_account'][$key] : '';
+			print $formaccounting->select_account($p_defaultaccount, $key, 1, '', 1, 1);
 			print '</td></tr>' . "\n";
 		}
 	}

@@ -3,9 +3,35 @@
 ## [14.0.0] - 23-02-2024
 - Changement de numérotation
 
+## 4.1.72
+- Correction 'MISSING LABEL' lors de la synchro d'un produit du site vers dolibarr
+
+## 4.1.71
+- Ajout d'une variable globale ECOMMERCENG_BYPASS_SEND_INVOICE_WHEN_NO_EMAIL_TEMPLATE pour passer l'envoi des factures par email si le modèle n'est renseigné au lieu d'avoir une erreur
+
+## 4.1.70
+- Rajout d'un champ commenté (prix régulier)
+
+## 4.1.69
+- Ajout d'un paramètre pour définir les statuts des produits synchronisablent (par défault : publish)
+- Correction synchronisation du libellé du produit variant
+
+## 4.1.68
+- Correction synchro commande avec un commercial en contact par defaut
+
+## 4.1.67
+- Correction bug synchro categories dolibarr vers site
+- Ajout modification des attributs parent d'une variation lors de l'ajout d'une nouvelle valeur d'attribut sur la variation (synchro dolibarr vers WooCommerce)
+- Correction synchro attributs de WooCommerce vers Dolibarr pour une variation
+
+## 4.1.66
+- Correction bug ajout de ligne de produit dans la commande, facture, ...
+
 ## 4.1.65
 - Correction de la synchronisation d'un nouveau produit variable depuis les crochets web qui créait un produit "parent" non voulue
 - Correction de la synchro des attributs d'une variation d'un produit variable de dolibarr vers le site
+- Correction requete SQL sur la liste des factures (Concernant la colonne 'WooSync Total Delta')
+- Les produits "bundles" nouvellement synchronisé ne seront plus soumis au movement de stock dolibarr (support de gestion du stock au niveau du produit si existant dans la version du dolibarr ou via champs complementaire sur celui-ci)
 
 ## 4.1.64
 - Correction script 'syncronize_products_to_ecommerce.php' recupère tous les sites (multi-entités)

@@ -97,7 +97,7 @@ class modECommerceNg extends DolibarrModules
 		//                        );
 		$this->module_parts = array(
 			'triggers' => 1,
-			'hooks' => array('expeditioncard', 'invoicecard', 'productdocuments', 'productcard', 'thirdpartycard', 'invoicelist'),
+			'hooks' => array('expeditioncard', 'invoicecard', 'productdocuments', 'productcard', 'thirdpartycard', 'invoicelist', 'mouvementstock'),
 		);
 
 		// Data directories to create when module is enabled.
@@ -474,6 +474,12 @@ WHERE c.rowid IS NOT NULL" ];
 		dolibarr_del_const($this->db, 'ECOMMERCE_PROCESSING_WEBHOOK_SYNCHRONIZATION', 0);
 
 		$result=$this->load_tables($options);
+
+		require_once(DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php');
+		require_once(DOL_DOCUMENT_ROOT . '/product/class/product.class.php');
+		$extrafields = new ExtraFields($this->db);
+		$product_static = new Product($this->db);
+		if (!property_exists($product_static, 'stockable_product')) $res = $extrafields->addExtraField("ecommerceng_stockable_product", 'StockableProduct', 'select', 11, '', 'product', 0, 0, '1', array('options' => array(0 => 'StockDisabled', 1 => 'StockEnabled')), 1, '0', 1, 'StockableProductDescription', '', '', 'ecommerceng@ecommerceng', '1', 'false');
 
 		// Upgrade site configuration to new setup cards
 		$eCommerceSite = new eCommerceSite($this->db);

@@ -117,6 +117,7 @@ if ($action == 'set_options') {
 			$object->parameters['product_weight_units'] = 0; // 0 = Kg
 			$object->parameters['product_dimension_units'] = 2; // 2 = cm
 			$object->parameters['product_variation_mode'] = 'one_to_one';
+			$object->parameters['product_status_supported'] = 'publish';
 			$object->price_level = 1;
 			$object->parameters['product_synch_direction']['ref'] = 'all';
 			$object->parameters['product_synch_direction']['description'] = 'etod';
@@ -175,7 +176,7 @@ if ($action == 'set_options') {
 				"publish" => $langs->trans('ECommercengWoocommerceStatusPublish'),
 			)), 0, '0', 1, 0, '', '', 'ecommerceng@ecommerceng', '1', 'false');
 			if ($res > 0) $res = $extrafields->addExtraField("ecommerceng_tax_class_{$object->id}_{$conf->entity}", $langs->trans('ECommercengWoocommerceTaxClass', $object->name), 'sellist', 4, '', 'product', 0, 0, '', array('options' => array("c_ecommerceng_tax_class:label:code::active=1 AND site_id={$object->id} AND entity={$conf->entity}" => null)), 0, '0', 1, 0, '', '', 'ecommerceng@ecommerceng', '1', 'false');
-//				if ($res > 0) $res = $extrafields->addExtraField("ecommerceng_wc_regular_price_{$object->id}_{$conf->entity}", $langs->trans('ECommercengWoocommerceRegularPrice', $object->name), 'price', 5, '', 'product', 0, 0, '', null, 0, '0', 1, 0, '', '', 'ecommerceng@ecommerceng', '1', 'false');
+			if ($res > 0) $res = $extrafields->addExtraField("ecommerceng_wc_regular_price_{$object->id}_{$conf->entity}", $langs->trans('ECommercengWoocommerceRegularPrice', $object->name), 'price', 5, '', 'product', 0, 0, '', null, 0, '0', 1, 0, '', '', 'ecommerceng@ecommerceng', '1', 'false');
 			if ($res > 0) $res = $extrafields->addExtraField("ecommerceng_wc_sale_price_{$object->id}_{$conf->entity}", $langs->trans('ECommercengWoocommerceSalePrice', $object->name), 'price', 6, '', 'product', 0, 0, '', null, 0, '0', 1, 0, '', '', 'ecommerceng@ecommerceng', '1', 'false');
 			if ($res > 0) $res = $extrafields->addExtraField("ecommerceng_wc_date_on_sale_from_{$object->id}_{$conf->entity}", $langs->trans('ECommercengWoocommerceDateOnSaleFrom', $object->name), 'date', 7, '', 'product', 0, 0, '', null, 0, '0', 1, 0, '', '', 'ecommerceng@ecommerceng', '1', 'false');
 			if ($res > 0) $res = $extrafields->addExtraField("ecommerceng_wc_date_on_sale_to_{$object->id}_{$conf->entity}", $langs->trans('ECommercengWoocommerceDateOnSaleTo', $object->name), 'date', 8, '', 'product', 0, 0, '', null, 0, '0', 1, 0, '', '', 'ecommerceng@ecommerceng', '1', 'false');
@@ -454,7 +455,8 @@ if ($object->id > 0) {
 	print '<td>' . $langs->transnoentities("ECommerceSiteWebHooksSecretDescription") . '</td>' . "\n";
 	print '<td class="right">' . "\n";
 	print '<table class="nobordernopadding centpercent"><tr><td>' . "\n";
-	print '<input type="text" class="flat centpercent" id="site_web_hooks_secret" name="site_web_hooks_secret" value="' . dol_escape_htmltag($object->parameters['web_hooks_secret']) . '">' . "\n";
+	$p_webhooksecret = !empty($object->parameters['web_hooks_secret']) ? $object->parameters['web_hooks_secret'] : '';
+	print '<input type="text" class="flat centpercent" id="site_web_hooks_secret" name="site_web_hooks_secret" value="' . dol_escape_htmltag($p_webhooksecret) . '">' . "\n";
 	if (!empty($conf->use_javascript_ajax)) {
 		print '</td><td class="width25">' . img_picto($langs->trans('Generate'), 'refresh', 'id="generate_web_hooks_secret" class="linkobject"');
 		print "\n" . '<script type="text/javascript">';
@@ -479,7 +481,8 @@ if ($object->id > 0) {
 	print '<td>' . $langs->trans("ECommerceSiteWebHooksVolumetryAlert") . '</td>' . "\n";
 	print '<td>' . $langs->transnoentities("ECommerceSiteWebHooksVolumetryAlertDescription") . '</td>' . "\n";
 	print '<td class="right">' . "\n";
-	print '<input type="number" class="flat centpercent" name="site_web_hooks_volumetry_alert" value="' . dol_escape_htmltag($object->parameters['web_hooks_volumetry_alert']) . '">' . "\n";
+	$p_webhookvolalert = !empty($object->parameters['web_hooks_volumetry_alert']) ? $object->parameters['web_hooks_volumetry_alert'] : '';
+	print '<input type="number" class="flat centpercent" name="site_web_hooks_volumetry_alert" value="' . dol_escape_htmltag($p_webhookvolalert) . '">' . "\n";
 	print '</td></tr>' . "\n";
 
 	print '</table>' . "\n";
