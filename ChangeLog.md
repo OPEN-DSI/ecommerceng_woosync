@@ -1,5 +1,8 @@
 # ChangeLog
 
+## [14.0.0] - 23-02-2024
+- Changement de numérotation
+
 ## 4.1.65
 - Correction de la synchronisation d'un nouveau produit variable depuis les crochets web qui créait un produit "parent" non voulue
 - Correction de la synchro des attributs d'une variation d'un produit variable de dolibarr vers le site
@@ -855,3 +858,6 @@
 ## 3.9.0.0
 
 - Initial version.
+
+
+[14.0.0]: https://github.com/OPEN-DSI/ecommerceng_woosync/releases/tag/14.0.0
