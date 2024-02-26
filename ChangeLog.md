@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 14.0.1
+- Changement de numérotation
+
 ## 4.1.72
 - Correction 'MISSING LABEL' lors de la synchro d'un produit du site vers dolibarr
 
