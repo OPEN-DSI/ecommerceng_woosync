@@ -167,14 +167,14 @@ if ($action == 'set_options') {
 		// Create all extrafields
 		if ($result > 0) {
 			// Product
-			$res = $extrafields->addExtraField("ecommerceng_description_{$conf->entity}", 'ECommercengWoocommerceDescription', 'text', 1, '', 'product', 0, 0, '', null, 0, '0', 1, 0, '', '', 'ecommerceng@ecommerceng', '1', 'false');
-			if ($res > 0) $res = $extrafields->addExtraField("ecommerceng_short_description_{$conf->entity}", 'ECommercengWoocommerceShortDescription', 'text', 2, '', 'product', 0, 0, '', null, 0, '0', 1, 0, '', '', 'ecommerceng@ecommerceng', '1', 'false');
+			$res = $extrafields->addExtraField("ecommerceng_description_{$conf->entity}", 'ECommercengWoocommerceDescription', 'text', 1, '', 'product', 0, 0, '', null, 0, '0', 1, 0, '', '', 'woocommerce@ecommerceng', '1', 'false');
+			if ($res > 0) $res = $extrafields->addExtraField("ecommerceng_short_description_{$conf->entity}", 'ECommercengWoocommerceShortDescription', 'text', 2, '', 'product', 0, 0, '', null, 0, '0', 1, 0, '', '', 'woocommerce@ecommerceng', '1', 'false');
 			if ($res > 0) $res = $extrafields->addExtraField("ecommerceng_wc_status_{$object->id}_{$conf->entity}", $langs->trans('ECommercengWoocommerceStatus', $object->name), 'select', 3, '', 'product', 0, 0, '', array('options' => array(
 				"draft" => $langs->trans('ECommercengWoocommerceStatusDraft'),
 				"pending" => $langs->trans('ECommercengWoocommerceStatusPending'),
 				"private" => $langs->trans('ECommercengWoocommerceStatusPrivate'),
 				"publish" => $langs->trans('ECommercengWoocommerceStatusPublish'),
-			)), 0, '0', 1, 0, '', '', 'ecommerceng@ecommerceng', '1', 'false');
+			)), 0, '0', 1, 0, '', '', 'woocommerce@ecommerceng', '1', 'false');
 			if ($res > 0) $res = $extrafields->addExtraField("ecommerceng_tax_class_{$object->id}_{$conf->entity}", $langs->trans('ECommercengWoocommerceTaxClass', $object->name), 'sellist', 4, '', 'product', 0, 0, '', array('options' => array("c_ecommerceng_tax_class:label:code::active=1 AND site_id={$object->id} AND entity={$conf->entity}" => null)), 0, '0', 1, 0, '', '', 'ecommerceng@ecommerceng', '1', 'false');
 			if ($res > 0) $res = $extrafields->addExtraField("ecommerceng_wc_regular_price_{$object->id}_{$conf->entity}", $langs->trans('ECommercengWoocommerceRegularPrice', $object->name), 'price', 5, '', 'product', 0, 0, '', null, 0, '0', 1, 0, '', '', 'ecommerceng@ecommerceng', '1', 'false');
 			if ($res > 0) $res = $extrafields->addExtraField("ecommerceng_wc_sale_price_{$object->id}_{$conf->entity}", $langs->trans('ECommercengWoocommerceSalePrice', $object->name), 'price', 6, '', 'product', 0, 0, '', null, 0, '0', 1, 0, '', '', 'ecommerceng@ecommerceng', '1', 'false');
