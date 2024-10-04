@@ -1,5 +1,13 @@
 # ChangeLog
 
+## [14.0.14] - 04-10-2024
+- Fix bug on dimensions unit convertion by benvia
+- PHP 82 Compat : Initialize variable
+- Allow guzzle to retry (5 time) if api fails and add a user agent by frederic34
+- Fix sanitization and settings saving issues with Dolibarr 20 by medtr-git
+- Fix Ambiguous ‘rowid’ Column in Web Hooks List Query Count by medtr-git
+- Correction fichier langue
+
 ## [14.0.13] - 04-08-2024
 - Correction du traitement des webhooks : produit puis commande dans l'ordre du plus recent au plus vieux
 - Correction affichage de l'ordre de la liste des Webhooks
@@ -939,7 +947,8 @@
 - Initial version.
 
 
-[Non Distribué]: https://github.com/OPEN-DSI/ecommerceng_woosync/compare/14.0.13...HEAD
+[Non Distribué]: https://github.com/OPEN-DSI/ecommerceng_woosync/compare/14.0.14...HEAD
+[14.0.14]: https://github.com/OPEN-DSI/ecommerceng_woosync/commits/14.0.14
 [14.0.13]: https://github.com/OPEN-DSI/ecommerceng_woosync/commits/14.0.13
 [14.0.12]: https://github.com/OPEN-DSI/ecommerceng_woosync/commits/14.0.12
 [14.0.11]: https://github.com/OPEN-DSI/ecommerceng_woosync/commits/14.0.11

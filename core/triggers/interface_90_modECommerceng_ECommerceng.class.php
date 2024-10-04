@@ -586,7 +586,7 @@ class InterfaceECommerceng
 			$entities = explode(',', getEntity('commande'));
 
 			foreach ($sites as $site) {
-				if ($obj->context['fromsyncofecommerceid'] && $obj->context['fromsyncofecommerceid'] == $site->id) {
+				if (isset($obj->context['fromsyncofecommerceid']) && $obj->context['fromsyncofecommerceid'] == $site->id) {
 					dol_syslog("Triggers was ran from a create/update to sync from ecommerce to dolibarr, so we won't run code to sync from dolibarr to ecommerce");
 					continue;
 				}
